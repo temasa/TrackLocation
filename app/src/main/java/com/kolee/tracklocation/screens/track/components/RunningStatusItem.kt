@@ -46,7 +46,7 @@ fun RunningStatusItem(
                 )
             )
             Text(
-                text = value,
+                text = unit,
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
