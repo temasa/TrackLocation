@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.shouldShowRationale
 
 private const val TAG = "CheckAndRequestPermission"
 
@@ -68,7 +70,7 @@ fun CheckAndRequestPermissions(
                 modifier = Modifier,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = Color.DarkGray
+                    containerColor = Color.DarkGray
                 ),
                 enabled = !permissionState.allPermissionsGranted,
                 onClick = {
@@ -86,16 +88,19 @@ fun CheckAndRequestPermissions(
             Log.d(TAG, "Ask permissions, openDialogState: ${openDialogState}")
 
             permissionState.permissions.forEach {
+                val hasPermission = it.status.isGranted
+                val shouldShowRationale = it.status.shouldShowRationale
+
                 Log.d(TAG, "Ask permission: ${it.permission}, "
-                    + "hasPermission: ${it.hasPermission}, "
-                    + "shouldShowRationale: ${it.shouldShowRationale}, "
+                    + "hasPermission: ${hasPermission}, "
+                    + "shouldShowRationale: ${shouldShowRationale}, "
                     + "openDialogState: ${openDialogState}")
 
                 when (it.permission) {
                     Manifest.permission.POST_NOTIFICATIONS -> {
                         when {
-                            it.hasPermission -> {}
-                            it.shouldShowRationale -> {
+                            hasPermission -> {}
+                            shouldShowRationale -> {
                                 Log.d(TAG, "Show rationale for ${it.permission}, openDialogState: ${openDialogState}")
                                 PermissionDialog(
                                     open = openDialogState,
@@ -105,7 +110,7 @@ fun CheckAndRequestPermissions(
                                     }
                                 )
                             }
-                            !it.hasPermission && !it.shouldShowRationale -> {
+                            !hasPermission && !shouldShowRationale -> {
                                 PermissionDialog(
                                     open = openDialogState,
                                     msgText = "You can go to the app settings to grant it",
@@ -119,8 +124,8 @@ fun CheckAndRequestPermissions(
 
                     Manifest.permission.ACCESS_FINE_LOCATION -> {
                         when {
-                            it.hasPermission -> {}
-                            it.shouldShowRationale -> {
+                            hasPermission -> {}
+                            shouldShowRationale -> {
                                 Log.d(TAG, "Show rationale for ${it.permission}, openDialogState: ${openDialogState}")
                                 PermissionDialog(
                                     open = openDialogState,
@@ -130,7 +135,7 @@ fun CheckAndRequestPermissions(
                                     }
                                 )
                             }
-                            !it.hasPermission && !it.shouldShowRationale -> {
+                            !hasPermission && !shouldShowRationale -> {
                                 PermissionDialog(
                                     open = openDialogState,
                                     msgText = "You can go to the app settings to grant it",

@@ -1,9 +1,10 @@
 package com.kolee.tracklocation.navigation
 
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
@@ -27,14 +28,14 @@ fun BottomNavigationScreen(
         Screen.SettingsScreen
     )
 
-    BottomNavigation(
-        backgroundColor = PurpleGrey80
+    NavigationBar(
+        containerColor = PurpleGrey80
     ) {
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
 
         listBottomItems.forEach { bottomItem ->
-            BottomNavigationItem(
+            NavigationBarItem(
                 selected = currentRoute == bottomItem.route,
                 onClick = {
                     navController.navigate(bottomItem.route) {
@@ -55,8 +56,12 @@ fun BottomNavigationScreen(
                         fontSize = 12.sp
                     )
                 },
-                selectedContentColor = Purple400,
-                unselectedContentColor = Purple40
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Purple400,
+                    selectedTextColor = Purple400,
+                    unselectedIconColor = Purple40,
+                    unselectedTextColor = Purple40
+                )
             )
         }
     }

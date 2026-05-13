@@ -3,6 +3,7 @@ package com.kolee.tracklocation.screens.track
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.kolee.tracklocation.screens.track.components.TrackMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -115,6 +116,6 @@ private fun performTrackingService(
 ) {
     Intent(context, TrackingService::class.java).also {
         it.action = actions.name
-        context.startService(it)
+        ContextCompat.startForegroundService(context, it)
     }
 }
