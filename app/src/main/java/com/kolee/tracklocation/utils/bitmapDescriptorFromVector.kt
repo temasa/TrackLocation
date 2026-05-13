@@ -11,14 +11,20 @@ import androidx.core.graphics.createBitmap
 fun bitmapDescriptorFromVector(
     context: Context,
     vectorResId: Int,
-    tint: Int? = null
+    tint: Int? = null,
+    scale: Double
 ): BitmapDescriptor {
     val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)!!
     tint?.let {
         vectorDrawable.setTint(it)
     }
 
-    vectorDrawable.setBounds( 0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+    vectorDrawable.setBounds(
+        0,
+        0,
+        (vectorDrawable.intrinsicWidth * scale).toInt(),
+        (vectorDrawable.intrinsicHeight * scale).toInt()
+    )
 
     val bitmap = createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
 

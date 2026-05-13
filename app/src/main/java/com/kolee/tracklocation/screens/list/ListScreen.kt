@@ -1,5 +1,6 @@
 package com.kolee.tracklocation.screens.list
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.TopAppBar
@@ -16,25 +17,26 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.kolee.tracklocation.data.roomdb.TrackEntity
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kolee.tracklocation.screens.list.components.ListContent
 import com.kolee.tracklocation.screens.list.components.TrackItemRow
+import com.kolee.tracklocation.ui.theme.RoyalBlue
+import com.kolee.tracklocation.viewmodel.Response
+import com.kolee.tracklocation.viewmodel.ShareViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
-    navHostController: NavHostController
+    onSelect: (trackIdx: Int) -> Unit
 ) {
-//    Text(text = "List", fontSize = 20.sp)
-    val  trackDemoList = listOf(
-        TrackEntity(idx = 1, timestamp = System.currentTimeMillis(), distance = 3100F, duration = 500000L, pathPoints = ""),
-        TrackEntity(idx = 2, timestamp = System.currentTimeMillis(), distance = 2100F, duration = 300000L, pathPoints = ""),
-        TrackEntity(idx = 3, timestamp = System.currentTimeMillis(), distance = 3500F, duration = 300000L, pathPoints = ""),
-        TrackEntity(idx = 4, timestamp = System.currentTimeMillis(), distance = 1100F, duration = 800000L, pathPoints = ""),
-        TrackEntity(idx = 5, timestamp = System.currentTimeMillis(), distance = 6100F, duration = 100000L, pathPoints = ""),
-        TrackEntity(idx = 6, timestamp = System.currentTimeMillis(), distance = 3200F, duration = 900000L, pathPoints = ""),
-        TrackEntity(idx = 7, timestamp = System.currentTimeMillis(), distance = 4200F, duration = 600000L, pathPoints = ""),
-        TrackEntity(idx = 8, timestamp = System.currentTimeMillis(), distance = 7100F, duration = 520000L, pathPoints = ""),
-        TrackEntity(idx = 9, timestamp = System.currentTimeMillis(), distance = 8900F, duration = 700000L, pathPoints = ""),
+
+    val viewModel: ShareViewModel = viewModel(
+        factory = ShareViewModel.Factory
     )
+
+    val responseState = viewModel.responseState
 
     Scaffold(
         topBar = {
@@ -42,9 +44,10 @@ fun ListScreen(
         },
         content = { padding ->
             ListContent(
-                navHostController = navHostController,
-                trackList = trackDemoList,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.padding(padding),
+                responseState = responseState,
+                onSelect = onSelect,
+                viewModel = viewModel
             )
         },
         floatingActionButton = {
@@ -56,7 +59,10 @@ fun ListScreen(
 @Composable
 fun ListAppBar() {
     TopAppBar(
-        backgroundColor = Color.Blue
+        backgroundColor = RoyalBlue,
+        modifier = Modifier
+            .height(68.dp)
+            .clip(RoundedCornerShape(8.dp))
     ){
         Text(
             text = "TRACK LIST",
@@ -70,20 +76,3 @@ fun ListAppBar() {
     }
 }
 
-@Composable
-fun ListContent(
-    navHostController: NavHostController,
-    trackList: List<TrackEntity>,
-    modifier: Modifier
-) {
-    LazyColumn(
-        modifier = modifier.padding(bottom = 10.dp)
-    ) {
-        items(
-            items = trackList,
-            key = { trackItem -> trackItem.idx}
-        ) { item ->
-            TrackItemRow(item = item)
-        }
-    }
-}

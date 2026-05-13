@@ -8,7 +8,7 @@ data class TrackEntity(
     @PrimaryKey(autoGenerate = true)
     val idx: Int = 0,
     val timestamp: Long = 0L,
-    val distance: Float = 0f,
+    val distance: Int = 0,
     val duration: Long = 0L,
     val pathPoints: String = ""
 )

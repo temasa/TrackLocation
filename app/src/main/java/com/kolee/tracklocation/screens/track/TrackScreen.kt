@@ -16,18 +16,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kolee.tracklocation.data.roomdb.TrackEntity
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.screens.track.components.RunningCard
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
+import com.kolee.tracklocation.utils.LocationUtils
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val TAG = "TrackScreen"
 
@@ -35,6 +39,7 @@ private const val TAG = "TrackScreen"
 fun TrackScreen() {
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val viewModel: ShareViewModel = viewModel(
         factory = ShareViewModel.Factory
@@ -71,7 +76,24 @@ fun TrackScreen() {
                     locationUiState = locationUiState
                 ) {
                     Log.d(TAG, "RunningCard, onPlayStopClicked trigger")
-                    performTrackingService(context, locationUiState.isTracking)
+                    if (locationUiState.isTracking) {
+                        scope.launch {
+                            viewModel.insertTrack(
+                                TrackEntity(
+                                    timestamp = System.currentTimeMillis(),
+                                    distance = locationUiState.distanceInMeters,
+                                    duration = locationUiState.durationTimer,
+                                    pathPoints = LocationUtils.pathPointsToString(locationUiState.pathPoints)
+                                )
+                            )
+                            Log.d(TAG, "Tracking location stop")
+                            performTrackingService(context, Actions.STOP)
+                        }
+                    }
+                    else {
+                        Log.d(TAG, "Tracking location start")
+                        performTrackingService(context, Actions.START)
+                    }
                 }
             }
         }
@@ -89,19 +111,10 @@ fun TrackScreen() {
 
 private fun performTrackingService(
     context: Context,
-    isTracking: Boolean
+    actions: Actions
 ) {
     Intent(context, TrackingService::class.java).also {
-        Log.d(TAG, "performTrackingService")
-        if (!isTracking) {
-            Log.d(TAG, "performTrackingService, launch START action")
-            it.action = Actions.START.name
-            context.startService(it)
-        }
-        else {
-            Log.d(TAG, "performTrackingService, launch STOP action")
-            it.action = Actions.STOP.name
-            context.startService(it)
-        }
+        it.action = actions.name
+        context.startService(it)
     }
 }

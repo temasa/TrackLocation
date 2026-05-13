@@ -17,7 +17,7 @@ interface TrackDao {
     suspend fun insertTrack(item: TrackEntity)
 
     @Query("SELECT * FROM track WHERE idx=:idx")
-    suspend fun getTrackById(idx: Int): TrackEntity
+    fun getTrackById(idx: Int): Flow<TrackEntity>
 
     @Delete
     suspend fun deleteTrack(item: TrackEntity)

@@ -19,13 +19,14 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kolee.tracklocation.R
+import com.kolee.tracklocation.utils.TimeUtilFormatter
 
 private const val TAG = "RunningCardTime"
 
 @Composable
 fun RunningCardTime(
     modifier: Modifier = Modifier,
-    durationTimer: String,
+    durationTimer: Long,
     isTracking: Boolean,
     onPlayStopClicked: () -> Unit
 ) {
@@ -44,7 +45,7 @@ fun RunningCardTime(
                 )
             )
             Text(
-                text = durationTimer,
+                text = TimeUtilFormatter.getTime(durationTimer),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold

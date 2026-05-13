@@ -20,4 +20,33 @@ object LocationUtils {
 
         return result[0].roundToInt()
     }
+    fun pathPointsToString(list: List<LatLng>): String {
+        val sb = StringBuilder()
+
+        list.forEach {
+            sb.append("${it.latitude},${it.longitude}/")
+        }
+
+        return sb.toString()
+    }
+
+    fun stringToPathPoints(geoPoints: String): List<LatLng> {
+        val geoPointsList = mutableListOf<LatLng>()
+        val tempList = geoPoints.split("/")
+
+        tempList.forEach {
+            if (it.isEmpty()) return@forEach
+            val points = it.split(",")
+            geoPointsList.add(
+                LatLng(
+                    points[0].toDouble(),
+                    points[1].toDouble()
+                )
+            )
+        }
+
+        return geoPointsList
+    }
+
 }
+

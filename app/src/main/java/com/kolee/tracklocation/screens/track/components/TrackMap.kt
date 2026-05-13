@@ -73,7 +73,8 @@ fun BoxScope.TrackMap(
             icon = bitmapDescriptorFromVector(
                 context = LocalContext.current,
                 vectorResId = R.drawable.ic_location_pin,
-                tint = Color.Blue.toArgb()
+                tint = Color.Blue.toArgb(),
+                scale = 1.0
             ),
             state = currentMarkerState,
             anchor = Offset(0.5f, 0.5f)

@@ -1,5 +1,7 @@
 package com.kolee.tracklocation.screens.list.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,19 +20,27 @@ import com.kolee.tracklocation.data.roomdb.TrackEntity
 import com.kolee.tracklocation.ui.theme.LightYellow
 import com.kolee.tracklocation.utils.TimeUtilFormatter
 import java.text.SimpleDateFormat
+import java.util.Locale
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TrackItemRow(
-    item: TrackEntity
+    item: TrackEntity,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
-    val distanceText = "${String.format("%.2f", item.distance / 1000)} km"
+    val distanceText = "${String.format("%.2f", item.distance / 1000f)} km"
     val timeText = TimeUtilFormatter.getTime(item.duration)
 
     Card(
         backgroundColor = LightYellow,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         elevation = 8.dp,
         modifier = Modifier.padding(vertical = 10.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
     ) {
         Column(modifier = Modifier) {
             Row(
@@ -40,8 +50,8 @@ fun TrackItemRow(
                     modifier = Modifier
                         .weight(1f)
                         .padding(5.dp),
-                    text = SimpleDateFormat("HH:mm, yy-Mm-dd").format(item.timestamp),
-                    color = Color.Blue,
+                    text = SimpleDateFormat("HH:mm, dd MM yyyy", Locale.ENGLISH).format(item.timestamp),
+                    color = Color.Blue.copy(alpha = 0.7f),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

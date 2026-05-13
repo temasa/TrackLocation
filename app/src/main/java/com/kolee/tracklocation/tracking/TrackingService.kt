@@ -96,22 +96,23 @@ class TrackingService: Service() {
 
     private fun startTimer() {
         timer?.cancel()
+        startTime = System.currentTimeMillis()
 
         timer = Timer()
         timer?.schedule(object : TimerTask() {
             override fun run() {
                 _locationUiState.update {
-                    it.copy(durationTimer = getDurationTimer())
+                    it.copy(durationTimer = System.currentTimeMillis() - startTime)
                 }
             }
         }, 1, 1)
     }
 
-    private fun getDurationTimer(): String {
-        return TimeUtilFormatter.getTime(
-            System.currentTimeMillis() - startTime
-        )
-    }
+//    private fun getDurationTimer(): String {
+//        return TimeUtilFormatter.getTime(
+//            System.currentTimeMillis() - startTime
+//        )
+//    }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun requestLocationUpdate() {
@@ -162,10 +163,18 @@ class TrackingService: Service() {
                 distanceInMeters = state.distanceInMeters.run {
                     var distance =  this
                     if (pathPoints.size > 1) {
-                        distance += LocationUtils.getDistanceBetweenPathPoints(
-                            pathPoints1 = pathPoints[pathPoints.size - 1],
-                            pathPoints2 = pathPoints[pathPoints.size - 2]
+//                        distance += LocationUtils.getDistanceBetweenPathPoints(
+//                            pathPoints1 = pathPoints[pathPoints.size - 1],
+//                            pathPoints2 = pathPoints[pathPoints.size - 2]
+//                        )
+                        val result = FloatArray(1)
+                        Location.distanceBetween(
+                            pathPoints[pathPoints.size - 2].latitude, pathPoints[pathPoints.size - 2].longitude,
+                            pathPoints[pathPoints.size - 1].latitude, pathPoints[pathPoints.size - 1].longitude,
+                            result
                         )
+
+                        distance += result[0].toInt()
                     }
 
                     distance

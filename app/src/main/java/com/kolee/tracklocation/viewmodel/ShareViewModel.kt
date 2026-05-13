@@ -12,6 +12,7 @@ import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.data.roomdb.TrackDao
 import com.kolee.tracklocation.data.roomdb.TrackEntity
 import com.kolee.tracklocation.tracking.TrackingService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -22,6 +23,10 @@ class ShareViewModel(
     var locationUiState = TrackingService.locationUiState
     var responseState by mutableStateOf<Response>(Response.Loading)
         private set
+    var selectedTrackState by mutableStateOf(TrackEntity())
+        private set
+    private var job: Job? = null
+
 
     fun insertTrack(item: TrackEntity) {
         viewModelScope.launch {
@@ -40,6 +45,15 @@ class ShareViewModel(
     fun deleteTrack(item: TrackEntity) {
         viewModelScope.launch {
             databaseDao.deleteTrack(item)
+        }
+    }
+
+    fun getTrack(idx: Int) {
+        job?.cancel()
+        job = viewModelScope.launch {
+            databaseDao.getTrackById(idx).distinctUntilChanged().collect { track ->
+                selectedTrackState = track
+            }
         }
     }
 
