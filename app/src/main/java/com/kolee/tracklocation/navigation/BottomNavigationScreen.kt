@@ -10,13 +10,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.kolee.tracklocation.ui.theme.PurpleGrey80
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import com.kolee.tracklocation.ui.theme.Purple40
-import com.kolee.tracklocation.ui.theme.Purple400
+import com.kolee.tracklocation.ui.theme.TripGreen
+import com.kolee.tracklocation.ui.theme.TripInk
+import com.kolee.tracklocation.ui.theme.TripMuted
+import com.kolee.tracklocation.ui.theme.TripSurface
+import com.kolee.tracklocation.ui.theme.TripSurfaceMuted
 
 @Composable
 fun BottomNavigationScreen(
@@ -29,7 +30,7 @@ fun BottomNavigationScreen(
     )
 
     NavigationBar(
-        containerColor = PurpleGrey80
+        containerColor = TripSurface
     ) {
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
@@ -57,10 +58,11 @@ fun BottomNavigationScreen(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Purple400,
-                    selectedTextColor = Purple400,
-                    unselectedIconColor = Purple40,
-                    unselectedTextColor = Purple40
+                    TripGreen,
+                    TripMuted,
+                    TripInk,
+                    TripMuted,
+                    TripSurfaceMuted
                 )
             )
         }

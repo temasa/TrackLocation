@@ -14,8 +14,14 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple500,
-    secondary = Teal200
+    primary = TripGreen,
+    secondary = TripBlue,
+    background = TripBackground,
+    surface = TripSurface,
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = TripInk,
+    onSurface = TripInk
 
     /* Other default colors to override
     background = Color.White,
