@@ -1,5 +1,7 @@
 package com.kolee.tracklocation.screens.sessions
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -22,16 +24,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -40,9 +50,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.data.roomdb.SessionEntity
+import com.kolee.tracklocation.permission.CheckAndRequestPermissions
+import com.kolee.tracklocation.tracking.Actions
+import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.theme.TripBackground
 import com.kolee.tracklocation.ui.theme.TripBorder
 import com.kolee.tracklocation.ui.theme.TripBorderSoft
@@ -71,43 +85,65 @@ private data class SessionUiItem(
 
 @Composable
 fun SessionsScreen() {
-    val viewModel: ShareViewModel = viewModel(
-        factory = ShareViewModel.Factory
-    )
+    val context = LocalContext.current
+    val viewModel: ShareViewModel = viewModel(factory = ShareViewModel.Factory)
     val locationUiState by viewModel.locationUiState.collectAsState()
     val sessions = viewModel.sessionsState.mapIndexed { index, session ->
         session.toUiItem(index = sessionsIndex(viewModel.sessionsState.size, index))
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(TripBackground)
-    ) {
-        PageHeader(
-            title = "Sessions"
-        )
-        StatusHero(
-            on = locationUiState.isAlwaysRecording,
-            elapsed = activeSessionElapsed(sessions),
-            points = sessions.firstOrNull { it.active }?.points ?: 0
-        )
+    var requestRecordingPermission by remember { mutableStateOf(false) }
+    var guardMessage by remember { mutableStateOf<String?>(null) }
 
-        if (sessions.isNotEmpty()) {
-            SessionsList(
-                sessions = sessions,
-                modifier = Modifier.weight(1f)
+    Scaffold(
+        containerColor = TripBackground
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(TripBackground)
+                .padding(padding)
+        ) {
+            PageHeader()
+            StatusCard(
+                on = locationUiState.isAlwaysRecording,
+                isTripActive = locationUiState.isTracking,
+                helperText = guardMessage,
+                onAlwaysRecordingChange = { enabled ->
+                    guardMessage = null
+                    if (enabled) {
+                        requestRecordingPermission = true
+                    } else if (locationUiState.isTracking) {
+                        guardMessage = "Always-recording is required while a trip is running."
+                    } else {
+                        performTrackingService(context, Actions.STOP_RECORDING)
+                    }
+                }
             )
-        } else {
-            EmptySessionsState(modifier = Modifier.weight(1f))
+
+            if (sessions.isNotEmpty()) {
+                SessionsList(
+                    sessions = sessions,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                EmptySessionsState(modifier = Modifier.weight(1f))
+            }
+        }
+
+        if (requestRecordingPermission) {
+            CheckAndRequestPermissions(
+                isGranted = {
+                    requestRecordingPermission = false
+                    performTrackingService(context, Actions.START_RECORDING)
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun PageHeader(
-    title: String
-) {
+private fun PageHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,87 +155,95 @@ private fun PageHeader(
             fontSize = 14.sp,
             fontWeight = FontWeight.Normal
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = title,
-                color = TripInk,
-                fontSize = 40.sp,
-                fontWeight = FontWeight.ExtraBold,
-                lineHeight = 42.sp,
-                letterSpacing = 0.sp
-            )
-        }
+        Text(
+            text = "Sessions",
+            color = TripInk,
+            fontSize = 40.sp,
+            fontWeight = FontWeight.ExtraBold,
+            lineHeight = 42.sp,
+            letterSpacing = 0.sp
+        )
     }
 }
 
 @Composable
-private fun StatusHero(
+private fun StatusCard(
     on: Boolean,
-    elapsed: String,
-    points: Int
+    isTripActive: Boolean,
+    helperText: String?,
+    onAlwaysRecordingChange: (Boolean) -> Unit
 ) {
-    Row(
+    val statusText = if (on) "Active" else "Inactive"
+    val descriptionText = when {
+        helperText != null -> helperText
+        on -> "Recording location sessions in the background."
+        else -> "Location sessions are not being recorded."
+    }
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 22.dp, top = 14.dp, end = 22.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(TripGreenDark)
-            .padding(horizontal = 22.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(start = 22.dp, top = 12.dp, end = 22.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = TripGreenDark)
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(if (on) TripGreen.copy(alpha = 0.18f) else TripGreenMid),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            if (on) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(TripGreen.copy(alpha = 0.22f))
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(if (on) TripGreen.copy(alpha = 0.18f) else TripGreenMid),
+                contentAlignment = Alignment.Center
+            ) {
+                PulseDot(
+                    color = if (on) TripGreen else Color(0xFF9AA9A1),
+                    size = 14,
+                    pulsing = on
                 )
             }
-            PulseDot(
-                color = if (on) TripGreen else Color(0xFF9AA9A1),
-                size = 16,
-                pulsing = on
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Always-recording",
-                color = Color.White.copy(alpha = 0.65f),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal
-            )
-            Text(
-                text = if (on) "Recording" else "Idle",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 25.sp,
-                letterSpacing = 0.sp,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-            if (on) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "$elapsed · $points points",
-                    color = Color.White.copy(alpha = 0.78f),
+                    text = "Always-recording",
+                    color = Color.White.copy(alpha = 0.68f),
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Medium
+                )
+                Row(
+                    modifier = Modifier.padding(top = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = statusText,
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (isTripActive && !on) {
+                        Text(
+                            text = "Required while a trip is running",
+                            color = Color.White.copy(alpha = 0.72f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                Text(
+                    text = descriptionText,
+                    color = Color.White.copy(alpha = 0.76f),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
                     modifier = Modifier.padding(top = 6.dp)
                 )
             }
+            Switch(
+                checked = on,
+                onCheckedChange = onAlwaysRecordingChange
+            )
         }
     }
 }
@@ -243,7 +287,7 @@ private fun EmptySessionsState(modifier: Modifier = Modifier) {
                 withStyle(SpanStyle(color = TripInk, fontWeight = FontWeight.SemiBold)) {
                     append("ON")
                 }
-                append(" from the Trips screen.")
+                append(".")
             },
             color = TripMuted,
             fontSize = 14.sp,
@@ -268,11 +312,6 @@ private fun SessionEntity.toUiItem(index: Int): SessionUiItem {
 }
 
 private fun sessionsIndex(size: Int, index: Int): Int = size - index
-
-private fun activeSessionElapsed(sessions: List<SessionUiItem>): String {
-    val active = sessions.firstOrNull { it.active }
-    return TimeUtilFormatter.getTime(active?.durationMs ?: 0L)
-}
 
 @Composable
 private fun SessionsList(
@@ -489,4 +528,14 @@ private fun PulseDot(
             .clip(CircleShape)
             .background(color)
     )
+}
+
+private fun performTrackingService(
+    context: Context,
+    actions: Actions
+) {
+    Intent(context, TrackingService::class.java).also {
+        it.action = actions.name
+        ContextCompat.startForegroundService(context, it)
+    }
 }

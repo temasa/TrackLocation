@@ -33,6 +33,7 @@ Always-recording switch.
 - Do not create a separate settings section.
 - Do not create a new navigation destination.
 - Do not remove or hide the sessions list.
+- Do not place an always-recording switch on the List screen.
 
 ## Recommended Layout
 Status card / status area:
@@ -41,8 +42,9 @@ Status card / status area:
   - Active when ON
   - Inactive when OFF
 - Short helper text:
-  - OFF: Location sessions are not being recorded.
-  - ON: Recording location sessions in the background.
+- OFF: Location sessions are not being recorded.
+- ON: Recording location sessions in the background.
+- The List screen remains trip-only and does not expose this control.
 - Trailing switch:
   - OFF = inactive
   - ON = active

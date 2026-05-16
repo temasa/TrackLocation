@@ -78,13 +78,19 @@ Status: Implemented in source as of 2026-05-16 18:30:39 +07:00; Gradle/test/devi
 
 Status: Planned. Detailed file names may change once implementation begins.
 
+---
+
+# CR-0002 — Session always-recording switch
+
+Status: In progress.
+
 ## Phase 1 planned source changes
 
 | Category | Expected files/modules |
 |---|---|
-| Create | Accessibility service, service config XML, `ObservedEventEntity`, Observer DAO, repository/use cases, Observer feed screen |
-| Edit | Manifest, Room database, navigation graph, bottom/app shell after navigation decision |
-| Test | Denylist filtering, searchable text generation, snapshot caps, DAO insert/get |
+| Edit | `app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt`, `app/src/main/java/com/kolee/tracklocation/screens/list/ListScreen.kt`, `app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt`, `app/src/main/java/com/kolee/tracklocation/tracking/TrackingService.kt`, `app/src/main/java/com/kolee/tracklocation/viewmodel/ShareViewModel.kt`, `app/src/main/java/com/kolee/tracklocation/permission/CheckAndRequestPermissions.kt`, `docs/ui/screen-specification.md`, `docs/change-requests/CR-0002-session-always-recording-switch-ui.md`, `docs/change-requests/CR-0002-session-always-recording-switch.md` |
+| Edit | `app/src/main/java/com/kolee/tracklocation/screens/list/components/CustomAlertDialog.kt` if cleanup is needed after removing imports or unused permission wiring |
+| Test | Compose/manual coverage for Session render states, permission-required/denied behavior, active-trip guard, trip auto-start sync, and removal of the List-screen control |
 
 ## Phase 2 planned source changes
 

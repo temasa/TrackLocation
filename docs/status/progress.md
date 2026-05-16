@@ -12,6 +12,22 @@ Last updated: 2026-05-16 20:20:00 +07:00
 
 ## Task Log
 
+### 2026-05-16 20:20:00 +07:00
+
+- Branch: `codex`
+- Commit: `fe241a7`
+- Commit status: uncommitted working-tree changes
+- Task: implement CR-0002 Session always-recording switch as the single control surface
+- End: 2026-05-16 21:05:00 +07:00
+- Done:
+  - Replaced the Session screen hero mockup with a compact always-recording status card and trailing switch.
+  - Kept the sessions list visible and marked active sessions distinctly.
+  - Removed the always-recording switch and permission flow from the List screen.
+  - Updated the CR-0002 docs and UI screen specification to treat Session as the only control surface for always-recording.
+- Verification:
+  - Static inspection only.
+  - Did not run Gradle build, unit tests, emulator, or device verification because project rules require explicit permission first.
+
 ### 2026-05-16 20:01:12 +07:00
 
 - Branch: `codex`

@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,9 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import com.kolee.tracklocation.data.roomdb.TrackEntity
-import com.kolee.tracklocation.viewmodel.Response
-import com.kolee.tracklocation.viewmodel.ShareViewModel
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.ui.theme.TripBackground
 import com.kolee.tracklocation.ui.theme.TripBlue
@@ -48,6 +46,8 @@ import com.kolee.tracklocation.ui.theme.TripInk
 import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
 import com.kolee.tracklocation.ui.theme.TripSurfaceMuted
+import com.kolee.tracklocation.viewmodel.Response
+import com.kolee.tracklocation.viewmodel.ShareViewModel
 import java.util.Locale
 
 
@@ -56,9 +56,7 @@ fun ListContent(
     modifier: Modifier = Modifier,
     responseState: Response,
     onSelect: (trackIdx: Int) -> Unit,
-    viewModel: ShareViewModel,
-    isAlwaysRecording: Boolean,
-    onAlwaysRecordingChange: (Boolean) -> Unit
+    viewModel: ShareViewModel
 ) {
     Column(
         modifier = modifier
@@ -74,9 +72,7 @@ fun ListContent(
                 TrackSuccessState(
                     trackList = trackList,
                     onSelect = onSelect,
-                    viewModel = viewModel,
-                    isAlwaysRecording = isAlwaysRecording,
-                    onAlwaysRecordingChange = onAlwaysRecordingChange
+                    viewModel = viewModel
                 )
             }
         }
@@ -87,9 +83,7 @@ fun ListContent(
 private fun TrackSuccessState(
     trackList: List<TrackEntity>,
     onSelect: (trackIdx: Int) -> Unit,
-    viewModel: ShareViewModel,
-    isAlwaysRecording: Boolean,
-    onAlwaysRecordingChange: (Boolean) -> Unit
+    viewModel: ShareViewModel
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -101,12 +95,7 @@ private fun TrackSuccessState(
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
-            ListHeader(
-                isAlwaysRecording = isAlwaysRecording,
-                onAlwaysRecordingChange = onAlwaysRecordingChange
-            )
-        }
+        item { ListHeader() }
         item {
             CurrentTripCard()
         }
@@ -151,10 +140,7 @@ private fun TrackSuccessState(
 }
 
 @Composable
-private fun ListHeader(
-    isAlwaysRecording: Boolean,
-    onAlwaysRecordingChange: (Boolean) -> Unit
-) {
+private fun ListHeader() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom
@@ -172,27 +158,6 @@ private fun ListHeader(
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 42.sp
-            )
-        }
-        Row(
-            modifier = Modifier
-                .height(44.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(TripSurface)
-                .border(1.dp, TripBorder, RoundedCornerShape(18.dp))
-                .padding(start = 12.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = if (isAlwaysRecording) "ON" else "OFF",
-                color = if (isAlwaysRecording) TripGreen else TripMuted,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Switch(
-                checked = isAlwaysRecording,
-                onCheckedChange = onAlwaysRecordingChange
             )
         }
     }
@@ -226,7 +191,7 @@ private fun CurrentTripCard() {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Current trip",
-                color = androidx.compose.ui.graphics.Color(0xFFCFE3DC),
+                color = Color(0xFFCFE3DC),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -239,7 +204,7 @@ private fun CurrentTripCard() {
             )
             Text(
                 text = "",
-                color = androidx.compose.ui.graphics.Color(0xFFCFE3DC),
+                color = Color(0xFFCFE3DC),
                 fontSize = 12.sp
             )
         }

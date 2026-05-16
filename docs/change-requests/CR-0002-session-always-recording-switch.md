@@ -8,6 +8,8 @@ Last updated: 2026-05-16 20:01:12 +07:00
 
 Add a compact always-recording switch to the Session screen inside the always-recording status area. This is a visible control for the same always-recording state introduced in CR-0001, not a new setting, destination, or separate state source.
 
+The Session screen is the only always-recording control surface for this CR. The List screen remains read-only trip history.
+
 CR-0002 builds on CR-0001. It does not rewrite CR-0001 and does not change the accepted bottom navigation:
 
 ```text
@@ -52,6 +54,7 @@ Place an always-recording switch inside the Session screen always-recording stat
 - The user can start always-recording directly from the Session screen when location permission is granted.
 - If location permission is missing, turning the switch ON triggers the existing location permission flow.
 - If permission is denied, the switch remains or returns OFF.
+- The List screen does not expose a separate always-recording switch.
 
 ## Behavior changes
 
@@ -63,6 +66,7 @@ Place an always-recording switch inside the Session screen always-recording stat
 - Starting a trip while always-recording is OFF automatically starts always-recording.
 - Auto-starting always-recording from trip start must update the Session switch to ON.
 - Stopping a trip does not stop always-recording.
+- The List screen may reflect shared state textually, but not through its own switch.
 
 ## Interaction with CR-0001
 
@@ -87,6 +91,7 @@ CR-0002 only adds a Session-screen control for the existing always-recording sta
 - If the user turns ON from the Session screen, other always-recording controls must reflect ON.
 - If the user turns OFF from any allowed control, all always-recording controls must reflect OFF after the active session closes.
 - If the user starts a trip from Track while always-recording is OFF, always-recording starts automatically and all always-recording controls, including the Session switch, must reflect ON.
+- Because this CR removes the List-screen switch, the Session switch is the primary control surface and must remain in sync with Track-triggered auto-start.
 - Manual ON and trip-triggered ON must not be presented as different states.
 
 ## CR-0002 UI specification
@@ -145,6 +150,7 @@ Visual guidance:
 - Do not create a marketing-style hero section.
 - Do not duplicate the same control multiple times on the Session screen.
 - Preserve existing CR-0001 Session screen visual direction.
+- Do not keep an always-recording switch on the List screen.
 
 States:
 

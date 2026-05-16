@@ -11,7 +11,7 @@ This file is the current UI source of truth after CR#1. It absorbs the accepted 
 | Screen | Status | Notes |
 |---|---|---|
 | Session | Current after CR#1 and CR-0002 | First-class bottom-nav destination; includes always-recording switch |
-| List | Current after CR#1 and CR-0002 | Trip list only; any visible always-recording control shares Session state |
+| List | Current after CR#1 and CR-0002 | Trip list only; no always-recording control |
 | Track | Current, modified by CR#1 | Start/Stop controls trip range, not global recording |
 | Settings | Current | Unified settings destination |
 | Observer Feed | Planned | Navigation placement unresolved |
@@ -135,16 +135,8 @@ Required CR#1 changes:
 
 - Header top label: `Trip Tracker`.
 - Main title: `Trips` or accepted `List` label.
-- Replace prior export pill with compact always-recording switch.
-- After CR-0002, any List-screen switch controls the same always-recording state as the Session-screen switch.
-
-Switch behavior:
-
-- OFF means no always-recorded session is currently active.
-- ON means foreground location recorder is active.
-- If permission is missing, tapping ON triggers location permission flow.
-- If permission is denied, switch remains OFF.
-- If a trip is active, OFF is blocked or guarded unless a later accepted product change allows stopping always-recording during an active trip.
+- Keep the trip history content intact.
+- Do not expose an always-recording switch on this screen.
 
 Trip list behavior:
 
@@ -162,7 +154,7 @@ CR#1 semantic changes:
 
 - `Start` begins a trip range inside the canonical location log.
 - If always-recording is OFF, starting a trip automatically starts always-recording.
-- Trip-triggered auto-start updates all always-recording controls, including the Session screen switch, to ON.
+- Trip-triggered auto-start updates the Session screen switch to ON.
 - `Stop` ends the trip range but does not stop always-recording.
 - Avoid copy like `Stop recording` on this screen.
 - Prefer `Start trip` and `Stop trip`.

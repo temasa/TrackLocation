@@ -1,127 +1,26 @@
-Start: 2026-05-16 20:01:12 +07:00
-Goal: Refine the CR-0002 Session always-recording switch UI handoff to match the provided Stitch references.
+Start: 2026-05-16 20:20:00 +07:00
+Goal: Implement CR-0002 Session always-recording switch as the single control surface.
 Status: Done
-End: 2026-05-16 20:20:00 +07:00
-
-Files created:
-- None.
+End: 2026-05-16 21:05:00 +07:00
 
 Files edited:
-- docs/change-requests/CR-0002-session-always-recording-switch-ui.md // Added Stitch design references and tightened visual guidance.
-- docs/status/status_report.txt // Recorded the refinement task status and outputs.
-- docs/status/progress.md // Added the refinement task entry.
+- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Replaced the hero mockup with a compact Session status card and switch.
+- app/src/main/java/com/kolee/tracklocation/screens/list/ListScreen.kt // Removed the always-recording control and permission flow.
+- app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt // Kept trip history UI only and removed switch UI.
+- docs/change-requests/CR-0002-session-always-recording-switch-ui.md // Added Session-only control guidance.
+- docs/change-requests/CR-0002-session-always-recording-switch.md // Updated behavior wording for the Session-only control surface.
+- docs/ui/screen-specification.md // Removed the List-screen switch wording and updated Session state copy.
+- docs/implementation/source-change-manifest.md // Recorded the concrete CR-0002 source surface before editing code.
+- docs/status/status_report.txt // Recorded the implementation result for the active task.
 
-Source code changes:
-- None. Documentation-only task.
-
-Files deleted:
-- None.
-
-Migrations added:
-- None.
-
-Tests added or updated:
-- None. Documentation-only task.
-
-Tests run / Verification run:
-- Reviewed the active CR, UI spec, and the referenced Stitch design URLs as provided in the task.
-- Did not run Gradle build, unit tests, emulator, or device verification because no source code changed.
+Current status: Done
 
 Tests not run / Verification not run:
-- No build or runtime verification was needed for this documentation-only change.
+- No Gradle build, unit tests, emulator, or device verification were run. The project rules require explicit permission for heavy verification, and this task was completed with static inspection only.
 
 Known remaining issues:
-- CR-0002 remains documentation-only until a later implementation task.
+- The new Session screen switch and permission flow still need compile/runtime verification.
+- `CheckAndRequestPermissions` remains a shared permission helper and still uses a full-screen prompt style.
 
 Suggested commit message:
-docs: refine CR2 session switch UI specification
-
-
---- Previous status report ---
-
-Start: 2026-05-16 18:01:44 +07:00
-Goal: Fully implement CR-0001 always-recorded sessions, canonical location log, and trip range behavior.
-Status: Done
-End: 2026-05-16 18:30:39 +07:00
-
-Files created:
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationEntity.kt // Add canonical append-only location rows.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionEntity.kt // Add always-recorded session rows.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationDao.kt // Add location range and summary queries.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionDao.kt // Add active/history session queries.
-
-Files edited:
-- docs/implementation/source-change-manifest.md // Marked concrete CR-0001 source changes as implemented and verification pending.
-- docs/status/progress.md // Added completion history for full CR-0001 implementation.
-- docs/status/status_report.txt // Recorded completion details for the active task.
-- app/src/main/java/com/kolee/tracklocation/TrackApp.kt // Exposed location and session DAOs from the application container.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackEntity.kt // Added trip location range boundaries.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDao.kt // Added location-range-aware query support and newest-first ordering.
-- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt // Added entities, schema version 2, and legacy path migration.
-- app/src/main/java/com/kolee/tracklocation/tracking/Actions.kt // Add always-recording and trip-specific actions.
-- app/src/main/java/com/kolee/tracklocation/tracking/LocationUiState.kt // Exposed session/trip recording state and location boundaries.
-- app/src/main/java/com/kolee/tracklocation/tracking/TrackingService.kt // Appends locations, manages sessions, and preserves trip-only stop semantics.
-- app/src/main/java/com/kolee/tracklocation/viewmodel/ShareViewModel.kt // Exposes sessions, location ranges, and recording controls.
-- app/src/main/java/com/kolee/tracklocation/screens/list/ListScreen.kt // Wires List permission flow and always-recording switch.
-- app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt // Replaced Export pill with always-recording switch.
-- app/src/main/java/com/kolee/tracklocation/screens/track/TrackScreen.kt // Saves trips from canonical boundaries and updates Start/Stop semantics.
-- app/src/main/java/com/kolee/tracklocation/screens/track/components/RunningCardTime.kt // Uses trip-specific control copy/accessibility.
-- app/src/main/java/com/kolee/tracklocation/screens/details/DetailsScreen.kt // Resolves trip detail path from canonical location range.
-- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Renders real session rows and active state.
-
-Files deleted:
-- None.
-
-Migrations added:
-- Room migration 1 -> 2 // Creates canonical location/session tables, adds trip boundaries, and migrates legacy path strings.
-
-Tests added or updated:
-- None.
-
-Tests run / Verification run:
-- Ran `git diff --check`; it reported only existing line-ending warnings and no whitespace errors.
-- Ran static searches for stale START/STOP actions, old recording copy, and negative screen letter spacing.
-
-Tests not run / Verification not run:
-- Gradle build, unit tests, Room migration tests, emulator, and device verification were not run because project rules require explicit user permission.
-- CR-0001 test files were not added in this pass; the manifest records them as pending verification/build-capacity work.
-
-Known remaining issues:
-- Runtime behavior still needs compile, migration, and device verification.
-- Always-recording switch state remains process-session-only, matching CR-0001 scope.
-
-Suggested commit message:
-Implement CR-0001 always-recorded sessions
-
-
---- Previous status report ---
-
-Start: 2026-05-16 17:38:39 +07:00
-Goal: Add the missing historical progress entry for the latest docs refactor commit.
-Status: Done
-End: 2026-05-16 17:39:23 +07:00
-
-Affected files:
-- docs/status/progress.md // Added a dated task log entry for commit 776cd6e7230ca77e00310b188032a36209ffc524.
-- docs/status/status_report.txt // Recorded completion details for this documentation-only task.
-
-Verification:
-- Reviewed the updated progress entry for the latest docs refactor commit.
-- Did not run Gradle build, tests, or emulator because this change is documentation-only.
-
-
---- Previous status report ---
-
-Start: 2026-05-14 21:05:21 +07:00
-Goal: Implement CR#1 UI-first Sessions screen and 4-tab bottom navigation.
-Status: Done
-End: 2026-05-14 21:09:23 +07:00
-
-Affected files:
-- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Added UI-first Sessions screen with mock OFF/ON states, hero, empty state, active session rows, and pulse accents.
-- app/src/main/java/com/kolee/tracklocation/navigation/BottomNavigationScreen.kt // Replaced 3-tab Material navigation with custom 4-tab bottom nav matching CR#1 visual treatment.
-- app/src/main/java/com/kolee/tracklocation/navigation/NavGraph.kt // Added Session as a top-level destination and app start tab.
-- app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt // Added Session route metadata and icon reference.
-- app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt // Aligned TrackLocation theme tokens with CR#1 handoff colors.
-- app/src/main/res/values/strings.xml // Added Session tab label string.
-- app/src/main/res/drawable/ic_session_signal.xml // Added broadcast-style Session icon vector.
+Implement CR-0002 Session-only always-recording control
