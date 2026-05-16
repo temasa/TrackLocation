@@ -181,3 +181,7 @@ States:
 
 1. Should the List-screen switch remain long-term, or should the Session screen become the only always-recording control in a future CR?
 2. Should always-recording state eventually survive process death?
+
+## UI handoff
+
+Design-ready Session screen UI guidance for this CR lives in [`CR-0002-session-always-recording-switch-ui.md`](./CR-0002-session-always-recording-switch-ui.md).

@@ -1,20 +1,17 @@
 Start: 2026-05-16 20:01:12 +07:00
-Goal: Document CR-0002 Session always-recording switch and embedded UI specification.
+Goal: Add the CR-0002 Session always-recording switch UI handoff and link it from the active docs.
 Status: Done
-End: 2026-05-16 20:03:24 +07:00
+End: 2026-05-16 20:10:00 +07:00
 
 Files created:
-- docs/change-requests/CR-0002-session-always-recording-switch.md // Added CR-0002 behavior, state synchronization, and embedded Session UI specification.
+- docs/change-requests/CR-0002-session-always-recording-switch-ui.md // Added design-ready Session switch UI specification.
 
 Files edited:
-- docs/INDEX.md // Added CR-0002 to the documentation index.
-- docs/change-requests/README.md // Added CR-0002 to the current CR list.
-- docs/ui/screen-specification.md // Synchronized Session/List always-recording control guidance.
-- docs/product/product-baseline.md // Added CR-0002 to accepted product baseline behavior.
-- docs/architecture/navigation.md // Clarified always-recording control ownership without changing navigation.
-- docs/implementation/test-plan.md // Added CR-0002 verification expectations.
-- docs/status/progress.md // Added documentation-only progress entry.
-- docs/status/status_report.txt // Recorded task start and completion.
+- docs/change-requests/CR-0002-session-always-recording-switch.md // Added a pointer to the new UI handoff document.
+- docs/ui/screen-specification.md // Linked the Session screen section to the CR-0002 UI handoff.
+- docs/INDEX.md // Added the new UI spec to the documentation index.
+- docs/status/progress.md // Added the completed documentation task entry.
+- docs/status/status_report.txt // Recorded the documentation task status and outputs.
 
 Source code changes:
 - None. Documentation-only task.
@@ -29,17 +26,17 @@ Tests added or updated:
 - None. Documentation-only task.
 
 Tests run / Verification run:
-- Ran `rg` checks for CR-0002 references and stale active `List header owns` wording.
-- Ran `git diff --check`; it reported only LF/CRLF normalization warnings and no whitespace errors.
+- Reviewed the active CR, UI spec, navigation, product baseline, and status docs.
+- Did not run Gradle build, unit tests, emulator, or device verification because no source code changed.
 
 Tests not run / Verification not run:
-- Gradle build, unit tests, emulator, and device verification were not run because no source code changed.
+- No build or runtime verification was needed for this documentation-only change.
 
 Known remaining issues:
-- CR-0002 is documented only; implementation remains a future task.
+- CR-0002 remains documentation-only until a later implementation task.
 
 Suggested commit message:
-docs: add CR2 session always-recording switch
+docs: add CR2 session switch UI specification
 
 
 --- Previous status report ---

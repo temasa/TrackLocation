@@ -18,6 +18,7 @@ Generated: 2026-05-16 13:52:51 +07:00
 - `docs/archive/original/ui_screen_specification.md`
 - `docs/change-requests/CR-0001-always-recorded-sessions.md`
 - `docs/change-requests/CR-0002-session-always-recording-switch.md`
+- `docs/change-requests/CR-0002-session-always-recording-switch-ui.md`
 - `docs/change-requests/README.md`
 - `docs/implementation/migration-plan.md`
 - `docs/implementation/rollout-plan.md`

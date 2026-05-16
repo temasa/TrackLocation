@@ -44,6 +44,11 @@ Required content:
 - Active session, if present, pinned or clearly marked at the top.
 - Empty state when no sessions exist.
 
+CR-0002 UI handoff:
+
+- [`../change-requests/CR-0002-session-always-recording-switch-ui.md`](../change-requests/CR-0002-session-always-recording-switch-ui.md)
+- This document is the design-ready, screen-specific spec for the Session always-recording switch.
+
 Each session row should show:
 
 - Start time.
@@ -80,7 +85,7 @@ Recommended layout:
 - Supporting text:
   - OFF: `Location sessions are not being recorded.`
   - ON: `Recording location sessions in the background.`
-  - Active trip guard: `Required while a trip is running.`
+- Active trip guard: `Required while a trip is running.`
 
 Interaction rules:
 
