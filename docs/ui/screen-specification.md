@@ -10,8 +10,8 @@ This file is the current UI source of truth after CR#1. It absorbs the accepted 
 
 | Screen | Status | Notes |
 |---|---|---|
-| Session | Current after CR#1 | First-class bottom-nav destination |
-| List | Current after CR#1 | Trip list only; owns always-recording switch |
+| Session | Current after CR#1 and CR-0002 | First-class bottom-nav destination; includes always-recording switch |
+| List | Current after CR#1 and CR-0002 | Trip list only; any visible always-recording control shares Session state |
 | Track | Current, modified by CR#1 | Start/Stop controls trip range, not global recording |
 | Settings | Current | Unified settings destination |
 | Observer Feed | Planned | Navigation placement unresolved |
@@ -39,6 +39,7 @@ Show always-recorded location sessions. These sessions are ON-to-OFF recording p
 Required content:
 
 - Screen title: `Sessions`.
+- Always-recording status area with compact switch.
 - List of recorded sessions, newest first.
 - Active session, if present, pinned or clearly marked at the top.
 - Empty state when no sessions exist.
@@ -53,7 +54,71 @@ Each session row should show:
 Empty state:
 
 - Title: `No sessions recorded yet`.
-- Supporting text: sessions appear when always-recording is turned ON from the List screen.
+- Supporting text: sessions appear when always-recording is turned ON.
+
+### CR-0002 always-recording status area
+
+Objective:
+
+Make always-recording controllable directly from the Session screen because this is where the user sees always-recording status and recorded sessions.
+
+Placement:
+
+- Put the switch inside the always-recording status area.
+- Visually connect the switch to the current status label or card.
+- Prefer right-side or trailing placement when space allows.
+- Do not add another top-level navigation item.
+- Do not move or remove the Session list.
+
+Recommended layout:
+
+- Status area title: `Always-recording`.
+- Status value:
+  - `Active` when switch is ON.
+  - `Inactive` when switch is OFF.
+- Right-side or trailing control: switch.
+- Supporting text:
+  - OFF: `Location sessions are not being recorded.`
+  - ON: `Recording location sessions in the background.`
+  - Active trip guard: `Required while a trip is running.`
+
+Interaction rules:
+
+- User turns switch ON:
+  - If location permission is granted, always-recording starts.
+  - If permission is missing, trigger the existing location permission flow.
+  - If permission is denied, switch remains or returns OFF.
+- User turns switch OFF:
+  - If no trip is active, always-recording stops and the active session closes.
+  - If a trip is active, keep the switch ON and show helper copy or snackbar explaining that recording is required while a trip is active.
+- User starts a trip from Track while always-recording is OFF:
+  - Always-recording starts automatically.
+  - Session screen switch shows ON.
+- User stops a trip:
+  - Trip stops.
+  - Always-recording remains ON.
+  - Session screen switch remains ON.
+
+States:
+
+| State | Required UI |
+|---|---|
+| OFF / inactive | Switch OFF; status `Inactive`; Sessions list remains visible |
+| ON / active | Switch ON; status `Active`; active session appears at top if available |
+| Permission required | Switch attempt triggers permission; denied permission leaves or returns switch OFF |
+| Trip active | Switch ON; OFF interaction blocked or guarded; helper copy explains why |
+| Auto-started by trip | Switch ON; status `Active`; no visual distinction from manual ON |
+
+Visual guidance:
+
+- Use existing Material 3 styling.
+- Keep the control operational and compact.
+- Use clear text status, not color alone.
+- The switch must meet Android touch target guidance.
+- Do not create a marketing-style hero section.
+- Do not duplicate the same control multiple times on the Session screen.
+- Preserve existing CR#1 Session screen visual direction.
+- This is not a new separate setting; it is a visible control for the existing always-recording state.
 
 ## 2. List Screen
 
@@ -66,6 +131,7 @@ Required CR#1 changes:
 - Header top label: `Trip Tracker`.
 - Main title: `Trips` or accepted `List` label.
 - Replace prior export pill with compact always-recording switch.
+- After CR-0002, any List-screen switch controls the same always-recording state as the Session-screen switch.
 
 Switch behavior:
 
@@ -73,6 +139,7 @@ Switch behavior:
 - ON means foreground location recorder is active.
 - If permission is missing, tapping ON triggers location permission flow.
 - If permission is denied, switch remains OFF.
+- If a trip is active, OFF is blocked or guarded unless a later accepted product change allows stopping always-recording during an active trip.
 
 Trip list behavior:
 
@@ -90,6 +157,7 @@ CR#1 semantic changes:
 
 - `Start` begins a trip range inside the canonical location log.
 - If always-recording is OFF, starting a trip automatically starts always-recording.
+- Trip-triggered auto-start updates all always-recording controls, including the Session screen switch, to ON.
 - `Stop` ends the trip range but does not stop always-recording.
 - Avoid copy like `Stop recording` on this screen.
 - Prefer `Start trip` and `Stop trip`.

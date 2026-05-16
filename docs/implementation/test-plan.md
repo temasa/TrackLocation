@@ -30,6 +30,21 @@ This file records tests required by accepted product behavior. It should be upda
 | Trip detail | Path renders from location range |
 | Bottom nav | Session/List/Track/Settings order is stable |
 
+# CR-0002 — Session always-recording switch
+
+## UI/manual tests
+
+| Area | Required checks |
+|---|---|
+| Session placement | Always-recording switch appears inside the Session always-recording status area |
+| Shared state | Session switch and any other always-recording controls show the same ON/OFF state |
+| ON interaction | Turning ON starts or keeps active the foreground location recorder when permission is granted |
+| OFF interaction | Turning OFF stops always-recording and closes the active session when no trip is active |
+| Permission | Missing permission triggers the existing permission flow; denied permission leaves or returns the switch OFF |
+| Active trip guard | OFF is blocked or guarded while a trip is active, with clear helper copy or snackbar |
+| Trip auto-start | Starting a trip while always-recording is OFF auto-starts always-recording and updates the Session switch to ON |
+| Trip stop | Stopping a trip does not stop always-recording and leaves the Session switch ON |
+
 # Observer planned tests
 
 Use the phase-level tests from `implementation/rollout-plan.md`. Before implementation, expand them into concrete test files in `source-change-manifest.md`.

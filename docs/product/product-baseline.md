@@ -12,7 +12,10 @@ TrackLocation is an Android-first driver utility evolving from a GPS trip tracke
 
 ## Current accepted baseline
 
-The current accepted app baseline includes CR#1: Always-recorded Location Sessions.
+The current accepted app baseline includes:
+
+- CR#1: Always-recorded Location Sessions.
+- CR-0002: Session always-recording switch.
 
 ### GPS and Sessions
 
@@ -24,6 +27,10 @@ The current accepted app baseline includes CR#1: Always-recorded Location Sessio
 - Deleting a trip does not delete location history.
 - If a trip starts while always-recording is OFF, always-recording starts automatically.
 - Stopping a trip does not stop always-recording.
+- The Session screen exposes an always-recording switch inside the always-recording status area.
+- The Session switch and any other always-recording controls share one underlying always-recording state.
+- ON means always-recording is active.
+- OFF means always-recording is inactive, unless a trip is actively running and requires recording to stay active.
 
 ### Accessibility Observer
 

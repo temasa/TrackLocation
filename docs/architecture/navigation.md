@@ -8,7 +8,7 @@ This file is the navigation source of truth. When any PRD, CR, UI spec, or rollo
 
 ## Current accepted main navigation
 
-After CR#1, the accepted main bottom navigation is:
+After CR#1 and CR-0002, the accepted main bottom navigation is:
 
 ```text
 1. Session
@@ -21,11 +21,11 @@ After CR#1, the accepted main bottom navigation is:
 
 ### Session
 
-Shows always-recorded ON-to-OFF location sessions. Sessions are not trips.
+Shows always-recorded ON-to-OFF location sessions. Sessions are not trips. The Session screen includes an always-recording switch inside the always-recording status area.
 
 ### List
 
-Shows explicit trips only. The List header owns the always-recording switch.
+Shows explicit trips only. If an always-recording switch remains visible here, it controls the same underlying always-recording state as the Session screen switch.
 
 ### Track
 

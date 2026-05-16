@@ -1,3 +1,49 @@
+Start: 2026-05-16 20:01:12 +07:00
+Goal: Document CR-0002 Session always-recording switch and embedded UI specification.
+Status: Done
+End: 2026-05-16 20:03:24 +07:00
+
+Files created:
+- docs/change-requests/CR-0002-session-always-recording-switch.md // Added CR-0002 behavior, state synchronization, and embedded Session UI specification.
+
+Files edited:
+- docs/INDEX.md // Added CR-0002 to the documentation index.
+- docs/change-requests/README.md // Added CR-0002 to the current CR list.
+- docs/ui/screen-specification.md // Synchronized Session/List always-recording control guidance.
+- docs/product/product-baseline.md // Added CR-0002 to accepted product baseline behavior.
+- docs/architecture/navigation.md // Clarified always-recording control ownership without changing navigation.
+- docs/implementation/test-plan.md // Added CR-0002 verification expectations.
+- docs/status/progress.md // Added documentation-only progress entry.
+- docs/status/status_report.txt // Recorded task start and completion.
+
+Source code changes:
+- None. Documentation-only task.
+
+Files deleted:
+- None.
+
+Migrations added:
+- None.
+
+Tests added or updated:
+- None. Documentation-only task.
+
+Tests run / Verification run:
+- Ran `rg` checks for CR-0002 references and stale active `List header owns` wording.
+- Ran `git diff --check`; it reported only LF/CRLF normalization warnings and no whitespace errors.
+
+Tests not run / Verification not run:
+- Gradle build, unit tests, emulator, and device verification were not run because no source code changed.
+
+Known remaining issues:
+- CR-0002 is documented only; implementation remains a future task.
+
+Suggested commit message:
+docs: add CR2 session always-recording switch
+
+
+--- Previous status report ---
+
 Start: 2026-05-16 18:01:44 +07:00
 Goal: Fully implement CR-0001 always-recorded sessions, canonical location log, and trip range behavior.
 Status: Done

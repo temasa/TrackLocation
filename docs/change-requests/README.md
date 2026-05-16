@@ -25,3 +25,4 @@ Each CR should include:
 | CR | Status | Summary |
 |---|---|---|
 | CR-0001 | Accepted / UI-first partially implemented | Always-recorded location sessions |
+| CR-0002 | Accepted / documentation-only specification | Session always-recording switch |

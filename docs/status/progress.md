@@ -8,9 +8,25 @@ The documentation set has been reorganized into product, change-request, archite
 
 # Project Progress
 
-Last updated: 2026-05-16 17:38:39 +07:00
+Last updated: 2026-05-16 20:02:55 +07:00
 
 ## Task Log
+
+### 2026-05-16 20:01:12 +07:00
+
+- Branch: `codex`
+- Commit: `fe241a7`
+- Commit status: uncommitted working-tree changes
+- Task: document CR-0002 Session always-recording switch
+- End: 2026-05-16 20:02:55 +07:00
+- Done:
+  - Added CR-0002 documentation for placing an always-recording switch inside the Session screen status area.
+  - Documented that all always-recording controls share one underlying state.
+  - Preserved CR-0001 behavior: trip start auto-starts always-recording, and trip stop does not stop always-recording.
+  - Added UI state, permission, active-trip guard, and testing expectations for the Session switch.
+- Verification:
+  - Documentation-only change.
+  - Did not run Gradle build, tests, emulator, or device verification because no source code changed.
 
 ### 2026-05-16 18:01:44 +07:00
 
