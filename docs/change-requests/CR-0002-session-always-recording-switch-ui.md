@@ -9,6 +9,14 @@ Reference CR-0002 behavior/product document: [`CR-0002-session-always-recording-
 ## Purpose
 Explain that the Session screen should let the user control always-recording directly from the same area where always-recording status is displayed.
 
+## Design Reference
+Use the provided Stitch reference screens as the visual target for layout, spacing, control density, and status-card treatment:
+
+- `screenweb application/stitch/projects/4372301068817999806/screens/39f014e484e844e6b1626d3158ec144b`
+- `screenweb application/stitch/projects/4372301068817999806/screens/02b3e9041a5548fa8af0075b7b2a080c`
+
+The references should guide visual composition and hierarchy, but the accepted CR-0002 behavior rules still apply.
+
 ## Target Screen
 Session screen.
 
@@ -107,11 +115,13 @@ Avoid:
 
 ## Visual Guidance
 - Use existing TrackLocation Material 3 visual language.
-- Keep the control compact and operational.
-- Use status text plus switch state; do not rely on color alone.
+- Match the Stitch references with a compact, card-like status area that feels operational, not promotional.
+- Keep the switch visually anchored to the status label and helper text.
+- Use a trailing/right-side switch when the layout allows it.
 - Keep the Session list visible and primary.
+- Use status text plus switch state; do not rely on color alone.
 - Avoid marketing-style cards, decorative gradients, or oversized hero sections.
-- The status area should feel like a control panel, not an onboarding screen.
+- The status area should read like a control panel with clear state, concise copy, and minimal ornament.
 
 ## Accessibility Requirements
 - Switch touch target must be at least 48dp.
@@ -121,6 +131,7 @@ Avoid:
 - Status must be communicated with text, not color alone.
 - Guarded/blocked OFF action must provide readable feedback.
 - Layout must work on small Android phone widths.
+- Ensure the referenced design remains legible in both light and dark themes.
 
 ## What Must Not Change
 - Do not remove the Session screen.

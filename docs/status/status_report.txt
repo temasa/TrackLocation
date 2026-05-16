@@ -1,17 +1,15 @@
 Start: 2026-05-16 20:01:12 +07:00
-Goal: Add the CR-0002 Session always-recording switch UI handoff and link it from the active docs.
+Goal: Refine the CR-0002 Session always-recording switch UI handoff to match the provided Stitch references.
 Status: Done
-End: 2026-05-16 20:10:00 +07:00
+End: 2026-05-16 20:20:00 +07:00
 
 Files created:
-- docs/change-requests/CR-0002-session-always-recording-switch-ui.md // Added design-ready Session switch UI specification.
+- None.
 
 Files edited:
-- docs/change-requests/CR-0002-session-always-recording-switch.md // Added a pointer to the new UI handoff document.
-- docs/ui/screen-specification.md // Linked the Session screen section to the CR-0002 UI handoff.
-- docs/INDEX.md // Added the new UI spec to the documentation index.
-- docs/status/progress.md // Added the completed documentation task entry.
-- docs/status/status_report.txt // Recorded the documentation task status and outputs.
+- docs/change-requests/CR-0002-session-always-recording-switch-ui.md // Added Stitch design references and tightened visual guidance.
+- docs/status/status_report.txt // Recorded the refinement task status and outputs.
+- docs/status/progress.md // Added the refinement task entry.
 
 Source code changes:
 - None. Documentation-only task.
@@ -26,7 +24,7 @@ Tests added or updated:
 - None. Documentation-only task.
 
 Tests run / Verification run:
-- Reviewed the active CR, UI spec, navigation, product baseline, and status docs.
+- Reviewed the active CR, UI spec, and the referenced Stitch design URLs as provided in the task.
 - Did not run Gradle build, unit tests, emulator, or device verification because no source code changed.
 
 Tests not run / Verification not run:
@@ -36,7 +34,7 @@ Known remaining issues:
 - CR-0002 remains documentation-only until a later implementation task.
 
 Suggested commit message:
-docs: add CR2 session switch UI specification
+docs: refine CR2 session switch UI specification
 
 
 --- Previous status report ---

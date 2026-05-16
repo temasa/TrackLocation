@@ -8,7 +8,7 @@ The documentation set has been reorganized into product, change-request, archite
 
 # Project Progress
 
-Last updated: 2026-05-16 20:10:00 +07:00
+Last updated: 2026-05-16 20:20:00 +07:00
 
 ## Task Log
 
@@ -17,13 +17,12 @@ Last updated: 2026-05-16 20:10:00 +07:00
 - Branch: `codex`
 - Commit: `fe241a7`
 - Commit status: uncommitted working-tree changes
-- Task: add CR-0002 Session switch UI specification
-- End: 2026-05-16 20:10:00 +07:00
+- Task: refine CR-0002 Session switch UI specification from Stitch references
+- End: 2026-05-16 20:20:00 +07:00
 - Done:
-  - Added a design-ready UI handoff document for the CR-0002 Session always-recording switch.
-  - Linked the new UI handoff from the accepted CR-0002 behavior document.
-  - Linked the new UI handoff from the active Session screen specification.
-  - Added the new UI handoff to the documentation index.
+  - Added Stitch design references to the CR-0002 Session UI handoff.
+  - Tightened the UI handoff copy so it matches the visual treatment in the supplied references.
+  - Preserved the accepted Session switch behavior, states, and accessibility requirements.
 - Verification:
   - Documentation-only change.
   - Did not run Gradle build, tests, emulator, or device verification because no source code changed.
