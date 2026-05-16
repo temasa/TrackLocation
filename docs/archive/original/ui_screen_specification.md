@@ -572,4 +572,3 @@ Important product rules:
 
 Deliver polished light and dark screens with component annotations, states, and spacing guidance suitable for Android implementation.
 ```
-

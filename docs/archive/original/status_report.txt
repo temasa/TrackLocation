@@ -1,0 +1,13 @@
+Start: 2026-05-14 21:05:21 +07:00
+Goal: Implement CR#1 UI-first Sessions screen and 4-tab bottom navigation.
+Status: Done
+End: 2026-05-14 21:09:23 +07:00
+
+Affected files:
+- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Added UI-first Sessions screen with mock OFF/ON states, hero, empty state, active session rows, and pulse accents.
+- app/src/main/java/com/kolee/tracklocation/navigation/BottomNavigationScreen.kt // Replaced 3-tab Material navigation with custom 4-tab bottom nav matching CR#1 visual treatment.
+- app/src/main/java/com/kolee/tracklocation/navigation/NavGraph.kt // Added Session as a top-level destination and app start tab.
+- app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt // Added Session route metadata and icon reference.
+- app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt // Aligned TrackLocation theme tokens with CR#1 handoff colors.
+- app/src/main/res/values/strings.xml // Added Session tab label string.
+- app/src/main/res/drawable/ic_session_signal.xml // Added broadcast-style Session icon vector.

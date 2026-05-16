@@ -1,4 +1,37 @@
-# TrackLocation PRD Implementation Plan
+# TrackLocation Rollout Plan
+
+Last updated: 2026-05-16 13:52:51 +07:00
+
+## Purpose
+
+This file is the implementation rollout source of truth. It preserves the original Observer rollout while explicitly inserting the accepted CR#1 baseline that future implementation must build on.
+
+## Baseline before further Observer rollout
+
+CR#1 has modified the GPS/navigation baseline:
+
+- Main navigation is now `Session / List / Track / Settings`.
+- Sessions are always-recorded ON-to-OFF location ranges.
+- Trips are explicit ranges over the canonical location log.
+- Trip path rendering must query location rows between `startLocationId` and `endLocationId`.
+- Starting a trip auto-starts always-recording if needed.
+- Stopping a trip does not stop always-recording.
+
+## Observer rollout caution
+
+The original Observer plan says Observer should become a first-class bottom-nav destination. That remains a product goal, but its exact navigation placement is unresolved after CR#1.
+
+Before implementing Observer navigation, create a new CR or ADR deciding one of:
+
+1. Add Observer as fifth tab.
+2. Place Observer under Settings/tools.
+3. Redesign the app shell to group GPS and Observer areas.
+
+---
+
+# Original Rollout Plan Preserved
+
+  # TrackLocation PRD Implementation Plan
 
 Last updated: 2026-05-14 11:08:28 +07:00
 
@@ -582,4 +615,3 @@ The app protects UI access while capture and sync continue uninterrupted.
   - list affected code files with brief inline comments
   - mark the task done with timestamp
   - provide a concise commit message
-

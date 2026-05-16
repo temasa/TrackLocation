@@ -1,0 +1,45 @@
+Start: 2026-05-16 13:52:51 +07:00
+Goal: Refactor project documentation into source-of-truth structure for CRs, architecture, UI, implementation, and source-code change control.
+Status: Done
+End: 2026-05-16 13:52:51 +07:00
+
+Affected files:
+- docs/product/product-baseline.md // Added current accepted product baseline after CR#1.
+- docs/product/accessibility-observer-prd.md // Preserved Observer PRD with navigation reconciliation note.
+- docs/product/glossary.md // Added shared terminology.
+- docs/change-requests/CR-0001-always-recorded-sessions.md // Consolidated CR behavior, screen requirements, and impact matrix.
+- docs/architecture/navigation.md // Added current navigation source of truth.
+- docs/architecture/data-model.md // Added accepted canonical location/session/trip data model.
+- docs/architecture/app-architecture.md // Added high-level module boundaries.
+- docs/architecture/adr/ADR-0001-canonical-location-log.md // Recorded canonical location log decision.
+- docs/architecture/adr/ADR-0002-observer-capture-scope.md // Recorded denylist-vs-allowlist Observer decision.
+- docs/architecture/adr/ADR-0003-face-first-auth.md // Recorded face-first auth decision.
+- docs/ui/screen-specification.md // Updated UI source of truth with CR#1 current screens and planned Observer screens.
+- docs/ui/ui-implementation-plan.md // Preserved original UI plan with CR#1 baseline note.
+- docs/implementation/rollout-plan.md // Preserved rollout plan with CR#1 baseline note.
+- docs/implementation/source-change-manifest.md // Added source-code create/edit/delete/migrate/test manifest.
+- docs/implementation/migration-plan.md // Added CR#1 migration requirements.
+- docs/implementation/test-plan.md // Added CR#1 and planned Observer test obligations.
+- docs/status/progress.md // Preserved historical progress log.
+- docs/status/status_report.txt // Added documentation refactor status entry.
+- docs/archive/original/* // Preserved unchanged original uploaded files.
+
+Concise commit message:
+- docs: refactor project documentation into source-of-truth structure
+
+
+--- Previous status report ---
+
+Start: 2026-05-14 21:05:21 +07:00
+Goal: Implement CR#1 UI-first Sessions screen and 4-tab bottom navigation.
+Status: Done
+End: 2026-05-14 21:09:23 +07:00
+
+Affected files:
+- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Added UI-first Sessions screen with mock OFF/ON states, hero, empty state, active session rows, and pulse accents.
+- app/src/main/java/com/kolee/tracklocation/navigation/BottomNavigationScreen.kt // Replaced 3-tab Material navigation with custom 4-tab bottom nav matching CR#1 visual treatment.
+- app/src/main/java/com/kolee/tracklocation/navigation/NavGraph.kt // Added Session as a top-level destination and app start tab.
+- app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt // Added Session route metadata and icon reference.
+- app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt // Aligned TrackLocation theme tokens with CR#1 handoff colors.
+- app/src/main/res/values/strings.xml // Added Session tab label string.
+- app/src/main/res/drawable/ic_session_signal.xml // Added broadcast-style Session icon vector.

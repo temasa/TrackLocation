@@ -391,4 +391,3 @@ Phase 7:
 - Existing `List` navigation may be visually renamed to `Trips`, but GPS trip behavior must remain intact.
 - Compose + Material3 remain the UI implementation stack.
 - Visual refinement can be incremental, with final polish concentrated in Phase 7.
-

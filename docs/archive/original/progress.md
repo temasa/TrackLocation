@@ -4,6 +4,24 @@ Last updated: 2026-05-13 13:49:37 +07:00
 
 ## Task Log
 
+### 2026-05-14 21:05:21 +07:00
+
+- Branch: `codex`
+- Commit: `7ae11b9`
+- Commit status: changes are currently uncommitted working-tree changes on top of this commit
+- Task: implement CR#1 UI-first Sessions screen and 4-tab bottom navigation
+- End: 2026-05-14 21:09:23 +07:00
+- Done:
+  - Added a new top-level Session destination and made it the app start tab.
+  - Rebuilt the bottom navigation as a custom 4-tab Compose bar in the order Session, List, Track, Settings.
+  - Created a UI-only Sessions screen that toggles between the handoff Idle and Recording visual states with local mock state.
+  - Added the Recording hero, OFF/ON switch, empty state copy, sample active/history session rows, and pulse accents.
+  - Added a Session icon vector and a Session string resource.
+  - Updated TrackLocation theme colors to match the CR#1 handoff tokens.
+- Verification:
+  - Ran `git diff --check`; it reported only existing line-ending warnings and no whitespace errors.
+  - Did not run Gradle build, tests, or emulator per project instruction requiring permission first.
+
 ### 2026-05-13 13:49:37 +07:00
 
 - Branch: `codex`
@@ -213,3 +231,19 @@ $env:JAVA_HOME='C:\Users\rinal\.jdks\jbr-17.0.14'
 
 - The Android Studio JBR at `C:\Program Files\Android\Android Studio\jbr` was incomplete and failed with missing `lib\jvm.cfg`.
 - Another Android Studio JBR existed at `C:\Program Files\Android\Android Studio1\jbr`, but the user-local JDK path above was more reliable.
+
+## Session: CR Documentation for Always-recorded Location Sessions
+
+Start: 2026-05-14 20:18:18 +07:00
+
+End: 2026-05-14 20:19:14 +07:00
+
+### Changes
+
+- Created `docs/crs_plan.md` to record CR#1 implementation intent and behavior decisions separately from rollout phases.
+- Created `docs/crs_screen_specification.md` to record CR#1 UI and interaction requirements separately from implementation planning.
+- Documented CR#1 as `Always-recorded location sessions`.
+
+### Verification
+
+- Documentation-only change. No build or emulator run.

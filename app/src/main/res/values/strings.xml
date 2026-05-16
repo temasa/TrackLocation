@@ -4,6 +4,7 @@
 
     <!-- Screen Item -->
     <string name="list_screen">List</string>
+    <string name="session_screen">Session</string>
     <string name="track_screen">Track</string>
     <string name="settings_screen">Settings</string>
     <string name="details_screen">Details</string>

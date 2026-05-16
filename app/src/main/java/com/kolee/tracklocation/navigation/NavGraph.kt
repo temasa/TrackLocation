@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.kolee.tracklocation.screens.details.DetailsScreen
 import com.kolee.tracklocation.screens.list.ListScreen
+import com.kolee.tracklocation.screens.sessions.SessionsScreen
 import com.kolee.tracklocation.screens.settings.SettingsScreen
 import com.kolee.tracklocation.screens.track.TrackScreen
 
@@ -21,9 +22,12 @@ fun NavGraph(
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = Screen.ListScreen.route,
+        startDestination = Screen.SessionScreen.route,
         modifier = modifier
     ) {
+        composable(Screen.SessionScreen.route) {
+            SessionsScreen()
+        }
         composable(Screen.ListScreen.route) {
             ListScreen(
                 onSelect = { trackIdx ->
