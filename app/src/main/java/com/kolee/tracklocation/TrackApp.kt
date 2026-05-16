@@ -12,6 +12,12 @@ class TrackApp: Application() {
     val databaseDao by lazy {
         TrackDatabase.getDatabase(this).trackDao
     }
+    val locationDao by lazy {
+        TrackDatabase.getDatabase(this).locationDao
+    }
+    val sessionDao by lazy {
+        TrackDatabase.getDatabase(this).sessionDao
+    }
 
     override fun onCreate() {
         super.onCreate()

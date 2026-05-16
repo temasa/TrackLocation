@@ -10,5 +10,7 @@ data class TrackEntity(
     val timestamp: Long = 0L,
     val distance: Int = 0,
     val duration: Long = 0L,
-    val pathPoints: String = ""
+    val pathPoints: String = "",
+    val startLocationId: Long? = null,
+    val endLocationId: Long? = null
 )

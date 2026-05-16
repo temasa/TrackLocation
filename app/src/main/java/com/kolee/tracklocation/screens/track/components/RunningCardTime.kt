@@ -39,7 +39,7 @@ fun RunningCardTime(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = "Running Time",
+                text = if (isTracking) "Trip Time" else "Ready for trip",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -70,7 +70,7 @@ fun RunningCardTime(
                 imageVector = ImageVector.vectorResource(
                     id = if (isTracking) R.drawable.ic_finish else R.drawable.ic_play
                 ),
-                contentDescription = null,
+                contentDescription = if (isTracking) "Stop trip" else "Start trip",
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onPrimary
             )

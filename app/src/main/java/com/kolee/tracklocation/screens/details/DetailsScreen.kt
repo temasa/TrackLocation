@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.screens.details.components.DetailsTrackMap
 import com.kolee.tracklocation.screens.details.components.TopBar
-import com.kolee.tracklocation.utils.LocationUtils
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 
 @Composable
@@ -23,20 +22,19 @@ fun DetailsScreen(
     )
 
     val selectedTrackState = viewModel.selectedTrackState
+    val selectedTrackPathPoints = viewModel.selectedTrackPathPoints
 
     LaunchedEffect(key1 = trackIdx) {
-        if (trackIdx > 1) {
+        if (trackIdx > 0) {
             viewModel.getTrack(trackIdx)
         }
     }
-
-    val pathPointsDecoded = LocationUtils.stringToPathPoints(selectedTrackState.pathPoints)
 
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
         DetailsTrackMap(
-            pathPoints = pathPointsDecoded
+            pathPoints = selectedTrackPathPoints
         )
 
         TopBar(

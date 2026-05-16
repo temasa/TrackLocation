@@ -20,7 +20,7 @@ Historical status/progress files record what happened after implementation. This
 
 # CR-0001 — Always-recorded Location Sessions
 
-Status: UI-first partially implemented; data/model/service work still pending unless completed in code outside this document set.
+Status: Implemented in source as of 2026-05-16 18:30:39 +07:00; Gradle/test/device verification pending explicit permission.
 
 ## Create
 
@@ -28,11 +28,10 @@ Status: UI-first partially implemented; data/model/service work still pending un
 |---|---|---|
 | `app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt` | Sessions UI | Done per status report |
 | `app/src/main/res/drawable/ic_session_signal.xml` | Session bottom-nav icon | Done per status report |
-| `app/src/main/java/com/kolee/tracklocation/data/location/LocationEntity.kt` | Canonical location row | Pending |
-| `app/src/main/java/com/kolee/tracklocation/data/session/SessionEntity.kt` | Always-recording session row | Pending |
-| `app/src/main/java/com/kolee/tracklocation/data/session/SessionDao.kt` | Session persistence queries | Pending |
-| `app/src/main/java/com/kolee/tracklocation/data/location/LocationDao.kt` | Canonical location queries | Pending |
-| `app/src/main/java/com/kolee/tracklocation/domain/session/RecordingSessionRepository.kt` | Session and always-recording orchestration | Pending |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationEntity.kt` | Canonical location row | Done |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionEntity.kt` | Always-recording session row | Done |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionDao.kt` | Session persistence queries | Done |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationDao.kt` | Canonical location queries | Done |
 
 ## Edit
 
@@ -43,13 +42,13 @@ Status: UI-first partially implemented; data/model/service work still pending un
 | `app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt` | Add Session route metadata/icon reference | Done per status report |
 | `app/src/main/res/values/strings.xml` | Add Session tab label | Done per status report |
 | `app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt` | Align color tokens with CR#1 handoff | Done per status report |
-| Existing Room database class | Add Location and Session entities; increment schema version | Pending |
-| Existing Trip entity | Add `startLocationId` and `endLocationId`; preserve summary fields | Pending |
-| Existing trip DAO | Add location-range-aware queries | Pending |
-| Existing tracking service | Append points to canonical location log; support always-recording lifecycle | Pending |
-| Existing List screen | Replace Export pill with always-recording switch | Pending unless already implemented outside status report |
-| Existing Track screen | Update Start/Stop semantics and copy to trip-specific wording | Pending |
-| Existing Trip Detail screen | Resolve path from location ID range | Pending |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt` | Add Location and Session entities; increment schema version | Done |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackEntity.kt` | Add `startLocationId` and `endLocationId`; preserve summary fields | Done |
+| `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDao.kt` | Add location-range-aware queries | Done |
+| `app/src/main/java/com/kolee/tracklocation/tracking/TrackingService.kt` | Append points to canonical location log; support always-recording lifecycle | Done |
+| `app/src/main/java/com/kolee/tracklocation/screens/list/ListScreen.kt` and `app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt` | Replace Export pill with always-recording switch | Done |
+| `app/src/main/java/com/kolee/tracklocation/screens/track/TrackScreen.kt` and `app/src/main/java/com/kolee/tracklocation/screens/track/components/RunningCardTime.kt` | Update Start/Stop semantics and copy to trip-specific wording | Done |
+| `app/src/main/java/com/kolee/tracklocation/screens/details/DetailsScreen.kt` | Resolve path from location ID range | Done |
 
 ## Delete
 
@@ -61,17 +60,17 @@ Status: UI-first partially implemented; data/model/service work still pending un
 
 | Migration | Purpose | Status |
 |---|---|---|
-| Room migration from legacy trip path schema to canonical location log | Convert serialized trip path points into `LocationEntity` rows and set trip boundaries | Pending |
+| Room migration from legacy trip path schema to canonical location log | Convert serialized trip path points into `LocationEntity` rows and set trip boundaries | Done |
 
 ## Tests required
 
 | Test file | Required cases | Status |
 |---|---|---|
-| `TripMigrationTest.kt` | Legacy trip path converted to location rows and trip boundaries | Pending |
-| `RecordingSessionRepositoryTest.kt` | Always-recording ON/OFF creates and closes sessions | Pending |
-| `TripRecordingBoundaryTest.kt` | Start uses next point; stop uses latest point | Pending |
-| `TripDeletionTest.kt` | Deleting trip keeps location rows | Pending |
-| `SessionsScreenTest.kt` or Compose preview/manual checklist | Empty, active, and history session states | Pending |
+| `TripMigrationTest.kt` | Legacy trip path converted to location rows and trip boundaries | Not added in this pass; verification pending permission/build capacity |
+| `RecordingSessionRepositoryTest.kt` | Always-recording ON/OFF creates and closes sessions | Not added in this pass; verification pending permission/build capacity |
+| `TripRecordingBoundaryTest.kt` | Start uses next point; stop uses latest point | Not added in this pass; verification pending permission/build capacity |
+| `TripDeletionTest.kt` | Deleting trip keeps location rows | Not added in this pass; verification pending permission/build capacity |
+| `SessionsScreenTest.kt` or Compose preview/manual checklist | Empty, active, and history session states | Not added in this pass; verification pending permission/build capacity |
 
 ---
 

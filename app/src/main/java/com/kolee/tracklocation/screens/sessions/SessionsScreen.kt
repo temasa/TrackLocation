@@ -7,14 +7,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,11 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -46,7 +40,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.R
+import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.ui.theme.TripBackground
 import com.kolee.tracklocation.ui.theme.TripBorder
 import com.kolee.tracklocation.ui.theme.TripBorderSoft
@@ -59,6 +55,9 @@ import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
 import com.kolee.tracklocation.ui.theme.TripTertiary
 import com.kolee.tracklocation.utils.TimeUtilFormatter
+import com.kolee.tracklocation.viewmodel.ShareViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 private data class SessionUiItem(
@@ -70,34 +69,15 @@ private data class SessionUiItem(
     val active: Boolean = false
 )
 
-private val sampleSessions = listOf(
-    SessionUiItem(
-        index = 7,
-        start = "Today, 08:19",
-        durationMs = (12 * 60 + 34) * 1000L,
-        distanceKm = 1.84f,
-        points = 184,
-        active = true
-    ),
-    SessionUiItem(
-        index = 6,
-        start = "Wed, 07:02",
-        durationMs = ((1 * 60 + 14) * 60 + 22) * 1000L,
-        distanceKm = 9.42f,
-        points = 1862
-    ),
-    SessionUiItem(
-        index = 5,
-        start = "Tue, 18:41",
-        durationMs = (41 * 60 + 8) * 1000L,
-        distanceKm = 3.07f,
-        points = 742
-    )
-)
-
 @Composable
 fun SessionsScreen() {
-    var recordingOn by rememberSaveable { mutableStateOf(false) }
+    val viewModel: ShareViewModel = viewModel(
+        factory = ShareViewModel.Factory
+    )
+    val locationUiState by viewModel.locationUiState.collectAsState()
+    val sessions = viewModel.sessionsState.mapIndexed { index, session ->
+        session.toUiItem(index = sessionsIndex(viewModel.sessionsState.size, index))
+    }
 
     Column(
         modifier = Modifier
@@ -105,23 +85,17 @@ fun SessionsScreen() {
             .background(TripBackground)
     ) {
         PageHeader(
-            title = "Sessions",
-            right = {
-                RecordingSwitch(
-                    on = recordingOn,
-                    onClick = { recordingOn = !recordingOn }
-                )
-            }
+            title = "Sessions"
         )
         StatusHero(
-            on = recordingOn,
-            elapsed = "00:12:34",
-            points = 184
+            on = locationUiState.isAlwaysRecording,
+            elapsed = activeSessionElapsed(sessions),
+            points = sessions.firstOrNull { it.active }?.points ?: 0
         )
 
-        if (recordingOn) {
+        if (sessions.isNotEmpty()) {
             SessionsList(
-                sessions = sampleSessions,
+                sessions = sessions,
                 modifier = Modifier.weight(1f)
             )
         } else {
@@ -132,8 +106,7 @@ fun SessionsScreen() {
 
 @Composable
 private fun PageHeader(
-    title: String,
-    right: @Composable () -> Unit
+    title: String
 ) {
     Column(
         modifier = Modifier
@@ -159,59 +132,7 @@ private fun PageHeader(
                 fontSize = 40.sp,
                 fontWeight = FontWeight.ExtraBold,
                 lineHeight = 42.sp,
-                letterSpacing = (-1.2).sp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            right()
-        }
-    }
-}
-
-@Composable
-private fun RecordingSwitch(
-    on: Boolean,
-    onClick: () -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Row(
-        modifier = Modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(TripSurface)
-            .border(
-                width = 1.5f.dp,
-                color = if (on) TripGreen else TripBorder,
-                shape = RoundedCornerShape(22.dp)
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-            .padding(start = 14.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = if (on) "ON" else "OFF",
-            color = if (on) TripGreenLabel else TripMuted,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.2.sp
-        )
-        Box(
-            modifier = Modifier
-                .size(width = 38.dp, height = 22.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(if (on) TripGreen else Color(0xFFD6D8D4))
-        ) {
-            Box(
-                modifier = Modifier
-                    .offset(x = if (on) 18.dp else 2.dp, y = 2.dp)
-                    .size(18.dp)
-                    .clip(CircleShape)
-                    .background(TripSurface)
+                letterSpacing = 0.sp
             )
         }
     }
@@ -267,7 +188,7 @@ private fun StatusHero(
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 25.sp,
-                letterSpacing = (-0.4).sp,
+                letterSpacing = 0.sp,
                 modifier = Modifier.padding(top = 2.dp)
             )
             if (on) {
@@ -312,7 +233,7 @@ private fun EmptySessionsState(modifier: Modifier = Modifier) {
             color = TripInk,
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = (-0.2).sp,
+            letterSpacing = 0.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 14.dp)
         )
@@ -322,7 +243,7 @@ private fun EmptySessionsState(modifier: Modifier = Modifier) {
                 withStyle(SpanStyle(color = TripInk, fontWeight = FontWeight.SemiBold)) {
                     append("ON")
                 }
-                append(" from the Sessions header.")
+                append(" from the Trips screen.")
             },
             color = TripMuted,
             fontSize = 14.sp,
@@ -333,6 +254,24 @@ private fun EmptySessionsState(modifier: Modifier = Modifier) {
                 .width(280.dp)
         )
     }
+}
+
+private fun SessionEntity.toUiItem(index: Int): SessionUiItem {
+    return SessionUiItem(
+        index = index,
+        start = SimpleDateFormat("EEE, HH:mm", Locale.ENGLISH).format(Date(startedAt)),
+        durationMs = durationMillis,
+        distanceKm = (distanceMeters / 1000.0).toFloat(),
+        points = pointCount,
+        active = isActive
+    )
+}
+
+private fun sessionsIndex(size: Int, index: Int): Int = size - index
+
+private fun activeSessionElapsed(sessions: List<SessionUiItem>): String {
+    val active = sessions.firstOrNull { it.active }
+    return TimeUtilFormatter.getTime(active?.durationMs ?: 0L)
 }
 
 @Composable
@@ -356,7 +295,7 @@ private fun SessionsList(
                     color = TripInk,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.2).sp,
+                    letterSpacing = 0.sp,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
@@ -410,7 +349,7 @@ private fun SessionRow(item: SessionUiItem) {
                         color = TripInk,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.2).sp,
+                        letterSpacing = 0.sp,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
@@ -513,7 +452,7 @@ private fun SessionMetric(
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             lineHeight = 17.sp,
-            letterSpacing = (-0.2).sp,
+            letterSpacing = 0.sp,
             maxLines = 1
         )
         Text(

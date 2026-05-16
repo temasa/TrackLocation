@@ -8,9 +8,43 @@ The documentation set has been reorganized into product, change-request, archite
 
 # Project Progress
 
-Last updated: 2026-05-13 13:49:37 +07:00
+Last updated: 2026-05-16 17:38:39 +07:00
 
 ## Task Log
+
+### 2026-05-16 18:01:44 +07:00
+
+- Branch: `codex`
+- Commit: `776cd6e`
+- Commit status: uncommitted working-tree changes
+- Task: fully implement CR-0001 always-recorded sessions and canonical location log
+- End: 2026-05-16 18:30:39 +07:00
+- Done:
+  - Added canonical `location_log` rows and always-recorded `recording_session` rows.
+  - Added Room DAOs for location ranges and session history.
+  - Migrated Room from version 1 to 2, converting legacy serialized trip paths into canonical location rows and trip boundaries.
+  - Updated `TrackingService` so always-recording appends canonical points and sessions while trip start/stop creates explicit trip ranges.
+  - Replaced the Trips/List header Export pill with an always-recording switch and permission flow.
+  - Updated Track controls to Start trip/Stop trip semantics; stopping a trip does not stop always-recording.
+  - Updated trip detail path rendering to resolve from canonical location ranges.
+  - Connected Sessions screen to real session rows instead of mock UI state.
+- Verification:
+  - Ran `git diff --check`; it reported only line-ending warnings and no whitespace errors.
+  - Ran static searches for stale actions/copy and negative letter spacing.
+  - Did not run Gradle build, tests, emulator, or device verification because project rules require explicit permission first.
+
+### 2026-05-16 17:38:39 +07:00
+
+- Branch: `codex`
+- Commit: `776cd6e7230ca77e00310b188032a36209ffc524`
+- Commit status: committed as current `codex` HEAD with a clean working tree
+- Task: capture the latest docs refactor in the historical progress log
+- Done:
+  - Added a task log entry for the latest docs refactor commit.
+  - Preserved the existing status note and all prior progress entries.
+- Verification:
+  - Reviewed the status and progress files for consistency.
+  - Did not run Gradle build, tests, or emulator because this change is documentation-only.
 
 ### 2026-05-14 21:05:21 +07:00
 

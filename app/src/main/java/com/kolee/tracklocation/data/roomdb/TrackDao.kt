@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TrackDao {
 
-    @Query("SELECT * FROM track")
+    @Query("SELECT * FROM track ORDER BY timestamp DESC")
     fun getAllTracks(): Flow<List<TrackEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -18,6 +18,9 @@ interface TrackDao {
 
     @Query("SELECT * FROM track WHERE idx=:idx")
     fun getTrackById(idx: Int): Flow<TrackEntity>
+
+    @Query("SELECT * FROM track WHERE idx=:idx")
+    suspend fun getTrackByIdOnce(idx: Int): TrackEntity?
 
     @Delete
     suspend fun deleteTrack(item: TrackEntity)

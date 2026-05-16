@@ -79,21 +79,31 @@ fun TrackScreen() {
                     Log.d(TAG, "RunningCard, onPlayStopClicked trigger")
                     if (locationUiState.isTracking) {
                         scope.launch {
-                            viewModel.insertTrack(
-                                TrackEntity(
-                                    timestamp = System.currentTimeMillis(),
-                                    distance = locationUiState.distanceInMeters,
-                                    duration = locationUiState.durationTimer,
-                                    pathPoints = LocationUtils.pathPointsToString(locationUiState.pathPoints)
+                            val startLocationId = locationUiState.activeTripStartLocationId
+                            val endLocationId = locationUiState.activeTripEndLocationId
+                            if (
+                                startLocationId != null
+                                && endLocationId != null
+                                && endLocationId >= startLocationId
+                            ) {
+                                viewModel.insertTrack(
+                                    TrackEntity(
+                                        timestamp = locationUiState.tripStartedAt,
+                                        distance = locationUiState.distanceInMeters,
+                                        duration = locationUiState.durationTimer,
+                                        pathPoints = LocationUtils.pathPointsToString(locationUiState.pathPoints),
+                                        startLocationId = startLocationId,
+                                        endLocationId = endLocationId
+                                    )
                                 )
-                            )
+                            }
                             Log.d(TAG, "Tracking location stop")
-                            performTrackingService(context, Actions.STOP)
+                            performTrackingService(context, Actions.STOP_TRIP)
                         }
                     }
                     else {
                         Log.d(TAG, "Tracking location start")
-                        performTrackingService(context, Actions.START)
+                        performTrackingService(context, Actions.START_TRIP)
                     }
                 }
             }

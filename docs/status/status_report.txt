@@ -1,31 +1,72 @@
-Start: 2026-05-16 13:52:51 +07:00
-Goal: Refactor project documentation into source-of-truth structure for CRs, architecture, UI, implementation, and source-code change control.
+Start: 2026-05-16 18:01:44 +07:00
+Goal: Fully implement CR-0001 always-recorded sessions, canonical location log, and trip range behavior.
 Status: Done
-End: 2026-05-16 13:52:51 +07:00
+End: 2026-05-16 18:30:39 +07:00
+
+Files created:
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationEntity.kt // Add canonical append-only location rows.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionEntity.kt // Add always-recorded session rows.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/LocationDao.kt // Add location range and summary queries.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/SessionDao.kt // Add active/history session queries.
+
+Files edited:
+- docs/implementation/source-change-manifest.md // Marked concrete CR-0001 source changes as implemented and verification pending.
+- docs/status/progress.md // Added completion history for full CR-0001 implementation.
+- docs/status/status_report.txt // Recorded completion details for the active task.
+- app/src/main/java/com/kolee/tracklocation/TrackApp.kt // Exposed location and session DAOs from the application container.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackEntity.kt // Added trip location range boundaries.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDao.kt // Added location-range-aware query support and newest-first ordering.
+- app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt // Added entities, schema version 2, and legacy path migration.
+- app/src/main/java/com/kolee/tracklocation/tracking/Actions.kt // Add always-recording and trip-specific actions.
+- app/src/main/java/com/kolee/tracklocation/tracking/LocationUiState.kt // Exposed session/trip recording state and location boundaries.
+- app/src/main/java/com/kolee/tracklocation/tracking/TrackingService.kt // Appends locations, manages sessions, and preserves trip-only stop semantics.
+- app/src/main/java/com/kolee/tracklocation/viewmodel/ShareViewModel.kt // Exposes sessions, location ranges, and recording controls.
+- app/src/main/java/com/kolee/tracklocation/screens/list/ListScreen.kt // Wires List permission flow and always-recording switch.
+- app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt // Replaced Export pill with always-recording switch.
+- app/src/main/java/com/kolee/tracklocation/screens/track/TrackScreen.kt // Saves trips from canonical boundaries and updates Start/Stop semantics.
+- app/src/main/java/com/kolee/tracklocation/screens/track/components/RunningCardTime.kt // Uses trip-specific control copy/accessibility.
+- app/src/main/java/com/kolee/tracklocation/screens/details/DetailsScreen.kt // Resolves trip detail path from canonical location range.
+- app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt // Renders real session rows and active state.
+
+Files deleted:
+- None.
+
+Migrations added:
+- Room migration 1 -> 2 // Creates canonical location/session tables, adds trip boundaries, and migrates legacy path strings.
+
+Tests added or updated:
+- None.
+
+Tests run / Verification run:
+- Ran `git diff --check`; it reported only existing line-ending warnings and no whitespace errors.
+- Ran static searches for stale START/STOP actions, old recording copy, and negative screen letter spacing.
+
+Tests not run / Verification not run:
+- Gradle build, unit tests, Room migration tests, emulator, and device verification were not run because project rules require explicit user permission.
+- CR-0001 test files were not added in this pass; the manifest records them as pending verification/build-capacity work.
+
+Known remaining issues:
+- Runtime behavior still needs compile, migration, and device verification.
+- Always-recording switch state remains process-session-only, matching CR-0001 scope.
+
+Suggested commit message:
+Implement CR-0001 always-recorded sessions
+
+
+--- Previous status report ---
+
+Start: 2026-05-16 17:38:39 +07:00
+Goal: Add the missing historical progress entry for the latest docs refactor commit.
+Status: Done
+End: 2026-05-16 17:39:23 +07:00
 
 Affected files:
-- docs/product/product-baseline.md // Added current accepted product baseline after CR#1.
-- docs/product/accessibility-observer-prd.md // Preserved Observer PRD with navigation reconciliation note.
-- docs/product/glossary.md // Added shared terminology.
-- docs/change-requests/CR-0001-always-recorded-sessions.md // Consolidated CR behavior, screen requirements, and impact matrix.
-- docs/architecture/navigation.md // Added current navigation source of truth.
-- docs/architecture/data-model.md // Added accepted canonical location/session/trip data model.
-- docs/architecture/app-architecture.md // Added high-level module boundaries.
-- docs/architecture/adr/ADR-0001-canonical-location-log.md // Recorded canonical location log decision.
-- docs/architecture/adr/ADR-0002-observer-capture-scope.md // Recorded denylist-vs-allowlist Observer decision.
-- docs/architecture/adr/ADR-0003-face-first-auth.md // Recorded face-first auth decision.
-- docs/ui/screen-specification.md // Updated UI source of truth with CR#1 current screens and planned Observer screens.
-- docs/ui/ui-implementation-plan.md // Preserved original UI plan with CR#1 baseline note.
-- docs/implementation/rollout-plan.md // Preserved rollout plan with CR#1 baseline note.
-- docs/implementation/source-change-manifest.md // Added source-code create/edit/delete/migrate/test manifest.
-- docs/implementation/migration-plan.md // Added CR#1 migration requirements.
-- docs/implementation/test-plan.md // Added CR#1 and planned Observer test obligations.
-- docs/status/progress.md // Preserved historical progress log.
-- docs/status/status_report.txt // Added documentation refactor status entry.
-- docs/archive/original/* // Preserved unchanged original uploaded files.
+- docs/status/progress.md // Added a dated task log entry for commit 776cd6e7230ca77e00310b188032a36209ffc524.
+- docs/status/status_report.txt // Recorded completion details for this documentation-only task.
 
-Concise commit message:
-- docs: refactor project documentation into source-of-truth structure
+Verification:
+- Reviewed the updated progress entry for the latest docs refactor commit.
+- Did not run Gradle build, tests, or emulator because this change is documentation-only.
 
 
 --- Previous status report ---

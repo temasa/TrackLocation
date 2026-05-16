@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,7 +56,9 @@ fun ListContent(
     modifier: Modifier = Modifier,
     responseState: Response,
     onSelect: (trackIdx: Int) -> Unit,
-    viewModel: ShareViewModel
+    viewModel: ShareViewModel,
+    isAlwaysRecording: Boolean,
+    onAlwaysRecordingChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -71,7 +74,9 @@ fun ListContent(
                 TrackSuccessState(
                     trackList = trackList,
                     onSelect = onSelect,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    isAlwaysRecording = isAlwaysRecording,
+                    onAlwaysRecordingChange = onAlwaysRecordingChange
                 )
             }
         }
@@ -82,7 +87,9 @@ fun ListContent(
 private fun TrackSuccessState(
     trackList: List<TrackEntity>,
     onSelect: (trackIdx: Int) -> Unit,
-    viewModel: ShareViewModel
+    viewModel: ShareViewModel,
+    isAlwaysRecording: Boolean,
+    onAlwaysRecordingChange: (Boolean) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -95,7 +102,10 @@ private fun TrackSuccessState(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            ListHeader()
+            ListHeader(
+                isAlwaysRecording = isAlwaysRecording,
+                onAlwaysRecordingChange = onAlwaysRecordingChange
+            )
         }
         item {
             CurrentTripCard()
@@ -141,7 +151,10 @@ private fun TrackSuccessState(
 }
 
 @Composable
-private fun ListHeader() {
+private fun ListHeader(
+    isAlwaysRecording: Boolean,
+    onAlwaysRecordingChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom
@@ -161,20 +174,25 @@ private fun ListHeader() {
                 lineHeight = 42.sp
             )
         }
-        Box(
+        Row(
             modifier = Modifier
-                .height(36.dp)
+                .height(44.dp)
                 .clip(RoundedCornerShape(18.dp))
                 .background(TripSurface)
                 .border(1.dp, TripBorder, RoundedCornerShape(18.dp))
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.Center
+                .padding(start = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Export",
-                color = TripInk,
+                text = if (isAlwaysRecording) "ON" else "OFF",
+                color = if (isAlwaysRecording) TripGreen else TripMuted,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
+            )
+            Switch(
+                checked = isAlwaysRecording,
+                onCheckedChange = onAlwaysRecordingChange
             )
         }
     }
