@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,92 +42,72 @@ fun SettingsScreen(navController: NavController? = null) {
             .background(Color(0xFFF1F4F0))
             .padding(horizontal = 18.dp)
     ) {
-            // Page title
-            item {
-                Text(
-                    text = "Settings",
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0A0A0A),
-                    letterSpacing = (-1.2).sp,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+        item {
+            Text(
+                text = "Settings",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF0A0A0A),
+                letterSpacing = (-1.2).sp,
+                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
+            )
+        }
+
+        item { SettingsSectionHeader("GENERAL") }
+        item {
+            SettingsSectionGroup {
+                SettingsRow(
+                    label = "Units",
+                    value = "Metric (km, km/h)",
+                    iconId = R.drawable.baseline_adjust_24,
+                    onClick = {},
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    label = "Map style",
+                    value = "System default",
+                    iconId = R.drawable.baseline_settings_24,
+                    onClick = {},
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    label = "Location permission",
+                    value = "Granted while in use",
+                    iconId = R.drawable.baseline_location_on_24,
+                    isLast = true,
+                    onClick = {},
                 )
             }
+        }
 
-            // General section
-            item {
-                SettingsSectionHeader("GENERAL")
-            }
-
-            item {
-                SettingsSectionGroup {
-                    SettingsRow(
-                        label = "Units",
-                        supporting = null,
-                        value = "Metric (km, km/h)",
-                        iconId = R.drawable.baseline_adjust_24,
-                        onClick = {}
-                    )
-                    SettingsRow(
-                        label = "Map style",
-                        supporting = null,
-                        value = "System default",
-                        iconId = R.drawable.baseline_settings_24,
-                        onClick = {}
-                    )
-                    SettingsRow(
-                        label = "Location permission",
-                        supporting = null,
-                        value = "Granted while in use",
-                        iconId = R.drawable.baseline_location_on_24,
-                        isLast = true,
-                        onClick = {}
-                    )
-                }
-            }
-
-            // Tools section
-            item {
-                SettingsSectionHeader("TOOLS")
-            }
-
-            item {
-                SettingsSectionGroup {
-                    SettingsRow(
-                        label = "Observer",
-                        supporting = "Inspect accessibility events captured by the service",
-                        value = null,
-                        iconId = R.drawable.baseline_settings_24,
-                        isLast = true,
-                        onClick = {
-                            navController?.navigate(Screen.ObserverFeedScreen.route)
-                        }
-                    )
-                }
-            }
-
-            // About section
-            item {
-                SettingsSectionHeader("ABOUT")
-            }
-
-            item {
-                SettingsSectionGroup {
-                    SettingsRow(
-                        label = "About TrackLocation",
-                        supporting = null,
-                        value = "Version 1.6.2",
-                        iconId = R.drawable.baseline_adjust_24,
-                        isLast = true,
-                        onClick = {}
-                    )
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
+        item { SettingsSectionHeader("TOOLS") }
+        item {
+            SettingsSectionGroup {
+                SettingsRow(
+                    label = "Observer",
+                    supporting = "Inspect accessibility events captured by the service",
+                    iconId = R.drawable.ic_session_signal,
+                    isLast = true,
+                    onClick = { navController?.navigate(Screen.ObserverFeedScreen.route) },
+                )
             }
         }
+
+        item { SettingsSectionHeader("ABOUT") }
+        item {
+            SettingsSectionGroup {
+                SettingsRow(
+                    label = "About TrackLocation",
+                    value = "Version 1.6.2",
+                    iconId = R.drawable.baseline_adjust_24,
+                    isLast = true,
+                    onClick = {},
+                )
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+    }
 }
 
 @Composable
@@ -137,7 +120,8 @@ private fun SettingsSectionHeader(title: String) {
         letterSpacing = 1.4.sp,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 8.dp)
+            .padding(horizontal = 18.dp)
+            .padding(top = 20.dp, bottom = 8.dp),
     )
 }
 
@@ -148,92 +132,68 @@ private fun SettingsSectionGroup(content: @Composable () -> Unit) {
             .fillMaxWidth()
             .background(Color.White, shape = RoundedCornerShape(18.dp))
             .border(1.5.dp, Color(0xFFEEF0EC), RoundedCornerShape(18.dp))
-            .padding(0.dp)
-            .padding(bottom = 16.dp)
     ) {
         content()
     }
 }
 
 @Composable
-private fun SettingsRow(
-    label: String,
-    supporting: String?,
-    value: String?,
-    iconId: Int,
-    isLast: Boolean = false,
-    onClick: () -> Unit
-) {
-    Column(
+private fun SettingsRowDivider() {
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(14.dp, 14.dp, 16.dp, 14.dp)
-    ) {
-        if (!isLast) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                SettingsRowContent(label, supporting, value, iconId)
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color(0xFFEEF0EC))
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                SettingsRowContent(label, supporting, value, iconId)
-            }
-        }
-    }
+            .padding(horizontal = 16.dp)
+            .height(1.dp)
+            .background(Color(0xFFEEF0EC))
+    )
 }
 
 @Composable
-private fun SettingsRowContent(
+private fun SettingsRow(
     label: String,
-    supporting: String?,
-    value: String?,
-    iconId: Int
+    supporting: String? = null,
+    value: String? = null,
+    iconId: Int,
+    isLast: Boolean = false,
+    onClick: () -> Unit,
 ) {
+    val cd = if (supporting != null) "$label, $supporting" else label
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .semantics { contentDescription = cd }
+            .defaultMinSize(minHeight = 56.dp)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Icon tile
+        // Leading icon tile
         Box(
             modifier = Modifier
                 .size(36.dp)
                 .background(Color(0xFFF1F4F0), shape = RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(id = iconId),
-                contentDescription = label,
+                contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color(0xFF0A0A0A)
+                tint = Color(0xFF0A0A0A),
             )
         }
 
-        // Label and supporting text
+        // Label + supporting
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
                 text = label,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF0A0A0A),
-                letterSpacing = (-0.1).sp
+                letterSpacing = (-0.1).sp,
             )
             supporting?.let {
                 Text(
@@ -241,29 +201,29 @@ private fun SettingsRowContent(
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF737373),
-                    lineHeight = 1.35.sp
+                    lineHeight = 17.sp,
                 )
             }
         }
 
-        // Trailing value and chevron
+        // Trailing value + chevron
         Column(
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             value?.let {
                 Text(
                     text = it,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF737373)
+                    color = Color(0xFF737373),
                 )
             }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
-                tint = Color(0xFFA3A3A3)
+                tint = Color(0xFFA3A3A3),
             )
         }
     }

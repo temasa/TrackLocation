@@ -18,6 +18,12 @@ class TrackApp: Application() {
     val sessionDao by lazy {
         TrackDatabase.getDatabase(this).sessionDao
     }
+    val observerEventDao by lazy {
+        TrackDatabase.getDatabase(this).observerEventDao
+    }
+    val allowlistRuleDao by lazy {
+        TrackDatabase.getDatabase(this).allowlistRuleDao
+    }
 
     override fun onCreate() {
         super.onCreate()

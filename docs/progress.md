@@ -169,6 +169,54 @@ Scope decision:
 
 ## Task Log
 
+### 2026-05-19 Build Fix — ModalBottomSheet + stickyHeader opt-in
+
+- Branch: `codex`
+- Task: Build project and fix all compile errors
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Build run: `:app:compileDebugKotlin` — BUILD SUCCESSFUL
+- Files edited:
+  - `feature/observer/presentation/components/AllowlistBottomSheet.kt` — replaced `ModalBottomSheet`/`rememberModalBottomSheetState` (unavailable in Material3 alpha12) with a custom `Dialog`-based overlay; added `@OptIn(ExperimentalComposeUiApi::class)` for `DialogProperties.usePlatformDefaultWidth`; fixed missing closing brace for function body
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — added `ExperimentalFoundationApi` import and opt-in to composable using `stickyHeader`
+- Errors fixed: 7 compile errors → 0 errors (1 unused-parameter warning remains, not an error)
+- Suggested commit message: `fix: replace ModalBottomSheet with Dialog overlay for alpha12 compat; add stickyHeader opt-in`
+
+### 2026-05-19 Observer Phase 1 — Full UI Implementation
+
+- Branch: `codex`
+- Task: Implement Observer Phase 1 UI per `OBSERVER_PHASE1_SPEC.md` (complete from scratch — previous sessions' files did not persist on disk)
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done (static inspection complete; Gradle build not run per AGENTS.md)
+- Files created:
+  - `feature/observer/domain/model/ObservedEvent.kt`
+  - `feature/observer/domain/model/AllowlistRule.kt` (includes `MatchType` enum)
+  - `feature/observer/domain/model/ObserverUiState.kt` (includes `AllowlistScope`, `AllowlistDraftRule`, `AllowlistUiState`)
+  - `feature/observer/data/ObserverPreferencesDataStore.kt` — DataStore for capture state
+  - `feature/observer/data/repository/EventRepository.kt` — interface + `EventRepositoryImpl` (real DB) + `FakeEventRepository` (stub)
+  - `feature/observer/presentation/viewmodel/ObserverViewModel.kt` — ViewModel with factory
+  - `feature/observer/presentation/components/StatusIndicators.kt` — `ServiceBanner`, `CaptureChip`, `AutoScrollReadout`, `CapturePausedBanner`
+  - `feature/observer/presentation/components/EventRow.kt` — `EventRow`, `EventTypeChip`
+  - `feature/observer/presentation/components/FeedHeaderBar.kt` — sticky feed header
+  - `feature/observer/presentation/components/EmptyState.kt` — `ObserverEmptyState`
+  - `feature/observer/presentation/components/JumpToLatestFab.kt` — transient jump FAB
+  - `feature/observer/presentation/components/AllowlistBottomSheet.kt` — modal sheet + rule rows + match-type toggle
+- Files edited:
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — replaced placeholder with full implementation
+  - `ui/theme/Color.kt` — added 11 Observer color tokens
+  - `screens/settings/SettingsScreen.kt` — fixed fixed-height clipping of supporting text; changed Observer icon to `ic_session_signal`; cleaned up divider logic
+  - `TrackApp.kt` — exposed `observerEventDao` and `allowlistRuleDao` as lazy properties
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Build run: Not run
+- Known issues / notes:
+  - `ModalBottomSheet`/`rememberModalBottomSheetState` API was adjusted for alpha12 compatibility (removed `skipPartiallyExpanded` param)
+  - `Icons.Default.Sensors` replaced with `painterResource(ic_session_signal)` for Compose 1.2.0 compatibility
+  - Accessibility service polling uses `AccessibilityManager.isEnabled` (global enabled, not service-specific); real check would use `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES`
+  - Stub: EventRepositoryImpl reads from real DB; FakeEventRepository available as alternative
+- Suggested commit message: `feat(observer): implement Observer Phase 1 UI — Settings, Feed, Allowlist sheet`
+
 ### 2026-05-18 Observer Feed — Smooth Pause/Resume + FAB Jump
 
 - Branch: `codex`
