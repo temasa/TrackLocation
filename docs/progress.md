@@ -8,6 +8,21 @@ This is the single active status/progress file in the simplified documentation s
 
 ---
 
+### 2026-05-19 Observer — Smooth resume with relative scroll offset
+
+- Branch: `codex`
+- Task: When resuming from pause, the list jumped to the very last item which felt jarring. Refined to maintain the relative position from the bottom, only FAB forces a jump to the tail.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — added `scrollRelativeOffset` state; `tapListToggle` captures `lastIndex - bottomVisibleIndex` at resume time; new-events `LaunchedEffect` scrolls to `lastIndex - scrollRelativeOffset` instead of always `lastIndex`; FAB `onClick` resets offset to 0 before jumping to ensure it always reaches the very end
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL, 0 errors, 0 warnings
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `fix(observer): smooth resume — maintain relative scroll offset, FAB-only jump to latest`
+
+---
+
 ### 2026-05-19 Observer — Fix FAB click pausing auto-scroll
 
 - Branch: `codex`

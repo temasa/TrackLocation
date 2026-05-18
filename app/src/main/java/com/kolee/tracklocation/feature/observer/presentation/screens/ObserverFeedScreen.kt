@@ -77,6 +77,7 @@ fun ObserverFeedScreen(navController: NavController) {
     var autoScrollRunning by remember { mutableStateOf(true) }
     var showFab by remember { mutableStateOf(false) }
     var programmaticScroll by remember { mutableStateOf(false) }
+    var scrollRelativeOffset by remember { mutableStateOf(0) }
 
     // Drag/scroll → pause auto-scroll (ignore programmatic scrolls)
     LaunchedEffect(listState) {
@@ -94,8 +95,9 @@ fun ObserverFeedScreen(navController: NavController) {
         val hasNew = uiState.events.size > prevEventCount.value
         prevEventCount.value = uiState.events.size
         if (hasNew && autoScrollRunning && uiState.events.isNotEmpty()) {
+            val targetIdx = (uiState.events.lastIndex - scrollRelativeOffset).coerceAtLeast(0)
             programmaticScroll = true
-            listState.animateScrollToItem(uiState.events.lastIndex)
+            listState.animateScrollToItem(targetIdx)
             programmaticScroll = false
         }
     }
@@ -112,7 +114,10 @@ fun ObserverFeedScreen(navController: NavController) {
         val wasPaused = !autoScrollRunning
         autoScrollRunning = !autoScrollRunning
         if (wasPaused) {
-            // Paused → Running: show transient FAB for ~2 s
+            // Capture how many items are below the bottom visible row
+            val lastIdx = uiState.events.lastIndex.coerceAtLeast(0)
+            val bottomIdx = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: lastIdx
+            scrollRelativeOffset = (lastIdx - bottomIdx).coerceAtLeast(0)
             coroutineScope.launch {
                 showFab = true
                 delay(2_000)
@@ -262,6 +267,7 @@ fun ObserverFeedScreen(navController: NavController) {
             onClick = {
                 coroutineScope.launch {
                     if (uiState.events.isNotEmpty()) {
+                        scrollRelativeOffset = 0
                         programmaticScroll = true
                         listState.animateScrollToItem(uiState.events.lastIndex)
                         programmaticScroll = false
