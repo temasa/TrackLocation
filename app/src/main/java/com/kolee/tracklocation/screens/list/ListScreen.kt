@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,6 +13,7 @@ import com.kolee.tracklocation.screens.list.components.ListContent
 import com.kolee.tracklocation.ui.theme.TripBackground
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
     onSelect: (trackIdx: Int) -> Unit

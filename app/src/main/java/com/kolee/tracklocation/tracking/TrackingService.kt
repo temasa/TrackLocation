@@ -178,7 +178,7 @@ class TrackingService: Service() {
         timer?.cancel()
         removeLocationUpdates()
 
-        stopForeground(NOTIFICATION_ID)
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
@@ -204,11 +204,12 @@ class TrackingService: Service() {
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun requestLocationUpdate() {
         if (!locationUpdatesRequested) {
+            @Suppress("DEPRECATION")
             val locationRequest = LocationRequest.create().apply {
                 interval = LOCATION_UPDATE_INTERVAL
                 fastestInterval = FASTEST_LOCATION_INTERVAL
-                maxWaitTime = LOCATION_UPDATE_INTERVAL
                 priority = Priority.PRIORITY_HIGH_ACCURACY
+                maxWaitTime = LOCATION_UPDATE_INTERVAL
             }
 
             fusedLocationProviderClient.requestLocationUpdates(

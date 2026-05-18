@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.kolee.tracklocation.screens.sessions
 
 import android.content.Context
@@ -26,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -83,6 +86,7 @@ private data class SessionUiItem(
     val active: Boolean = false
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionsScreen() {
     val context = LocalContext.current
@@ -510,15 +514,14 @@ private fun PulseDot(
     size: Int,
     pulsing: Boolean
 ) {
-    val transition = rememberInfiniteTransition(label = "sessionPulse")
+    val transition = rememberInfiniteTransition()
     val alpha by transition.animateFloat(
         initialValue = 1f,
         targetValue = if (pulsing) 0.55f else 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1600),
             repeatMode = RepeatMode.Reverse
-        ),
-        label = "sessionPulseAlpha"
+        )
     )
 
     Box(

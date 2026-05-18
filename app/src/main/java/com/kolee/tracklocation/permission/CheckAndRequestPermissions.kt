@@ -26,9 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.shouldShowRationale
 
 private const val TAG = "CheckAndRequestPermission"
 
@@ -88,8 +86,8 @@ fun CheckAndRequestPermissions(
             Log.d(TAG, "Ask permissions, openDialogState: ${openDialogState}")
 
             permissionState.permissions.forEach {
-                val hasPermission = it.status.isGranted
-                val shouldShowRationale = it.status.shouldShowRationale
+                val hasPermission = it.hasPermission
+                val shouldShowRationale = it.shouldShowRationale
 
                 Log.d(TAG, "Ask permission: ${it.permission}, "
                     + "hasPermission: ${hasPermission}, "

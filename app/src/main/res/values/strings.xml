@@ -4,11 +4,14 @@
 
     <!-- Screen Item -->
     <string name="list_screen">List</string>
-    <string name="session_screen">Session</string>
     <string name="track_screen">Track</string>
     <string name="settings_screen">Settings</string>
     <string name="details_screen">Details</string>
+    <string name="session_screen">Session</string>
+    <string name="observer_feed_screen">Observer</string>
 
     <string name="no_item_description">No items in the inventory.</string>
+
+    <string name="observer_service_description">Observer service used to capture app/activity changes for the Observer feed.</string>
 
 </resources>

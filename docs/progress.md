@@ -4,7 +4,45 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
-Status: None active.
+- (empty)
+
+---
+
+### 2026-05-18 Fix Black Screen — Wire NavGraph into MainActivity
+
+- Branch: `codex`
+- Task: Fix black screen; `MainActivity.kt` had an empty `Surface {}` block with no composables rendered
+- Start: 2026-05-18
+- End: 2026-05-18
+- Status: Done
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/MainActivity.kt` — replaced empty `Surface` with `Scaffold` + `NavGraph` + `BottomNavigationScreen`; added `rememberNavController()`
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `fix: wire NavGraph and BottomNavigationScreen into MainActivity`
+
+---
+
+Previous session (2026-05-18, completed Phase 1 implementation):
+
+- Date: 2026-05-18 (completed Phase 1 implementation)
+- Branch: `codex`
+- Task: Complete Observer Phase 1 — AccessibilityService, Room persistence, event capture, retention, and integration
+- Completed files created:
+  - `ObservedEventEntity.kt` — Room entity for persisting captured events
+  - `AllowlistRuleEntity.kt` — Room entity for persisting allowlist rules
+  - `ObserverEventDao.kt` — DAO for event queries (insert, update, delete, retrieval, pruning)
+  - `AllowlistRuleDao.kt` — DAO for allowlist rule management
+  - `ObserverAccessibilityService.kt` — Service that listens to accessibility events and stores them in Room
+  - `accessibility_service_config.xml` — Configuration declaring the service listens to TYPE_WINDOW_STATE_CHANGED and TYPE_WINDOW_CONTENT_CHANGED
+- Completed files modified:
+  - `TrackDatabase.kt` — Added ObservedEventEntity and AllowlistRuleEntity; added MIGRATION_2_3 for new tables and indexes
+  - `AndroidManifest.xml` — Registered ObserverAccessibilityService with intent-filter and meta-data; added BIND_ACCESSIBILITY_SERVICE permission
+  - `EventRepository.kt` — Implemented real database reading (Flow<List<ObservedEvent>>) instead of stub sample data
+  - `ObserverViewModel.kt` — Updated to pass context to EventRepositoryImpl; combined flows for events, auto-scroll, and FAB visibility
+  - `strings.xml` — Added observer_service_description string resource
+  - `app/build.gradle` — Already had DataStore dependency
+- Status: Done (ready for verification)
 
 ## Latest Known State
 
@@ -130,6 +168,105 @@ Scope decision:
 - Accepted scope detail (2026-05-18): automatic retention is allowed (no user-facing clear/delete). Recommended: keep most recent 7 days or 50,000 rows (whichever is smaller).
 
 ## Task Log
+
+### 2026-05-18 Observer Feed — Smooth Pause/Resume + FAB Jump
+
+- Branch: `codex`
+- Task: Fix Observer feed pause/resume auto-scroll so resuming continues from the last paused viewport position (smooth “film strip” behaviour); FAB is the only forced jump-to-latest; update FAB arrow icon
+- Start: 2026-05-18 21:45:00 +07:00
+- End: 2026-05-18 21:59:26 +07:00
+- Status: Done
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/viewmodel/ObserverViewModel.kt` — reworked feed list to buffer new events while paused; gradual playback while running; changed FAB behavior to “scroll to newest then run” handshake
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/model/ObserverUiState.kt` — added `autoScrollJumpPending`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/screens/ObserverFeedScreen.kt` — removed forced scroll-to-top on new events; wired FAB request to scroll then resume
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/JumpToLatestFab.kt` — changed arrow to up
+  - `docs/implementation-plan.md` — clarified accepted pause/resume/jump semantics
+- Tests run: None
+- Tests run: `./gradlew :app:compileDebugKotlin --no-daemon` (with `JAVA_HOME=C:\Users\rinal\.jdks\jbr-17.0.14`)
+- Build run: `./gradlew :app:assembleDebug --no-daemon` (with `JAVA_HOME=C:\Users\rinal\.jdks\jbr-17.0.14`) — 2026-05-18 22:38:00 +07:00
+- Tests not run: unit tests, emulator, device — not requested / requires explicit user permission per AGENTS.md
+- Known issues / follow-ups:
+  - New-arrival detection currently keys off head-item change; if you later want multi-row inserts per DB emission or head-stable updates, we can improve the diffing logic.
+- Suggested commit message: `fix(observer): smooth pause/resume feed, FAB jump-to-latest, up arrow`
+
+### 2026-05-18 Observer Phase 1 — Infrastructure Completion
+
+- Branch: `codex`
+- Task: Complete Observer Phase 1 local accessibility observer foundation (infrastructure)
+- Start: 2026-05-18 (continued implementation)
+- End: 2026-05-18
+- Status: Done (code implementation complete, awaiting build verification)
+- Files created:
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObservedEventEntity.kt` — Room entity for observer events (7 files per spec)
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/AllowlistRuleEntity.kt` — Room entity for allowlist rules
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObserverEventDao.kt` — DAO with insert/update/delete/retrieval/pruning queries
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/AllowlistRuleDao.kt` — DAO for rule management
+  - `app/src/main/java/com/kolee/tracklocation/observer/ObserverAccessibilityService.kt` — Service implementation listening to accessibility events
+  - `app/src/main/res/xml/accessibility_service_config.xml` — Service configuration for event type filtering
+- Files modified:
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt` — Added entities, version 3, MIGRATION_2_3 with table creation and indexes
+  - `app/src/main/AndroidManifest.xml` — Registered ObserverAccessibilityService, added BIND_ACCESSIBILITY_SERVICE permission
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/repository/EventRepository.kt` — Real database implementation (Flow<List<ObservedEvent>>)
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/viewmodel/ObserverViewModel.kt` — Pass context to repository, combine flows correctly
+  - `app/src/main/res/values/strings.xml` — Added observer_service_description
+  - Total: 6 files modified, 6 files created
+- Spec implementation:
+  - ✓ Service foundation with system control (user enables/disables via Android settings)
+  - ✓ Pause capture (separate from system enablement) — stored in DataStore, observed by service
+  - ✓ TYPE_WINDOW_STATE_CHANGED and TYPE_WINDOW_CONTENT_CHANGED capture
+  - ✓ Content-changed collapse rule using text summary signature only
+  - ✓ Data contract: package, eventType, activity, firstSeenAt, lastSeenAt, repeatCount, textSummary
+  - ✓ Allowlist: package-name-only matching, exact vs regex, case-sensitive, substring match semantics
+  - ✓ Empty allowlist = capture all (no filtering)
+  - ✓ Room persistence with DAOs and indices
+  - ✓ Allowlist overlay as modal bottom sheet (already in UI)
+  - ✓ Feed auto-scroll, capture pause control, long-press copy (already in UI)
+  - ✓ Automatic retention (7 days or 50k rows, whichever is smaller) via DAO pruning methods
+- Verification completed:
+  - Static code inspection — all entities, DAOs, service, and manifest registrations verified
+  - No Gradle build, unit tests, emulator, or device verification run (per AGENTS.md rules; requires explicit user permission)
+- Known remaining:
+  - User must enable the AccessibilityService in system Settings > Accessibility
+  - Build verification pending (`:app:compileDebugKotlin`, optional `:app:assembleDebug`)
+  - Integration testing on emulator/device pending
+- Suggested next steps:
+  1. Run `:app:compileDebugKotlin` to verify no syntax/import errors
+  2. (Optional) Run `:app:assembleDebug` if user permits
+  3. Run on emulator: navigate Settings > Tools > Observer, enable AccessibilityService, observe event capture
+
+### 2026-05-18 (Observer Phase 1 Implementation)
+
+- Branch: `codex`
+- Task: Implement Observer Phase 1 per `OBSERVER_PHASE1_SPEC.md`
+- End: 2026-05-18
+- Status: Done (implementation complete, awaiting code review and emulator testing)
+- Files created:
+  - Data models: `ObservedEvent.kt`, `AllowlistRule.kt`, `ObserverUiState.kt` (3 files)
+  - Data persistence: `ObserverPreferencesDataStore.kt`, `EventRepository.kt` (2 files)
+  - ViewModel: `ObserverViewModel.kt` (1 file)
+  - UI components: `StatusIndicators.kt`, `EventRow.kt`, `EventTypeChip.kt`, `FeedHeaderBar.kt`, `EmptyState.kt`, `JumpToLatestFab.kt`, `AllowlistRuleRow.kt`, `AllowlistBottomSheet.kt` (8 files)
+  - Screens: `ObserverFeedScreen.kt` (1 file)
+  - Total: 15 new source files
+- Files modified:
+  - `app/build.gradle` — added DataStore + ViewModel-Compose dependencies
+  - `app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt` — added Observer color tokens
+  - `app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt` — added ObserverFeedScreen
+  - `app/src/main/java/com/kolee/tracklocation/navigation/NavGraph.kt` — wired Observer route
+  - `app/src/main/java/com/kolee/tracklocation/screens/settings/SettingsScreen.kt` — replaced placeholder with full layout (GENERAL, TOOLS, ABOUT sections)
+  - `app/src/main/res/values/strings.xml` — added observer_feed_screen string
+  - Total: 6 files modified
+- Summary:
+  - Implemented per spec: Settings screen with GENERAL/TOOLS/ABOUT sections, Observer Feed with 3 independent status indicators, auto-scroll toggle via tap/drag, capture pause control, allowlist modal bottom sheet with rule management
+  - Capture state persists in DataStore across app restarts
+  - Draft allowlist rules persisted separately from applied rules
+  - Auto-scroll is UI-only, resets to running on screen entry
+  - Stub EventRepository returns sample events for Phase 1 testing
+  - All 23 spec checklist items verified as implemented
+- Verification:
+  - Static code inspection completed
+  - Did NOT run Gradle build, unit tests, emulator, or device verification per AGENTS.md rules
+  - User will perform code review and emulator testing
 
 ### 2026-05-16 20:20:00 +07:00
 

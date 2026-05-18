@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "mcp__stitch__list_projects"
+      "mcp__stitch__list_projects",
+      "Bash(grep -E \"\\\\.kt$\")",
+      "Bash(xargs grep -l \"DataStore\\\\|Repository\")",
+      "Bash(export JAVA_HOME='C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14')",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew compileDebugKotlin)"
     ]
   }
 }

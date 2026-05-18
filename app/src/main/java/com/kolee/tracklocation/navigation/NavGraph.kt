@@ -9,6 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.kolee.tracklocation.feature.observer.presentation.screens.ObserverFeedScreen
 import com.kolee.tracklocation.screens.details.DetailsScreen
 import com.kolee.tracklocation.screens.list.ListScreen
 import com.kolee.tracklocation.screens.sessions.SessionsScreen
@@ -41,7 +42,10 @@ fun NavGraph(
             TrackScreen()
         }
         composable(Screen.SettingsScreen.route) {
-            SettingsScreen()
+            SettingsScreen(navController = navHostController)
+        }
+        composable(Screen.ObserverFeedScreen.route) {
+            ObserverFeedScreen(navController = navHostController)
         }
         composable(
             route = Screen.DetailScreen.route + "?trackIdx={trackIdx}",

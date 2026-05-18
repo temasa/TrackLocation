@@ -10,27 +10,14 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple200,
-    secondary = Teal200
+    secondary = Teal200,
+    tertiary = Pink600
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = TripGreen,
-    secondary = TripBlue,
-    background = TripBackground,
-    surface = TripSurface,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = TripInk,
-    onSurface = TripInk
-
-    /* Other default colors to override
-    background = Color.White,
-    surface = Color.White,
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
-    */
+    primary = Purple500,
+    secondary = Teal200,
+    tertiary = Pink600
 )
 
 @Composable
@@ -38,11 +25,7 @@ fun TrackLocationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) {
-        DarkColorScheme
-    } else {
-        LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val systemUiController = rememberSystemUiController()
     if (darkTheme) {

@@ -343,6 +343,7 @@ UI acceptance criteria (Phase 1):
 - Feed supports a user-controlled pause/resume of auto-scroll, and package copy from paused events.
 - Feed provides a jump-to-latest FAB and long-press copy (paused only) as a single line `package | activity` (best-effort).
 - Capture can be paused/resumed independently of auto-scroll; pausing capture stops new persisted rows until resumed.
+- Accepted UX detail: while paused, the viewport freezes completely and newly arriving events do not shift the visible list; on resume, the feed continues moving from the current viewport position without jumping; the jump-to-latest FAB is the only control that forces a jump to the newest position.
 
 Verification gates (Phase 1):
 

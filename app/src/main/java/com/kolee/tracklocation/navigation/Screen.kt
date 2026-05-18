@@ -13,4 +13,5 @@ sealed class Screen(
     object TrackScreen: Screen(R.string.track_screen, R.drawable.baseline_location_on_24, "track_screen")
     object SettingsScreen: Screen(R.string.settings_screen, R.drawable.baseline_settings_24, "settings_screen")
     object DetailScreen: Screen(R.string.details_screen, R.drawable.ic_location_pin, "details_screen")
+    object ObserverFeedScreen: Screen(R.string.observer_feed_screen, R.drawable.baseline_settings_24, "observer_feed_screen")
 }

@@ -11,9 +11,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         TrackEntity::class,
         LocationEntity::class,
-        SessionEntity::class
+        SessionEntity::class,
+        ObservedEventEntity::class,
+        AllowlistRuleEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -21,14 +23,50 @@ abstract class TrackDatabase: RoomDatabase() {
     abstract val trackDao: TrackDao
     abstract val locationDao: LocationDao
     abstract val sessionDao: SessionDao
+    abstract val observerEventDao: ObserverEventDao
+    abstract val allowlistRuleDao: AllowlistRuleDao
 
     companion object {
         @Volatile
         var INSTANCE: TrackDatabase? = null
 
+        private val MIGRATION_2_3 = object: Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `observer_event` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `packageName` TEXT NOT NULL,
+                        `activityName` TEXT,
+                        `eventType` TEXT NOT NULL,
+                        `firstSeenAt` INTEGER NOT NULL,
+                        `lastSeenAt` INTEGER NOT NULL,
+                        `textSummary` TEXT,
+                        `repeatCount` INTEGER NOT NULL DEFAULT 1,
+                        `treeSnapshot` TEXT,
+                        `truncationMetadata` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `allowlist_rule` (
+                        `id` TEXT NOT NULL PRIMARY KEY,
+                        `matchType` TEXT NOT NULL,
+                        `pattern` TEXT NOT NULL,
+                        `enabled` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_packageName` ON `observer_event` (`packageName`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_lastSeenAt` ON `observer_event` (`lastSeenAt`)")
+            }
+        }
+
         private val MIGRATION_1_2 = object: Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `location_log` (
                         `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -42,7 +80,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                database.execSQL(
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `recording_session` (
                         `id` TEXT NOT NULL,
@@ -58,10 +96,34 @@ abstract class TrackDatabase: RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                database.execSQL("ALTER TABLE `track` ADD COLUMN `startLocationId` INTEGER")
-                database.execSQL("ALTER TABLE `track` ADD COLUMN `endLocationId` INTEGER")
 
-                val cursor = database.query("SELECT `idx`, `timestamp`, `duration`, `pathPoints` FROM `track`")
+                // Migration for 'track' table to handle 'distance' type mismatch (REAL -> INTEGER)
+                // and add new columns 'startLocationId' and 'endLocationId'.
+                db.execSQL(
+                    """
+                    CREATE TABLE `track_new` (
+                        `idx` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        `distance` INTEGER NOT NULL,
+                        `duration` INTEGER NOT NULL,
+                        `pathPoints` TEXT NOT NULL,
+                        `startLocationId` INTEGER,
+                        `endLocationId` INTEGER
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT INTO `track_new` (`idx`, `timestamp`, `distance`, `duration`, `pathPoints`)
+                    SELECT `idx`, `timestamp`, CAST(`distance` AS INTEGER), `duration`, `pathPoints` FROM `track`
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE `track`")
+                db.execSQL("ALTER TABLE `track_new` RENAME TO `track`")
+
+                val cursor = db.query("SELECT `idx`, `timestamp`, `duration`, `pathPoints` FROM `track`")
                 try {
                     while (cursor.moveToNext()) {
                         val trackId = cursor.getInt(0)
@@ -80,7 +142,7 @@ abstract class TrackDatabase: RoomDatabase() {
                         }
 
                         points.forEachIndexed { index, point ->
-                            database.execSQL(
+                            db.execSQL(
                                 """
                                 INSERT INTO `location_log` (
                                     `timestamp`,
@@ -94,7 +156,7 @@ abstract class TrackDatabase: RoomDatabase() {
                                 """.trimIndent(),
                                 arrayOf(timestamp + (interval * index), point.first, point.second)
                             )
-                            val insertedId = latestInsertedRowId(database)
+                            val insertedId = latestInsertedRowId(db)
                             if (startLocationId == null) startLocationId = insertedId
                             endLocationId = insertedId
                         }
@@ -102,7 +164,7 @@ abstract class TrackDatabase: RoomDatabase() {
                         val migratedStartLocationId = startLocationId
                         val migratedEndLocationId = endLocationId
                         if (migratedStartLocationId != null && migratedEndLocationId != null) {
-                            database.execSQL(
+                            db.execSQL(
                                 "UPDATE `track` SET `startLocationId` = ?, `endLocationId` = ? WHERE `idx` = ?",
                                 arrayOf(migratedStartLocationId, migratedEndLocationId, trackId)
                             )
@@ -142,7 +204,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 return instance
