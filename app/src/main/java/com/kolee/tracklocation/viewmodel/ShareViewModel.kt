@@ -1,8 +1,11 @@
 package com.kolee.tracklocation.viewmodel
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,12 +18,15 @@ import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.data.roomdb.TrackDao
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
+import com.kolee.tracklocation.utils.LocationUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class ShareViewModel(
+    private val appContext: Context,
     private val databaseDao: TrackDao,
     private val locationDao: LocationDao,
     private val sessionDao: SessionDao
@@ -57,6 +63,39 @@ class ShareViewModel(
         }
     }
 
+    fun onTripCtaTap() {
+        val current = locationUiState.value
+        viewModelScope.launch {
+            if (current.isTracking && !current.isPaused) {
+                val startId = current.activeTripStartLocationId
+                val endId = current.activeTripEndLocationId
+                if (startId != null && endId != null && endId >= startId) {
+                    insertTrack(
+                        TrackEntity(
+                            timestamp = current.tripStartedAt,
+                            distance = current.distanceInMeters,
+                            duration = current.durationTimer,
+                            pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
+                            startLocationId = startId,
+                            endLocationId = endId
+                        )
+                    )
+                }
+                sendServiceCommand(Actions.STOP_TRIP)
+            } else if (!current.isTracking) {
+                sendServiceCommand(Actions.START_TRIP)
+            }
+            // PAUSED → LIVE resumption requires a RESUME_TRIP service action (future phase)
+        }
+    }
+
+    private fun sendServiceCommand(action: Actions) {
+        Intent(appContext, TrackingService::class.java).also {
+            it.action = action.name
+            ContextCompat.startForegroundService(appContext, it)
+        }
+    }
+
     fun deleteTrack(item: TrackEntity) {
         viewModelScope.launch {
             databaseDao.deleteTrack(item)
@@ -89,6 +128,7 @@ class ShareViewModel(
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TrackApp)
                 ShareViewModel(
+                    appContext = application.applicationContext,
                     databaseDao = application.databaseDao,
                     locationDao = application.locationDao,
                     sessionDao = application.sessionDao

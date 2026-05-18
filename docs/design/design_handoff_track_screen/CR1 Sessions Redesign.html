@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TrackLocation — CR#1 Sessions screen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #efece4; font-family: 'Roboto', system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="cr1-shared.jsx"></script>
+  <script type="text/babel" src="screen-sessions-idle.jsx"></script>
+  <script type="text/babel" src="screen-sessions-active.jsx"></script>
+  <script type="text/babel" src="screen-list-updated-nav.jsx"></script>
+  <script type="text/babel" src="screen-track.jsx"></script>
+
+  <script type="text/babel">
+    function ArtboardCanvas({ children, bg = '#e8eae6' }) {
+      return (
+        <div style={{
+          width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+          background: bg, borderRadius: 18, padding: 20,
+        }}>{children}</div>
+      );
+    }
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection
+            id="cr1"
+            title="CR#1 — Sessions screen (switch lives here, not on List)"
+            subtitle="Built in the existing List screen visual language. 4-tab bottom nav: Session · List · Track · Settings."
+          >
+            <DCArtboard id="sessions-idle" label="Sessions — Idle / empty" width={420} height={860}>
+              <div data-screen-label="Sessions — Idle"><ArtboardCanvas><SessionsIdle /></ArtboardCanvas></div>
+            </DCArtboard>
+
+            <DCArtboard id="sessions-active" label="Sessions — Recording, with history" width={420} height={860}>
+              <div data-screen-label="Sessions — Recording"><ArtboardCanvas><SessionsActive /></ArtboardCanvas></div>
+            </DCArtboard>
+
+            <DCArtboard id="list-updated" label="List — unchanged, with new 4-tab nav" width={420} height={860}>
+              <div data-screen-label="List — 4-tab nav"><ArtboardCanvas><ListUpdatedNav /></ArtboardCanvas></div>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="track"
+            title="Track screen — translucent glass panel"
+            subtitle="Map shows through behind the panel. Brand-green CTA, monospace timer, design-system metrics. Three states: Ready, Live, Paused."
+          >
+            <DCArtboard id="track-ready" label="Track — Ready for trip" width={420} height={860}>
+              <div data-screen-label="Track — Ready"><ArtboardCanvas><TrackScreen panelState="ready" /></ArtboardCanvas></div>
+            </DCArtboard>
+
+            <DCArtboard id="track-live" label="Track — Trip in progress" width={420} height={860}>
+              <div data-screen-label="Track — Live"><ArtboardCanvas><TrackScreen panelState="live" /></ArtboardCanvas></div>
+            </DCArtboard>
+
+            <DCArtboard id="track-paused" label="Track — Trip paused" width={420} height={860}>
+              <div data-screen-label="Track — Paused"><ArtboardCanvas><TrackScreen panelState="paused" /></ArtboardCanvas></div>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

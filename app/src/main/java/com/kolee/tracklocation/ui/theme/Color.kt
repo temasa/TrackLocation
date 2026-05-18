@@ -37,6 +37,18 @@ val TripBlue = Color(0xFF2563EB)
 val TripGold = Color(0xFFF59E0B)
 val TripTertiary = Color(0xFF7C3AED)
 
+// Track screen glass panel tokens
+val BrandGreen = Color(0xFF22C55E)             // CTA button background
+val BrandGreenDark = Color(0xFF0A2218)          // glyph ink on brand-green
+val PanelBg = Color(0x7A143026)                 // rgba(20,48,38,0.48) — API 31+ (map shows through)
+val PanelBgFallback = Color(0xC7143026)         // rgba(20,48,38,0.78) — pre-API31 (no blur)
+val PanelBorder = Color(0x1FFFFFFF)             // rgba(255,255,255,0.12)
+val PanelTextPrimary = Color(0xFFFFFFFF)
+val PanelTextSecondary = Color(0xC7FFFFFF)      // rgba(255,255,255,0.78)
+val PanelTextTertiary = Color(0x73FFFFFF)       // rgba(255,255,255,0.45)
+val StatusPaused = Color(0xFFF5A524)            // amber dot
+val MapFabBg = Color(0xEBFFFFFF)                // rgba(255,255,255,0.92)
+
 // Observer color tokens (additions per OBSERVER_PHASE1_SPEC.md)
 val ObserverRed = Color(0xFFDC2626)
 val ObserverRedDark = Color(0xFF991B1B)

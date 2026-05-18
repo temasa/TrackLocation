@@ -8,6 +8,33 @@ This is the single active status/progress file in the simplified documentation s
 
 ---
 
+### 2026-05-19 Track Screen — Glass panel + brand-green CTA redesign
+
+- Branch: `codex`
+- Task: Replace solid dark panel + purple play button with translucent glass panel + brand-green CTA. Three trip states (READY/LIVE/PAUSED). Map visible through panel. Spec: `docs/design/design_handoff_track_screen/TRACK_SCREEN_SPEC.md`
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files created:
+  - `screens/track/TripState.kt` — `TripState` enum + `TrackPanelState` data class
+  - `screens/track/components/TripPanel.kt` — glass panel composable (eyebrow, timer, CTA, stats)
+  - `screens/track/components/MapControls.kt` — floating recenter + layers FABs
+- Files edited:
+  - `ui/theme/Color.kt` — added BrandGreen, BrandGreenDark, PanelBg, PanelBgFallback, PanelBorder, PanelTextPrimary/Secondary/Tertiary, StatusPaused, MapFabBg
+  - `ui/theme/Type.kt` — added MonospaceFontFamily (FontFamily.Monospace / Roboto Mono)
+  - `tracking/LocationUiState.kt` — added isPaused: Boolean = false
+  - `viewmodel/ShareViewModel.kt` — added appContext, onTripCtaTap(), sendServiceCommand()
+  - `screens/track/TrackScreen.kt` — wired TripPanel + MapControls, removed duplicated service-call logic
+- Build run: Not run (explicit permission required per AGENTS.md)
+- Tests run: None
+- Known limitations:
+  - Backdrop blur (28dp) is approximated via graphicsLayer RenderEffect on API 31+; this blurs the panel element itself (soft edges), not the true map content behind it. True per-composable backdrop blur requires custom rendering not available in Compose 1.2.0. Pre-API-31 uses 0.78 opacity fallback.
+  - MonospaceFontFamily uses FontFamily.Monospace (Roboto Mono). JetBrains Mono can be added by including `ui-text-google-fonts` dependency and configuring a GoogleFont.Provider.
+  - PAUSED state is displayable (isPaused=true in LocationUiState) but cannot be triggered via onTripCtaTap() yet — requires a PAUSE_TRIP/RESUME_TRIP action in TrackingService (future phase).
+- Suggested commit message: `feat(track): glass panel + brand-green CTA, three-state UI (READY/LIVE/PAUSED)`
+
+---
+
 ### 2026-05-19 Observer — Smooth resume with relative scroll offset
 
 - Branch: `codex`

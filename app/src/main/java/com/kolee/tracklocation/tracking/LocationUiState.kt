@@ -9,6 +9,7 @@ data class LocationUiState(
     val durationTimer: Long = 0L, //String = "00:00:00",
     val speedInKMH: Float = 0f,
     val isTracking: Boolean = false,
+    val isPaused: Boolean = false,
     val isAlwaysRecording: Boolean = false,
     val tripStartedAt: Long = 0L,
     val activeTripStartLocationId: Long? = null,
