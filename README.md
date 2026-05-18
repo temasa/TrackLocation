@@ -1,54 +1,60 @@
-# TrackLocation Documentation Source of Truth
+# TrackLocation Simplified Documentation
 
-Refactored on: 2026-05-16 13:52:51 +07:00
+Updated from latest uploaded docs: 2026-05-16 21:05:00 +07:00
 
-This documentation set reorganizes the existing TrackLocation documents so product changes, architecture decisions, UI requirements, implementation tasks, and source-code edits are easier to control.
+This package simplifies the active documentation into four living docs plus AI-agent instructions.
 
-## Source-of-truth hierarchy
-
-1. `docs/product/` — stable product behavior and locked PRD rules.
-2. `docs/change-requests/` — chronological product changes, impact analysis, and acceptance state.
-3. `docs/architecture/` — current accepted technical structure after accepted CRs are absorbed.
-4. `docs/ui/` — current and planned screen specifications.
-5. `docs/implementation/` — rollout plan, source-code change manifest, migrations, and test obligations.
-6. `docs/status/` — historical progress and status reports. Do not treat this as the primary source of truth.
-7. `docs/archive/original/` — unchanged original uploads preserved for audit and comparison.
-
-## Rule for future CRs
-
-Every accepted CR must update these layers in order:
+## Active files
 
 ```text
-CR document
-  -> architecture docs if behavior/model/navigation changes
-  -> UI docs if screens/interactions change
-  -> implementation source-change manifest
-  -> migration/test plans if required
-  -> status/progress after the work is completed
+AGENTS.md
+CLAUDE.md
+docs/product-spec.md
+docs/change-requests.md
+docs/implementation-plan.md
+docs/progress.md
 ```
 
-## Current baseline after refactor
+## Purpose of each file
 
-The accepted CR#1 baseline is:
+| File | Purpose |
+|---|---|
+| `docs/product-spec.md` | Current accepted product, navigation, UI, data, and planned Observer behavior |
+| `docs/change-requests.md` | Chronological CR history and accepted behavioral changes |
+| `docs/implementation-plan.md` | Two-track implementation plan: code handoff and UI/design handoff |
+| `docs/progress.md` | What has been done, current status, verification state, and next steps |
+| `AGENTS.md` | Stable rules for Codex, Claude Code, Cursor, Windsurf, and other coding agents |
+| `CLAUDE.md` | Claude Code wrapper that imports `AGENTS.md` |
 
-* Main bottom navigation: `Session / List / Track / Settings`.
-* Sessions are always-recorded ON-to-OFF location ranges.
-* Trips are explicit ranges over a canonical append-only location log.
-* Observer remains a planned feature from the Accessibility Observer PRD and requires a later navigation integration decision.
+## Archived original upload
 
-## Start here
+The latest uploaded detailed docs are preserved under:
 
-* Product overview: `docs/product/product-baseline.md`
-* Current navigation truth: `docs/architecture/navigation.md`
-* Current data model truth: `docs/architecture/data-model.md`
-* Source-code change control: `docs/implementation/source-change-manifest.md`
-* Current UI truth: `docs/ui/screen-specification.md`
+```text
+docs/archive/latest-upload/
+```
 
+Do not treat archived files as active source of truth unless explicitly needed for audit/comparison.
 
+## Current accepted baseline
 
-## Inspiration
+The current app baseline is:
 
-https://youtu.be/LND9Cjc7CRM
+```text
+Session / List / Track / Settings
+```
 
+Current accepted CRs:
 
+- CR-0001: Always-recorded Location Sessions.
+- CR-0002: Session always-recording switch as the single control surface.
 
+## Latest implementation state
+
+- CR-0001 has been implemented in source as of 2026-05-16 18:30:39 +07:00.
+- CR-0002 has been implemented in source as of 2026-05-16 21:05:00 +07:00.
+- CR-0001 and CR-0002 have now been verified by the user and are working as expected.
+
+## Recommended next action
+
+Proceed to the next planned implementation after confirming the Observer navigation decision in `docs/implementation-plan.md`.

@@ -1,14 +1,12 @@
 @AGENTS.md
 
-# Claude Code Notes
+## Claude Code Notes
 
-Use the imported `AGENTS.md` as the canonical project instruction source.
+Use `AGENTS.md` as the canonical project instruction source.
 
 For implementation work:
-
-- Read the required docs before editing code.
-- Treat `docs/implementation/source-change-manifest.md` as the source-code change contract.
-- Update `docs/status/status_report.txt` before source changes.
-- Update `docs/status/progress.md` after source-code changes.
-- Do not run builds, full tests, emulators, or device runs without explicit user permission.
-- Do not implement unrelated planned phases unless explicitly requested.
+- read the active simplified docs first
+- use `docs/implementation-plan.md` as the implementation contract
+- update `docs/progress.md` before and after source-code changes
+- do not run Gradle, tests, emulator, or device verification without explicit user permission
+- do not implement unrelated future phases unless explicitly requested

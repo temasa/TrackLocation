@@ -8,7 +8,7 @@ Use this file for long-lived project rules. Put the current task, change request
 
 ## Project Context
 
-TrackLocation is an Android Jetpack Compose application evolving from a GPS trip tracker into a broader driver utility with:
+TrackLocation is an Android Jetpack Compose app evolving from a GPS trip tracker into a broader driver utility with:
 
 - GPS trip tracking
 - Always-recorded location sessions
@@ -18,6 +18,41 @@ TrackLocation is an Android Jetpack Compose application evolving from a GPS trip
 - Future registration and face-first authentication
 
 The existing GPS tracking feature must remain intact unless the active task or accepted change request explicitly changes it.
+
+## Active Documentation Source of Truth
+
+Use the simplified active docs:
+
+1. `README.md`
+2. `docs/product-spec.md`
+3. `docs/change-requests.md`
+4. `docs/implementation-plan.md`
+5. `docs/progress.md`
+
+Archived detailed docs live under:
+
+```text
+docs/archive/latest-upload/
+```
+
+The archive is historical/reference material only. Do not implement from archived files unless explicitly instructed.
+
+## Authority Rules
+
+For implementation tasks:
+
+- `docs/change-requests.md` is the accepted CR history.
+- `docs/product-spec.md` is the current accepted product/UI/navigation/data baseline.
+- `docs/implementation-plan.md` is the implementation contract.
+- `docs/progress.md` records what actually happened and what remains pending.
+
+If documents conflict:
+
+1. Prefer the active CR section in `docs/change-requests.md` for task-specific behavior.
+2. Prefer `docs/product-spec.md` for current accepted baseline.
+3. Prefer `docs/implementation-plan.md` for concrete source-code and UI/design handoff work.
+4. Treat `docs/archive/latest-upload/*` as lower-priority historical reference.
+5. If still unclear, document the conflict in `docs/progress.md` and make the smallest safe change.
 
 ## Tool Usage Modes
 
@@ -34,75 +69,28 @@ Implementation changes should be left for Codex CLI or another code-editing agen
 
 ### Codex CLI / Code-Editing Agents
 
-Use Codex CLI, Claude Code, Cursor, Windsurf, or another code-editing agent for actual repository modifications.
+Use Codex CLI, Claude Code, Cursor, Windsurf, or another code-editing agent for repository modifications.
 
-Whenever an instruction, task, plan, or change request modifies, creates, deletes, or migrates code files, follow the documentation and progress workflow in this file.
+Whenever an instruction, task, plan, or CR modifies, creates, deletes, or migrates code files, follow the progress workflow below.
 
-## Documentation Source of Truth
+## Progress Tracking
 
-The active documentation is under `docs/`.
+Use `docs/progress.md` as the single progress file.
 
-Read documentation in this order before implementation:
+Before source-code changes:
 
-1. `docs/README.md` or root `README.md` if present
-2. `docs/INDEX.md`
-3. `docs/product/product-baseline.md`
-4. Relevant files in `docs/change-requests/`
-5. `docs/architecture/navigation.md`
-6. `docs/architecture/data-model.md`
-7. `docs/architecture/app-architecture.md`
-8. `docs/ui/screen-specification.md`
-9. `docs/ui/ui-implementation-plan.md`
-10. `docs/implementation/source-change-manifest.md`
-11. `docs/implementation/migration-plan.md`
-12. `docs/implementation/test-plan.md`
-13. `docs/status/status_report.txt`
-14. `docs/status/progress.md`
-
-If a listed file does not exist, continue with the available files and document the missing file only if it affects the task.
-
-## Authority Rules
-
-For implementation tasks:
-
-- `docs/implementation/source-change-manifest.md` is the source-code change contract.
-- Relevant files in `docs/change-requests/` are the requirement source for accepted change requests.
-- `docs/architecture/*.md` files describe the current accepted architecture.
-- `docs/ui/*.md` files describe current and planned UI behavior.
-- `docs/status/*` files are historical/status logs.
-- `docs/archive/original/*` is historical reference only. Do not implement from archived files unless explicitly instructed.
-
-If documents conflict:
-
-1. Prefer the relevant accepted change request for task-specific behavior.
-2. Prefer architecture docs for current system structure.
-3. Prefer the source-change manifest for concrete source file changes.
-4. Treat archived docs as lower priority.
-5. If still unclear, document the conflict in `docs/status/status_report.txt` and make the smallest safe implementation.
-
-## Mandatory Workflow Before Code Changes
-
-Before creating, editing, deleting, or migrating source code files:
-
-1. Read the relevant source-of-truth documents.
-2. Check `docs/implementation/source-change-manifest.md`.
-3. If the source-change manifest does not include a needed file change, update the manifest first.
-4. Update `docs/status/status_report.txt`.
-5. Record:
+1. Update `## Current Session`.
+2. Record:
    - start timestamp
-   - task goal in short and concise form
-   - expected affected files
-   - current status: `In Progress`
+   - task goal
+   - expected files
+   - status: `In Progress`
+3. If the implementation plan does not include the required source changes, update `docs/implementation-plan.md` before code edits.
 
-Do not start code edits before the status report is updated.
+After source-code changes:
 
-## Mandatory Workflow After Code Changes
-
-After implementation:
-
-1. Update `docs/status/status_report.txt`.
-2. If source code changed, update `docs/status/progress.md`.
-3. Record:
+1. Move the completed session into `## Task Log`.
+2. Record:
    - end timestamp
    - final status: `Done`, `Partially Done`, or `Blocked`
    - files created
@@ -114,22 +102,10 @@ After implementation:
    - tests not run and why
    - known remaining issues
    - concise suggested commit message
+3. Clear or reset `## Current Session`.
+4. Remind the user to make a git commit before starting another task.
 
-When listing affected or created code files, include a brief inline comment:
-
-```text
-app/src/main/java/.../ExampleFile.kt // Added repository method for session ranges.
-```
-
-After completing a task, remind the user to make a git commit before starting another task.
-
-## Progress Tracking Rules
-
-Use `docs/status/status_report.txt` for the active task status.
-
-Use `docs/status/progress.md` for session-level historical progress only when source code changed.
-
-If the task only changes documentation and does not touch code, do not add a source-code progress entry unless the user explicitly asks.
+If the task only changes documentation and does not touch source code, do not add a source-code progress entry unless the user explicitly asks.
 
 ## Build, Test, and Emulator Rules
 
@@ -146,96 +122,57 @@ This includes commands such as:
 
 The user's laptop can be slow and resource constrained. Always ask permission before running heavy build, test, emulator, or device commands.
 
-You may perform lightweight static inspection, file reads, grep/search, and small local edits without asking, unless the user has instructed otherwise.
+Lightweight static inspection, file reads, grep/search, and small local edits are allowed unless the user instructs otherwise.
 
-If a build, test, or emulator run is not performed, document this clearly in `docs/status/status_report.txt` under "Tests not run / Verification not run".
+If a build, test, or emulator run is not performed, document this clearly in `docs/progress.md`.
 
 ## Code Change Rules
 
 - Keep existing GPS tracking behavior working unless the active CR explicitly changes it.
 - Do not remove existing features unless a CR explicitly says so.
 - Keep Compose + Material3 as the UI direction.
-- Keep navigation consistent with `docs/architecture/navigation.md`.
-- Keep the data model consistent with `docs/architecture/data-model.md`.
+- Keep navigation consistent with `docs/product-spec.md`.
+- Keep data model behavior consistent with `docs/product-spec.md`.
 - Use Room migrations for database schema changes.
-- Do not silently change schema without updating migration docs and tests.
+- Do not silently change schema without updating implementation docs and tests.
 - Keep business logic out of Compose UI where practical.
 - Keep data access behind repositories or data source abstractions where practical.
 - Do not hardcode secrets, connection strings, credentials, or API keys.
 - Do not implement unrelated future phases unless explicitly requested.
 
-## Change Request Implementation Rules
+## Two-Track Work Model
 
-For every change request:
+For every CR or implementation phase, distinguish:
 
-1. Read the CR document first.
-2. Read the impact sections:
-   - product behavior
-   - navigation
-   - UI
-   - data model
-   - migration
-   - source-code impact
-   - tests
-3. Update the source-change manifest before implementation if needed.
-4. Implement only the current CR scope unless instructed otherwise.
-5. Do not implement future planned phases accidentally.
-6. Update status docs before and after implementation.
+1. Code implementation work — for Codex / Claude Code / Cursor.
+2. UI specification/design handoff work — for Claude Design / Google Stitch / Figma.
 
-## Testing Rules
+Do not mix design-only handoff instructions with source-code implementation unless explicitly requested.
 
-When permission is granted to run verification, prefer the smallest meaningful verification first.
+### UI Screenshot Attachment Rule (Always Follow)
 
-Recommended order:
+When producing or updating any UI specification/design handoff (including prompts for Google Stitch, Figma, Claude Design, or similar), always suggest which current-app screenshots the user should attach to preserve the app's visual language and interaction patterns.
 
-1. Static/code inspection
-2. Unit tests for changed logic
-3. Room migration tests if schema changed
-4. `:app:compileDebugKotlin`
-5. `:app:testDebugUnitTest`
-6. `:app:assembleDebug`
+Guidance:
 
-If a test/build cannot be run because of machine limits, timeouts, missing SDK, or user instruction, document it clearly in `docs/status/status_report.txt`.
+- Prefer screenshots that establish baseline styling: bottom navigation, top app bar, list density, cards, typography, and any relevant control surfaces.
+- If a referenced screen is currently empty/minimal, do not request it as a style reference; instead request other screens that reflect the real UI baseline.
+- Tailor the screenshot list to the specific UI change (for example, if changing list behavior, include a representative list screen).
 
 ## CR-0001 Guardrails
 
-When working on CR-0001 Always-recorded Location Sessions:
-
-- Treat always-recorded sessions as separate from trips.
-- Treat the canonical location log as the source of truth for recorded GPS points.
-- Trips should reference location ranges with `startLocationId` and `endLocationId` when the data model migration is implemented.
-- Starting a trip may start always-recording if it is not already active.
-- Stopping a trip must not stop always-recording.
+- Sessions are separate from trips.
+- The canonical location log is the source of truth for GPS points.
+- Trips reference location ranges with `startLocationId` and `endLocationId`.
+- Starting a trip while always-recording is OFF auto-starts always-recording.
+- Stopping a trip does not stop always-recording.
 - Deleting a trip must not delete canonical location history.
-- Keep current navigation aligned with the accepted CR navigation unless a later CR supersedes it.
 
-## Accessibility Observer Guardrails
+## CR-0002 Guardrails
 
-When working on the Accessibility Observer feature:
-
-- Capture all packages except the configurable denylist.
-- Package filtering is a UI concern, not a capture-layer allowlist.
-- Do not associate observed events with users; events are device-level.
-- Do not delete unsynced local events.
-- Keep sync logic behind `RemoteDataSource`.
-- Do not put Neon logic directly in Compose UI, ViewModels, or the accessibility service.
-- Keep JSON viewer full-screen when implemented because snapshots can be large.
-
-## Auth and Privacy Guardrails
-
-When working on registration, face enrollment, authentication, or re-authentication:
-
-- Do not transmit raw face images.
-- Face authentication is primary after registration.
-- Google SSO is fallback only after face auth fails or cannot run.
-- Auth gates UI access only; GPS tracking, accessibility capture, and sync must continue in the background.
-- Do not show Google SSO as an equal primary login option after registration.
-
-## Suggested Commit Message Format
-
-At the end of each implementation task, provide one concise suggested commit message, for example:
-
-```text
-Implement CR-0001 session navigation baseline
-```
-
+- The Session screen is the primary always-recording control surface.
+- The always-recording switch belongs inside the Session always-recording status area.
+- The List screen remains trip-only and should not expose the always-recording switch.
+- Starting a trip can auto-start always-recording; the Session switch must reflect ON.
+- Stopping a trip does not turn the Session switch OFF.
+- If a trip is active, do not allow the user to turn always-recording OFF unless a future CR changes this rule.
