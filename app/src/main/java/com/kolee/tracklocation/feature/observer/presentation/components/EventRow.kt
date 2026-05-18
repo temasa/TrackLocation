@@ -2,12 +2,12 @@ package com.kolee.tracklocation.feature.observer.presentation.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,7 +44,8 @@ fun EventRow(
     modifier: Modifier = Modifier,
 ) {
     val bg = if (isEven) ObserverCardAlt else Color.White
-    val cd = "${event.packageName}, ${event.activityName ?: ""}, ${event.eventType}, at ${timeFormatter.format(Date(event.timestampMs))}"
+    val timeStr = timeFormatter.format(Date(event.timestampMs))
+    val cd = "${event.packageName}, ${event.activityName ?: ""}, ${event.eventType}, at $timeStr"
 
     Column(
         modifier = modifier
@@ -54,15 +55,14 @@ fun EventRow(
                 onClick = { onTap() },
                 onLongClick = { if (autoScrollPaused) onLongPress() },
             )
-            .padding(horizontal = 18.dp, vertical = 10.dp)
-            .semantics { contentDescription = cd },
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+            .semantics { contentDescription = cd }
+            .padding(horizontal = 10.dp, vertical = 10.dp),
     ) {
-        // Line 1: package · event type chip · timestamp
+        // Line 1: package (weight 1f) + timestamp
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
                 text = event.packageName,
@@ -70,14 +70,14 @@ fun EventRow(
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = FontFamily.Monospace,
                 color = Color(0xFF0A0A0A),
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
                 letterSpacing = (-0.1).sp,
+                lineHeight = (12.5 * 1.3).sp,
             )
-            EventTypeChip(eventType = event.eventType)
             Text(
-                text = timeFormatter.format(Date(event.timestampMs)),
+                text = timeStr,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Normal,
                 fontFamily = FontFamily.Monospace,
@@ -85,31 +85,36 @@ fun EventRow(
             )
         }
 
-        // Line 2: activity/class
+        // Line 2: activity / class — no maxLines cap, wraps freely
         event.activityName?.let { activity ->
+            Spacer(Modifier.height(3.dp))
             Text(
                 text = activity,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Normal,
                 fontFamily = FontFamily.Monospace,
                 color = Color(0xFF737373),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 letterSpacing = (-0.1).sp,
+                lineHeight = (11.5 * 1.4).sp,
             )
         }
 
-        // Line 3: optional text snippet
+        // Line 3: event type chip (left-aligned)
+        Spacer(Modifier.height(6.dp))
+        EventTypeChip(eventType = event.eventType)
+
+        // Line 4 (optional): text snippet
         event.textSummary?.let { snippet ->
+            Spacer(Modifier.height(6.dp))
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = "↳",
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
                     color = Color(0xFFA3A3A3),
+                    modifier = Modifier.alignByBaseline(),
                 )
                 Text(
                     text = "\"$snippet\"",
@@ -118,6 +123,7 @@ fun EventRow(
                     color = Color(0xFF0A0A0A),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.alignByBaseline(),
                 )
             }
         }
@@ -134,48 +140,40 @@ fun EventRow(
 
 @Composable
 fun EventTypeChip(eventType: String, modifier: Modifier = Modifier) {
+    // Strip TYPE_ prefix; the stripped label drives both display and color mapping
+    val label = eventType.removePrefix("TYPE_")
+
     val (bg, fg) = when {
-        eventType.startsWith("TYPE_VIEW_CLICK") ||
-        eventType.startsWith("TYPE_TOUCH") ||
-        eventType.startsWith("TYPE_GESTURE") -> Color(0xFFEEF6FF) to Color(0xFF1D4ED8)
+        label.startsWith("CLICK") || label.startsWith("TOUCH") || label.startsWith("GESTURE") ->
+            Color(0xFFEEF6FF) to Color(0xFF1D4ED8)
 
-        eventType.startsWith("TYPE_VIEW_SCROLL") ||
-        eventType.startsWith("TYPE_VIEW_FOCUS") ||
-        eventType.startsWith("TYPE_VIEW_HOVER") -> Color(0xFFF5F3FF) to Color(0xFF6D28D9)
+        label.startsWith("SCROLL") || label.startsWith("FOCUS") || label.startsWith("HOVER") ->
+            Color(0xFFF5F3FF) to Color(0xFF6D28D9)
 
-        eventType.startsWith("TYPE_VIEW_TEXT") ||
-        eventType.startsWith("TYPE_VIEW_SELECTION") ||
-        eventType.contains("INPUT") -> Color(0xFFFEF7E6) to Color(0xFF92400E)
+        label.startsWith("TEXT") || label.startsWith("SELECTION") || label.startsWith("INPUT") ->
+            Color(0xFFFEF7E6) to Color(0xFF92400E)
 
-        eventType.startsWith("TYPE_WINDOW") ||
-        eventType.startsWith("TYPE_VIEW_CONTENT") ||
-        eventType.contains("STATE") -> Color(0xFFECFDF5) to Color(0xFF047857)
+        label.startsWith("WINDOW") || label.startsWith("CONTENT") || label.startsWith("STATE") ->
+            Color(0xFFECFDF5) to Color(0xFF047857)
 
-        eventType.startsWith("TYPE_ANNOUNCEMENT") ||
-        eventType.startsWith("TYPE_NOTIFICATION") -> Color(0xFFFDF2F8) to Color(0xFF9D174D)
+        label.startsWith("ANNOUNCE") || label.startsWith("NOTIFICATION") ->
+            Color(0xFFFDF2F8) to Color(0xFF9D174D)
 
         else -> Color(0xFFF3F4F6) to Color(0xFF374151)
     }
 
-    // Shorten the type label to fit in the chip
-    val label = eventType
-        .removePrefix("TYPE_")
-        .replace("_", " ")
-        .take(20)
-        .trimEnd()
-
     Box(
         modifier = modifier
-            .background(bg, shape = RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .background(bg, shape = RoundedCornerShape(5.dp))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
     ) {
         Text(
             text = label,
-            fontSize = 10.5.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
             fontFamily = FontFamily.Monospace,
             color = fg,
-            letterSpacing = 0.1.sp,
+            letterSpacing = 0.15.sp,
             maxLines = 1,
         )
     }

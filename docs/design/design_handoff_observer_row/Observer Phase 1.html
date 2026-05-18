@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TrackLocation — Observer Phase 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #e8eae6; font-family: 'Roboto', system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    button { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="observer-shared.jsx"></script>
+  <script type="text/babel" src="screen-settings.jsx"></script>
+  <script type="text/babel" src="screen-observer.jsx"></script>
+  <script type="text/babel" src="sheet-allowlist.jsx"></script>
+
+  <script type="text/babel">
+    function Board({ children, bg = '#e8eae6' }) {
+      return (
+        <div style={{
+          width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+          background: bg, borderRadius: 18, padding: 20,
+        }}>{children}</div>
+      );
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection
+            id="entry"
+            title="Entry path — Settings → Tools → Observer"
+            subtitle="Observer is a Tools entry inside Settings, NOT a bottom-nav tab."
+          >
+            <DCArtboard id="settings" label="Settings — new layout with Tools section" width={420} height={860}>
+              <div data-screen-label="Settings"><Board><ScreenSettings /></Board></div>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="observer"
+            title="Observer Feed — Phase 1 surface"
+            subtitle="Three independent status indicators: Service · Capture · Auto-scroll. Each is shown with both icon AND text."
+          >
+            <DCArtboard id="ob-running" label="A · Service ON, Capture Running, Auto-scroll Running" width={420} height={860}>
+              <div data-screen-label="Observer — Running"><Board><ScreenObserver variant="running" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="ob-disabled" label="B · Service DISABLED (system off)" width={420} height={860}>
+              <div data-screen-label="Observer — Service Disabled"><Board><ScreenObserver variant="service-disabled" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="ob-capture-paused" label="C · Capture PAUSED (no new events stored)" width={420} height={860}>
+              <div data-screen-label="Observer — Capture Paused"><Board><ScreenObserver variant="capture-paused" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="ob-autoscroll-paused" label="D · Auto-scroll PAUSED + transient FAB" width={420} height={860}>
+              <div data-screen-label="Observer — Auto-scroll Paused"><Board><ScreenObserver variant="autoscroll-paused" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="ob-empty" label="E · Empty — no events yet" width={420} height={860}>
+              <div data-screen-label="Observer — Empty"><Board><ScreenObserver variant="empty" /></Board></div>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="allowlist"
+            title="Allowlist — bottom sheet overlay on Observer Feed"
+            subtitle="Compact modal sheet — feed remains visible behind. Closing saves drafts; Apply commits them to future capture."
+          >
+            <DCArtboard id="al-empty" label="F · Allowlist — empty (capturing all packages)" width={420} height={860}>
+              <div data-screen-label="Allowlist — Empty"><Board><ScreenObserverWithAllowlist sheetVariant="empty" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="al-clean" label="G · Allowlist — rules applied (no draft)" width={420} height={860}>
+              <div data-screen-label="Allowlist — Clean"><Board><ScreenObserverWithAllowlist sheetVariant="rules-clean" /></Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="al-draft" label="H · Allowlist — DRAFT changes not applied" width={420} height={860}>
+              <div data-screen-label="Allowlist — Draft"><Board><ScreenObserverWithAllowlist sheetVariant="rules-draft" /></Board></div>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -8,6 +8,21 @@ This is the single active status/progress file in the simplified documentation s
 
 ---
 
+### 2026-05-19 Observer Feed — Event row layout update
+
+- Branch: `codex`
+- Task: Replace single-line "log line" event row with stacked layout per `docs/design/design_handoff_observer_row/OBSERVER_ROW_SPEC.md`
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `feature/observer/presentation/components/EventRow.kt` — full layout rewrite: stacked lines, chip moved to Line 3, type prefix stripped, color mapping against stripped label, no truncation on activity, 2-line max on package, padding/spacing per spec
+- Build run: Not run (explicit permission required per AGENTS.md)
+- Tests run: None
+- Known limitations: No device run; acceptance checklist verified by code inspection only
+
+---
+
 ### 2026-05-19 Track Screen — Glass panel + brand-green CTA redesign
 
 - Branch: `codex`
