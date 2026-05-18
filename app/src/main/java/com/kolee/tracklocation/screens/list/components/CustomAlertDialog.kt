@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CustomAlertDialog(
     title: String,
-    text: String? = null,
     onClick: (isDelete: Boolean) -> Unit
 ) {
     var isShowDialog by remember { mutableStateOf(true) }

@@ -40,6 +40,7 @@ fun EventRow(
     isEven: Boolean,
     autoScrollPaused: Boolean,
     onLongPress: () -> Unit,
+    onTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val bg = if (isEven) ObserverCardAlt else Color.White
@@ -50,7 +51,7 @@ fun EventRow(
             .fillMaxWidth()
             .background(bg)
             .combinedClickable(
-                onClick = {},
+                onClick = { onTap() },
                 onLongClick = { if (autoScrollPaused) onLongPress() },
             )
             .padding(horizontal = 18.dp, vertical = 10.dp)

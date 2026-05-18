@@ -76,12 +76,13 @@ fun ObserverFeedScreen(navController: NavController) {
     // In-memory auto-scroll state — resets to true on screen entry per spec
     var autoScrollRunning by remember { mutableStateOf(true) }
     var showFab by remember { mutableStateOf(false) }
+    var programmaticScroll by remember { mutableStateOf(false) }
 
-    // Drag/scroll → pause auto-scroll
+    // Drag/scroll → pause auto-scroll (ignore programmatic scrolls)
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .collect { isScrolling ->
-                if (isScrolling && autoScrollRunning) {
+                if (isScrolling && autoScrollRunning && !programmaticScroll) {
                     autoScrollRunning = false
                 }
             }
@@ -93,7 +94,9 @@ fun ObserverFeedScreen(navController: NavController) {
         val hasNew = uiState.events.size > prevEventCount.value
         prevEventCount.value = uiState.events.size
         if (hasNew && autoScrollRunning && uiState.events.isNotEmpty()) {
+            programmaticScroll = true
             listState.animateScrollToItem(uiState.events.lastIndex)
+            programmaticScroll = false
         }
     }
 
@@ -246,6 +249,7 @@ fun ObserverFeedScreen(navController: NavController) {
                             isEven = index % 2 == 0,
                             autoScrollPaused = !autoScrollRunning,
                             onLongPress = { viewModel.copyToClipboard(event) },
+                            onTap = tapListToggle,
                         )
                     }
                 }
@@ -258,7 +262,9 @@ fun ObserverFeedScreen(navController: NavController) {
             onClick = {
                 coroutineScope.launch {
                     if (uiState.events.isNotEmpty()) {
+                        programmaticScroll = true
                         listState.animateScrollToItem(uiState.events.lastIndex)
+                        programmaticScroll = false
                     }
                 }
                 showFab = false

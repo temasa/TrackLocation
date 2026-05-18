@@ -8,6 +8,71 @@ This is the single active status/progress file in the simplified documentation s
 
 ---
 
+### 2026-05-19 Observer — Fix FAB click pausing auto-scroll
+
+- Branch: `codex`
+- Task: When tapping the list resumes auto-scroll, clicking the FAB immediately re-pauses it because `animateScrollToItem` triggers `isScrollInProgress`, which the scroll detector interprets as a user drag
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — added `programmaticScroll` flag; both `animateScrollToItem` call sites (FAB + new-event auto-scroll) set it true/false around the scroll; scroll detector skips pausing when flag is set
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL, 0 errors, 0 warnings
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `fix(observer): prevent FAB-triggered scroll from pausing auto-scroll`
+
+---
+
+### 2026-05-19 Observer — Fix list tap not resuming auto-scroll
+
+- Branch: `codex`
+- Task: When auto-scroll is paused, tapping an event row should resume it, but the row's `combinedClickable(onClick = {})` consumed the tap before it reached the LazyColumn's `detectTapGestures` listener
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `feature/observer/presentation/components/EventRow.kt` — added `onTap: () -> Unit` parameter; replaced empty `onClick = {}` with `onClick = { onTap() }`
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — passed `onTap = tapListToggle` to `EventRow` at the `itemsIndexed` call site
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL, 0 errors, 0 warnings
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `fix(observer): forward row tap to auto-scroll toggle so paused list resumes on tap`
+
+---
+
+### 2026-05-19 Observer — Fix service status always showing "Enabled"
+
+- Branch: `codex`
+- Task: Observer screen ServiceBanner always showed "Enabled" because `AccessibilityManager.isEnabled` returns true when **any** accessibility service is on, not specifically ours
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `feature/observer/presentation/viewmodel/ObserverViewModel.kt` — added `isOurServiceEnabled()` helper using `getEnabledAccessibilityServiceList(FEEDBACK_ALL_MASK)` filtered by `context.packageName` + `ObserverAccessibilityService::class.java.name`; replaced `am.isEnabled` poll with `isOurServiceEnabled()`; added imports for `AccessibilityServiceInfo` and `ObserverAccessibilityService`
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL, 0 errors, 0 warnings
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `fix(observer): check specific service enabled state instead of global accessibility flag`
+
+---
+
+### 2026-05-19 Build clean-up — fix all compiler warnings
+
+- Branch: `codex`
+- Task: Fix all 6 Kotlin compiler warnings reported by `./gradlew assembleDebug`
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `observer/ObserverAccessibilityService.kt` — removed redundant `?: return null` on non-nullable `event.text`
+  - `screens/details/DetailsScreen.kt` — removed unused `modifier` parameter; removed unused `selectedTrackState` variable
+  - `screens/list/components/CustomAlertDialog.kt` — removed unused `text` parameter
+  - `screens/settings/SettingsScreen.kt` — removed unused `isLast` parameter; removed all `isLast = true` call-site arguments (3 call sites)
+  - `screens/track/components/TrackMap.kt` — removed unused `modifier` parameter
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL (39s), 0 errors, 0 warnings
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Suggested commit message: `chore: fix all compiler warnings — remove unused params and variables`
+
+---
+
 ### 2026-05-18 Fix Black Screen — Wire NavGraph into MainActivity
 
 - Branch: `codex`
@@ -168,6 +233,23 @@ Scope decision:
 - Accepted scope detail (2026-05-18): automatic retention is allowed (no user-facing clear/delete). Recommended: keep most recent 7 days or 50,000 rows (whichever is smaller).
 
 ## Task Log
+
+### 2026-05-19 Observer Phase 1 — Service + Manifest (final missing pieces)
+
+- Branch: `codex`
+- Task: Create `ObserverAccessibilityService.kt`, `accessibility_service_config.xml`, and register service in `AndroidManifest.xml`
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done (static inspection complete; Gradle build not run per AGENTS.md)
+- Files created:
+  - `app/src/main/java/com/kolee/tracklocation/observer/ObserverAccessibilityService.kt` — `AccessibilityService` subclass; captures `TYPE_WINDOW_STATE_CHANGED` and `TYPE_WINDOW_CONTENT_CHANGED`; content-changed collapse using text-summary signature; allowlist filtering from DB (EXACT/REGEX, case-sensitive, substring match, fail-closed on bad regex, empty rules = capture all); pause-state check via `ObserverPreferencesDataStore`; automatic retention (7 days / 50k rows); CoroutineScope torn down in `onDestroy`
+  - `app/src/main/res/xml/accessibility_service_config.xml` — `typeWindowStateChanged|typeWindowContentChanged`, `feedbackGeneric`, `flagDefault`, `canRetrieveWindowContent=true`, 100 ms timeout
+- Files edited:
+  - `app/src/main/AndroidManifest.xml` — added `<service>` declaration with `android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"`, intent-filter action `android.accessibilityservice.AccessibilityService`, and meta-data referencing `@xml/accessibility_service_config`
+- Tests run: None (requires explicit user permission per AGENTS.md)
+- Build run: Not run
+- Known remaining: user must enable the service in Android Settings → Accessibility → TrackLocation Observer
+- Suggested commit message: `feat(observer): add ObserverAccessibilityService, config XML, and manifest registration`
 
 ### 2026-05-19 Build Fix — ModalBottomSheet + stickyHeader opt-in
 

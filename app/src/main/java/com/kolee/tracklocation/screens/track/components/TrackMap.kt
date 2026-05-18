@@ -32,7 +32,6 @@ private const val TAG = "TrackMap"
 
 @Composable
 fun BoxScope.TrackMap(
-    modifier: Modifier = Modifier,
     currentLocation: LatLng,
     pathPoints: List<LatLng>
 ) {

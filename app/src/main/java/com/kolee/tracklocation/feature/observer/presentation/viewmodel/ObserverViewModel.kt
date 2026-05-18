@@ -3,7 +3,9 @@ package com.kolee.tracklocation.feature.observer.presentation.viewmodel
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityManager
+import com.kolee.tracklocation.observer.ObserverAccessibilityService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -52,7 +54,7 @@ class ObserverViewModel(
         // Poll service enabled state every second
         viewModelScope.launch {
             while (true) {
-                _uiState.update { it.copy(serviceEnabled = am.isEnabled) }
+                _uiState.update { it.copy(serviceEnabled = isOurServiceEnabled()) }
                 delay(1_000)
             }
         }
@@ -173,6 +175,14 @@ class ObserverViewModel(
         val scope = if (enabled.isEmpty()) AllowlistScope.AllPackages
                     else AllowlistScope.FilteredCount(enabled.size, rules.size)
         _uiState.update { it.copy(scope = scope) }
+    }
+
+    private fun isOurServiceEnabled(): Boolean {
+        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        return enabled.any {
+            it.resolveInfo.serviceInfo.packageName == context.packageName &&
+            it.resolveInfo.serviceInfo.name == ObserverAccessibilityService::class.java.name
+        }
     }
 
     companion object {

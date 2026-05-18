@@ -13,7 +13,6 @@ import com.kolee.tracklocation.viewmodel.ShareViewModel
 
 @Composable
 fun DetailsScreen(
-    modifier: Modifier = Modifier,
     trackIdx: Int,
     onNavigateUp: () -> Unit
 ) {
@@ -21,7 +20,6 @@ fun DetailsScreen(
         factory = ShareViewModel.Factory
     )
 
-    val selectedTrackState = viewModel.selectedTrackState
     val selectedTrackPathPoints = viewModel.selectedTrackPathPoints
 
     LaunchedEffect(key1 = trackIdx) {

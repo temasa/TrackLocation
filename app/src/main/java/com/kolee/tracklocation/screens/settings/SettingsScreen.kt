@@ -74,7 +74,6 @@ fun SettingsScreen(navController: NavController? = null) {
                     label = "Location permission",
                     value = "Granted while in use",
                     iconId = R.drawable.baseline_location_on_24,
-                    isLast = true,
                     onClick = {},
                 )
             }
@@ -87,7 +86,6 @@ fun SettingsScreen(navController: NavController? = null) {
                     label = "Observer",
                     supporting = "Inspect accessibility events captured by the service",
                     iconId = R.drawable.ic_session_signal,
-                    isLast = true,
                     onClick = { navController?.navigate(Screen.ObserverFeedScreen.route) },
                 )
             }
@@ -100,7 +98,6 @@ fun SettingsScreen(navController: NavController? = null) {
                     label = "About TrackLocation",
                     value = "Version 1.6.2",
                     iconId = R.drawable.baseline_adjust_24,
-                    isLast = true,
                     onClick = {},
                 )
             }
@@ -154,7 +151,6 @@ private fun SettingsRow(
     supporting: String? = null,
     value: String? = null,
     iconId: Int,
-    isLast: Boolean = false,
     onClick: () -> Unit,
 ) {
     val cd = if (supporting != null) "$label, $supporting" else label
