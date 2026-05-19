@@ -8,6 +8,66 @@ _None — last task completed._
 
 ---
 
+### 2026-05-19 Observer Phase 1 Step 4 — tree snapshot DFS in ObserverAccessibilityService
+
+- Branch: `codex`
+- Task: `treeSnapshot` and `truncationMetadata` fields existed in `ObservedEventEntity` but were always written as `null`. Implemented bounded DFS traversal in `ObserverAccessibilityService` to populate them.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done (static inspection)
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/observer/ObserverAccessibilityService.kt` — added `captureTreeSnapshot(event)` private method: DFS via explicit stack from `event.source`; collects text, contentDescription, className, isClickable, isEditable, isEnabled, bounds per node; limits: 200 nodes, depth 10, 300 chars/text field, 40 KB JSON cap; recycles every `AccessibilityNodeInfo` after use; returns `(snapshotJson, truncationMetadataJson)` where truncation JSON records `reason` (node_limit / depth_limit / size_limit) and `nodesCaptured`; wired into both insert path and CONTENT_CHANGED dedup update path.
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Known remaining: device verification needed to confirm DFS runs without crash/ANR on real event volume
+- Suggested commit message: `feat(observer): implement tree snapshot DFS capture with node/depth/size limits`
+
+---
+
+### Observer Phase 1 — Local Accessibility Observer Foundation (full implementation)
+
+- Branch: `codex`
+- Task: Implement all 8 steps of Observer Phase 1 as defined in `docs/implementation-plan.md`. Navigation placement (Option B: Settings → Tools → Observer) was accepted 2026-05-18.
+- Start: (prior session — exact date not recorded at the time)
+- End: (prior session — discovered via codebase audit on 2026-05-19)
+- Status: Done (code + UI, static inspection); device verification pending (requires explicit user permission per AGENTS.md)
+- Files created:
+  - `app/src/main/java/com/kolee/tracklocation/observer/ObserverAccessibilityService.kt`
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObservedEventEntity.kt`
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObserverEventDao.kt`
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/AllowlistRuleEntity.kt`
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/AllowlistRuleDao.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/domain/model/ObservedEvent.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/domain/model/AllowlistRule.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/domain/model/ObserverUiState.kt` (includes `AllowlistDraftRule`, `AllowlistUiState`, `MatchType`)
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/ObserverPreferencesDataStore.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/repository/EventRepository.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/viewmodel/ObserverViewModel.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/screens/ObserverFeedScreen.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/EventRow.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/FeedHeaderBar.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/AllowlistBottomSheet.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/JumpToLatestFab.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/EmptyState.kt`
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/StatusIndicators.kt`
+  - `app/src/main/res/xml/accessibility_service_config.xml`
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt` — added `ObservedEventEntity`, `AllowlistRuleEntity`, observer/allowlist DAOs, `MIGRATION_2_3` (creates `observer_event` and `allowlist_rule` tables with indices); database version bumped to 3
+  - `app/src/main/AndroidManifest.xml` — added `BIND_ACCESSIBILITY_SERVICE` permission, declared `ObserverAccessibilityService` with intent-filter and meta-data reference
+  - `app/src/main/java/com/kolee/tracklocation/navigation/NavGraph.kt` — added `observer_feed_screen` route
+  - `app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt` — added `ObserverFeedScreen` sealed class entry
+  - Settings screen — added Tools section with Observer row linking to `observer_feed_screen`
+  - Theme files — added `ObserverAmber*`, `ObserverGreen*`, `ObserverRed*` color tokens
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Known remaining issues:
+  - Step 4 (tree snapshot DFS): `treeSnapshot` and `truncationMetadata` fields exist in `ObservedEventEntity` but whether `ObserverAccessibilityService` actually performs DFS traversal to populate them is unverified by static inspection alone — needs device run.
+  - `ObserverEventDao.getEventsByPackage()` exists but `ObserverViewModel` always fetches all events; scoped package-filtered feed is not yet wired up.
+  - No pagination (full list in memory; acceptable under 50k row retention cap).
+- Suggested commit message: `feat(observer): Phase 1 — accessibility service, event capture, Room schema, feed UI, allowlist`
+
+---
+
 ### 2026-05-19 ListContent.kt — Fix Compose 1.2.x build errors (EaseInOut/EaseOut/label)
 
 - Branch: `codex`

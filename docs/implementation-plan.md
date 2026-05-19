@@ -18,7 +18,7 @@ B. UI Specification / Design Handoff Work
 |---|---|---|---|
 | CR-0001 Always-recorded Location Sessions | Implemented | Implemented | Verified by user |
 | CR-0002 Session always-recording switch | Implemented | Implemented | Verified by user |
-| Observer Phase 1 Local Foundation | Planned | Planned | Not started |
+| Observer Phase 1 Local Foundation | Implemented | Implemented | Not verified on device |
 | Observer Phase 2 Inspection UI | Planned | Planned | Not started |
 | Observer Phase 3 Filtering + Settings | Planned | Planned | Not started |
 | Observer Phase 4 Sync Engine | Planned | Planned | Not started |
@@ -28,15 +28,16 @@ B. UI Specification / Design Handoff Work
 
 ## Immediate Next Step
 
-Proceed to the next planned implementation in this order:
+Observer Phase 1 is implemented. Proceed to device verification, then Observer Phase 2.
 
-1. Accept an Observer navigation placement decision (required).
-2. Freeze Observer Phase 1 scope + data contract (this doc).
-3. Then implement Observer Phase 1.
+1. Grant explicit permission for `./gradlew assembleDebug` and device run to verify Phase 1 on device.
+2. Verify tree snapshot DFS population in `ObserverAccessibilityService` on a real device.
+3. Then plan and implement Observer Phase 2 (Inspection UI).
 
 Notes:
 
 - CR-0001 and CR-0002 are verified by the user as working as expected (see `docs/progress.md`).
+- Observer Phase 1 code + UI are implemented (static inspection confirmed); device verification not yet run.
 - Heavy verification (Gradle builds/tests/emulator/device) still requires explicit user permission per `AGENTS.md`.
 
 ## CR-0001 — Always-recorded Location Sessions
@@ -183,9 +184,9 @@ Rules:
 - Produce light and dark theme variants if possible.
 ```
 
-## Observer Rollout — Planned
+## Observer Rollout
 
-Observer remains planned. Do not begin until CR-0001/CR-0002 are verified and Observer navigation placement is accepted.
+Observer Phase 1 is implemented. Remaining phases (2–7) are planned.
 
 ### Required decision before Observer Phase 1
 
@@ -212,13 +213,18 @@ Accepted decision:
 
 ## Observer Phase 1 — Local Accessibility Observer Foundation
 
+Status:
+
+- Code implementation: Done (static inspection).
+- UI implementation: Done (static inspection).
+- Verification: Not run — requires explicit user permission per `AGENTS.md`.
+
 ### A. Code Implementation Work
 
 Goal:
 
 - Capture accessibility events locally (Room) with safe limits, without impacting GPS tracking reliability.
-- Provide a minimal feed UI (only after navigation placement is accepted).
-  Navigation (accepted Option B): `Settings -> Tools -> Observer`.
+- Provide a minimal feed UI under `Settings → Tools → Observer` (navigation Option B, accepted 2026-05-18).
 
 Non-goals (Phase 1):
 
@@ -229,126 +235,60 @@ Non-goals (Phase 1):
 - No changes to GPS tracking behavior.
 - No user-facing delete/clear of observer history.
 
-Planned, in buildable order:
+Done:
 
-1. Service foundation
-   Add an `AccessibilityService` implementation dedicated to observer capture. Add the manifest service declaration. Add accessibility service config XML with the minimum required capabilities.
-   Service enablement notes:
-   - The user enables/disables the AccessibilityService in Android system accessibility settings (the app cannot enable it programmatically).
-   - The app provides a deep-link/action to open the relevant system settings screen when the service is disabled.
-   Pause capture semantics:
-   - When the user pauses capture from the Observer feed, the observer capture loop stops (no event processing / no DB writes). When unpaused, the capture loop starts again.
-   - This pause/resume does not change the system accessibility enablement toggle; it controls whether the enabled service actively records.
-2. Event capture surface
-   Capture `TYPE_WINDOW_STATE_CHANGED` and `TYPE_WINDOW_CONTENT_CHANGED`. Decide and document the capture policy for high-frequency content-changed events. Recommended: throttle + dedupe (for example, time window + stable key) to avoid runaway writes.
-   Accepted decision (2026-05-18) for `TYPE_WINDOW_CONTENT_CHANGED`:
-   - If a new content-changed event arrives but the relevant captured content signature has not changed, do not insert a new row. Instead update the existing row's timestamp (and optionally increment a repeat counter).
-   - Accepted content signature (2026-05-18): use **text summary only** (length-capped) to decide whether content changed.
-3. Normalize observed context (data contract)
-   Fields:
-   - package name (required)
-   - event type (required)
-   - activity/class name (best-effort)
-   - firstSeenAt (required, epoch millis)
-   - lastSeenAt (required, epoch millis)
-   - optional repeatCount (best-effort; for collapsed content-changed events)
-   - optional text summary (best-effort, length-capped)
-4. Tree snapshot capture (bounded)
-   Capture a serialized view-tree snapshot (JSON) with strict limits (max nodes, max depth, max string lengths, max total payload size). Store truncation metadata so Phase 2 UI can explain partial snapshots.
-5. Noise reduction (allowlist)
-   Use a user-configured allowlist to decide what gets stored. Persist allowlist locally and allow the user to configure it in Phase 1 (UI under Settings/tools). Allowlist entries support regex keywords/patterns.
-   Accepted decision (2026-05-18): allowlist matching applies to **package name only** in Phase 1.
-   Accepted decision (2026-05-18): matching is **case-sensitive**.
-   Accepted decision (2026-05-18): regex rules use **substring match** semantics. The pattern may match anywhere in the package name (start, middle, or end). Users can use `^` and `$` for full-string matching when needed.
-   Behavior:
-   - If the allowlist has zero enabled rules, capture stores everything (no filtering is applied).
-   - A package is captured when it matches at least one enabled rule.
-   Rule types:
-   - Exact match: full-string equality only (for example, `packageName == pattern`), e.g. `com.example.app`.
-   - Regex match: treat as a Kotlin `Regex` pattern and use substring matching (for example, `Regex(pattern).containsMatchIn(packageName)`).
-   Examples:
-   - Pattern `maps` matches `com.google.android.apps.maps` and `com.example.mapshelper`.
-   - Pattern `^com\\.google\\.` matches only packages starting with `com.google.`.
-   Recommended defaults:
-   - Start with a broad regex rule (or keep the list empty) during early bring-up; refine rules to reduce noise as needed.
-   - Do not include quick-add suggestions from the live feed in Phase 1; rules are added manually.
-   UI guidance (Phase 1):
-   - Treat allowlist as optional configuration.
-   - When there are zero enabled rules, show helper text such as: `Allowlist is empty. Capturing all packages. Add rules to reduce noise.`
-   Regex safety:
-   - Cap pattern length.
-   - Validate/compile before saving/enabling.
-   - Fail closed: invalid regex rules are disabled and do not capture.
-6. Local persistence
-   Add Room entities/DAOs for observed events and (optional) package stats rollups for fast feed rendering. Ensure schema changes are migration-safe (Room migration required).
-   Retention limit (accepted 2026-05-18):
-   - Implement automatic retention to cap local observer storage growth (no user-facing clear/delete UI).
-   - Recommended limit: keep the most recent 7 days of observer events OR 50,000 rows (whichever is smaller). Oldest rows are pruned automatically.
-7. Repository / use-case boundary
-   Add repository APIs for enabling/disabling capture (service running state), reading the feed (paged/cursor-ready shape), and reading a single event by id.
-8. Minimal UI shell (gated by nav decision)
-   Add Observer feed destination only after navigation placement is accepted. Phase 1 feed requirements: shows service status (enabled/disabled), shows empty/loading states, shows basic event cards (package, time range via lastSeenAt, event type, activity, small snippet).
-   Feed must include an in-context entry point to allowlist configuration. Accepted decision (2026-05-18): allowlist configuration is an overlay panel on top of the Observer feed (compact modal bottom sheet), so users can watch events while tuning rules.
-   Capture control (Phase 1):
-   - Provide a separate control to pause/resume capture (stops receiving/storing new events). This is distinct from auto-scroll pause (UI-only).
-   - When capture is paused, the feed remains readable and continues showing previously stored rows, but no new rows are appended until capture is resumed.
-   State model (Phase 1):
-   - Service state: `Enabled` or `Disabled` (system-controlled).
-   - Capture state: `Running` or `Paused` (app-controlled; only meaningful when service is enabled).
-   - UI auto-scroll state: `Running` or `Paused` (UI-only; does not affect capture).
-   Accepted persistence (2026-05-18):
-   - Persist capture state so a user-paused capture stays paused across application/process restarts until explicitly resumed.
-   - If the system disables the AccessibilityService, remember the last capture state and restore it when the service is re-enabled (i.e., do not reset to Running).
-   Feed interaction (Phase 1):
-   - Tap anywhere in the feed list area toggles auto-scroll (running vs paused).
-   - Drag/scroll behavior (accepted 2026-05-18): if auto-scroll is running and the user drags/scrolls the list, auto-scroll immediately switches to paused and the user begins manual scrolling.
-   - Resume semantics (accepted 2026-05-18): when resuming from paused, auto-scroll continues from the current paused position (does not jump to the latest event).
-   - While paused, the user can freely drag/scroll the list up and down to inspect older events.
-   - Jump-to-latest (accepted 2026-05-18): show a transient FAB that scrolls to the latest event without changing whether auto-scroll is running or paused. The FAB is shown only for a couple of seconds when transitioning from paused to running.
-   - Long-press copy is enabled only when auto-scroll is paused: long-press on an event copies a single line `package | activity` (best-effort). Put package first so it can be pasted into allowlist rules with minimal edits.
+| Step | Files / modules | Result |
+|---|---|---|
+| 1. Service foundation | `ObserverAccessibilityService.kt`, `AndroidManifest.xml`, `res/xml/accessibility_service_config.xml` | `AccessibilityService` declared with `BIND_ACCESSIBILITY_SERVICE`; config listens to `typeWindowStateChanged\|typeWindowContentChanged`; manifest declares service with correct intent-filter and meta-data; "Open settings" action wired to `ACTION_ACCESSIBILITY_SETTINGS` in `StatusIndicators.kt` |
+| 2. Event capture surface | `ObserverAccessibilityService.kt` | Captures both event types; `TYPE_WINDOW_CONTENT_CHANGED` deduped by text summary — updates existing row's `lastSeenAt` + increments `repeatCount` instead of inserting a duplicate row |
+| 3. Data contract | `ObservedEventEntity.kt`, `ObserverEventDao.kt` | Fields: `packageName`, `eventType`, `activityName`, `firstSeenAt`, `lastSeenAt`, `repeatCount`, `textSummary`, `treeSnapshot`, `truncationMetadata`; indices on `packageName` and `lastSeenAt` |
+| 4. Tree snapshot capture (bounded) | `ObserverAccessibilityService.kt` — `captureTreeSnapshot()` | DFS from `event.source` via explicit stack; captures text, contentDescription, className, flags, bounds per node; limits: 200 nodes, depth 10, 300 chars/field, 40 KB JSON; recycles all `AccessibilityNodeInfo` nodes; truncation metadata records reason + nodesCaptured; wired into both insert and CONTENT_CHANGED dedup-update paths |
+| 5. Noise reduction (allowlist) | `AllowlistRuleEntity.kt`, `AllowlistRuleDao.kt`, service | EXACT (full-string equality) and REGEX (substring, case-sensitive, `containsMatchIn`) on `packageName`; empty allowlist = capture all; invalid/uncompilable regex = disabled silently |
+| 6. Local persistence | `TrackDatabase.kt` (v3), migration `MIGRATION_2_3` | Creates `observer_event` and `allowlist_rule` tables; service prunes rows older than 7 days and enforces 50,000-row cap automatically |
+| 7. Repository / use-case boundary | `EventRepository` (interface + `EventRepositoryImpl` + `FakeEventRepository`), `ObserverPreferencesDataStore.kt` | Feed reads from Room via Flow; capture running state persisted in DataStore; `setCaptureRunning` toggled from ViewModel |
+| 8. Minimal UI shell | `ObserverFeedScreen.kt`, `ObserverViewModel.kt`, 6 components, `NavGraph.kt` | Full feed screen under Settings → Tools → Observer; service status banner (enabled/disabled); capture chip (toggle, persisted); auto-scroll with drag-pause; jump-to-latest FAB (2s transient); long-press copy (paused only); allowlist bottom sheet (draft → apply pattern) |
+
+Pending:
+
+| Category | Required work |
+|---|---|
+| Verify | Step 4 — DFS implemented; runtime behavior on real device not yet confirmed (no build/device run) |
+| Wire | `getEventsByPackage()` DAO method exists but ViewModel always fetches all events; scoped package feed is not yet wired |
+| Build | `./gradlew assembleDebug` — requires explicit user permission per `AGENTS.md` |
+| Device | Enable service in Android Accessibility Settings, confirm events appear in feed — requires explicit user permission per `AGENTS.md` |
+| Test | Unit tests for dedup/retention logic; Room migration test for `MIGRATION_2_3` |
+
+Package structure (actual):
+
+```
+com.kolee.tracklocation.observer.ObserverAccessibilityService
+com.kolee.tracklocation.data.roomdb.{ObservedEventEntity, AllowlistRuleEntity, ObserverEventDao, AllowlistRuleDao}
+com.kolee.tracklocation.feature.observer.domain.model.{ObservedEvent, AllowlistRule, ObserverUiState, AllowlistDraftRule, AllowlistUiState, MatchType}
+com.kolee.tracklocation.feature.observer.data.{ObserverPreferencesDataStore, repository/EventRepository, repository/EventRepositoryImpl, repository/FakeEventRepository}
+com.kolee.tracklocation.feature.observer.presentation.viewmodel.ObserverViewModel
+com.kolee.tracklocation.feature.observer.presentation.screens.ObserverFeedScreen
+com.kolee.tracklocation.feature.observer.presentation.components.{EventRow, FeedHeaderBar, AllowlistBottomSheet, JumpToLatestFab, EmptyState, StatusIndicators}
+```
 
 ### B. UI Specification / Design Handoff Work
 
-Planned (only after navigation placement is accepted):
+Done:
 
-- Observer feed shell.
-- Service status indicator (enabled/disabled).
-- Capture pause/resume control (separate from UI auto-scroll pause).
-- Service disabled state with deep-link to Android accessibility settings (action-only, no complex flows).
-- Basic event cards.
-- Loading/empty states.
-- Allowlist configuration UI (Phase 1): add/remove rules and enable/disable rules. Each rule has a `Match type` toggle (`Exact` or `Regex`) and a single `Pattern` field (no special prefixes).
-  Each rule supports: enable/disable, and delete.
-  IA note: allowlist configuration is presented as a compact overlay panel on top of the feed (modal bottom sheet). The feed remains visible behind the panel.
-  Apply semantics (accepted 2026-05-18):
-  - Edits are staged and only take effect when the user presses an explicit `Apply` button in the overlay.
-  - Closing/dismissing the overlay saves the staged edits as a draft, but does not apply them to capture until `Apply` is pressed.
-  - The overlay should indicate when there are unapplied draft changes (e.g., `Draft changes not applied`).
-  - The Observer feed and capture behavior reflect applied rules only. Draft changes do not affect capture until `Apply` is pressed.
-  - Applying new allowlist rules affects future capture only. Previously stored events remain visible because the feed is backed by the persisted local table, not a live filter.
-
-Event card layout (Phase 1):
-
-- Primary: package name.
-- Secondary: activity/class (when available) and event type.
-- Metadata: timestamp.
-
-UI acceptance criteria (Phase 1):
-
-- Feed remains readable in high-volume scenarios (list perf baseline).
-- Cards do not attempt to render huge JSON.
-- The screen clearly explains when snapshots are truncated or unavailable.
-- Allowlist changes take effect without requiring an app restart (service observes updates or reloads safely).
-- Allowlist overlay panel is compact and does not obscure the feed entirely (user can still see events updating behind it).
-- Feed supports a user-controlled pause/resume of auto-scroll, and package copy from paused events.
-- Feed provides a jump-to-latest FAB and long-press copy (paused only) as a single line `package | activity` (best-effort).
-- Capture can be paused/resumed independently of auto-scroll; pausing capture stops new persisted rows until resumed.
-- Accepted UX detail: while paused, the viewport freezes completely and newly arriving events do not shift the visible list; on resume, the feed continues moving from the current viewport position without jumping; the jump-to-latest FAB is the only control that forces a jump to the newest position.
+- Observer feed shell — `ObserverFeedScreen.kt`.
+- Service status indicator (enabled green / disabled red with "Open settings") — `StatusIndicators.kt`.
+- Capture pause/resume chip (independent of auto-scroll) — `CaptureChip` in `StatusIndicators.kt`.
+- Auto-scroll readout (display-only indicator; tap list toggles) — `AutoScrollReadout`.
+- Capture paused inline banner — `CapturePausedBanner`.
+- Event cards with package, activity, event-type chip (color-coded by category), text snippet, timestamp — `EventRow.kt`.
+- Empty state ("Waiting for events") — `EmptyState.kt`.
+- Jump-to-latest transient FAB (2s auto-dismiss) — `JumpToLatestFab.kt`.
+- Allowlist bottom sheet: add/edit/delete rules, match-type toggle (Exact/Regex), enable/disable switch, draft indicator, amber draft banner, Apply/Close footer — `AllowlistBottomSheet.kt`.
+- Feed header bar with event count, scope label, live/paused dot — `FeedHeaderBar.kt`.
 
 Verification gates (Phase 1):
 
-- Static inspection: ensure no coupling from observer to GPS tracking service.
-- Optional (requires explicit user permission per `AGENTS.md`): `:app:compileDebugKotlin`, targeted unit tests for throttling/dedupe logic, Room migration test(s) for the new tables, and device/emulator sanity check that service can be enabled and events appear.
+- Static inspection: no coupling from observer to GPS tracking service — confirmed.
+- Requires explicit user permission per `AGENTS.md`: `./gradlew assembleDebug`, Room migration test, device/emulator sanity check that service enables and events appear in feed.
 
 ## Observer Phase 2 — Inspection UI
 
