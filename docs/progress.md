@@ -8,6 +8,26 @@ _None — last task completed._
 
 ---
 
+### 2026-05-19 Sessions screen — Indicator animation + active card header alignment
+
+- Branch: `codex`
+- Task: Two UI fixes targeting `SessionsScreen.kt` only:
+  1. Always-recording indicator (Active state): blinking inner dot (opacity 1↔0.35, 1200ms) + two concentric ripple rings (scale 1.0→1.65, alpha 0.9→0, 1800ms, 0.6s stagger) — mirrors Trips screen pattern. Reduce-motion aware.
+  2. Active session card header: removed absolutely-positioned ACTIVE badge + 70dp padding hack; replaced with a flat `Row(CenterVertically)` containing title (weight 1), then a nested row with start time + badge inline.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done (static inspection)
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/screens/sessions/SessionsScreen.kt` — added `LinearOutSlowInEasing` + `graphicsLayer` imports; `StatusCard`: added reduce-motion check (`ANIMATOR_DURATION_SCALE == 0`), indicator 52→64dp, `SessionPulseRing` ×2 before dot, `PulseDot` now takes `pulseTargetAlpha=0.35f`/`pulseDurationMs=1200` for indicator; `SessionRow`: removed absolute `ActiveBadge`, header `Row` is now `CenterVertically`+`spacedBy(10dp)` with nested right-side group; `PulseDot`: added optional `pulseTargetAlpha`/`pulseDurationMs` params (defaults preserve `ActiveBadge` behavior); added `SessionPulseRing` private composable
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Known limitations:
+  - CSS `box-shadow` glow on inner dot skipped — no Compose 1.2.x equivalent; ambient glow provided by greenSoft indicator background
+  - Easing: `ease-out` → `LinearOutSlowInEasing` (Compose 1.2.x compat); `ease-in-out` → `FastOutSlowInEasing` (tween default)
+- Suggested commit message: `feat(sessions): animate always-recording indicator (blink + pulse rings) + fix active card header alignment`
+
+---
+
 ### 2026-05-19 Observer Phase 1 Step 4 — tree snapshot DFS in ObserverAccessibilityService
 
 - Branch: `codex`

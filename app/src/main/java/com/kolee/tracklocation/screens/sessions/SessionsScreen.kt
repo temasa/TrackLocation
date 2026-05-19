@@ -4,6 +4,7 @@ package com.kolee.tracklocation.screens.sessions
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -43,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -177,6 +179,16 @@ private fun StatusCard(
     helperText: String?,
     onAlwaysRecordingChange: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        try {
+            android.provider.Settings.Global.getFloat(
+                context.contentResolver,
+                android.provider.Settings.Global.ANIMATOR_DURATION_SCALE
+            ) == 0f
+        } catch (_: Throwable) { false }
+    }
+
     val statusText = if (on) "Active" else "Inactive"
     val descriptionText = when {
         helperText != null -> helperText
@@ -196,17 +208,28 @@ private fun StatusCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Outer Box has no clip so rings can ripple beyond the circle boundary.
             Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(if (on) TripGreen.copy(alpha = 0.18f) else TripGreenMid),
+                modifier = Modifier.size(64.dp),
                 contentAlignment = Alignment.Center
             ) {
+                // Clipped background circle
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(if (on) TripGreen.copy(alpha = 0.18f) else TripGreenMid)
+                )
+                if (on && !reduceMotion) {
+                    SessionPulseRing(delayMs = 0)
+                    SessionPulseRing(delayMs = 600)
+                }
                 PulseDot(
                     color = if (on) TripGreen else Color(0xFF9AA9A1),
-                    size = 14,
-                    pulsing = on
+                    size = if (on) 18 else 14,
+                    pulsing = on && !reduceMotion,
+                    pulseTargetAlpha = 0.35f,
+                    pulseDurationMs = 1200,
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -370,11 +393,6 @@ private fun SessionRow(item: SessionUiItem) {
             )
             .padding(start = 20.dp, top = 18.dp, end = 18.dp, bottom = 18.dp)
     ) {
-        if (item.active) {
-            ActiveBadge(
-                modifier = Modifier.align(Alignment.TopEnd)
-            )
-        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
@@ -384,8 +402,8 @@ private fun SessionRow(item: SessionUiItem) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
                         text = "Session #${item.index}",
@@ -395,13 +413,18 @@ private fun SessionRow(item: SessionUiItem) {
                         letterSpacing = 0.sp,
                         modifier = Modifier.weight(1f)
                     )
-                    Text(
-                        text = item.start,
-                        color = TripMuted,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Normal,
-                        modifier = Modifier.padding(end = if (item.active) 70.dp else 0.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = item.start,
+                            color = TripMuted,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                        )
+                        if (item.active) ActiveBadge()
+                    }
                 }
                 Box(
                     modifier = Modifier
@@ -512,14 +535,16 @@ private fun SessionMetric(
 private fun PulseDot(
     color: Color,
     size: Int,
-    pulsing: Boolean
+    pulsing: Boolean,
+    pulseTargetAlpha: Float = 0.55f,
+    pulseDurationMs: Int = 1600,
 ) {
     val transition = rememberInfiniteTransition()
     val alpha by transition.animateFloat(
         initialValue = 1f,
-        targetValue = if (pulsing) 0.55f else 1f,
+        targetValue = if (pulsing) pulseTargetAlpha else 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1600),
+            animation = tween(durationMillis = pulseDurationMs),
             repeatMode = RepeatMode.Reverse
         )
     )
@@ -530,6 +555,34 @@ private fun PulseDot(
             .alpha(alpha)
             .clip(CircleShape)
             .background(color)
+    )
+}
+
+@Composable
+private fun SessionPulseRing(delayMs: Int) {
+    val transition = rememberInfiniteTransition()
+    val scale by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.65f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = LinearOutSlowInEasing, delayMillis = delayMs),
+            repeatMode = RepeatMode.Restart,
+        ),
+    )
+    val ringAlpha by transition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = LinearOutSlowInEasing, delayMillis = delayMs),
+            repeatMode = RepeatMode.Restart,
+        ),
+    )
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .scale(scale)
+            .alpha(ringAlpha)
+            .border(2.dp, TripGreen, CircleShape)
     )
 }
 
