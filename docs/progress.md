@@ -4,7 +4,54 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
-- (empty)
+_None — last task completed._
+
+---
+
+### 2026-05-19 ListContent.kt — Fix Compose 1.2.x build errors (EaseInOut/EaseOut/label)
+
+- Branch: `codex`
+- Task: User requested a debug build. `./gradlew assembleDebug` failed in `:app:compileDebugKotlin` with unresolved `EaseInOut`/`EaseOut` references and `label` parameter not found on animation APIs. Root cause: project pins Compose UI 1.2.x (`composeOptions { kotlinCompilerExtensionVersion '1.2.0' }`); `EaseInOut`/`EaseOut` and animation `label` params were introduced in Compose 1.4 / 1.3 respectively.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt` — replaced `EaseInOut` import/usages with `FastOutSlowInEasing` and `EaseOut` with `LinearOutSlowInEasing` (both available in 1.0+); removed `label = "..."` from animation calls (`animateColorAsState` x3, `rememberInfiniteTransition` x2, `animateFloat` x3) that 1.2.x does not support. The non-animation `label = ...` parameters on the stat-row composables (lines ~441–453) were left intact.
+- Build run: `./gradlew assembleDebug` — BUILD SUCCESSFUL (14s, with explicit user permission for this build request).
+- Tests run: None.
+- Known remaining issues: Animation easing curves are now `FastOutSlowInEasing` / `LinearOutSlowInEasing` instead of the requested `EaseInOut` / `EaseOut`. Visually very similar but not identical; if exact parity is required, the project must move to Compose 1.4+ (compiler extension + UI library bump).
+- Suggested commit message: `fix(list): replace Compose 1.4 easing/label APIs with 1.2-compatible equivalents`
+
+---
+
+### 2026-05-19 Trips (List) hero card — Recording state per TRIPS_START_STOP_SPEC
+
+- Branch: `codex`
+- Task: Add visible Recording state to the Current-trip hero card on the Trips (List) screen per `docs/design/design_handoff_trips_start_stop/TRIPS_START_STOP_SPEC.md`. Card dimensions identical across states; indicator blink + two staggered pulse rings; title `Ready` ↔ `Recording`; always-visible monospace `HH:MM:SS` readout; CTA color/glyph/label swap (green Start ▶ ↔ red Stop ■). Honors reduced-motion (animator duration scale = 0).
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/ui/theme/Color.kt` — added Trips-hero tokens: `TripHeroBg` (#173A2D), `TripHeroDim` (#22513F), `TripHeroDotIdle`, `TripHeroBrandGreen` (#22C55E), `TripHeroIndicatorWash` (0.18α green), `TripHeroDotHalo` (0.25α green), `TripHeroStopRed` (#E5484D), `TripHeroEyebrow` (.65α white), `TripHeroReadoutIdle` (.40α white), `TripHeroReadoutLive` (.78α white)
+  - `app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt` — collect `viewModel.locationUiState` as state at call site; rewrote `CurrentTripCard` to take `LocationUiState` + `onCtaTap`; added `PulseRing` composable and `formatElapsed` helper; `produceState` 1s tick gated on `isRecording` (auto-paused when not recording); `animateColorAsState` for indicator + CTA background (200ms / 150ms); blink via `rememberInfiniteTransition` (600ms reverse) gated on `!reduceMotion`; reduced-motion detection via `Settings.Global.ANIMATOR_DURATION_SCALE == 0`; semantics: polite live region announces "Trip started" / "Trip stopped"; CTA `contentDescription` swaps "Start trip" / "Stop trip"; readout `contentDescription` reads the elapsed value; monospace `HH:MM:SS` via `MonospaceFontFamily`
+- Behavior notes:
+  - `isRecording = uiState.isTracking && !uiState.isPaused`; PAUSED state shows Ready visuals + "00:00:00" today since `onTripCtaTap` does not yet resume from paused (called out in earlier Track-screen progress entry).
+  - Reduced-motion check is conservative — only treats animator scale == 0 as reduced; `AccessibilityManager.isReduceMotionEnabled` is not available on min SDK targeted. Reduced-motion users still see the color/glyph/label swap.
+  - CTA tap target meets 48dp via card padding + 44dp button height + Row vertical centering; spec calls for `Modifier.minimumInteractiveComponentSize()` but the current Box-as-button pattern (matching the rest of the screen) keeps the visual height at 44dp; touch slop on the 44dp height plus horizontal padding remains tappable. If a follow-up wants a strict 48dp guarantee, swap to `IconButton`/`Button`.
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Acceptance checklist (code inspection):
+  - Card outer dimensions identical across states (both rely on the same `padding(18dp v, 20dp h)` + content row that always renders title + readout) — ✓
+  - Title `"Ready"` / `"Recording"`, single line, no truncation (`maxLines = 1`) — ✓
+  - Elapsed readout always rendered (`00:00:00` idle, live `HH:MM:SS` recording) — ✓
+  - Button transitions in 150ms (`animateColorAsState` linear 150ms) — ✓
+  - Inner dot blink at ~1.2s rhythm (600ms reverse, infinite) — ✓
+  - Two pulse rings, second delayed 600ms — ✓
+  - Tabular figures via monospace font family — ✓ (system monospace; JetBrains Mono not added)
+  - TalkBack live-region announcement on state change — ✓ (polite, announces title change)
+  - Reduced-motion skips blink + rings; color/glyph/label still change — ✓
+  - 48dp tap target — Partial (44dp visual; see note above)
+- Suggested commit message: `feat(list): Recording state for Current-trip hero card — blink, pulse rings, elapsed readout, Stop CTA`
 
 ---
 
