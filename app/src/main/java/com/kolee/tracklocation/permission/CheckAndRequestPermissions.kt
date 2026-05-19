@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +55,9 @@ fun CheckAndRequestPermissions(
 
     Log.d(TAG, "Enter CheckAndRequestPermission, openDialogState: ${openDialogState}")
     if (permissionState.allPermissionsGranted) {
-        isGranted.invoke()
+        LaunchedEffect(Unit) {
+            isGranted.invoke()
+        }
     }
     else {
         Column(

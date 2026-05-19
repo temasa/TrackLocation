@@ -8,6 +8,54 @@ This is the single active status/progress file in the simplified documentation s
 
 ---
 
+### 2026-05-19 Session Screen — Re-declare TrackingService in manifest (actual fix for non-functional switch)
+
+- Branch: `codex`
+- Task: Sessions always-recording switch still did not start recording after the earlier Compose-side fix. Root cause: `TrackingService` was missing from `app/src/main/AndroidManifest.xml`; the stale merged manifest under `app/build/intermediates/` masked the issue on the dev machine, but `startForegroundService` silently fails on clean install.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Root cause: `<service android:name=".tracking.TrackingService" .../>` declaration was lost in a prior manifest rewrite (was present in commit `9e2bcc0`). Also SDK-34 requires `FOREGROUND_SERVICE_LOCATION` for a `foregroundServiceType="location"` service.
+- Files edited:
+  - `app/src/main/AndroidManifest.xml` — added `<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />`; re-added `<service android:name=".tracking.TrackingService" android:enabled="true" android:exported="false" android:foregroundServiceType="location" />` inside `<application>` before the Observer service block
+- Build run: Not run (explicit permission required per AGENTS.md). A clean build is recommended (`./gradlew clean assembleDebug`) so the stale merged manifest in `app/build/` is regenerated.
+- Tests run: None
+- Relationship to earlier fix today: the `LaunchedEffect(Unit)` wrap in `CheckAndRequestPermissions.kt` was a genuine Compose-side bug fix, but not the reason recording wasn't starting; the manifest gap is the actual cause.
+- Commit message suggestion: `fix(session): re-declare TrackingService in manifest with FOREGROUND_SERVICE_LOCATION (SDK 34)`
+
+---
+
+### 2026-05-19 Session Screen — Fix non-functional always-recording switch
+
+- Branch: `codex`
+- Task: Switch toggled but never triggered `START_RECORDING` service action
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Root cause: `CheckAndRequestPermissions` called `isGranted.invoke()` directly in composition body when permissions were already granted — side effects during composition are illegal in Compose and were silently dropped.
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/permission/CheckAndRequestPermissions.kt` — wrapped `isGranted.invoke()` in `LaunchedEffect(Unit)` so the callback fires in a coroutine after composition, not during it; added `LaunchedEffect` import
+- Build run: Not run (explicit permission required per AGENTS.md)
+- Tests run: None
+- Commit message suggestion: `fix(session): wrap isGranted callback in LaunchedEffect — was called during composition, causing switch to appear non-functional`
+
+---
+
+### 2026-05-19 List Screen — Fix non-functional Start button
+
+- Branch: `codex`
+- Task: Start button in CurrentTripCard had no click handler; wire it to `viewModel.onTripCtaTap()`
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/screens/list/components/ListContent.kt` — added `clickable` import, added `onStartTrip` param to `CurrentTripCard`, added `.clickable(onClick = onStartTrip)` to Start button Box, wired call site to `viewModel.onTripCtaTap()`
+- Build run: Not run (explicit permission required per AGENTS.md)
+- Tests run: None
+- Commit message suggestion: `fix(list): wire Start button to onTripCtaTap() — button was non-interactive`
+
+---
+
 ### 2026-05-19 Observer Feed — Event row layout update
 
 - Branch: `codex`

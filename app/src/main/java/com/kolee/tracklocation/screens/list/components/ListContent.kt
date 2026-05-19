@@ -2,6 +2,7 @@ package com.kolee.tracklocation.screens.list.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -97,7 +98,7 @@ private fun TrackSuccessState(
     ) {
         item { ListHeader() }
         item {
-            CurrentTripCard()
+            CurrentTripCard(onStartTrip = { viewModel.onTripCtaTap() })
         }
         item {
             MetricsRow(trackList = trackList)
@@ -164,7 +165,7 @@ private fun ListHeader() {
 }
 
 @Composable
-private fun CurrentTripCard() {
+private fun CurrentTripCard(onStartTrip: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -213,6 +214,7 @@ private fun CurrentTripCard() {
                 .height(46.dp)
                 .clip(RoundedCornerShape(23.dp))
                 .background(TripGreen)
+                .clickable(onClick = onStartTrip)
                 .padding(horizontal = 26.dp),
             contentAlignment = Alignment.Center
         ) {
