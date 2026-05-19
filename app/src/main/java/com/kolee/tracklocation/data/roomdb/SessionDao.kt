@@ -16,6 +16,9 @@ interface SessionDao {
     @Query("SELECT * FROM recording_session WHERE isActive = 1 ORDER BY startedAt DESC LIMIT 1")
     suspend fun getActiveSession(): SessionEntity?
 
+    @Query("UPDATE recording_session SET isActive = 0, endedAt = :endedAt WHERE isActive = 1 AND endedAt IS NULL")
+    suspend fun closeAllActiveSessions(endedAt: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(item: SessionEntity)
 
