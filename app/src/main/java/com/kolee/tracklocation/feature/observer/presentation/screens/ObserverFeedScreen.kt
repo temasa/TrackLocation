@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kolee.tracklocation.feature.observer.presentation.components.AllowlistBottomSheet
+import com.kolee.tracklocation.feature.observer.presentation.components.SnapshotViewerSheet
+import com.kolee.tracklocation.feature.observer.domain.model.ObservedEvent
 import com.kolee.tracklocation.feature.observer.presentation.components.AutoScrollReadout
 import com.kolee.tracklocation.feature.observer.presentation.components.CapturePausedBanner
 import com.kolee.tracklocation.feature.observer.presentation.components.CaptureChip
@@ -72,6 +74,7 @@ fun ObserverFeedScreen(navController: NavController) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showAllowlist by remember { mutableStateOf(false) }
+    var snapshotEvent by remember { mutableStateOf<ObservedEvent?>(null) }
 
     // In-memory auto-scroll state — resets to true on screen entry per spec
     var autoScrollRunning by remember { mutableStateOf(true) }
@@ -255,6 +258,9 @@ fun ObserverFeedScreen(navController: NavController) {
                             autoScrollPaused = !autoScrollRunning,
                             onLongPress = { viewModel.copyToClipboard(event) },
                             onTap = tapListToggle,
+                            onViewSnapshot = if (event.treeSnapshot != null) {
+                                { snapshotEvent = event }
+                            } else null,
                         )
                     }
                 }
@@ -298,6 +304,14 @@ fun ObserverFeedScreen(navController: NavController) {
             onDeleteRule = viewModel::deleteDraftRule,
             onApply = viewModel::applyAllowlist,
             onClose = { showAllowlist = false },
+        )
+    }
+
+    // Snapshot viewer sheet
+    snapshotEvent?.let { ev ->
+        SnapshotViewerSheet(
+            event = ev,
+            onDismiss = { snapshotEvent = null },
         )
     }
 }

@@ -5,6 +5,10 @@ data class ObservedEvent(
     val packageName: String,
     val activityName: String?,
     val eventType: String,
+    val firstSeenMs: Long,
     val timestampMs: Long,
-    val textSummary: String?
+    val repeatCount: Int,
+    val textSummary: String?,
+    val treeSnapshot: String?,
+    val truncationMetadata: String?,
 )

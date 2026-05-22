@@ -2,6 +2,7 @@ package com.kolee.tracklocation.feature.observer.presentation.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +12,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.feature.observer.domain.model.ObservedEvent
 import com.kolee.tracklocation.ui.theme.ObserverCardAlt
+import com.kolee.tracklocation.ui.theme.TripGreenLabel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -41,6 +47,7 @@ fun EventRow(
     autoScrollPaused: Boolean,
     onLongPress: () -> Unit,
     onTap: () -> Unit,
+    onViewSnapshot: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val bg = if (isEven) ObserverCardAlt else Color.White
@@ -124,6 +131,33 @@ fun EventRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.alignByBaseline(),
+                )
+            }
+        }
+
+        // "View window content" link — only when snapshot captured and callback wired
+        if (event.treeSnapshot != null && onViewSnapshot != null) {
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onViewSnapshot)
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "View window content",
+                    color = TripGreenLabel,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.05).sp,
+                )
+                Icon(
+                    imageVector = Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = TripGreenLabel,
                 )
             }
         }

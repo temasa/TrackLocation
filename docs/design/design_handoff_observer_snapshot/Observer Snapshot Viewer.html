@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TrackLocation — Observer · Snapshot Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; background: #e8eae6; font-family: 'Roboto', system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    button { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="cr1-shared.jsx"></script>
+  <script type="text/babel" src="obs-shared.jsx"></script>
+  <script type="text/babel" src="screen-observer-feed.jsx"></script>
+  <script type="text/babel" src="sheet-snapshot.jsx"></script>
+  <script type="text/babel" src="screen-observer-snap.jsx"></script>
+
+  <script type="text/babel">
+    function Board({ children, bg = '#e8eae6' }) {
+      return (
+        <div style={{
+          width: '100%', height: '100%', display: 'grid', placeItems: 'center',
+          background: bg, borderRadius: 18, padding: 20,
+        }}>{children}</div>
+      );
+    }
+
+    function Note({ children }) {
+      return (
+        <div style={{
+          width: 380, padding: '12px 14px', borderRadius: 14,
+          background: '#fff7d6', border: '1px solid #e9dca0',
+          fontFamily: 'Roboto, Inter, system-ui, sans-serif',
+          fontSize: 12.5, color: '#3b2f00', lineHeight: 1.5,
+          boxShadow: '0 2px 6px rgba(80,60,0,.05)',
+        }}>{children}</div>
+      );
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          {/* ───────── Section 1: Event card affordance ───────── */}
+          <DCSection
+            id="cards"
+            title="Event card — “View window content” link"
+            subtitle="Trailing-aligned, link-style. Preferred: hide when no snapshot. Disabled-state shown for parity comparison."
+          >
+            <DCArtboard id="card-auto" label="A · Auto — preferred (hide when missing)" width={420} height={860}>
+              <div data-screen-label="Observer Feed — Auto"><Board>
+                <ScreenObserverSnap linkMode="auto" />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="card-disabled" label="B · Disabled placeholder — for layout parity" width={420} height={860}>
+              <div data-screen-label="Observer Feed — Disabled placeholder"><Board>
+                <ScreenObserverSnap linkMode="disabled" />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="card-note" label="Notes" width={420} height={860}>
+              <Board>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <Note>
+                    <strong>Link placement:</strong> trailing-bottom inside the card, below
+                    activity / snippet. Reads as an action without competing with the
+                    card-level tap target.
+                  </Note>
+                  <Note>
+                    <strong>Visibility:</strong> A is preferred — empty cards stay quiet so the
+                    feed is scannable. B exists only if list density needs to be uniform for
+                    rapid scrolling (e.g. high-frequency event bursts).
+                  </Note>
+                  <Note>
+                    <strong>Color:</strong> uses the brand green at <code>greenDark</code>
+                    to read as a link without looking like a button. Caret-right hints at
+                    “opens a panel”.
+                  </Note>
+                  <Note>
+                    <strong>Hit target:</strong> 44pt vertical via padding — link area
+                    expands beyond the visible glyph so it remains thumb-friendly.
+                  </Note>
+                </div>
+              </Board>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ───────── Section 2: Modal — primary states ───────── */}
+          <DCSection
+            id="modal-primary"
+            title="Snapshot modal — primary states"
+            subtitle="Bottom sheet · ~88% height · scrim · drag handle · close (X)."
+          >
+            <DCArtboard id="modal-formatted" label="C · Formatted — default" width={420} height={860}>
+              <div data-screen-label="Snapshot — Formatted"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'ok',
+                  pkg: 'com.google.android.apps.maps',
+                  activity: 'MapActivity',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:24:07.214',
+                  lastSeen:  '13:24:07.981',
+                  mode: 'Formatted',
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-raw" label="D · Raw JSON toggle" width={420} height={860}>
+              <div data-screen-label="Snapshot — Raw JSON"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'ok',
+                  pkg: 'com.google.android.apps.maps',
+                  activity: 'MapActivity',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:24:07.214',
+                  lastSeen:  '13:24:07.981',
+                  mode: 'Raw JSON',
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-copied" label="E · Copy → confirmed" width={420} height={860}>
+              <div data-screen-label="Snapshot — Copied"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'ok',
+                  pkg: 'com.google.android.apps.maps',
+                  activity: 'MapActivity',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:24:07.214',
+                  lastSeen:  '13:24:07.981',
+                  mode: 'Formatted',
+                  copied: true,
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-repeat" label="F · With repeat count" width={420} height={860}>
+              <div data-screen-label="Snapshot — Repeat"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'ok',
+                  pkg: 'com.android.systemui',
+                  activity: 'NotificationShadeWindowView',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:23:51.108',
+                  lastSeen:  '13:24:08.412',
+                  repeat: 17,
+                  mode: 'Formatted',
+                }} />
+              </Board></div>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ───────── Section 3: Error / empty content states ───────── */}
+          <DCSection
+            id="modal-edge"
+            title="Snapshot modal — edge states"
+            subtitle="Parse error keeps metadata + Raw JSON copy fallback. Empty-text keeps copy disabled."
+          >
+            <DCArtboard id="modal-parse-error" label="G · Parse / render error" width={420} height={860}>
+              <div data-screen-label="Snapshot — Parse error"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'parse-error',
+                  pkg: 'com.android.chrome',
+                  activity: 'Browser.MainActivity',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:24:05.602',
+                  lastSeen:  '13:24:05.602',
+                  mode: 'Formatted',
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-parse-error-raw" label="H · Parse error → Raw JSON fallback" width={420} height={860}>
+              <div data-screen-label="Snapshot — Parse error · Raw"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'parse-error',
+                  pkg: 'com.android.chrome',
+                  activity: 'Browser.MainActivity',
+                  type: 'WINDOW_CONTENT_CHANGED',
+                  firstSeen: '13:24:05.602',
+                  lastSeen:  '13:24:05.602',
+                  mode: 'Raw JSON',
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-no-text" label="I · No readable text in snapshot" width={420} height={860}>
+              <div data-screen-label="Snapshot — No text"><Board>
+                <ScreenObserverSnap linkMode="auto" sheet={{
+                  state: 'no-text',
+                  pkg: 'com.example.tracklocation',
+                  activity: 'session.SessionsActivity',
+                  type: 'WINDOW_STATE_CHANGED',
+                  firstSeen: '13:24:01.876',
+                  lastSeen:  '13:24:01.876',
+                  mode: 'Formatted',
+                }} />
+              </Board></div>
+            </DCArtboard>
+
+            <DCArtboard id="modal-edge-note" label="Notes" width={420} height={860}>
+              <Board>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <Note>
+                    <strong>Why keep the metadata strip on errors:</strong> the event itself
+                    isn't broken — only the render of one of its fields is. Showing pkg /
+                    activity / timing lets the operator triage without closing the sheet.
+                  </Note>
+                  <Note>
+                    <strong>Parse-error → Raw JSON:</strong> the Formatted tab is disabled
+                    (Copy too); switching to Raw re-enables Copy so the raw payload can be
+                    exported to a bug report.
+                  </Note>
+                  <Note>
+                    <strong>Empty content:</strong> Copy stays disabled. Copying an empty
+                    string is rarely useful and an explicit affordance for it would clutter
+                    the modal. If we need it later, add as a secondary text-button.
+                  </Note>
+                  <Note>
+                    <strong>Repeat count:</strong> when {`>`}1, a 4th meta chip joins the
+                    strip. Layout reflows from 3-col to 4-col so first/last seen still get
+                    equal width.
+                  </Note>
+                </div>
+              </Board>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ───────── Section 4: Spec assumptions ───────── */}
+          <DCSection
+            id="assumptions"
+            title="Open questions & assumptions"
+            subtitle="Captured here so they don't get lost during build."
+          >
+            <DCArtboard id="open-q" label="Notes" width={840} height={520}>
+              <Board>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+                  <Note>
+                    <strong>1. Tree formatting source.</strong> The Formatted view assumes a
+                    JSON tree of <code>{`{cls, id?, text?, desc?, children[]}`}</code> nodes
+                    is available client-side. If only flat text-lines are emitted by the
+                    capture pipeline, swap the <code>TreeNode</code> recursion for a flat
+                    list — same metadata strip, same toolbar.
+                  </Note>
+                  <Note>
+                    <strong>2. Truncation.</strong> Snapshots are bounded server-side. If a
+                    capture is truncated, surface a small mono badge after the title
+                    (“truncated · 47 KB / 64 KB”). Not drawn yet — needs a number from eng.
+                  </Note>
+                  <Note>
+                    <strong>3. Subtitle ellipsize.</strong> Header subtitle is a single mono
+                    line that ellipsizes from the right. Long packages keep the front
+                    visible; activity falls off first, then lastSeen — which is acceptable
+                    because lastSeen is already in the meta strip below.
+                  </Note>
+                  <Note>
+                    <strong>4. “Copy” target.</strong> Always copies what's visible in the
+                    active mode. The button label stays “Copy” — no need for “Copy
+                    formatted” / “Copy raw” since the mode is the segmented control's job
+                    to communicate.
+                  </Note>
+                </div>
+              </Board>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -8,6 +8,27 @@ _None — last task completed._
 
 ---
 
+### 2026-05-19 Observer Snapshot Viewer — per-event modal sheet
+
+- Branch: `codex`
+- Task: Add "View window content" link to each Observer event card; tapping opens a modal bottom sheet showing the event's captured `treeSnapshot` as a flat formatted node list or raw JSON, with Copy and all four dismiss methods.
+- Start: 2026-05-19
+- End: 2026-05-19
+- Status: Done (build verified — `BUILD SUCCESSFUL`)
+- Files edited:
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/domain/model/ObservedEvent.kt` — added `firstSeenMs`, `repeatCount`, `treeSnapshot`, `truncationMetadata` fields
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/repository/EventRepository.kt` — mapped new fields from entity; updated `FakeEventRepository` defaults
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/EventRow.kt` — added `onViewSnapshot: (() -> Unit)?` param; added "View window content" link row (hidden when no snapshot)
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/screens/ObserverFeedScreen.kt` — added `snapshotEvent` local state; wired `onViewSnapshot` into `EventRow`; mounted `SnapshotViewerSheet` conditionally
+- Files created:
+  - `app/src/main/java/com/kolee/tracklocation/feature/observer/presentation/components/SnapshotViewerSheet.kt` — full modal sheet (Dialog+scrim pattern; DragHandle, TitleRow, MetaStrip, ModeToolbar, ContentArea; Formatted flat node list + Raw JSON + Parse-error + No-readable-text edge states; Copy with 1.4s confirmation; all four dismiss paths)
+- Build run: `./gradlew :app:compileDebugKotlin --no-daemon` — BUILD SUCCESSFUL (1 unused-param warning, no errors)
+- Tests run: None
+- Known remaining: device verification needed
+- Suggested commit message: `feat(observer): snapshot viewer sheet — per-event modal with formatted/raw views and copy`
+
+---
+
 ### 2026-05-19 Sessions screen — Indicator animation + active card header alignment
 
 - Branch: `codex`
