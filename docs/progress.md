@@ -15,6 +15,7 @@ _None — last task completed._
 - Start: 2026-05-19
 - End: 2026-05-19
 - Status: Done (build verified — `BUILD SUCCESSFUL`)
+- Commit status: Committed — branch `codex`, revision `8ceb530`
 - Files edited:
   - `app/src/main/java/com/kolee/tracklocation/feature/observer/domain/model/ObservedEvent.kt` — added `firstSeenMs`, `repeatCount`, `treeSnapshot`, `truncationMetadata` fields
   - `app/src/main/java/com/kolee/tracklocation/feature/observer/data/repository/EventRepository.kt` — mapped new fields from entity; updated `FakeEventRepository` defaults
