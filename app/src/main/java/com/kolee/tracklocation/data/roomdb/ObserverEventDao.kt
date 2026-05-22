@@ -19,6 +19,15 @@ interface ObserverEventDao {
     @Query("SELECT * FROM observer_event ORDER BY lastSeenAt DESC")
     fun getAllEvents(): Flow<List<ObservedEventEntity>>
 
+    @Query("SELECT * FROM observer_event ORDER BY lastSeenAt DESC LIMIT :limit")
+    suspend fun getEventsFirstPage(limit: Int): List<ObservedEventEntity>
+
+    @Query("SELECT * FROM observer_event WHERE lastSeenAt < :beforeLastSeenAt ORDER BY lastSeenAt DESC LIMIT :limit")
+    suspend fun getEventsNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
+
+    @Query("SELECT * FROM observer_event WHERE lastSeenAt > :afterLastSeenAt ORDER BY lastSeenAt DESC")
+    fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEventEntity>>
+
     @Query("SELECT * FROM observer_event WHERE packageName = :packageName ORDER BY lastSeenAt DESC")
     fun getEventsByPackage(packageName: String): Flow<List<ObservedEventEntity>>
 

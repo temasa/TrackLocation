@@ -10,7 +10,13 @@
       "Bash(cmd *)",
       "Bash(JAVA_HOME='C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14' ./gradlew :app:compileDebugKotlin *)",
       "Bash(git add *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation\\\\app\\\\src\\\\main\\\\java\\\\com\\\\kolee\\\\tracklocation\\\\feature\\\\observer\" -Recurse -Filter \"*.kt\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(export JAVA_HOME=\"C:/Users/rinal/.jdks/jbr-17.0.14\")",
+      "Bash(./gradlew :app:compileDebugKotlin --no-daemon)",
+      "Bash(grep -i \"\\\\.kt$\")",
+      "Bash(grep \"\\\\.kt$\")"
     ]
   }
 }

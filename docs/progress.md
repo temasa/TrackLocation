@@ -8,6 +8,26 @@ _None — last task completed._
 
 ---
 
+### 2026-05-22 Observer Phase 2 — Cursor Pagination
+
+- Task: Replace unbounded `getAllEvents()` feed loading with cursor-based pagination. First page of 50 events on open; `loadMore()` triggered when user scrolls to oldest visible items; live new events appended via narrow `getEventsNewerThan()` Flow. Phase 2 otherwise complete (inspection covered by `SnapshotViewerSheet` from Phase 1).
+- Start: 2026-05-22
+- End: 2026-05-22
+- Status: Done (static inspection)
+- Commit status: uncommitted
+- Files edited:
+  - `data/roomdb/ObserverEventDao.kt` — added `getEventsFirstPage(limit)`, `getEventsNextPage(beforeLastSeenAt, limit)`, `getEventsNewerThan(afterLastSeenAt)` queries
+  - `feature/observer/data/repository/EventRepository.kt` — added `getFirstPage`, `getNextPage`, `getEventsNewerThan` to interface and `EventRepositoryImpl`; extracted `toDomain()` private helper to deduplicate mapping; added stubs to `FakeEventRepository`
+  - `feature/observer/domain/model/ObserverUiState.kt` — added `canLoadMore: Boolean = false` and `isLoadingMore: Boolean = false`
+  - `feature/observer/presentation/viewmodel/ObserverViewModel.kt` — removed unbounded `getEvents()` collection; added in-memory `_loadedEvents`/`_loadedIds`/`_oldestLastSeenAt`/`_newestLastSeenAt` tracking; `init` loads first page then collects `getEventsNewerThan()` for live arrivals; added `loadMore()` fun with prepend + `_prependedCount` SharedFlow; `PAGE_SIZE = 50` in companion
+  - `feature/observer/presentation/screens/ObserverFeedScreen.kt` — imported `derivedStateOf`; added `hasScrolled` flag (set on first scroll); `shouldLoadMore` derived state gates `loadMore()` call; `LaunchedEffect` collects `prependedCount` and adjusts scroll with `scrollToItem(firstIdx + count)`; added `key = { _, event -> event.id }` to `itemsIndexed` for stable item identity
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Known remaining: device verification needed; edge case — events with identical `lastSeenAt` ms at page boundary may be skipped by cursor
+- Suggested commit message: `feat(observer): cursor pagination — first page of 50, load-more on scroll, live-event narrow flow`
+
+---
+
 ### 2026-05-19 Observer Snapshot Viewer — per-event modal sheet
 
 - Task: Add "View window content" link to each Observer event card; tapping opens a modal bottom sheet showing the event's captured `treeSnapshot` as a flat formatted node list or raw JSON, with Copy and all four dismiss methods.

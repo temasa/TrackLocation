@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,15 +82,42 @@ fun ObserverFeedScreen(navController: NavController) {
     var showFab by remember { mutableStateOf(false) }
     var programmaticScroll by remember { mutableStateOf(false) }
     var scrollRelativeOffset by remember { mutableStateOf(0) }
+    var hasScrolled by remember { mutableStateOf(false) }
 
     // Drag/scroll → pause auto-scroll (ignore programmatic scrolls)
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .collect { isScrolling ->
-                if (isScrolling && autoScrollRunning && !programmaticScroll) {
-                    autoScrollRunning = false
+                if (isScrolling) {
+                    hasScrolled = true
+                    if (autoScrollRunning && !programmaticScroll) {
+                        autoScrollRunning = false
+                    }
                 }
             }
+    }
+
+    // Load-more: trigger when user scrolls near the oldest end (top of list)
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            hasScrolled &&
+            listState.firstVisibleItemIndex <= 3 &&
+            uiState.canLoadMore &&
+            !uiState.isLoadingMore
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) viewModel.loadMore()
+    }
+
+    // Adjust scroll position after items are prepended so the view stays stable
+    LaunchedEffect(Unit) {
+        viewModel.prependedCount.collect { count ->
+            if (count > 0) {
+                val newIdx = listState.firstVisibleItemIndex + count
+                listState.scrollToItem(newIdx)
+            }
+        }
     }
 
     // New events while auto-scroll is running → scroll to newest
@@ -251,7 +279,7 @@ fun ObserverFeedScreen(navController: NavController) {
                         ObserverEmptyState()
                     }
                 } else {
-                    itemsIndexed(uiState.events) { index, event ->
+                    itemsIndexed(uiState.events, key = { _, event -> event.id }) { index, event ->
                         EventRow(
                             event = event,
                             isEven = index % 2 == 0,

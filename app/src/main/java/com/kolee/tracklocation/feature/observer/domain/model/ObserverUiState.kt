@@ -15,6 +15,8 @@ data class ObserverUiState(
     val showJumpToLatestFab: Boolean = false,
     val allowlistDraftPending: Boolean = false,
     val snackbarMessage: String? = null,
+    val canLoadMore: Boolean = false,
+    val isLoadingMore: Boolean = false,
 )
 
 data class AllowlistDraftRule(

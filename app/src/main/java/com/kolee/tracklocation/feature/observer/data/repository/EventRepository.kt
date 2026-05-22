@@ -5,10 +5,14 @@ import com.kolee.tracklocation.data.roomdb.TrackDatabase
 import com.kolee.tracklocation.feature.observer.domain.model.ObservedEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 interface EventRepository {
     fun getEvents(): Flow<List<ObservedEvent>>
+    suspend fun getFirstPage(limit: Int): List<ObservedEvent>
+    suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
+    fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>>
 }
 
 class EventRepositoryImpl(context: Context) : EventRepository {
@@ -18,21 +22,32 @@ class EventRepositoryImpl(context: Context) : EventRepository {
     override fun getEvents(): Flow<List<ObservedEvent>> =
         dao.getAllEvents().map { entities ->
             // DB returns newest-first; reverse to newest-last for the feed list
-            entities.reversed().map { e ->
-                ObservedEvent(
-                    id = e.id,
-                    packageName = e.packageName,
-                    activityName = e.activityName,
-                    eventType = e.eventType,
-                    firstSeenMs = e.firstSeenAt,
-                    timestampMs = e.lastSeenAt,
-                    repeatCount = e.repeatCount,
-                    textSummary = e.textSummary,
-                    treeSnapshot = e.treeSnapshot,
-                    truncationMetadata = e.truncationMetadata,
-                )
-            }
+            entities.reversed().map { it.toDomain() }
         }
+
+    override suspend fun getFirstPage(limit: Int): List<ObservedEvent> =
+        dao.getEventsFirstPage(limit).reversed().map { it.toDomain() }
+
+    override suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
+        dao.getEventsNextPage(beforeLastSeenAt, limit).reversed().map { it.toDomain() }
+
+    override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> =
+        dao.getEventsNewerThan(afterLastSeenAt).map { entities ->
+            entities.reversed().map { it.toDomain() }
+        }
+
+    private fun com.kolee.tracklocation.data.roomdb.ObservedEventEntity.toDomain() = ObservedEvent(
+        id = id,
+        packageName = packageName,
+        activityName = activityName,
+        eventType = eventType,
+        firstSeenMs = firstSeenAt,
+        timestampMs = lastSeenAt,
+        repeatCount = repeatCount,
+        textSummary = textSummary,
+        treeSnapshot = treeSnapshot,
+        truncationMetadata = truncationMetadata,
+    )
 }
 
 // Returns a static set of fake events; used as the fallback when no real events exist yet.
@@ -49,4 +64,8 @@ class FakeEventRepository : EventRepository {
             )
         )
     }
+
+    override suspend fun getFirstPage(limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
+    override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> = flowOf(emptyList())
 }
