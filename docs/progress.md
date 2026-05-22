@@ -10,7 +10,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer Snapshot Viewer — per-event modal sheet
 
-- Branch: `codex`
 - Task: Add "View window content" link to each Observer event card; tapping opens a modal bottom sheet showing the event's captured `treeSnapshot` as a flat formatted node list or raw JSON, with Copy and all four dismiss methods.
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -32,7 +31,6 @@ _None — last task completed._
 
 ### 2026-05-19 Sessions screen — Indicator animation + active card header alignment
 
-- Branch: `codex`
 - Task: Two UI fixes targeting `SessionsScreen.kt` only:
   1. Always-recording indicator (Active state): blinking inner dot (opacity 1↔0.35, 1200ms) + two concentric ripple rings (scale 1.0→1.65, alpha 0.9→0, 1800ms, 0.6s stagger) — mirrors Trips screen pattern. Reduce-motion aware.
   2. Active session card header: removed absolutely-positioned ACTIVE badge + 70dp padding hack; replaced with a flat `Row(CenterVertically)` containing title (weight 1), then a nested row with start time + badge inline.
@@ -52,7 +50,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer Phase 1 Step 4 — tree snapshot DFS in ObserverAccessibilityService
 
-- Branch: `codex`
 - Task: `treeSnapshot` and `truncationMetadata` fields existed in `ObservedEventEntity` but were always written as `null`. Implemented bounded DFS traversal in `ObserverAccessibilityService` to populate them.
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -68,7 +65,6 @@ _None — last task completed._
 
 ### Observer Phase 1 — Local Accessibility Observer Foundation (full implementation)
 
-- Branch: `codex`
 - Task: Implement all 8 steps of Observer Phase 1 as defined in `docs/implementation-plan.md`. Navigation placement (Option B: Settings → Tools → Observer) was accepted 2026-05-18.
 - Start: (prior session — exact date not recorded at the time)
 - End: (prior session — discovered via codebase audit on 2026-05-19)
@@ -112,7 +108,6 @@ _None — last task completed._
 
 ### 2026-05-19 ListContent.kt — Fix Compose 1.2.x build errors (EaseInOut/EaseOut/label)
 
-- Branch: `codex`
 - Task: User requested a debug build. `./gradlew assembleDebug` failed in `:app:compileDebugKotlin` with unresolved `EaseInOut`/`EaseOut` references and `label` parameter not found on animation APIs. Root cause: project pins Compose UI 1.2.x (`composeOptions { kotlinCompilerExtensionVersion '1.2.0' }`); `EaseInOut`/`EaseOut` and animation `label` params were introduced in Compose 1.4 / 1.3 respectively.
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -128,7 +123,6 @@ _None — last task completed._
 
 ### 2026-05-19 Trips (List) hero card — Recording state per TRIPS_START_STOP_SPEC
 
-- Branch: `codex`
 - Task: Add visible Recording state to the Current-trip hero card on the Trips (List) screen per `docs/design/design_handoff_trips_start_stop/TRIPS_START_STOP_SPEC.md`. Card dimensions identical across states; indicator blink + two staggered pulse rings; title `Ready` ↔ `Recording`; always-visible monospace `HH:MM:SS` readout; CTA color/glyph/label swap (green Start ▶ ↔ red Stop ■). Honors reduced-motion (animator duration scale = 0).
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -159,7 +153,6 @@ _None — last task completed._
 
 ### 2026-05-19 Session Screen — Re-declare TrackingService in manifest (actual fix for non-functional switch)
 
-- Branch: `codex`
 - Task: Sessions always-recording switch still did not start recording after the earlier Compose-side fix. Root cause: `TrackingService` was missing from `app/src/main/AndroidManifest.xml`; the stale merged manifest under `app/build/intermediates/` masked the issue on the dev machine, but `startForegroundService` silently fails on clean install.
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -176,7 +169,6 @@ _None — last task completed._
 
 ### 2026-05-19 Session Screen — Fix non-functional always-recording switch
 
-- Branch: `codex`
 - Task: Switch toggled but never triggered `START_RECORDING` service action
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -192,7 +184,6 @@ _None — last task completed._
 
 ### 2026-05-19 List Screen — Fix non-functional Start button
 
-- Branch: `codex`
 - Task: Start button in CurrentTripCard had no click handler; wire it to `viewModel.onTripCtaTap()`
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -207,7 +198,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer Feed — Event row layout update
 
-- Branch: `codex`
 - Task: Replace single-line "log line" event row with stacked layout per `docs/design/design_handoff_observer_row/OBSERVER_ROW_SPEC.md`
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -222,7 +212,6 @@ _None — last task completed._
 
 ### 2026-05-19 Track Screen — Glass panel + brand-green CTA redesign
 
-- Branch: `codex`
 - Task: Replace solid dark panel + purple play button with translucent glass panel + brand-green CTA. Three trip states (READY/LIVE/PAUSED). Map visible through panel. Spec: `docs/design/design_handoff_track_screen/TRACK_SCREEN_SPEC.md`
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -249,7 +238,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer — Smooth resume with relative scroll offset
 
-- Branch: `codex`
 - Task: When resuming from pause, the list jumped to the very last item which felt jarring. Refined to maintain the relative position from the bottom, only FAB forces a jump to the tail.
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -264,7 +252,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer — Fix FAB click pausing auto-scroll
 
-- Branch: `codex`
 - Task: When tapping the list resumes auto-scroll, clicking the FAB immediately re-pauses it because `animateScrollToItem` triggers `isScrollInProgress`, which the scroll detector interprets as a user drag
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -279,7 +266,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer — Fix list tap not resuming auto-scroll
 
-- Branch: `codex`
 - Task: When auto-scroll is paused, tapping an event row should resume it, but the row's `combinedClickable(onClick = {})` consumed the tap before it reached the LazyColumn's `detectTapGestures` listener
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -295,7 +281,6 @@ _None — last task completed._
 
 ### 2026-05-19 Observer — Fix service status always showing "Enabled"
 
-- Branch: `codex`
 - Task: Observer screen ServiceBanner always showed "Enabled" because `AccessibilityManager.isEnabled` returns true when **any** accessibility service is on, not specifically ours
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -310,7 +295,6 @@ _None — last task completed._
 
 ### 2026-05-19 Build clean-up — fix all compiler warnings
 
-- Branch: `codex`
 - Task: Fix all 6 Kotlin compiler warnings reported by `./gradlew assembleDebug`
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -329,7 +313,6 @@ _None — last task completed._
 
 ### 2026-05-18 Fix Black Screen — Wire NavGraph into MainActivity
 
-- Branch: `codex`
 - Task: Fix black screen; `MainActivity.kt` had an empty `Surface {}` block with no composables rendered
 - Start: 2026-05-18
 - End: 2026-05-18
@@ -345,7 +328,6 @@ _None — last task completed._
 Previous session (2026-05-18, completed Phase 1 implementation):
 
 - Date: 2026-05-18 (completed Phase 1 implementation)
-- Branch: `codex`
 - Task: Complete Observer Phase 1 — AccessibilityService, Room persistence, event capture, retention, and integration
 - Completed files created:
   - `ObservedEventEntity.kt` — Room entity for persisting captured events
@@ -368,7 +350,6 @@ Previous session (2026-05-18, completed Phase 1 implementation):
 Last known active implementation session:
 
 - Date: 2026-05-16 20:20:00 +07:00 to 2026-05-16 21:05:00 +07:00
-- Branch: `codex`
 - Commit: `fe241a7`
 - Task: implement CR-0002 Session always-recording switch as the single control surface
 - Status: Done
@@ -490,7 +471,6 @@ Scope decision:
 
 ### 2026-05-19 Observer Phase 1 — Service + Manifest (final missing pieces)
 
-- Branch: `codex`
 - Task: Create `ObserverAccessibilityService.kt`, `accessibility_service_config.xml`, and register service in `AndroidManifest.xml`
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -507,7 +487,6 @@ Scope decision:
 
 ### 2026-05-19 Build Fix — ModalBottomSheet + stickyHeader opt-in
 
-- Branch: `codex`
 - Task: Build project and fix all compile errors
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -521,7 +500,6 @@ Scope decision:
 
 ### 2026-05-19 Observer Phase 1 — Full UI Implementation
 
-- Branch: `codex`
 - Task: Implement Observer Phase 1 UI per `OBSERVER_PHASE1_SPEC.md` (complete from scratch — previous sessions' files did not persist on disk)
 - Start: 2026-05-19
 - End: 2026-05-19
@@ -555,7 +533,6 @@ Scope decision:
 
 ### 2026-05-18 Observer Feed — Smooth Pause/Resume + FAB Jump
 
-- Branch: `codex`
 - Task: Fix Observer feed pause/resume auto-scroll so resuming continues from the last paused viewport position (smooth “film strip” behaviour); FAB is the only forced jump-to-latest; update FAB arrow icon
 - Start: 2026-05-18 21:45:00 +07:00
 - End: 2026-05-18 21:59:26 +07:00
@@ -576,7 +553,6 @@ Scope decision:
 
 ### 2026-05-18 Observer Phase 1 — Infrastructure Completion
 
-- Branch: `codex`
 - Task: Complete Observer Phase 1 local accessibility observer foundation (infrastructure)
 - Start: 2026-05-18 (continued implementation)
 - End: 2026-05-18
@@ -621,7 +597,6 @@ Scope decision:
 
 ### 2026-05-18 (Observer Phase 1 Implementation)
 
-- Branch: `codex`
 - Task: Implement Observer Phase 1 per `OBSERVER_PHASE1_SPEC.md`
 - End: 2026-05-18
 - Status: Done (implementation complete, awaiting code review and emulator testing)
@@ -654,7 +629,6 @@ Scope decision:
 
 ### 2026-05-16 20:20:00 +07:00
 
-- Branch: `codex`
 - Commit: `fe241a7`
 - Task: implement CR-0002 Session always-recording switch as the single control surface
 - End: 2026-05-16 21:05:00 +07:00
@@ -669,7 +643,6 @@ Scope decision:
 
 ### 2026-05-16 20:01:12 +07:00
 
-- Branch: `codex`
 - Commit: `fe241a7`
 - Commit status: uncommitted working-tree changes
 - Task: refine CR-0002 Session switch UI specification from Stitch references
@@ -684,7 +657,6 @@ Scope decision:
 
 ### 2026-05-16 18:01:44 +07:00
 
-- Branch: `codex`
 - Commit: `776cd6e`
 - Commit status: uncommitted working-tree changes
 - Task: fully implement CR-0001 always-recorded sessions and canonical location log
@@ -699,7 +671,6 @@ Scope decision:
 
 ### 2026-05-16 17:38:39 +07:00
 
-- Branch: `codex`
 - Commit: `776cd6e7230ca77e00310b188032a36209ffc524`
 - Commit status: committed as current `codex` HEAD with a clean working tree
 - Task: capture latest docs refactor in progress log
@@ -710,7 +681,6 @@ Scope decision:
 
 ### 2026-05-14 21:05:21 +07:00
 
-- Branch: `codex`
 - Commit: `7ae11b9`
 - Task: implement CR#1 UI-first Sessions screen and 4-tab bottom navigation
 - Done:
