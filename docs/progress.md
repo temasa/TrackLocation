@@ -4,7 +4,23 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
-_None — last task completed._
+### 2026-05-23 Observer Phase 2 — Truncation Warning UI Spec (Track B)
+
+- Task: Create UI spec/handoff document for truncation metadata warning banner inside SnapshotViewerSheet. Phase 2 code (cursor pagination) is complete; only UI spec for the missing truncationMetadata field remains.
+- Start: 2026-05-23
+- End: 2026-05-23
+- Status: Done (spec document created, ready for design handoff)
+- Commit status: Uncommitted working-tree changes
+- Files created:
+  - `docs/design-handoff/observer_truncation/OBSERVER_TRUNCATION_SPEC.md` — complete UI specification for the truncation warning banner (states A/B/C, design tokens, 5 required screenshots, edge cases, no interaction)
+- Files edited:
+  - `docs/progress.md` — recorded current session
+  - `docs/implementation-plan.md` — updated Phase 2 status to reflect cursor pagination done + truncation spec in progress
+- Known dependencies: Track A (code logic) is complete (field already in domain model); banner implementation waits for design approval
+- Next: Submit spec + 5 app screenshots to Google Stitch or Claude Design for visual treatment approval; then implement SnapshotViewerSheet.kt with the approved design
+- Suggested commit message: `docs(design): add Observer truncation warning UI spec for design handoff`
+
+---
 
 ---
 
@@ -14,7 +30,7 @@ _None — last task completed._
 - Start: 2026-05-22
 - End: 2026-05-22
 - Status: Done (static inspection)
-- Commit status: uncommitted
+- Commit status: Committed — branch `codex`, revision `ee54e9c`
 - Files edited:
   - `data/roomdb/ObserverEventDao.kt` — added `getEventsFirstPage(limit)`, `getEventsNextPage(beforeLastSeenAt, limit)`, `getEventsNewerThan(afterLastSeenAt)` queries
   - `feature/observer/data/repository/EventRepository.kt` — added `getFirstPage`, `getNextPage`, `getEventsNewerThan` to interface and `EventRepositoryImpl`; extracted `toDomain()` private helper to deduplicate mapping; added stubs to `FakeEventRepository`

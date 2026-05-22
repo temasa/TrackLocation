@@ -19,7 +19,7 @@ B. UI Specification / Design Handoff Work
 | CR-0001 Always-recorded Location Sessions | Implemented | Implemented | Verified by user |
 | CR-0002 Session always-recording switch | Implemented | Implemented | Verified by user |
 | Observer Phase 1 Local Foundation | Implemented | Implemented | Not verified on device |
-| Observer Phase 2 Inspection UI | Planned | Planned | Not started |
+| Observer Phase 2 Inspection UI | Implemented (pagination) + truncation code logic ready | Spec drafted (truncation), awaiting design | Not verified on device |
 | Observer Phase 3 Filtering + Settings | Planned | Planned | Not started |
 | Observer Phase 4 Sync Engine | Planned | Planned | Not started |
 | Observer Phase 5 Neon V1 | Planned | Planned | Not started |
@@ -292,24 +292,46 @@ Verification gates (Phase 1):
 
 ## Observer Phase 2 — Inspection UI
 
+Status:
+
+- Code implementation: Done (cursor pagination complete; truncation metadata code logic already in domain model, awaiting design spec).
+- UI specification: In progress (truncation warning spec drafted; awaiting design tool handoff; event detail and JSON viewer already implemented via SnapshotViewerSheet).
+- Verification: Not verified on device.
+
 ### A. Code Implementation Work
 
-Planned:
+Done:
 
-- Event detail route.
-- Event detail state/ViewModel.
-- JSON viewer route.
-- Cursor pagination.
+| Item | Status | Notes |
+|---|---|---|
+| Cursor pagination | ✅ Done (2026-05-22, `ee54e9c`) | First page 50, load-more on scroll, live-event narrow flow |
+| Event detail / JSON viewer | ✅ Done (2026-05-19, via `SnapshotViewerSheet`) | Formatted + raw JSON modes, copy, per-event modal |
+| Truncation metadata code | ✅ Ready | Field already in `ObservedEvent` domain model, passed to sheet; code change depends on design spec |
+
+Pending:
+
+| Item | Status |
+|---|---|
+| Truncation warning UI design approval | Track B in progress |
+| Truncation banner implementation (SnapshotViewerSheet.kt) | Waiting for design spec |
 
 ### B. UI Specification / Design Handoff Work
 
-Planned:
+Done:
 
-- Event detail screen.
-- Full-screen JSON viewer.
-- Metadata grid.
-- Large JSON handling.
-- Back behavior.
+| Item | Status | Document |
+|---|---|---|
+| Event detail screen | ✅ Via `SnapshotViewerSheet` | Already implemented; shows all event metadata, timestamp, event type, repeat count |
+| Full-screen JSON viewer | ✅ Via SnapshotViewerSheet Raw JSON tab | Formatted + raw modes, 2-space indentation, line numbers, copy action |
+| Metadata grid | ✅ Via SnapshotViewerSheet MetaStrip | Chips for event type, first seen, last seen, repeat count (when > 1) |
+| Truncation metadata warning | 📋 Spec drafted | `docs/design-handoff/observer_truncation/OBSERVER_TRUNCATION_SPEC.md` — awaiting design tool handoff |
+
+Pending:
+
+| Item | Status |
+|---|---|
+| Design approval of truncation banner | Awaiting handoff to Google Stitch / Claude Design |
+| Implementation after design approval | Code implementation ready once design is approved |
 
 ## Observer Phase 3 — Filtering + Unified Settings
 
