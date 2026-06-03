@@ -1,6 +1,7 @@
 # TrackLocation Product Specification
 
 Last updated from latest uploaded docs: 2026-05-16 21:05:00 +07:00
+OBD-II feature baseline added: 2026-05-29
 
 ## Purpose
 
@@ -16,6 +17,7 @@ Accepted CRs:
 
 - CR-0001: Always-recorded Location Sessions.
 - CR-0002: Session always-recording switch.
+- OBD Phase 1: ELM327 Bluetooth Classic telemetry (accepted 2026-05-29).
 
 Current bottom navigation:
 
@@ -36,6 +38,7 @@ Observer is planned but not yet integrated into bottom navigation.
 | Observer Feed | Planned | Accessed via `Settings -> Tools -> Observer` (Option B accepted 2026-05-18) |
 | Observer Event Detail | Planned | Depends on Observer Feed |
 | JSON Viewer | Planned | Full-screen, no bottom nav |
+| OBD Settings | Planned | Accessed via Settings → Tools → OBD |
 | Registration | Planned | Observer/auth phase |
 | Auth Overlay | Planned | App-wide overlay, not a nav destination |
 
@@ -181,6 +184,148 @@ Locked principles:
 - Unsynced local events are never deleted.
 - Observer history is not user-deletable/clearable (no clear-data action).
 - Accepted retention (2026-05-18): automatic retention limits local observer storage growth (no user-facing clear/delete). Recommended: keep most recent 7 days or 50,000 rows (whichever is smaller).
+
+## OBD-II Telemetry (ELM327 Bluetooth Classic)
+
+### IA Placement
+
+OBD configuration lives at `Settings → Tools → OBD`. Bottom navigation remains
+`Session / List / Track / Settings` unchanged.
+
+### Bluetooth Permission
+
+On Android 12+ (API 31+), `BLUETOOTH_CONNECT` is a dangerous permission that must be
+granted before `BluetoothAdapter.bondedDevices` or any RFCOMM socket can be used.
+
+Accepted flow (2026-05-29):
+
+- The permission is requested **when the user taps the OBD Enable toggle for the first
+  time** — the moment they explicitly choose to use Bluetooth.
+- On API ≤ 30 the check is skipped; `BLUETOOTH` and `BLUETOOTH_ADMIN` cover it as
+  normal permissions.
+- If the permission is granted → start `ObdPollingService`.
+- If the permission is denied → keep the toggle OFF; show an inline explanation:
+  "Bluetooth access is required to connect to an OBD adapter."
+- By the time the user reaches the device picker, the permission is already granted.
+
+### Bluetooth Pairing
+
+ELM327 adapters use Bluetooth Classic (RFCOMM/SPP). Pairing is a one-time OS-level
+step that must happen before the app can open a connection.
+
+Accepted flow (Option A — system settings redirect, 2026-05-29):
+
+1. User taps "Pair a new device" inside the OBD Settings screen.
+2. App deep-links to Android Bluetooth settings via `Settings.ACTION_BLUETOOTH_SETTINGS`.
+3. User pairs the ELM327 adapter there (typical PIN: `1234` or `0000`).
+4. User returns to the app; the device picker refreshes `BluetoothAdapter.bondedDevices`.
+5. User selects the adapter; its MAC address is saved to `obdDeviceMac` in DataStore.
+
+The app never performs in-app discovery or PIN entry. A "Change device" action clears
+the saved MAC and lets the user pick from the updated bonded-devices list, or re-enter
+pairing if no suitable device is bonded yet.
+
+### Service Behavior
+
+- A separate foreground service (`ObdPollingService`) manages the Bluetooth Classic
+  connection to the ELM327 adapter. `TrackingService` must not start or stop it.
+- The service is started by `MainActivity.onCreate()` when `obdServiceEnabled` is true.
+  It shows an ongoing foreground notification while running.
+- The service keeps the Bluetooth connection open while possible, even when
+  always-recording is OFF (no writes to the database while session is inactive).
+- On disconnect: retry with exponential backoff (1 s, 2 s, 4 s, …) capped at
+  `obdRetryMaxSeconds` (default 120 s). After the cap the service enters WAITING state
+  until the user taps "Reconnect now".
+- Toggling `obdServiceEnabled` OFF stops the service and removes the notification.
+
+### Data Collection Rule
+
+OBD samples are **only stored** when always-recording / a session is ON. Session gating
+is delivered via intent actions from `TrackingService` to `ObdPollingService`
+(`ACTION_SESSION_ON` / `ACTION_SESSION_OFF`) when always-recording starts or stops.
+
+### Data Model
+
+OBD samples are stored in a separate Room table `obd_sample`:
+
+| Column | Type | Notes |
+|---|---|---|
+| id | Long PK auto | |
+| timestampMs | Long | `System.currentTimeMillis()` at insert |
+| rpm | Int? | |
+| obdSpeedKmh | Int? | Stored for comparison; GPS speed is canonical for km/L |
+| fuelRateLph | Double? | Direct or MAF-derived |
+| mafGramsPerSecond | Double? | Raw MAF value when used for derivation |
+| fuelRateSource | String | `DIRECT_FUEL_RATE` / `MAF_DERIVED` / `UNAVAILABLE` |
+| adapterElapsedMs | Long? | Round-trip time to adapter |
+
+No foreign keys to trip or session tables. Trips and sessions link to OBD samples only
+via time-window queries (`samplesBetween(startMs, endMs)`).
+
+### Fuel Rate Fallback Chain
+
+Each poll cycle attempts fuel rate in order:
+
+1. `FuelConsumptionRateCommand` → `fuelRateLph` (`DIRECT_FUEL_RATE`)
+2. `MassAirFlowCommand` → `mafGramsPerSecond`, then derive:
+   `fuelRateLph = (mafGramsPerSecond × 3600) / (14.7 × 750)` (`MAF_DERIVED`, petrol constants)
+3. Neither available → `UNAVAILABLE`
+
+MAF-derived fuel rate is an estimate. Some ECUs do not expose the direct fuel-rate PID.
+Petrol stoichiometric constants (AFR 14.7, density 750 g/L) are used for Phase 1.
+
+### Retention
+
+OBD samples older than `obdRetentionDays` (default 7, configurable 1–30) are deleted
+automatically on service start and every 6 hours during operation.
+
+### OBD Settings Screen (`Settings → Tools → OBD`)
+
+| Control | Description |
+|---|---|
+| Enable toggle | Requests `BLUETOOTH_CONNECT` (API 31+) then starts / stops `ObdPollingService` |
+| Saved device row | Shows currently saved device name + MAC; "Change" clears MAC and shows picker |
+| "Pair a new device" row | Opens `Settings.ACTION_BLUETOOTH_SETTINGS`; picker refreshes on return |
+| Bonded device picker | Lists `BluetoothAdapter.bondedDevices`; selecting one saves MAC to DataStore |
+| Poll rate selector | 1 / 2 / 5 Hz (default 2 Hz) |
+| Retention days selector | 1–30 days (default 7) |
+| Retry cap selector | 30 / 60 / 120 / 300 s (default 120 s) |
+| Status display | IDLE / CONNECTING / CONNECTED / RETRYING / WAITING + last error + last sample timestamp |
+| Reconnect button | Visible in WAITING state; triggers immediate reconnect attempt |
+
+### Fuel Metrics on Session Screen and Trip Panel
+
+Both the Session screen and the Trip panel show:
+
+- **Instantaneous km/L** — EMA-smoothed (α = 0.2). Hidden when GPS speed < 3 km/h or
+  GPS accuracy > 20 m. GPS speed is used for the calculation; OBD speed is stored for
+  comparison only.
+- **Average km/L**:
+  - *Session screen*: accumulated fuel liters since `SESSION_ON` / GPS session distance.
+  - *Trip panel*: computed on-demand from `samplesBetween(tripStartMs, tripEndMs)`
+    divided by `TrackEntity` trip distance. Not accumulated in the service.
+- **Fuel source indicator** — `DIRECT` / `MAF est.` / `Unavail.`
+- **OBD connection status** — shown inline so the user knows whether live data is
+  available.
+
+Km/L calculation:
+
+- Instant: `gpsSpeedKmh / fuelRateLph` (EMA α = 0.2)
+- Average (session): `sessionDistanceKm / sessionFuelLiters`
+  where `sessionFuelLiters += fuelRateLph × dtHours` each poll cycle
+- Average (trip): `tripDistanceKm / sum(fuelRateLph × dtHours)` over `samplesBetween`
+
+### Windowing (No Schema Changes)
+
+**Trip OBD window:**
+
+- Primary: derive `tripStartMs` / `tripEndMs` from `location_log` timestamps at
+  `TrackEntity.startLocationId` / `endLocationId`.
+- Fallback: `TrackEntity.timestamp` as start, `timestamp + duration` as end.
+
+**Session OBD window:**
+
+- `SessionEntity.startedAt` / `endedAt` (or `now` if the session is still active).
 
 ## UI Direction
 

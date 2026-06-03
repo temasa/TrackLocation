@@ -4,23 +4,31 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
-### 2026-05-23 Observer Phase 2 — Truncation Warning UI Spec (Track B)
+### 2026-05-29 OBD Phase 1 — ELM327 Bluetooth Classic Telemetry
 
-- Task: Create UI spec/handoff document for truncation metadata warning banner inside SnapshotViewerSheet. Phase 2 code (cursor pagination) is complete; only UI spec for the missing truncationMetadata field remains.
-- Start: 2026-05-23
-- End: 2026-05-23
-- Status: Done (spec document created, ready for design handoff)
-- Commit status: Uncommitted working-tree changes
-- Files created:
-  - `docs/design-handoff/observer_truncation/OBSERVER_TRUNCATION_SPEC.md` — complete UI specification for the truncation warning banner (states A/B/C, design tokens, 5 required screenshots, edge cases, no interaction)
-- Files edited:
-  - `docs/progress.md` — recorded current session
-  - `docs/implementation-plan.md` — updated Phase 2 status to reflect cursor pagination done + truncation spec in progress
-- Known dependencies: Track A (code logic) is complete (field already in domain model); banner implementation waits for design approval
-- Next: Submit spec + 5 app screenshots to Google Stitch or Claude Design for visual treatment approval; then implement SnapshotViewerSheet.kt with the approved design
-- Suggested commit message: `docs(design): add Observer truncation warning UI spec for design handoff`
-
----
+- Task: Implement OBD-II support — update docs, then add Room entity/DAO/migration,
+  ObdPollingService (foreground), ObdPreferencesDataStore, OBD Settings screen and
+  navigation, Session screen and Trip panel km/L metrics.
+- Start: 2026-05-29
+- End: (in progress)
+- Status: In Progress — docs step complete; source changes pending
+- Expected files created:
+  - `data/roomdb/ObdSampleEntity.kt`
+  - `data/roomdb/ObdSampleDao.kt`
+  - `feature/obd/data/ObdPreferencesDataStore.kt`
+  - `feature/obd/service/ObdPollingService.kt`
+  - `screens/settings/obd/ObdSettingsScreen.kt`
+- Expected files edited:
+  - `data/roomdb/TrackDatabase.kt` (bump v4, MIGRATION_3_4)
+  - `TrackApp.kt` (obdSampleDao + OBD notification channel)
+  - `tracking/TrackingService.kt` (SESSION_ON/OFF intents)
+  - `MainActivity.kt` (auto-start ObdPollingService)
+  - `navigation/Screen.kt`, `navigation/NavGraph.kt`
+  - `screens/settings/SettingsScreen.kt` (OBD Tools row)
+  - `screens/sessions/SessionsScreen.kt` (ObdStatusCard + km/L)
+  - `screens/track/TripState.kt`, `screens/track/components/TripPanel.kt` (km/L row)
+  - `app/build.gradle`, `AndroidManifest.xml`
+- Docs updated before source changes: `docs/product-spec.md` ✓, `docs/implementation-plan.md` ✓
 
 ---
 
@@ -504,6 +512,28 @@ Scope decision:
 - Accepted scope detail (2026-05-18): automatic retention is allowed (no user-facing clear/delete). Recommended: keep most recent 7 days or 50,000 rows (whichever is smaller).
 
 ## Task Log
+
+### 2026-05-29 Observer Phase 1 — Device Verification Complete
+
+- Task: Verify Observer Phase 1 (accessibility service, event capture, feed, allowlist) functions correctly on device
+- Start: (prior work, 2026-05-18–2026-05-23)
+- End: 2026-05-29
+- Status: Done (all Phase 1 features verified working on device)
+- Commit status: Committed — branch `codex`, multiple revisions (see prior entries for code commits)
+- Verification performed:
+  - ✓ Observer service enables in Android Accessibility Settings
+  - ✓ Events capture correctly from active applications
+  - ✓ Tree snapshot DFS populates and displays in snapshot viewer
+  - ✓ Pause/resume capture control works
+  - ✓ Allowlist rules apply (exact/regex matching)
+  - ✓ Auto-scroll, event rows, feed header all display correctly
+  - ✓ Feed pagination working (first page 50, load-more on scroll)
+  - ✓ Snapshot viewer sheet shows formatted + raw JSON modes
+  - ✓ Copy functionality works in snapshot sheet
+- Known remaining: Phase 2 truncation warning UI spec awaits design handoff (spec document created 2026-05-23)
+- Suggested commit message: `docs(progress): Phase 1 verified complete on device — close Phase 1 implementation`
+
+---
 
 ### 2026-05-19 Observer Phase 1 — Service + Manifest (final missing pieces)
 
