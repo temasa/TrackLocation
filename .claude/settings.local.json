@@ -16,7 +16,11 @@
       "Bash(export JAVA_HOME=\"C:/Users/rinal/.jdks/jbr-17.0.14\")",
       "Bash(./gradlew :app:compileDebugKotlin --no-daemon)",
       "Bash(grep -i \"\\\\.kt$\")",
-      "Bash(grep \"\\\\.kt$\")"
+      "Bash(grep \"\\\\.kt$\")",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)"
     ]
   }
 }
