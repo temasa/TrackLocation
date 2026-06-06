@@ -20,7 +20,14 @@
       "Bash(git commit -m ' *)",
       "Bash(git commit *)",
       "Bash(git rebase *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(xargs grep -li \"obd\\\\|OBD\\\\|bluetooth\\\\|Bluetooth\")",
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 150)",
+      "PowerShell(tail *)",
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 100)",
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 20)",
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 5)",
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 50)"
     ]
   }
 }

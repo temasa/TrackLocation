@@ -24,6 +24,9 @@ class TrackApp: Application() {
     val allowlistRuleDao by lazy {
         TrackDatabase.getDatabase(this).allowlistRuleDao
     }
+    val obdSampleDao by lazy {
+        TrackDatabase.getDatabase(this).obdSampleDao
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -33,7 +36,14 @@ class TrackApp: Application() {
             NotificationManager.IMPORTANCE_LOW
         )
 
+        val obdChannel = NotificationChannel(
+            "OBD_POLLING",
+            "OBD Polling",
+            NotificationManager.IMPORTANCE_LOW
+        )
+
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
+        manager.createNotificationChannel(obdChannel)
     }
 }

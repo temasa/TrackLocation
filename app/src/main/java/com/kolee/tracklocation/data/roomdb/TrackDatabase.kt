@@ -13,9 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LocationEntity::class,
         SessionEntity::class,
         ObservedEventEntity::class,
-        AllowlistRuleEntity::class
+        AllowlistRuleEntity::class,
+        ObdSampleEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -25,6 +26,7 @@ abstract class TrackDatabase: RoomDatabase() {
     abstract val sessionDao: SessionDao
     abstract val observerEventDao: ObserverEventDao
     abstract val allowlistRuleDao: AllowlistRuleDao
+    abstract val obdSampleDao: ObdSampleDao
 
     companion object {
         @Volatile
@@ -61,6 +63,26 @@ abstract class TrackDatabase: RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_packageName` ON `observer_event` (`packageName`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_lastSeenAt` ON `observer_event` (`lastSeenAt`)")
+            }
+        }
+
+        private val MIGRATION_3_4 = object: Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `obd_sample` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `timestampMs` INTEGER NOT NULL,
+                        `rpm` INTEGER,
+                        `obdSpeedKmh` INTEGER,
+                        `fuelRateLph` REAL,
+                        `mafGramsPerSecond` REAL,
+                        `fuelRateSource` TEXT NOT NULL,
+                        `adapterElapsedMs` INTEGER
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_obd_sample_timestampMs` ON `obd_sample` (`timestampMs`)")
             }
         }
 
@@ -204,7 +226,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 return instance
