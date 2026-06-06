@@ -4,6 +4,20 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
+### 2026-06-07 OBD Phase 1 Pre-check — Kotlin 1.7.0 Compatibility
+
+- Task: Confirm whether `kotlin-obd-api` library compiles with Kotlin 1.7.0 project. If incompatible, skip library and implement raw AT I/O over Bluetooth socket instead.
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done — pre-check completed; library is incompatible
+- Build run: `./gradlew :app:compileDebugKotlin` — tested with `kotlin-obd-api:1.1.0` and `master-SNAPSHOT`; both failed with "The binary version of its metadata is 2.3.0/2.1.0, expected version is 1.7.1"
+- Decision: Skip kotlin-obd-api library. Implement raw AT commands over Bluetooth socket (PID 010D for speed, 010C for RPM, 015E/0110 for fuel rate with fallback chain). Manual AT command parsing instead of pre-built Command classes.
+- Files changed: None (dependency verification only; documentation updated with raw AT I/O approach)
+- Docs updated: `docs/implementation-plan.md` — completed pre-check table, removed JitPack dependency step, updated Slice 3 Step 1 with raw AT I/O details
+- Suggested commit message: `docs: OBD Phase 1 pre-check — kotlin-obd-api incompatible with Kotlin 1.7.0, switch to raw AT I/O`
+
+---
+
 ### 2026-05-29 OBD Phase 1 — ELM327 Bluetooth Classic Telemetry
 
 - Task: Implement OBD-II support — update docs, then add Room entity/DAO/migration,

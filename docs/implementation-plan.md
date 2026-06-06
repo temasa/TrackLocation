@@ -87,19 +87,17 @@ Non-goals (Phase 1):
 
 **Implementation steps:**
 
-1. **`settings.gradle`** — What: add JitPack repository. How: add `maven { url 'https://jitpack.io' }` inside `dependencyResolutionManagement.repositories`
-2. **`app/build.gradle`** — What: add OBD library. How: add `com.github.eltonvs:kotlin-obd-api:<version>` (verify Kotlin 1.7.0 compat first; if incompatible, skip library and implement raw AT commands over socket)
-3. **`AndroidManifest.xml`** — What: declare BT permissions and OBD service. How: add `BLUETOOTH` + `BLUETOOTH_ADMIN` (maxSdk 30), `BLUETOOTH_CONNECT` + `BLUETOOTH_SCAN neverForLocation` (API 31+); add `uses-feature bluetooth required=false`; declare `ObdPollingService` with `foregroundServiceType="connectedDevice"`
-4. **Create** `data/roomdb/ObdSampleEntity.kt` — What: define database table for OBD samples. Schema: id, timestampMs, rpm, obdSpeedKmh, fuelRateLph, mafGramsPerSecond, fuelRateSource, adapterElapsedMs
-5. **Create** `data/roomdb/ObdSampleDao.kt` — What: DAO for OBD sample CRUD and queries. Methods: `insert(ObdSampleEntity)`, `latestSample(): Flow<ObdSampleEntity?>`, `samplesBetween(startMs, endMs): Flow<List<ObdSampleEntity>>`, `deleteOlderThan(cutoffMs)`
-6. **Edit** `data/roomdb/TrackDatabase.kt` — What: wire OBD entity and migration. How: add `ObdSampleEntity` to entities list; bump version 3→4; add `abstract fun obdSampleDao()`; add inline `MIGRATION_3_4` (`CREATE TABLE obd_sample` with all fields); chain migration into `addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)`
-7. **Create** `feature/obd/data/ObdPreferencesDataStore.kt` — What: DataStore for OBD settings and state. DataStore name: `obd_prefs`. Keys (with defaults): `obdServiceEnabled` (bool, false), `obdDeviceMac` (string, ""), `obdPollHz` (int, 2), `obdRetentionDays` (int, 7), `obdRetryMaxSeconds` (int, 120), `obdLastState` (string, "Idle"), `obdLastError` (string, ""), `obdLastSampleTs` (long, 0). Model pattern on `feature/observer/data/ObserverPreferencesDataStore.kt`
-8. **Edit** `TrackApp.kt` — What: expose OBD DAO and notification channel. How: add `val obdSampleDao by lazy { TrackDatabase.getDatabase(this).obdSampleDao() }`; in `onCreate`, create notification channel with id `OBD_CHANNEL_ID = "OBD_POLLING"`
-9. **Create** `feature/obd/service/ObdPollingService.kt` (shell for Slice 1) — What: service to manage OBD connection. What it exposes: `companion object { val obdUiState = MutableStateFlow<ObdUiState>(ObdUiState.Idle) }`. What it does: handles `ACTION_START`/`ACTION_STOP` intents (no-op stubs for now); calls `startForeground()` with OBD notification; sets up `serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)` and tears it down in `onDestroy()`. `ObdUiState` sealed class: `Idle`, `Connecting`, `Connected(rpm, obdSpeedKmh, fuelRateLph, fuelSource, instantKmL, avgKmL, sessionActive)`, `Retrying(attemptSeconds, maxSeconds)`, `Waiting(lastError)`
-10. **Create** `screens/settings/obd/ObdSettingsScreen.kt` (shell for Slice 1) — What: Settings UI for OBD. Displays: status card showing `ObdPollingService.obdUiState` (initially "Idle"); Enable toggle (disabled for now, always shows OFF). No other controls yet
-11. **Edit** `navigation/Screen.kt` — What: register OBD Settings route. How: add `object ObdSettingsScreen : Screen("obd_settings_screen")`
-12. **Edit** `navigation/NavGraph.kt` — What: add OBD route to graph. How: add `composable(Screen.ObdSettingsScreen.route) { ObdSettingsScreen(navController) }`
-13. **Edit** `screens/settings/SettingsScreen.kt` — What: add OBD link in TOOLS. How: in TOOLS section after Observer row, add `SettingsRow(title = "OBD", supporting = "ELM327 Bluetooth telemetry", onClick = { navController.navigate(Screen.ObdSettingsScreen.route) })`
+1. **`AndroidManifest.xml`** — What: declare BT permissions and OBD service. How: add `BLUETOOTH` + `BLUETOOTH_ADMIN` (maxSdk 30), `BLUETOOTH_CONNECT` + `BLUETOOTH_SCAN neverForLocation` (API 31+); add `uses-feature bluetooth required=false`; declare `ObdPollingService` with `foregroundServiceType="connectedDevice"`
+2. **Create** `data/roomdb/ObdSampleEntity.kt` — What: define database table for OBD samples. Schema: id, timestampMs, rpm, obdSpeedKmh, fuelRateLph, mafGramsPerSecond, fuelRateSource, adapterElapsedMs
+3. **Create** `data/roomdb/ObdSampleDao.kt` — What: DAO for OBD sample CRUD and queries. Methods: `insert(ObdSampleEntity)`, `latestSample(): Flow<ObdSampleEntity?>`, `samplesBetween(startMs, endMs): Flow<List<ObdSampleEntity>>`, `deleteOlderThan(cutoffMs)`
+4. **Edit** `data/roomdb/TrackDatabase.kt` — What: wire OBD entity and migration. How: add `ObdSampleEntity` to entities list; bump version 3→4; add `abstract fun obdSampleDao()`; add inline `MIGRATION_3_4` (`CREATE TABLE obd_sample` with all fields); chain migration into `addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)`
+5. **Create** `feature/obd/data/ObdPreferencesDataStore.kt` — What: DataStore for OBD settings and state. DataStore name: `obd_prefs`. Keys (with defaults): `obdServiceEnabled` (bool, false), `obdDeviceMac` (string, ""), `obdPollHz` (int, 2), `obdRetentionDays` (int, 7), `obdRetryMaxSeconds` (int, 120), `obdLastState` (string, "Idle"), `obdLastError` (string, ""), `obdLastSampleTs` (long, 0). Model pattern on `feature/observer/data/ObserverPreferencesDataStore.kt`
+6. **Edit** `TrackApp.kt` — What: expose OBD DAO and notification channel. How: add `val obdSampleDao by lazy { TrackDatabase.getDatabase(this).obdSampleDao() }`; in `onCreate`, create notification channel with id `OBD_CHANNEL_ID = "OBD_POLLING"`
+7. **Create** `feature/obd/service/ObdPollingService.kt` (shell for Slice 1) — What: service to manage OBD connection. What it exposes: `companion object { val obdUiState = MutableStateFlow<ObdUiState>(ObdUiState.Idle) }`. What it does: handles `ACTION_START`/`ACTION_STOP` intents (no-op stubs for now); calls `startForeground()` with OBD notification; sets up `serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)` and tears it down in `onDestroy()`. `ObdUiState` sealed class: `Idle`, `Connecting`, `Connected(rpm, obdSpeedKmh, fuelRateLph, fuelSource, instantKmL, avgKmL, sessionActive)`, `Retrying(attemptSeconds, maxSeconds)`, `Waiting(lastError)`
+8. **Create** `screens/settings/obd/ObdSettingsScreen.kt` (shell for Slice 1) — What: Settings UI for OBD. Displays: status card showing `ObdPollingService.obdUiState` (initially "Idle"); Enable toggle (disabled for now, always shows OFF). No other controls yet
+9. **Edit** `navigation/Screen.kt` — What: register OBD Settings route. How: add `object ObdSettingsScreen : Screen("obd_settings_screen")`
+10. **Edit** `navigation/NavGraph.kt` — What: add OBD route to graph. How: add `composable(Screen.ObdSettingsScreen.route) { ObdSettingsScreen(navController) }`
+11. **Edit** `screens/settings/SettingsScreen.kt` — What: add OBD link in TOOLS. How: in TOOLS section after Observer row, add `SettingsRow(title = "OBD", supporting = "ELM327 Bluetooth telemetry", onClick = { navController.navigate(Screen.ObdSettingsScreen.route) })`
 
 ---
 
@@ -139,7 +137,7 @@ Non-goals (Phase 1):
 
 **Implementation steps:**
 
-1. **Edit** `feature/obd/service/ObdPollingService.kt` — What: implement full poll loop and metrics. After successful `socket.connect()`, emit `Connected` and start polling coroutine at `obdPollHz` Hz (`delay(1000L / pollHz)`). Poll sequence: execute `SpeedCommand` (get `obdSpeedKmh`), execute `RPMCommand` (get `rpm`), then fuel fallback chain: try `FuelConsumptionRateCommand` (DIRECT_FUEL_RATE); else try `MassAirFlowCommand` (MAF_DERIVED: `fuelRateLph = maf × 3600 / (14.7 × 750)`); else mark UNAVAILABLE. Calculate EMA instant km/L: `emaKmL = 0.2 × (gpsSpeedKmh / fuelRateLph) + 0.8 × emaKmL`; set to null when GPS speed < 3 km/h or accuracy > 20 m (read from `TrackingService.locationUiState`). Accumulate session fuel: `sessionFuelLiters += fuelRateLph × dtHours`; `sessionDistanceKm` from `TrackingService.locationUiState`. Compute average km/L: `sessionDistanceKm / sessionFuelLiters`. Write `ObdSampleEntity` to DB only when `sessionActive == true`. Retention cleanup: on `ACTION_START` and every 6 h, call `obdSampleDao.deleteOlderThan(now - retentionDays × 86_400_000)`
+1. **Edit** `feature/obd/service/ObdPollingService.kt` — What: implement full poll loop and metrics using raw AT commands over Bluetooth socket (no kotlin-obd-api). After successful `socket.connect()`, emit `Connected` and start polling coroutine at `obdPollHz` Hz (`delay(1000L / pollHz)`). Poll sequence (raw AT I/O): send PID `010D` via `writeATCommand("010D\r")`, parse response `41 0D XX` hex to get `obdSpeedKmh = XX`; send PID `010C` to get `rpm = (256×A + B)/4`; then fuel fallback: try PID `015E` for direct fuel rate (DIRECT_FUEL_RATE); else try PID `0110` for MAF airflow in g/s (MAF_DERIVED: `fuelRateLph = maf × 3600 / (14.7 × 750)`); else mark UNAVAILABLE. Helper: `writeATCommand(cmd: String): String` writes to socket output stream, reads from input stream until `>` prompt. Calculate EMA instant km/L: `emaKmL = 0.2 × (gpsSpeedKmh / fuelRateLph) + 0.8 × emaKmL`; set to null when GPS speed < 3 km/h or accuracy > 20 m (read from `TrackingService.locationUiState`). Accumulate session fuel: `sessionFuelLiters += fuelRateLph × dtHours`; `sessionDistanceKm` from `TrackingService.locationUiState`. Compute average km/L: `sessionDistanceKm / sessionFuelLiters`. Write `ObdSampleEntity` to DB only when `sessionActive == true`. Retention cleanup: on `ACTION_START` and every 6 h, call `obdSampleDao.deleteOlderThan(now - retentionDays × 86_400_000)`
 2. **Edit** `tracking/TrackingService.kt` — What: couple session start/stop to OBD service. In `startAlwaysRecording()`, send `startService(Intent(...ACTION_SESSION_ON → ObdPollingService))`; in stop path, send `ACTION_SESSION_OFF`. No direct field/state import across services
 3. **Edit** `screens/sessions/SessionsScreen.kt` — What: display OBD metrics on Session screen. Collect `ObdPollingService.obdUiState` as state. Below always-recording card, add `ObdStatusCard`: displays OBD state label, instant km/L (hidden when GPS speed < 3 or accuracy > 20 m from `TrackingService.locationUiState`), average km/L (session accumulator), fuel source chip. Reconnect button in `Waiting` state
 
@@ -190,11 +188,13 @@ A single spec doc at `docs/design-handoff/obd_phase1/OBD_PHASE1_SPEC.md` covers 
 4. Slice 1 infrastructure (steps 1–9) and the TOOLS row (step 13) can proceed immediately — no spec needed
 5. Slice 1 screen steps (10–12) and all of Slices 2–4 are blocked until the relevant surface is approved
 
-### Pending
+### Completed Pre-checks
 
-| Pre-checks | Work |
+| Pre-checks | Result |
 |---|---|
-| Kotlin compat | Confirm `kotlin-obd-api` compiles on Kotlin 1.7.0; if not, skip library and implement raw AT I/O |
+| Kotlin compat | ✓ Tested 2026-06-07: `kotlin-obd-api` (master branch) compiled with Kotlin 2.3.0 is binary-incompatible with Kotlin 1.7.0. Error: "The binary version of its metadata is 2.3.0, expected version is 1.7.1." Decision: Skip library, implement raw AT I/O over Bluetooth socket + manual PID parsing. |
+
+### Pending
 
 | Per-slice verification | Work |
 |---|---|
