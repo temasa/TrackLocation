@@ -4,6 +4,37 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
+### 2026-06-07 Fix — ObdSettingsScreen cosmetic gaps vs mockup
+
+- Task: Align ObdSettingsScreen with design mockup for Slice 1 — proper Scaffold + TopAppBar with back button, status row styled to match SettingsScreen pattern (icon + label + subtitle + disabled Switch).
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done
+- Files edited:
+  - `screens/settings/obd/ObdSettingsScreen.kt` — replaced bare Column with Scaffold + TopAppBar (back nav); replaced plain Text/Card/Switch with ObdSectionGroup + ObdStatusRow matching SettingsScreen token style; added `getStatusSubtitle()` for "Service not enabled" subtitle
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Commit status: Uncommitted
+- Suggested commit message: `fix(obd): align ObdSettingsScreen with mockup — Scaffold + TopAppBar + status row style`
+
+---
+
+### 2026-06-07 Fix — ObdSampleEntity missing @Index causing Room migration crash
+
+- Task: Fix `IllegalStateException: Migration didn't properly handle: obd_sample` crash on SM-G965F (API 29).
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done
+- Root cause: `MIGRATION_3_4` creates `index_obd_sample_timestampMs` on `timestampMs`, but `ObdSampleEntity` had no `@Index` annotation. Room's post-migration schema validation compared the actual DB (with index) against the entity definition (no index) and threw `IllegalStateException`.
+- Files edited:
+  - `data/roomdb/ObdSampleEntity.kt` — added `indices = [Index(value = ["timestampMs"])]` to `@Entity` annotation; added `import androidx.room.Index`
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Commit status: Uncommitted
+- Suggested commit message: `fix(obd): add @Index(timestampMs) to ObdSampleEntity — migration created index but entity didn't declare it`
+
+---
+
 ### 2026-06-07 OBD Phase 1 Slice 1 — Infrastructure + Navigation (steps 1–11)
 
 - Task: Implement OBD Phase 1 Slice 1 (complete): Room entity/DAO/migration, DataStore, ObdPollingService shell, ObdSettingsScreen UI, navigation route and TOOLS row in Settings.

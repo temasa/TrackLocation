@@ -27,7 +27,23 @@
       "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 100)",
       "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 20)",
       "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 5)",
-      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 50)"
+      "PowerShell(cd 'C:\\\\Users\\\\rinal\\\\Documents\\\\my_stuffs\\\\learnings\\\\android\\\\curated_projects\\\\TrackLocation'; $env:JAVA_HOME = 'C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14'; .\\\\gradlew.bat ':app:compileDebugKotlin' 2>&1 | Select-Object -Last 50)",
+      "mcp__ide__getDiagnostics",
+      "Bash(JAVA_HOME=\"C:/Users/rinal/.jdks/jbr-17.0.14\" ./gradlew assembleDebug --no-daemon)",
+      "Bash(C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "Bash(C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe install *)",
+      "Bash(C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe shell *)",
+      "Bash(\"C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe\" logcat *)",
+      "Bash(\"C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe\" pull *)",
+      "Bash(C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe pull *)",
+      "Bash(JAVA_HOME=\"C:/Users/rinal/.jdks/jbr-17.0.14\" ./gradlew :app:compileDebugKotlin)",
+      "Bash(adb devices *)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "Bash(JAVA_HOME=\"C:/Users/rinal/.jdks/jbr-17.0.14\" ./gradlew :app:assembleDebug)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe install *)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe shell *)",
+      "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe pull *)",
+      "Bash($ADB pull *)"
     ]
   }
 }
