@@ -1,9 +1,13 @@
 package com.kolee.tracklocation.data.roomdb
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "obd_sample")
+@Entity(
+    tableName = "obd_sample",
+    indices = [Index(value = ["timestampMs"])]
+)
 data class ObdSampleEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
