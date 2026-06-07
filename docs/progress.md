@@ -24,7 +24,7 @@ This is the single active status/progress file in the simplified documentation s
   - `screens/settings/SettingsScreen.kt` — added OBD row in TOOLS section (Step 10)
   - `navigation/NavGraph.kt` — added ObdSettingsScreen route + import (Step 11)
 - Compile verification: `./gradlew :app:compileDebugKotlin` — BUILD SUCCESSFUL (2 changes)
-- Commit status: Pending (will commit after this update)
+- Commit status: Committed — branch `codex`, revision `d089fcf`
 
 ---
 
