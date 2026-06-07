@@ -4,6 +4,73 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
+### 2026-06-08 OBD Phase 1 — Live device verification + connection bug fixes
+
+- Task: Verify OBD functionality live on connected device (SM-G965F, API 29) with a real KONNWEI ELM327 adapter (MAC 47:74:06:14:CD:B3); fix bugs found.
+- Start: 2026-06-08
+- End: 2026-06-08
+- Status: Done — verified live on device; RPM + speed streaming, no crashes
+- Live state before changes: adapter bonded + BR/EDR connected, BT on, but app stuck at `Waiting / Connection failed`.
+- Root cause (found via added logging): **concurrent connection attempts**. `attemptConnection()` and `startRetryBackoff()` each launched independent coroutines with no single-flight guard; MainActivity's `obdServiceEnabled.collect{}` re-fired `ACTION_START` on every DataStore emission, and `START_STICKY` redelivery added more. Multiple coroutines opened/closed RFCOMM sockets to the same device, stomping each other → "read failed, socket might closed" / "Broken pipe". The hardware was fine the whole time.
+- Bugs fixed:
+  - Concurrency: refactored the connect → init → poll → backoff lifecycle into ONE serialized coroutine (`connectionJob`); `attemptConnection()` cancels any in-flight attempt + closes its socket before starting; removed parallel `startRetryBackoff()`/`pollingJob`; backoff now folded into the single loop. After the fix, even **secure SPP connects on the first try** (no fallback needed) — proving concurrency was the root cause.
+  - Missing ELM327 init: added `ATZ / ATE0 / ATL0 / ATSP0` sequence before polling (spaces left ON so PID parsers still work). Verified live: `ELM327 v1.5`, `ATE0→OK`, etc.
+  - RFCOMM robustness: `connectRfcomm()` cancels discovery then tries secure → insecure → reflection channel-1 (KONNWEI clones need the fallback under contention).
+  - Fuel fallback was dead code (keyed on exceptions; `015E` unsupported returns the string `NO DATA`, not an exception). Now response-driven: `015E` then `0110`.
+  - Fuel-unsupported latch: after 5 cycles with no `015E`/`0110` answer, stop probing fuel. Verified live: poll cadence improved from ~1.5 s to ~0.82 s/cycle.
+  - `adapterElapsedMs` was always 0 (computed after `lastPollTimeMs` was overwritten) — now reflects real poll duration.
+  - MainActivity: auto-start reads launch-time value via `.first()` instead of `collect{}`; `ACTION_START` guarded in service to not tear down a healthy connection.
+  - Added Logcat logging throughout (`ObdPollingService` tag) for live diagnosis.
+- Files edited:
+  - `feature/obd/service/ObdPollingService.kt`
+  - `MainActivity.kt`
+- Live verification (device 213052810e037ece, KONNWEI ELM327 on running vehicle):
+  - ✓ Single clean connection (secure SPP, first try), state → Connected, last_error cleared
+  - ✓ ELM327 init sequence completes
+  - ✓ RPM streaming (~970–1630) and SPEED streaming (~9–26 km/h) live, stable
+  - ✓ Fuel correctly reported UNAVAILABLE (this vehicle exposes no fuel-rate PID — not a bug)
+  - ✓ Fuel latch trips after 5 cycles, poll cadence ~doubles
+  - ✓ No crashes (crash buffer clean)
+- Build run: `:app:assembleDebug` — BUILD SUCCESSFUL; installed via `adb install -r`
+- Known remaining:
+  - km/L not derivable on this vehicle (no fuel-rate PID); will populate on vehicles that support `015E` or `0110`. Worth surfacing "fuel data unavailable on this vehicle" in the OBD UI in a future slice.
+  - ObdStatusCard / km/L UI display not visually screenshot-verified this session (logic confirmed via state flow + logs).
+- Commit status: Uncommitted
+- Suggested commit message: `fix(obd): serialize connection lifecycle + ELM327 init — fixes concurrent-attempt socket races; live RPM/speed verified`
+
+---
+
+### 2026-06-08 OBD Phase 1 — Capability scan + indirect (speed-density) fuel estimate
+
+- Task: Confirm OBD-II protocol, query which PIDs the vehicle exposes, and (since it has no MAF/direct-fuel PID) implement an indirect fuel-rate estimate so km/L works.
+- Start: 2026-06-08
+- End: 2026-06-08
+- Status: Done — verified live; realistic idle fuel rate, no crashes
+- Findings (live, via added `scanCapabilities` diagnostic):
+  - OBD-II protocol negotiated: **ISO 15765-4 CAN 11-bit/500 kbps** (`ATDP` = "AUTO, ISO 15765-4 (CAN 11/500)", `ATDPN` = A6). Implementation was already pure OBD-II (ELM327 + ATSP0 auto + Mode-01 PIDs) — no protocol change needed.
+  - Supported Mode-01 PIDs (35): `0101 0103 0104 0105 0106 0107 010B 010C 010D 010E 010F 0111 0113 0114 011C 011F 0120 0121 012E 0130 0131 0133 0140 0141 0142 0143 0144 0145 0146 0147 0149 014A 014C 0151 015A`
+  - **No MAF (0110), no direct fuel rate (015E)** — both return NO DATA (not in bitmask). Fuel type (0151)=01 gasoline; commanded λ (0144)=1.00.
+  - Present for speed-density: MAP (010B), IAT (010F), RPM (010C), baro (0133), load (0104/0143), λ (0144).
+- Implemented: indirect fuel-rate estimate (speed-density) as 3rd fallback in the chain `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAVAILABLE`.
+  - Formula: `MAF(g/s) = (RPM × MAP_kPa × VE × Displacement_L × 28.97) / (120 × 8.314 × IAT_K)`; `fuel(L/h) = MAF/(14.7×λ) × 3600/745`. VE=0.85, gasoline constants.
+  - MAP read every cycle; IAT + λ cached, refreshed every 8 cycles.
+  - Engine displacement is a new user preference (`obd_engine_displacement_cc`, default 1193) with a new "Engine Displacement" row in OBD Settings → PREFERENCES. User confirmed the test vehicle is **1193 cc**.
+  - `mafGramsPerSecond` in `ObdSampleEntity` now populated from the estimate (was always null).
+- Files edited:
+  - `feature/obd/service/ObdPollingService.kt` — `scanCapabilities()` + `extractDataBytes()` diagnostics; `computeSpeedDensityFuel()`; fuel chain extended; sample MAF populated
+  - `feature/obd/data/ObdPreferencesDataStore.kt` — `obdEngineDisplacementCc` pref + setter (default 1193)
+  - `screens/settings/obd/ObdSettingsScreen.kt` — "Engine Displacement" preference row
+- Live verification (KONNWEI ELM327, vehicle idling, parked):
+  - ✓ Protocol confirmed ISO 15765-4 CAN
+  - ✓ Fuel now estimated: **~1.08–1.10 L/h at ~845 rpm idle** — physically realistic for a 1.2 L gasoline engine
+  - ✓ Source correctly reported `SPEED_DENSITY`; latch trips after 5 cycles, cadence ~1.0 s/cycle
+  - ✓ No crashes
+- Not verified (vehicle was parked): instant km/L on the road — gated on GPS speed > 3 km/h & accuracy ≤ 20 m; calculation path confirmed, awaits a drive.
+- Note: `scanCapabilities`/ATDP diagnostics run once per process and only log; harmless to keep, can be removed later.
+- Build run: `:app:assembleDebug` — BUILD SUCCESSFUL; installed via `adb install -r`
+- Commit status: Uncommitted
+- Suggested commit message: `feat(obd): indirect speed-density fuel estimate (MAP/IAT/RPM) + engine-displacement setting; live km/L enabled on no-MAF vehicles`
+
 ### 2026-06-07 OBD Phase 1 Slice 3 — Build + device verification
 
 - Task: Compile Slice 3 code, fix bugs found before build, install on device, verify app launches without crash.

@@ -24,6 +24,7 @@ class ObdPreferencesDataStore(private val context: Context) {
     private val OBD_LAST_STATE = stringPreferencesKey("obd_last_state")
     private val OBD_LAST_ERROR = stringPreferencesKey("obd_last_error")
     private val OBD_LAST_SAMPLE_TS = longPreferencesKey("obd_last_sample_ts")
+    private val OBD_ENGINE_DISPLACEMENT_CC = intPreferencesKey("obd_engine_displacement_cc")
 
     val obdServiceEnabled: Flow<Boolean> = context.obdDataStore.data
         .map { prefs -> prefs[OBD_SERVICE_ENABLED] ?: false }
@@ -48,6 +49,11 @@ class ObdPreferencesDataStore(private val context: Context) {
 
     val obdLastSampleTs: Flow<Long> = context.obdDataStore.data
         .map { prefs -> prefs[OBD_LAST_SAMPLE_TS] ?: 0L }
+
+    // Engine displacement in cc, used for the indirect speed-density fuel estimate on vehicles
+    // that expose neither direct fuel rate (015E) nor MAF (0110). 0 disables the estimate.
+    val obdEngineDisplacementCc: Flow<Int> = context.obdDataStore.data
+        .map { prefs -> prefs[OBD_ENGINE_DISPLACEMENT_CC] ?: 1193 }
 
     suspend fun setObdServiceEnabled(enabled: Boolean) {
         context.obdDataStore.edit { prefs ->
@@ -94,6 +100,12 @@ class ObdPreferencesDataStore(private val context: Context) {
     suspend fun setObdLastSampleTs(ts: Long) {
         context.obdDataStore.edit { prefs ->
             prefs[OBD_LAST_SAMPLE_TS] = ts
+        }
+    }
+
+    suspend fun setObdEngineDisplacementCc(cc: Int) {
+        context.obdDataStore.edit { prefs ->
+            prefs[OBD_ENGINE_DISPLACEMENT_CC] = cc
         }
     }
 }

@@ -67,6 +67,7 @@ fun ObdSettingsScreen(navController: NavController) {
     val pollHz = prefs.obdPollHz.collectAsState(initial = 2).value
     val retentionDays = prefs.obdRetentionDays.collectAsState(initial = 7).value
     val retryMaxSeconds = prefs.obdRetryMaxSeconds.collectAsState(initial = 120).value
+    val engineDisplacementCc = prefs.obdEngineDisplacementCc.collectAsState(initial = 1193).value
 
     Column(
         modifier = Modifier
@@ -202,6 +203,10 @@ fun ObdSettingsScreen(navController: NavController) {
                         ObdRetryCapRow(
                             current = retryMaxSeconds,
                             onChange = { scope.launch { prefs.setObdRetryMaxSeconds(it) } }
+                        )
+                        ObdDisplacementRow(
+                            current = engineDisplacementCc,
+                            onChange = { scope.launch { prefs.setObdEngineDisplacementCc(it) } }
                         )
                     }
                 }
@@ -446,6 +451,17 @@ private fun ObdRetryCapRow(current: Int, onChange: (Int) -> Unit) {
         label = "Retry Cap",
         current = "${current}s",
         options = listOf(30, 60, 120, 300),
+        onSelect = { onChange(it) }
+    )
+}
+
+@Composable
+private fun ObdDisplacementRow(current: Int, onChange: (Int) -> Unit) {
+    // Used for the indirect (speed-density) fuel estimate when the vehicle exposes no MAF/fuel-rate PID.
+    ObdPreferenceRow(
+        label = "Engine Displacement",
+        current = "$current cc",
+        options = listOf(1000, 1193, 1200, 1500, 1600, 1800, 2000, 2400, 3000),
         onSelect = { onChange(it) }
     )
 }

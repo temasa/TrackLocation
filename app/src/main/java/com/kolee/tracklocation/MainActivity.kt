@@ -16,6 +16,7 @@ import com.kolee.tracklocation.navigation.NavGraph
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.theme.TrackLocationTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -27,14 +28,14 @@ class MainActivity : ComponentActivity() {
             if (!TrackingService.locationUiState.value.isAlwaysRecording) {
                 (application as TrackApp).sessionDao.closeAllActiveSessions(System.currentTimeMillis())
             }
-            // Auto-start OBD service if enabled
+            // Auto-start OBD service if enabled. Read the launch-time value only (first());
+            // collecting the flow would re-fire ACTION_START on every DataStore write. Runtime
+            // enable/disable is handled directly by ObdSettingsScreen.
             val prefs = com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore(this@MainActivity)
-            prefs.obdServiceEnabled.collect { enabled ->
-                if (enabled) {
-                    val intent = Intent(this@MainActivity, com.kolee.tracklocation.feature.obd.service.ObdPollingService::class.java)
-                    intent.action = com.kolee.tracklocation.feature.obd.service.ObdPollingService.ACTION_START
-                    androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, intent)
-                }
+            if (prefs.obdServiceEnabled.first()) {
+                val intent = Intent(this@MainActivity, com.kolee.tracklocation.feature.obd.service.ObdPollingService::class.java)
+                intent.action = com.kolee.tracklocation.feature.obd.service.ObdPollingService.ACTION_START
+                androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, intent)
             }
         }
         @OptIn(ExperimentalMaterial3Api::class)
