@@ -5,6 +5,8 @@ package com.kolee.tracklocation.screens.sessions
 import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -59,6 +61,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.data.roomdb.SessionEntity
+import com.kolee.tracklocation.feature.obd.service.ObdPollingService
+import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
@@ -94,6 +98,7 @@ fun SessionsScreen() {
     val context = LocalContext.current
     val viewModel: ShareViewModel = viewModel(factory = ShareViewModel.Factory)
     val locationUiState by viewModel.locationUiState.collectAsState()
+    val obdState by ObdPollingService.obdUiState.collectAsState()
     val sessions = viewModel.sessionsState.mapIndexed { index, session ->
         session.toUiItem(index = sessionsIndex(viewModel.sessionsState.size, index))
     }
@@ -126,6 +131,19 @@ fun SessionsScreen() {
                     }
                 }
             )
+
+            if (obdState is ObdUiState.Connected || obdState is ObdUiState.Waiting) {
+                ObdStatusCard(
+                    obdState = obdState,
+                    locationUiState = locationUiState,
+                    onReconnect = {
+                        val intent = Intent(context, ObdPollingService::class.java).apply {
+                            action = ObdPollingService.ACTION_RECONNECT_NOW
+                        }
+                        context.startService(intent)
+                    }
+                )
+            }
 
             if (sessions.isNotEmpty()) {
                 SessionsList(
@@ -584,6 +602,195 @@ private fun SessionPulseRing(delayMs: Int) {
             .alpha(ringAlpha)
             .border(2.dp, TripGreen, CircleShape)
     )
+}
+
+@Composable
+private fun ObdStatusCard(
+    obdState: ObdUiState,
+    locationUiState: com.kolee.tracklocation.tracking.LocationUiState,
+    onReconnect: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 22.dp, top = 12.dp, end = 22.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = TripSurface.copy(alpha = 0.7f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_session_signal),
+                        contentDescription = null,
+                        tint = TripGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "OBD Status",
+                        color = TripInk,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                val (statusText, statusColor) = when (obdState) {
+                    is ObdUiState.Connected -> Pair("Connected", TripGreen)
+                    is ObdUiState.Waiting -> Pair("Waiting", Color(0xFFE5484D))
+                    else -> Pair("—", TripMuted)
+                }
+                Text(
+                    text = statusText,
+                    color = statusColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            if (obdState is ObdUiState.Connected) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "RPM",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = obdState.rpm?.toString() ?: "—",
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "SPEED",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = obdState.obdSpeedKmh?.let { "$it km/h" } ?: "—",
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "EFFICIENCY",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        val shouldShowKmL = obdState.instantKmL != null &&
+                                locationUiState.speedInKMH > 3f &&
+                                locationUiState.accuracyMeters <= 20f
+                        Text(
+                            text = if (shouldShowKmL) {
+                                String.format("%.1f km/L", obdState.instantKmL)
+                            } else {
+                                "—"
+                            },
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { },
+                        modifier = Modifier
+                            .height(36.dp)
+                            .weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = TripGreen.copy(alpha = 0.12f)
+                        )
+                    ) {
+                        Text(
+                            text = "DIRECT (OBD)",
+                            color = TripGreen,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            } else if (obdState is ObdUiState.Waiting) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Column {
+                        Text("RPM", color = TripMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("—", color = TripInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column {
+                        Text("SPEED", color = TripMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("—", color = TripInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Column {
+                        Text("EFFICIENCY", color = TripMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("—", color = TripInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Button(
+                    onClick = onReconnect,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_session_signal),
+                        contentDescription = null,
+                        tint = TripGreen,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .padding(end = 6.dp)
+                    )
+                    Text(
+                        text = "RECONNECT",
+                        color = TripGreen,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun performTrackingService(

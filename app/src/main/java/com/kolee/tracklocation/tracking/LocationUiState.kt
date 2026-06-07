@@ -8,6 +8,7 @@ data class LocationUiState(
     val distanceInMeters: Int = 0,
     val durationTimer: Long = 0L, //String = "00:00:00",
     val speedInKMH: Float = 0f,
+    val accuracyMeters: Float = 0f,
     val isTracking: Boolean = false,
     val isPaused: Boolean = false,
     val isAlwaysRecording: Boolean = false,

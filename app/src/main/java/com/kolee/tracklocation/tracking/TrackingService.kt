@@ -22,6 +22,7 @@ import com.kolee.tracklocation.R
 import com.kolee.tracklocation.data.roomdb.LocationEntity
 import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.data.roomdb.TrackDatabase
+import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.utils.CHANNEL_ID
 import com.kolee.tracklocation.utils.FASTEST_LOCATION_INTERVAL
 import com.kolee.tracklocation.utils.LOCATION_UPDATE_INTERVAL
@@ -114,6 +115,11 @@ class TrackingService: Service() {
             NOTIFICATION_ID,
             createNotification(this, "Recording location history...")
         )
+
+        val intent = Intent(this, ObdPollingService::class.java).apply {
+            action = ObdPollingService.ACTION_SESSION_ON
+        }
+        startService(intent)
     }
 
     private fun stopAlwaysRecording() {
@@ -135,6 +141,12 @@ class TrackingService: Service() {
         }
         activeSession = null
         lastSessionLocation = null
+
+        val intent = Intent(this, ObdPollingService::class.java).apply {
+            action = ObdPollingService.ACTION_SESSION_OFF
+        }
+        startService(intent)
+
         stopServiceIfIdle()
     }
 
@@ -283,7 +295,8 @@ class TrackingService: Service() {
             if (!isTripRecording) {
                 return@update state.copy(
                     currentLocation = pos,
-                    speedInKMH = kmh(location)
+                    speedInKMH = kmh(location),
+                    accuracyMeters = location.accuracy
                 )
             }
 
@@ -305,6 +318,7 @@ class TrackingService: Service() {
                 pathPoints = pathPoints,
                 distanceInMeters = state.distanceInMeters + distanceToAdd,
                 speedInKMH = kmh(location),
+                accuracyMeters = location.accuracy,
                 activeTripStartLocationId = startLocationId,
                 activeTripEndLocationId = locationId
             )

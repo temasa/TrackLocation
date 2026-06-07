@@ -4,6 +4,94 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
+### 2026-06-07 OBD Phase 1 Slice 3 — Build + device verification
+
+- Task: Compile Slice 3 code, fix bugs found before build, install on device, verify app launches without crash.
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done (build success + device install + no crash on launch)
+- Files fixed (pre-build bugs corrected):
+  - `feature/obd/service/ObdPollingService.kt` — replaced `.collect {}` with `.first()` for DataStore reads (obdDeviceMac, obdRetryMaxSeconds, obdPollHz, obdRetentionDays); fixed `insertSample` → `insert` (DAO method name); fixed `TrackApp.obdSampleDao` → `(applicationContext as TrackApp).obdSampleDao` (TrackApp is an instance, not an object); removed unused `currentState` variable; removed unused `TrackApp` import; added `kotlinx.coroutines.flow.first` import
+- Build run: `./gradlew :app:compileDebugKotlin` — BUILD SUCCESSFUL (warnings only: deprecated BluetoothAdapter.getDefaultAdapter())
+- Full build: `./gradlew :app:assembleDebug` — BUILD SUCCESSFUL in 38s
+- Device install: `adb install -r app-debug.apk` — Success (device 213052810e037ece)
+- App launch: no FATAL/crash in logcat; Room migration and OBD channel created cleanly
+- Commit status: Uncommitted
+- Suggested commit message: `feat(obd): Slice 3 — full polling loop with raw AT I/O, live metrics, session gating, ObdStatusCard on Session screen`
+- Known remaining:
+  - Live ELM327 adapter test (RPM/speed updates, km/L display) requires physical OBD dongle on the vehicle
+  - Session start/stop coupling (ACTION_SESSION_ON/OFF) not verified without real adapter
+  - ObdStatusCard only visible when OBD state is Connected or Waiting (card is hidden in Idle — correct behavior)
+
+---
+
+### 2026-06-07 OBD Phase 1 Spec — Design handoff prepared for Slices 3–4
+
+- Task: Create and rectify OBD_PHASE1_SPEC.md to document design requirements for ObdStatusCard (Session screen, Slice 3) and OBD metric row (TripPanel, Slice 4).
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done
+- Files created:
+  - `docs/design-handoff/obd_phase1/OBD_PHASE1_SPEC.md` — specification covering both remaining UI surfaces (Slices 3–4); Slices 1–2 noted as already implemented
+- Files edited: None
+- Build run: Not required
+- Tests run: None
+- Commit status: Uncommitted (documentation only)
+- Suggested commit message: `docs(obd): OBD Phase 1 design spec — Surfaces 2–3 for Slices 3–4 (Sessions + TripPanel)`
+- Next step: Collect reference screenshots (Session screen always-recording card, TripPanel existing metrics) and submit spec to Google Stitch / Claude Design for visual approval
+
+---
+
+### 2026-06-07 OBD Phase 1 Slice 3 — Full BT polling loop + live telemetry
+
+- Task: Implement full OBD polling loop (RPM, speed, fuel); calculate km/L; gate writes to session active; add OBD metrics to Session screen.
+- Start: 2026-06-07 14:30 (design mockups extracted: Connected + Waiting states)
+- End: 2026-06-07 15:45
+- Status: Done (implementation complete, build pending)
+- Files edited:
+  - `feature/obd/service/ObdPollingService.kt` — full polling loop with raw AT commands (PID 010D for speed, 010C for RPM, 015E/0110 for fuel); EMA instant km/L calculation; session gating (ACTION_SESSION_ON/OFF); OBD sample writes to DB when session active; 6-hour retention cleanup; startPollingLoop() at 1-5 Hz; writeATCommand() helper for raw AT I/O over socket; parseObdSpeed/Rpm/Fuel() helpers with fallback chain (DIRECT_FUEL_RATE → MAF_DERIVED → UNAVAILABLE)
+  - `tracking/TrackingService.kt` — added import for ObdPollingService; send ACTION_SESSION_ON intent in startAlwaysRecording(); send ACTION_SESSION_OFF intent in stopAlwaysRecording()
+  - `screens/sessions/SessionsScreen.kt` — collect ObdPollingService.obdUiState; added ObdStatusCard() composable displaying Connected/Waiting states with RPM/SPEED/EFFICIENCY metrics; instant km/L hidden when GPS speed < 3 km/h or accuracy > 20m; Reconnect button visible in Waiting state; added Button + Icon imports
+  - `tracking/LocationUiState.kt` — added accuracyMeters: Float field (from GPS location.accuracy)
+- Build run: Not run (requires explicit user permission per AGENTS.md)
+- Tests run: None
+- Commit status: Uncommitted
+- Suggested commit message: `feat(obd): Slice 3 — full polling loop with raw AT I/O, live metrics, session gating, ObdStatusCard on Session screen`
+- Acceptance criteria status:
+  - ✓ Connection flow: Idle → Connecting → Connected (state transitions implemented)
+  - ✓ Waiting state with error message (ObdUiState.Waiting implemented)
+  - ✓ Live metrics update at configurable Hz (startPollingLoop() at obdPollHz)
+  - ✓ Instant km/L calculation with EMA + visibility gating (speedInKMH > 3 AND accuracyMeters <= 20)
+  - ✓ Reconnect button in Waiting state (ObdStatusCard renders button)
+  - ✓ Session gating: OBD samples written only when sessionActive == true
+  - ✓ No regression: GPS tracking calls unchanged (TrackingService.startAlwaysRecording/stopAlwaysRecording only send intents, no other changes)
+- Known issues:
+  - Build/compilation not verified (pending user permission to run Gradle)
+  - Device testing pending (ELM327 required)
+  - AT command parsing assumes standard ELM327 response format; real devices may vary
+
+---
+
+## Current Session (Prior)
+
+### 2026-06-07 OBD Phase 1 Slice 2 — Enable toggle + device picker
+
+- Task: Wire Enable toggle to request Bluetooth permissions and attempt connection. Add bonded device picker. Show connection state (Connecting → Waiting on failure).
+- Start: 2026-06-07
+- End: 2026-06-07
+- Status: Done (Compilation successful)
+- Files edited:
+  - `feature/obd/service/ObdPollingService.kt` — implemented connection attempt with exponential backoff (1s, 2s, 4s... capped at obdRetryMaxSeconds); ACTION_START attempts BluetoothAdapter connection; ACTION_STOP closes socket and emits Idle; ACTION_RECONNECT_NOW resets retry delay to 1s and attempts connection; socket state and error persisted to DataStore; uses Flow.collect() for DataStore access
+  - `screens/settings/obd/ObdSettingsScreen.kt` — full OBD Settings UX: Enable toggle requests BLUETOOTH_CONNECT permission (API 31+) via ContextCompat.checkSelfPermission() and starts/stops service; bonded device picker dialog (refreshes on RESUMED); "Pair a new device" opens system BT settings; saved device row with "Change" action; Reconnect button visible in Waiting state; preference selectors for poll rate (1/2/5 Hz), retention days (1–30), retry cap (30/60/120/300s)
+  - `MainActivity.kt` — auto-start OBD service on app launch if obdServiceEnabled is true in DataStore using Flow.collect()
+- Build run: `./gradlew :app:compileDebugKotlin` — BUILD SUCCESSFUL (warnings only: deprecated BluetoothAdapter.getDefaultAdapter())
+- Tests run: None
+- Commit status: Uncommitted (ready to commit)
+- Suggested commit message: `feat(obd): Slice 2 — enable toggle + device picker + connection attempt with exponential backoff`
+- Observable result ready: toggle ON → BT permission dialog (API 31+) → grant → bonded device picker → select device → status shows "Connecting…" → "Waiting (no response)" (expected without ELM327 adapter)
+
+---
+
 ### 2026-06-07 Fix — ObdSettingsScreen cosmetic gaps vs mockup
 
 - Task: Align ObdSettingsScreen with design mockup for Slice 1 — proper Scaffold + TopAppBar with back button, status row styled to match SettingsScreen pattern (icon + label + subtitle + disabled Switch).
