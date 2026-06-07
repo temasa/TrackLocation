@@ -88,6 +88,13 @@ fun SettingsScreen(navController: NavController? = null) {
                     iconId = R.drawable.ic_session_signal,
                     onClick = { navController?.navigate(Screen.ObserverFeedScreen.route) },
                 )
+                SettingsRowDivider()
+                SettingsRow(
+                    label = "OBD",
+                    supporting = "ELM327 Bluetooth telemetry",
+                    iconId = R.drawable.baseline_settings_24,
+                    onClick = { navController?.navigate(Screen.ObdSettingsScreen.route) },
+                )
             }
         }
 

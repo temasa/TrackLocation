@@ -14,6 +14,7 @@ import com.kolee.tracklocation.screens.details.DetailsScreen
 import com.kolee.tracklocation.screens.list.ListScreen
 import com.kolee.tracklocation.screens.sessions.SessionsScreen
 import com.kolee.tracklocation.screens.settings.SettingsScreen
+import com.kolee.tracklocation.screens.settings.obd.ObdSettingsScreen
 import com.kolee.tracklocation.screens.track.TrackScreen
 
 @Composable
@@ -46,6 +47,9 @@ fun NavGraph(
         }
         composable(Screen.ObserverFeedScreen.route) {
             ObserverFeedScreen(navController = navHostController)
+        }
+        composable(Screen.ObdSettingsScreen.route) {
+            ObdSettingsScreen(navController = navHostController)
         }
         composable(
             route = Screen.DetailScreen.route + "?trackIdx={trackIdx}",

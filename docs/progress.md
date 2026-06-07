@@ -4,25 +4,27 @@ This is the single active status/progress file in the simplified documentation s
 
 ## Current Session
 
-### 2026-06-07 OBD Phase 1 Slice 1 — Infrastructure (steps 1–9)
+### 2026-06-07 OBD Phase 1 Slice 1 — Infrastructure + Navigation (steps 1–11)
 
-- Task: Implement OBD infrastructure: AndroidManifest permissions/service, Room entity/DAO, database migration v3→4, ObdPreferencesDataStore, TrackApp DAO exposure, ObdPollingService shell (no BT yet), ObdSettingsScreen shell (disabled toggle), navigation route registration.
+- Task: Implement OBD Phase 1 Slice 1 (complete): Room entity/DAO/migration, DataStore, ObdPollingService shell, ObdSettingsScreen UI, navigation route and TOOLS row in Settings.
 - Start: 2026-06-07
 - End: 2026-06-07
 - Status: Done
 - Files created:
-  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObdSampleEntity.kt` — Room entity for OBD samples (id, timestampMs, rpm, obdSpeedKmh, fuelRateLph, mafGramsPerSecond, fuelRateSource, adapterElapsedMs)
-  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/ObdSampleDao.kt` — DAO with insert, latestSample, samplesBetween, deleteOlderThan queries
-  - `app/src/main/java/com/kolee/tracklocation/feature/obd/data/ObdPreferencesDataStore.kt` — DataStore with 8 keys (obdServiceEnabled, obdDeviceMac, obdPollHz, obdRetentionDays, obdRetryMaxSeconds, obdLastState, obdLastError, obdLastSampleTs)
-  - `app/src/main/java/com/kolee/tracklocation/feature/obd/service/ObdPollingService.kt` — Foreground service shell with ObdUiState sealed class (Idle/Connecting/Connected/Retrying/Waiting) and intent action stubs (no logic yet)
-  - `app/src/main/java/com/kolee/tracklocation/screens/settings/obd/ObdSettingsScreen.kt` — UI shell showing idle status + disabled toggle
+  - `data/roomdb/ObdSampleEntity.kt` — Room entity (8 fields)
+  - `data/roomdb/ObdSampleDao.kt` — DAO (insert, latestSample, samplesBetween, deleteOlderThan)
+  - `feature/obd/data/ObdPreferencesDataStore.kt` — DataStore (8 preference keys with defaults)
+  - `feature/obd/service/ObdPollingService.kt` — Foreground service shell with ObdUiState sealed class
+  - `screens/settings/obd/ObdSettingsScreen.kt` — UI shell (status card, disabled toggle)
 - Files edited:
-  - `app/src/main/AndroidManifest.xml` — added BLUETOOTH/BLUETOOTH_ADMIN (maxSdk 30), BLUETOOTH_CONNECT/BLUETOOTH_SCAN (API 31+), uses-feature bluetooth, ObdPollingService declaration
-  - `app/src/main/java/com/kolee/tracklocation/data/roomdb/TrackDatabase.kt` — bumped version 3→4, added ObdSampleEntity to entities list, added abstract obdSampleDao, added MIGRATION_3_4 inline (CREATE TABLE obd_sample + index), chained migration in addMigrations()
-  - `app/src/main/java/com/kolee/tracklocation/TrackApp.kt` — added obdSampleDao lazy property, created OBD_POLLING notification channel in onCreate()
-  - `app/src/main/java/com/kolee/tracklocation/navigation/Screen.kt` — added ObdSettingsScreen object with route "obd_settings_screen"
-- Compile verification: `./gradlew :app:compileDebugKotlin` — BUILD SUCCESSFUL
-- Commit status: Committed — branch `codex`, revision `dfc982e`
+  - `AndroidManifest.xml` — BT permissions (API-gated), uses-feature, ObdPollingService declaration
+  - `data/roomdb/TrackDatabase.kt` — version 3→4, MIGRATION_3_4, obdSampleDao, added entity to list
+  - `TrackApp.kt` — obdSampleDao lazy, OBD notification channel
+  - `navigation/Screen.kt` — ObdSettingsScreen route object
+  - `screens/settings/SettingsScreen.kt` — added OBD row in TOOLS section (Step 10)
+  - `navigation/NavGraph.kt` — added ObdSettingsScreen route + import (Step 11)
+- Compile verification: `./gradlew :app:compileDebugKotlin` — BUILD SUCCESSFUL (2 changes)
+- Commit status: Pending (will commit after this update)
 
 ---
 
