@@ -1,5 +1,6 @@
 package com.kolee.tracklocation
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,6 +26,15 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             if (!TrackingService.locationUiState.value.isAlwaysRecording) {
                 (application as TrackApp).sessionDao.closeAllActiveSessions(System.currentTimeMillis())
+            }
+            // Auto-start OBD service if enabled
+            val prefs = com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore(this@MainActivity)
+            prefs.obdServiceEnabled.collect { enabled ->
+                if (enabled) {
+                    val intent = Intent(this@MainActivity, com.kolee.tracklocation.feature.obd.service.ObdPollingService::class.java)
+                    intent.action = com.kolee.tracklocation.feature.obd.service.ObdPollingService.ACTION_START
+                    androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, intent)
+                }
             }
         }
         @OptIn(ExperimentalMaterial3Api::class)
