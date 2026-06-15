@@ -1,178 +1,185 @@
-# AGENTS.md — TrackLocation AI Coding Rules
+---
+name: AGENTS.md
+description: AI-assistant instructions for TrackLocation (create-project schema + preserved project rules)
+---
 
-## Purpose
+# AGENTS.md
 
-This file defines stable instructions for AI coding assistants working on the TrackLocation Android project.
+Instructions for AI Coding Assistants — TrackLocation
 
-Use this file for long-lived project rules. Put the current task, change request, or implementation goal in the prompt when starting Codex, Claude Code, Cursor, Windsurf, or another coding agent.
+**Document Version:** 0.2
+**Status:** Active
+**Last Updated:** 2026-06-15
+**Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
-## Project Context
+> Migrated 2026-06-15 to the create-project governance schema. Generic methodology is template-owned; TrackLocation-specific rules are preserved in §2, §3, §5a, and §12.
 
-TrackLocation is an Android Jetpack Compose app evolving from a GPS trip tracker into a broader driver utility with:
+---
 
-- GPS trip tracking
-- Always-recorded location sessions
-- Accessibility Event Observer
-- Local-first storage
-- Sync-ready architecture
-- Future registration and face-first authentication
+## 0. Tool-Based Responsibilities
 
-The existing GPS tracking feature must remain intact unless the active task or accepted change request explicitly changes it.
+### Code-editing agents (Claude Code, Codex CLI, Cursor, Windsurf)
+- ✅ Work with source code (read, write, edit, create files)
+- ✅ Execute git workflows
+- ✅ Full project implementation
+- ⚠️ Heavy verification (Gradle/test/emulator/device) requires explicit user permission — see §5a
 
-## Active Documentation Source of Truth
+### Codex App / Claude Desktop (planning & design)
+- ✅ Planning, architecture discussion, mockups, design directions, non-code exploration
+- ❌ DO NOT modify source code, layouts, assets, Gradle files, resources, or project files unless the user explicitly asks for implementation changes
 
-Use the simplified active docs:
+---
 
-1. `README.md`
-2. `docs/product-spec.md`
-3. `docs/change-requests.md`
-4. `docs/implementation-plan.md`
-5. `docs/progress.md`
+## 1. Source of Truth
 
-Archived detailed docs live under:
+Priority order:
 
-```text
-docs/archive/latest-upload/
+1. `docs/PRD.md`
+2. `docs/IMPLEMENTATION-PLAN.md`
+3. Approved architecture docs (`docs/ARCHITECTURE.md`, `docs/adr/`)
+4. Source code and tests
+
+Do not silently contradict a higher-priority document. If documents conflict, prefer the active ADR/PRD for product behavior, then ARCHITECTURE, then IMPLEMENTATION-PLAN; if still unclear, raise a blocker (§9) and make the smallest safe change.
+
+---
+
+## 2. Product Boundaries (TrackLocation-specific)
+
+In scope: GPS trip tracking, always-recorded location sessions, the Accessibility Observer, OBD-II telemetry, and the planned registration/auth phases. Out of scope: anything in PRD §8 "Out of Scope".
+
+The AI assistant must **never unilaterally**:
+
+- Change the canonical-location-log-as-source-of-truth model or the sessions-vs-trips separation (PRD §12).
+- Remove or degrade existing GPS tracking behavior.
+- Add a new bottom-nav destination or move the always-recording switch off the Session screen.
+- Introduce BLE OBD, in-app BT discovery/PIN entry, or user-facing Observer-history deletion.
+
+Record gaps and ask for a product decision; do not invent scope that conflicts with locked decisions.
+
+---
+
+## 3. Decisions the Coding Assistant Must Not Invent
+
+Do not independently define:
+
+- Product scope or new product directions (belongs in PRD / a new ADR).
+- The locked business rules in PRD §12 (sessions/trips, canonical log, switch placement, retention).
+- Navigation/IA changes (e.g., revisiting Observer Option B).
+- Data-retention or privacy rules (Observer retention, "raw face images never transmitted").
+- Major UI/UX behavior — produce a UI spec/design handoff first (§12 two-track model).
+
+Record gaps and ask for a product decision.
+
+---
+
+## 4. Technical Responsibilities
+
+Propose and maintain:
+
+- **System architecture / domain model / schema** → `docs/ARCHITECTURE.md`
+- **Significant technical decisions** → `docs/adr/`
+- **Room migrations** for every schema change (never change schema silently)
+- **Local setup instructions** → `README.md`
+- Keep business logic out of Compose where practical; keep data access behind DAOs/repositories.
+
+---
+
+## 5. Implementation Process
+
+Before coding: read project docs, inspect the repo, identify blocking gaps, propose steps, record assumptions.
+During: work incrementally in end-to-end vertical slices; keep docs synchronized; do not silently change product behavior.
+After: list assumptions/deviations and remaining work; mark the task **Completed** in `docs/IMPLEMENTATION-PLAN.md §6 Task Log` with `Ended`, `Git Revision`, and a one-line `Verification`; commit source + updated plan together. Then **remind the user to commit before starting the next task.**
+
+---
+
+## 5a. Build, Test & Emulator Permission Gate (TrackLocation-specific — MANDATORY)
+
+Do **not** run a Gradle build, full test suite, emulator, or device run without explicit user permission. This includes `./gradlew assembleDebug`, `./gradlew build`, `./gradlew testDebugUnitTest`, `./gradlew connectedDebugAndroidTest`. The user's laptop is resource-constrained.
+
+Lightweight static inspection, file reads, search, and small local edits are allowed. If a build/test/emulator run is not performed, document this clearly in the task log. Local JDK for any permitted Gradle run: `C:\Users\rinal\.jdks\jbr-17.0.14` (inject `JAVA_HOME` inline).
+
+---
+
+## 6. First Vertical Slice
+
+TrackLocation is past its first slice — GPS tracking, sessions (CR-0001/0002), Observer P1, and OBD P1 are implemented and verified. New work follows the per-slice pattern in `docs/IMPLEMENTATION-PLAN.md §4` (each slice: what it does, observable result, how to verify, numbered steps with What/How).
+
+---
+
+## 7. Git Safeguard Workflow
+
+At the start of every file-modifying task, snapshot the working tree so it survives a failed task:
+
+```bash
+git stash push -u -m "pre-task: <short description>" && git stash apply
 ```
 
-The archive is historical/reference material only. Do not implement from archived files unless explicitly instructed.
+Clean tree → `git stash push` prints `No local changes to save` and `&&` skips the apply (expected). On success: `git stash drop stash@{0}`. On failure: `git reset --hard HEAD && git clean -fd` then `git stash apply stash@{0}` and drop. `git clean -fd` is destructive — only on failure recovery.
 
-## Authority Rules
+---
 
-For implementation tasks:
+## 8. Documentation Rule
 
-- `docs/change-requests.md` is the accepted CR history.
-- `docs/product-spec.md` is the current accepted product/UI/navigation/data baseline.
-- `docs/implementation-plan.md` is the implementation contract.
-- `docs/progress.md` records what actually happened and what remains pending.
+Use one authoritative implementation plan: `docs/IMPLEMENTATION-PLAN.md`. Do not create separate phase-specific plans. Every task-log entry records **commit status** (uncommitted, or committed + branch + revision hash) — this is the single source of truth for branch/revision; do not add a redundant Branch field.
 
-If documents conflict:
+---
 
-1. Prefer the active CR section in `docs/change-requests.md` for task-specific behavior.
-2. Prefer `docs/product-spec.md` for current accepted baseline.
-3. Prefer `docs/implementation-plan.md` for concrete source-code and UI/design handoff work.
-4. Treat `docs/archive/latest-upload/*` as lower-priority historical reference.
-5. If still unclear, document the conflict in `docs/progress.md` and make the smallest safe change.
+## 8a. Doc-Impact Rule
 
-## Tool Usage Modes
+When the user states a decision, feature, change, or constraint — analyze impact and update all affected docs **before** writing code. Distinguish proactively: a new **product decision** → PRD and/or a new ADR; an **implementation/fix** → IMPLEMENTATION-PLAN (§4 slices / §6 task log). Typical candidates: `docs/PRD.md`, `docs/UI-SPEC.md`, `docs/IMPLEMENTATION-PLAN.md`, `docs/ARCHITECTURE.md`, `docs/adr/`, `AGENTS.md`/`docs/WORKFLOW.md`. Show impact analysis, get approval, update, then proceed. Document-first is automatic and proactive.
 
-### Codex App
+---
 
-Use the Codex App primarily for sharpening UI ideas, mockups, design directions, and non-code exploration.
+## 9. Blocker Protocol
 
-When the user asks to "provide a mockup" or create a screen mockup:
+If implementation finds a contradiction/ambiguity/missing decision in locked docs, **halt and raise a blocker** — do not guess. Full protocol in `docs/IMPLEMENTATION-ISSUES.md`: developer writes the issue and commits `[doc-issue] …`, halts; architect updates docs, commits `[doc-decision] …`; developer resumes.
 
-- Produce a visual artifact only, such as an image, design preview, or UI description.
-- Do not modify source code, layouts, assets, Gradle files, resources, or project files unless the user explicitly asks for implementation changes.
+---
 
-Implementation changes should be left for Codex CLI or another code-editing agent unless the user clearly requests code edits inside the current tool.
+## 10. Error Logging Protocol
 
-### Codex CLI / Code-Editing Agents
+Errors during compilation, build, deployment, or verification are permanent learning artifacts. Search `docs/ERRORS-LOG.md` before debugging; log every error (Found At, Resolved At, root cause, resolution, lessons); after 3+ similar, add a pattern entry.
 
-Use Codex CLI, Claude Code, Cursor, Windsurf, or another code-editing agent for repository modifications.
+---
 
-Whenever an instruction, task, plan, or CR modifies, creates, deletes, or migrates code files, follow the progress workflow below.
+## 11. Reference Documents
 
-## Progress Tracking
+- `docs/PRD.md` — product requirements (source of truth #1)
+- `docs/ARCHITECTURE.md` — architecture, domain model, data model
+- `docs/adr/` — Architecture Decision Records
+- `docs/IMPLEMENTATION-PLAN.md` — slices, task log, commit format
+- `docs/UI-SPEC.md` — UI designs, screen inventory, design system
+- `docs/IMPLEMENTATION-ISSUES.md` — blocker channel
+- `docs/ERRORS-LOG.md` — error learning log
+- `docs/DOCUMENT-CONTROL.md` — version register
+- `docs/WORKFLOW.md` — human-facing workflow
 
-Use `docs/progress.md` as the single progress file.
+---
 
-Before source-code changes:
-
-1. Update `## Current Session`.
-2. Record:
-   - start timestamp
-   - task goal
-   - expected files
-   - status: `In Progress`
-3. If the implementation plan does not include the required source changes, update `docs/implementation-plan.md` before code edits.
-
-After source-code changes:
-
-1. Move the completed session into `## Task Log`.
-2. Record:
-   - end timestamp
-   - final status: `Done`, `Partially Done`, or `Blocked`
-   - files created
-   - files edited
-   - files deleted
-   - migrations added
-   - tests added or updated
-   - tests run
-   - tests not run and why
-   - known remaining issues
-   - concise suggested commit message
-3. Clear or reset `## Current Session`.
-4. Remind the user to make a git commit before starting another task.
-
-If the task only changes documentation and does not touch source code, do not add a source-code progress entry unless the user explicitly asks.
-
-## Build, Test, and Emulator Rules
-
-Do not run a Gradle build, full test suite, emulator, or Android device run without explicit user permission.
-
-This includes commands such as:
-
-```text
-./gradlew assembleDebug
-./gradlew build
-./gradlew testDebugUnitTest
-./gradlew connectedDebugAndroidTest
-```
-
-The user's laptop can be slow and resource constrained. Always ask permission before running heavy build, test, emulator, or device commands.
-
-Lightweight static inspection, file reads, grep/search, and small local edits are allowed unless the user instructs otherwise.
-
-If a build, test, or emulator run is not performed, document this clearly in `docs/progress.md`.
-
-## Code Change Rules
-
-- Keep existing GPS tracking behavior working unless the active CR explicitly changes it.
-- Do not remove existing features unless a CR explicitly says so.
-- Keep Compose + Material3 as the UI direction.
-- Keep navigation consistent with `docs/product-spec.md`.
-- Keep data model behavior consistent with `docs/product-spec.md`.
-- Use Room migrations for database schema changes.
-- Do not silently change schema without updating implementation docs and tests.
-- Keep business logic out of Compose UI where practical.
-- Keep data access behind repositories or data source abstractions where practical.
-- Do not hardcode secrets, connection strings, credentials, or API keys.
-- Do not implement unrelated future phases unless explicitly requested.
-
-## Two-Track Work Model
+## 12. Two-Track Work Model (TrackLocation-specific)
 
 For every CR or implementation phase, distinguish:
 
-1. Code implementation work — for Codex / Claude Code / Cursor.
-2. UI specification/design handoff work — for Claude Design / Google Stitch / Figma.
+1. **Code implementation work** → Codex CLI / Claude Code / Cursor / Windsurf.
+2. **UI specification / design handoff work** → Claude Design / Google Stitch / Figma.
 
-Do not mix design-only handoff instructions with source-code implementation unless explicitly requested.
+Do not mix design-only handoff instructions with source-code implementation unless explicitly requested. New UI needs a design-handoff spec **first**; don't invent visual design directly in code.
 
-### UI Screenshot Attachment Rule (Always Follow)
+### UI Screenshot Attachment Rule (always follow)
 
-When producing or updating any UI specification/design handoff (including prompts for Google Stitch, Figma, Claude Design, or similar), always suggest which current-app screenshots the user should attach to preserve the app's visual language and interaction patterns.
+When producing/updating any UI spec or design handoff (Google Stitch, Figma, Claude Design), always suggest which current-app screenshots to attach to preserve the visual language. Prefer baseline-establishing screens (bottom nav, top app bar, list density, cards, typography, relevant control surfaces). Skip empty/minimal screens; tailor the list to the specific change.
 
-Guidance:
+### Design handoff spec template
 
-- Prefer screenshots that establish baseline styling: bottom navigation, top app bar, list density, cards, typography, and any relevant control surfaces.
-- If a referenced screen is currently empty/minimal, do not request it as a style reference; instead request other screens that reflect the real UI baseline.
-- Tailor the screenshot list to the specific UI change (for example, if changing list behavior, include a representative list screen).
+Every handoff spec includes a **Handoff Instructions** section: step-by-step process, screenshot checklist, tool recommendations, and a copy-paste-ready prompt.
 
-## CR-0001 Guardrails
+---
 
-- Sessions are separate from trips.
-- The canonical location log is the source of truth for GPS points.
-- Trips reference location ranges with `startLocationId` and `endLocationId`.
-- Starting a trip while always-recording is OFF auto-starts always-recording.
-- Stopping a trip does not stop always-recording.
-- Deleting a trip must not delete canonical location history.
+## 13. Code Change Guardrails (TrackLocation-specific)
 
-## CR-0002 Guardrails
-
-- The Session screen is the primary always-recording control surface.
-- The always-recording switch belongs inside the Session always-recording status area.
-- The List screen remains trip-only and should not expose the always-recording switch.
-- Starting a trip can auto-start always-recording; the Session switch must reflect ON.
-- Stopping a trip does not turn the Session switch OFF.
-- If a trip is active, do not allow the user to turn always-recording OFF unless a future CR changes this rule.
+- Keep existing GPS tracking working unless an accepted decision explicitly changes it.
+- Do not remove existing features unless a decision (PRD/ADR) explicitly says so.
+- Keep Compose + Material 3; keep navigation and data-model behavior consistent with PRD/UI-SPEC/ARCHITECTURE.
+- Use Room migrations for schema changes; update ARCHITECTURE + tests when schema changes.
+- Do not hardcode secrets/credentials/keys.
+- Do not implement unrelated future phases unless explicitly requested.

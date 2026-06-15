@@ -13,4 +13,37 @@
 .externalNativeBuild
 .cxx
 local.properties
-/logs
+/logs# Node / NPM
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+# Build / dist
+dist/
+build/
+out/
+.next/
+.nuxt/
+# Environment
+.env
+.env.local
+.env.*.local
+# Logs
+logs/
+*.log
+npm-debug.log*
+# OS
+Thumbs.db
+# Generated / temporary
+.turbo/
+.cache/
+temp/
+tmp/
+# Backups (e.g. from the create-project content-merge procedure)
+*.bak
