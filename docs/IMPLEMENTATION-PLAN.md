@@ -93,11 +93,11 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ## 6. Task Log (summarized)
 
-Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry is in **Appendix B**. Commit status is the single source of truth for branch/revision (AGENTS.md §8).
+Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry is in **Appendix B**. Commit status is the single source of truth for branch/revision (AGENTS.md §8). A `Git Revision` of `---` is a placeholder to be backfilled with the introducing commit's hash in the next commit (AGENTS.md §8 backfill rule).
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | uncommitted | Static only (no Gradle per §5a); device verification pending — confirm recording survives a forced low-memory kill and that orphaned sessions still close |
+| 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Static only (no Gradle per §5a); device verification pending — confirm recording survives a forced low-memory kill and that orphaned sessions still close |
 | 2026-06-08 | OBD — live device verification + connection bug fixes | Completed | `211ef56` | Live on device: RPM/speed streaming, no crashes; `assembleDebug` OK |
 | 2026-06-08 | OBD — capability scan + indirect speed-density fuel estimate | Completed | `211ef56` | Live: ~1.08 L/h idle on 1.2L; source SPEED_DENSITY |
 | 2026-06-07 | OBD Slice 3 — build + device verification | Completed | `bd13fb3` | `assembleDebug` OK; installed; no crash on launch |

@@ -120,7 +120,13 @@ Clean tree → `git stash push` prints `No local changes to save` and `&&` skips
 
 ## 8. Documentation Rule
 
-Use one authoritative implementation plan: `docs/IMPLEMENTATION-PLAN.md`. Do not create separate phase-specific plans. Every task-log entry records **commit status** (uncommitted, or committed + branch + revision hash) — this is the single source of truth for branch/revision; do not add a redundant Branch field.
+Use one authoritative implementation plan: `docs/IMPLEMENTATION-PLAN.md`. Do not create separate phase-specific plans. Every task-log entry records **commit status** in the `Git Revision` column — this is the single source of truth for branch/revision; do not add a redundant Branch field.
+
+**Revision-hash backfill rule.** A commit's hash cannot be written into a file that is part of that same commit (the content would change the hash). So:
+
+1. When committing a task, put `---` in the `Git Revision` column (a "backfill me" placeholder — not `uncommitted`, which reads as a permanent state), and commit source + plan together.
+2. In the **next** commit, replace that `---` with the short hash of the commit that *introduced the row* (i.e. the commit containing the task's work — usually the immediately preceding commit).
+3. `---` must never survive in `HEAD` across more than one commit. Treat a lingering `---` as an unfinished task-log entry.
 
 ---
 
