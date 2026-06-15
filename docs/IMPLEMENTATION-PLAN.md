@@ -196,41 +196,7 @@ See `docs/ARCHITECTURE.md` (§4 stack, §2 domain model, §8 schema).
 
 ---
 
-## 13. Manual Test Guides & Hardware Verification
-
-Manual test procedures and hardware verification steps live here, alongside the implementation they verify. Each entry covers one feature, integration, or hardware component.
-
-### Template per guide
-
-```
-### [Component / Feature Name] — Manual Verification
-
-**Purpose:** <what this verifies>
-**Prerequisites:** <hardware, environment, or setup needed>
-**Steps:**
-1. <step>
-2. <step>
-**Expected result:** <what success looks like>
-**Known limitations / edge cases:** <anything to watch for>
-```
-
-### OBD-II Phase 1 — Manual Verification
-
-**Purpose:** Verify ELM327 adapter connects and streams live PIDs into the app.
-**Prerequisites:** KONNWEI ELM327 adapter plugged into OBD-II port; 1193cc gasoline car (ISO 15765-4 CAN); app installed with OBD Phase 1 build; Bluetooth paired.
-**Steps:**
-1. Start the car engine (or key-on for accessory power).
-2. Open the app and navigate to the OBD screen.
-3. Tap Connect — confirm the adapter connects without error toast.
-4. Observe live PID values streaming (RPM, speed, coolant temp, fuel via speed-density).
-5. Disconnect and reconnect to verify reconnection works.
-6. Kill and relaunch the app; verify it survives sticky restart without crashing.
-**Expected result:** PIDs update continuously; no MAF/015E values (adapter not supported); fuel reads via speed-density fallback.
-**Known limitations / edge cases:** No MAF sensor on this vehicle — speed-density is the correct fuel path. Sticky restart (OS kill + relaunch) must not throw uncaught exceptions.
-
----
-
-## 14. Reference Documents
+## 13. Reference Documents
 
 - `docs/PRD.md` — Product requirements
 - `docs/ARCHITECTURE.md` — Architecture, domain model, schema

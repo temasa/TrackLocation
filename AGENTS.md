@@ -127,8 +127,8 @@ Use one authoritative implementation plan: `docs/IMPLEMENTATION-PLAN.md`. Do not
 | Content type | Correct home |
 |---|---|
 | Build / deploy / compile / runtime errors | `docs/ERRORS-LOG.md` |
-| Manual test procedures, hardware verification | `docs/IMPLEMENTATION-PLAN.md §13` |
-| Verification steps for a task or slice | `docs/IMPLEMENTATION-PLAN.md §6` (Verification column) |
+| Manual test procedures, hardware verification | inline in the slice definition (§4 "How to Verify") or task Verification column (§6) |
+| Verification steps for a task or slice | `docs/IMPLEMENTATION-PLAN.md §6` (Verification column) or §4 "How to Verify" |
 | Product decisions, scope, requirements | `docs/PRD.md` |
 | UI behavior, screen specs, interaction notes | `docs/UI-SPEC.md` |
 | Architecture, domain model, tech stack | `docs/ARCHITECTURE.md` |
