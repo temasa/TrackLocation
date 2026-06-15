@@ -122,6 +122,21 @@ Clean tree → `git stash push` prints `No local changes to save` and `&&` skips
 
 Use one authoritative implementation plan: `docs/IMPLEMENTATION-PLAN.md`. Do not create separate phase-specific plans. Every task-log entry records **commit status** in the `Git Revision` column — this is the single source of truth for branch/revision; do not add a redundant Branch field.
 
+**The `docs/` directory is a closed set.** Never create a new `.md` file in `docs/` or at the project root. Route all new content into the existing governance doc whose purpose matches:
+
+| Content type | Correct home |
+|---|---|
+| Build / deploy / compile / runtime errors | `docs/ERRORS-LOG.md` |
+| Manual test procedures, hardware verification | `docs/IMPLEMENTATION-PLAN.md §13` |
+| Verification steps for a task or slice | `docs/IMPLEMENTATION-PLAN.md §6` (Verification column) |
+| Product decisions, scope, requirements | `docs/PRD.md` |
+| UI behavior, screen specs, interaction notes | `docs/UI-SPEC.md` |
+| Architecture, domain model, tech stack | `docs/ARCHITECTURE.md` |
+| Significant technical decisions | `docs/adr/` (new ADR file — the only permitted new file in docs) |
+| Blockers and contradictions | `docs/IMPLEMENTATION-ISSUES.md` |
+
+If no existing doc fits the content, raise a blocker (§9) — do not create a new file.
+
 **Revision-hash backfill rule.** A commit's hash cannot be written into a file that is part of that same commit (the content would change the hash). So:
 
 1. When committing a task, put `---` in the `Git Revision` column (a "backfill me" placeholder — not `uncommitted`, which reads as a permanent state), and commit source + plan together.
