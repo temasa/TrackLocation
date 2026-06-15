@@ -104,6 +104,8 @@ Lightweight static inspection, file reads, search, and small local edits are all
 
 TrackLocation is past its first slice — GPS tracking, sessions (CR-0001/0002), Observer P1, and OBD P1 are implemented and verified. New work follows the per-slice pattern in `docs/IMPLEMENTATION-PLAN.md §4` (each slice: what it does, observable result, how to verify, numbered steps with What/How).
 
+**Slice verification rule (mandatory):** Every slice definition must include a "How to Verify" block if the slice is verifiable. All verification detail — steps, expected output, hardware prerequisites, manual setup — goes inline in that block. Never put verification content in a separate section or file. A reader must be able to read one slice entry and know both what was built and how to confirm it works.
+
 ---
 
 ## 7. Git Safeguard Workflow
