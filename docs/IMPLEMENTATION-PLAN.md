@@ -20,7 +20,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ### Current — Observer Phase 2: Truncation banner
 
-**Parallel work:** OBD Phase 1 is functionally complete (live RPM/speed verified, indirect speed-density fuel estimate). Remaining OBD polish is optional.
+**Parallel work:** ✅ OBD Phase 1 is complete and hardware-verified (RPM/speed streaming, km/L calculation, session gating, stability hardening all working on SM-G965F with ELM327).
 
 **Next action:** Submit the truncation-warning spec (`docs/design-handoff/observer_truncation/OBSERVER_TRUNCATION_SPEC.md`) + screenshots to Google Stitch / Claude Design for visual approval, then implement the truncation banner in `SnapshotViewerSheet.kt` with the approved design.
 
@@ -29,6 +29,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ### Completed (newest first)
 
+- ✅ OBD Phase 1 — hardware verification complete (2026-06-15, ELM327 streaming verified)
 - OBD Phase 1 — live device verification + indirect speed-density fuel (2026-06-08, `211ef56`)
 - OBD Phase 1 Slice 3 — full polling loop, live telemetry (2026-06-07, `bd13fb3`)
 - OBD Phase 1 Slice 2 — enable toggle + device picker (2026-06-07, `c8a68da`)
@@ -63,7 +64,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | CR-0002 Session always-recording switch | Implemented | Implemented | Verified by user |
 | Observer Phase 1 — Local Foundation | Implemented | Implemented | Verified on device (2026-05-29) |
 | Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer); truncation code ready | Truncation banner spec drafted, awaiting design | Not fully verified on device |
-| OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Live RPM/speed verified (2026-06-08); km/L via speed-density |
+| OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | Observer Phase 3 — Filtering + Settings | Planned | Planned | Not started |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
@@ -97,7 +98,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Device verified: build OK; app survives force-stop/restart; OBD FGS running; no crashes; 98 MB memory. Ready for manual OBD adapter test |
+| 2026-06-15 | Hardware verification complete — OBD Phase 1 (ELM327 streaming) | Completed | --- | Live on device: RPM/speed streaming verified; km/L calculation functional; connection stable; session gating working; orphan reaper verified on restart |
+| 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Device verified: build OK; app survives force-stop/restart; OBD FGS running; no crashes; 98 MB memory |
 | 2026-06-08 | OBD — live device verification + connection bug fixes | Completed | `211ef56` | Live on device: RPM/speed streaming, no crashes; `assembleDebug` OK |
 | 2026-06-08 | OBD — capability scan + indirect speed-density fuel estimate | Completed | `211ef56` | Live: ~1.08 L/h idle on 1.2L; source SPEED_DENSITY |
 | 2026-06-07 | OBD Slice 3 — build + device verification | Completed | `bd13fb3` | `assembleDebug` OK; installed; no crash on launch |
