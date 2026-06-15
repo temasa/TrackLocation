@@ -26,6 +26,7 @@ import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.utils.CHANNEL_ID
 import com.kolee.tracklocation.utils.FASTEST_LOCATION_INTERVAL
 import com.kolee.tracklocation.utils.LOCATION_UPDATE_INTERVAL
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
@@ -46,7 +48,14 @@ class TrackingService: Service() {
     private val fusedLocationProviderClient: FusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
     }
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // Without a handler, an uncaught exception in a fire-and-forget launch (e.g. a Room write
+    // failing on a full/locked DB) reaches the default handler and crashes the process, silently
+    // killing the foreground service. SupervisorJob alone does NOT prevent this — it only stops
+    // sibling cancellation. Log and keep recording instead.
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "serviceScope coroutine failed; recording continues", throwable)
+    }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var timer: Timer? = null
     private var tripStartTime = 0L
     private var locationUpdatesRequested = false
@@ -91,6 +100,10 @@ class TrackingService: Service() {
             Actions.STOP_RECORDING.name -> stopAlwaysRecording()
             Actions.START_TRIP.name -> startTrip()
             Actions.STOP_TRIP.name -> stopTrip()
+            // START_STICKY redelivers a null intent after a system kill. The open session row
+            // (isActive = 1) is the persisted "should be recording" state — resume from it so
+            // recording doesn't silently stop after a low-memory kill.
+            null -> resumeIfActiveSession()
         }
 
         return START_STICKY
@@ -120,6 +133,38 @@ class TrackingService: Service() {
             action = ObdPollingService.ACTION_SESSION_ON
         }
         startService(intent)
+    }
+
+    /**
+     * Recover after a START_STICKY restart (null intent). If an open session exists in the DB,
+     * adopt it and re-establish the foreground service + location updates so recording resumes
+     * transparently. If none exists, there is nothing to record — shut the service down so it
+     * doesn't linger as a zombie foreground service.
+     */
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    private fun resumeIfActiveSession() {
+        serviceScope.launch {
+            val session = database.sessionDao.getActiveSession()
+            withContext(Dispatchers.Main) {
+                if (session == null) {
+                    stopServiceIfIdle()
+                    return@withContext
+                }
+                activeSession = session
+                lastSessionLocation = null
+                isAlwaysRecording = true
+                startForeground(
+                    NOTIFICATION_ID,
+                    createNotification(this@TrackingService, "Recording location history...")
+                )
+                requestLocationUpdate()
+
+                val obdIntent = Intent(this@TrackingService, ObdPollingService::class.java).apply {
+                    action = ObdPollingService.ACTION_SESSION_ON
+                }
+                startService(obdIntent)
+            }
+        }
     }
 
     private fun stopAlwaysRecording() {
@@ -198,13 +243,15 @@ class TrackingService: Service() {
         timer?.cancel()
 
         timer = Timer()
+        // 1 s period: the UI renders H:MM:SS, so a 1 ms tick (the old value) just flooded the
+        // StateFlow ~1000×/s, burning CPU/battery and churning recompositions for no benefit.
         timer?.schedule(object : TimerTask() {
             override fun run() {
                 _locationUiState.update {
                     it.copy(durationTimer = System.currentTimeMillis() - tripStartTime)
                 }
             }
-        }, 1, 1)
+        }, 0L, 1000L)
     }
 
 //    private fun getDurationTimer(): String {
@@ -224,12 +271,20 @@ class TrackingService: Service() {
                 maxWaitTime = LOCATION_UPDATE_INTERVAL
             }
 
-            fusedLocationProviderClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
-            locationUpdatesRequested = true
+            try {
+                fusedLocationProviderClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+                locationUpdatesRequested = true
+            } catch (e: SecurityException) {
+                // Location permission can be revoked/downgraded at runtime (auto-revoke, user
+                // toggling "While in use"). Don't crash the service — stop recording cleanly.
+                Log.e(TAG, "requestLocationUpdate: location permission lost", e)
+                locationUpdatesRequested = false
+                stopAlwaysRecording()
+            }
         }
     }
 

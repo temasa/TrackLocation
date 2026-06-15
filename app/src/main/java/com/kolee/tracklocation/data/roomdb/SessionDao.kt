@@ -16,8 +16,15 @@ interface SessionDao {
     @Query("SELECT * FROM recording_session WHERE isActive = 1 ORDER BY startedAt DESC LIMIT 1")
     suspend fun getActiveSession(): SessionEntity?
 
-    @Query("UPDATE recording_session SET isActive = 0, endedAt = :endedAt WHERE isActive = 1 AND endedAt IS NULL")
-    suspend fun closeAllActiveSessions(endedAt: Long)
+    /**
+     * Close only sessions whose last recorded activity (startedAt + durationMillis, refreshed on
+     * every location point) is older than [staleBefore]. Used at app launch to reap genuinely
+     * orphaned sessions WITHOUT racing the service's START_STICKY resume: a session being resumed
+     * after a low-memory kill was updated seconds ago and is therefore not stale, so it survives
+     * regardless of whether the Activity or the service wins the restart.
+     */
+    @Query("UPDATE recording_session SET isActive = 0, endedAt = :endedAt WHERE isActive = 1 AND endedAt IS NULL AND (startedAt + durationMillis) < :staleBefore")
+    suspend fun closeStaleActiveSessions(endedAt: Long, staleBefore: Long)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(item: SessionEntity)

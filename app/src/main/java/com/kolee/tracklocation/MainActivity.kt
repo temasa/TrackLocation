@@ -19,14 +19,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+// Grace window for the launch-time orphan reaper. A live session refreshes its last-point
+// timestamp every LOCATION_UPDATE_INTERVAL (5 s); 2 min comfortably covers a sticky-restart
+// resume gap while still reaping sessions abandoned by a force-stop/shutdown.
+private const val RESUME_GRACE_MILLIS = 2 * 60 * 1000L
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Close any sessions that were left active by a previous process kill or device shutdown.
-        // Guard: if the service is still running (e.g. config change), skip to avoid closing a live session.
+        // Close sessions left active by a previous process kill or device shutdown.
+        // Guard 1: if the service is still running (e.g. config change), the static flag is intact —
+        // skip entirely to avoid closing a live session.
+        // Guard 2: only reap STALE sessions (no location point within the grace window). After a
+        // low-memory kill, START_STICKY resurrects the service and resumes the open session; that
+        // session was updated seconds ago, so it is not stale and survives even if this cleanup
+        // runs before the service's resume completes.
         lifecycleScope.launch(Dispatchers.IO) {
             if (!TrackingService.locationUiState.value.isAlwaysRecording) {
-                (application as TrackApp).sessionDao.closeAllActiveSessions(System.currentTimeMillis())
+                val now = System.currentTimeMillis()
+                (application as TrackApp).sessionDao.closeStaleActiveSessions(
+                    endedAt = now,
+                    staleBefore = now - RESUME_GRACE_MILLIS
+                )
             }
             // Auto-start OBD service if enabled. Read the launch-time value only (first());
             // collecting the flow would re-fire ACTION_START on every DataStore write. Runtime

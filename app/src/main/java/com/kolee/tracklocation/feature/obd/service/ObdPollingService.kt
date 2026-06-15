@@ -94,6 +94,10 @@ class ObdPollingService : Service() {
                 stopSelf()
             }
             ACTION_SESSION_ON -> {
+                // A recording session is starting (driven by TrackingService). Ensure we run as a
+                // proper foreground service so the poll loop survives backgrounding, even if this
+                // is the first command the service received (no prior ACTION_START).
+                startForegroundNotification()
                 sessionActive = true
                 sessionDistanceKm = 0.0
                 sessionFuelLiters = 0.0
@@ -136,6 +140,14 @@ class ObdPollingService : Service() {
                 Log.d(TAG, "attemptConnection: connecting to $deviceMac")
                 try {
                     val adapter = BluetoothAdapter.getDefaultAdapter()
+                    if (adapter == null) {
+                        // No Bluetooth hardware/stack — retrying can never succeed.
+                        Log.w(TAG, "attemptConnection: no Bluetooth adapter available")
+                        obdUiState.value = ObdUiState.Waiting("Bluetooth not available")
+                        prefs.setObdLastError("Bluetooth not available")
+                        prefs.setObdLastState("Waiting")
+                        return@launch
+                    }
                     // Discovery actively running slows/breaks RFCOMM connects.
                     if (adapter.isDiscovering) adapter.cancelDiscovery()
                     val device = adapter.getRemoteDevice(deviceMac)
@@ -590,7 +602,14 @@ class ObdPollingService : Service() {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
-        startForeground(2001, notification)
+        try {
+            startForeground(2001, notification)
+        } catch (e: Exception) {
+            // Android 14+ can reject a connectedDevice FGS if BLUETOOTH_CONNECT is missing
+            // (SecurityException / ForegroundServiceStartNotAllowedException). Don't crash —
+            // the connect attempt will surface the permission problem as a Waiting state.
+            Log.w(TAG, "startForegroundNotification: could not start foreground — ${e.message}")
+        }
     }
 
     override fun onDestroy() {
