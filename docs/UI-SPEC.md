@@ -84,11 +84,17 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 
 ---
 
-## 4. OBD UI Surfaces (Phase 1)
+## 4. OBD UI Surfaces
 
+### Phase 1 (implemented)
 - **OBD Settings** (`Settings → Tools → OBD`): Enable toggle, saved-device row + Change, "Pair a new device" (system BT), bonded-device picker, poll-rate (1/2/5 Hz), retention (1–30d), retry cap, engine displacement (default 1193 cc), status display (IDLE/CONNECTING/CONNECTED/RETRYING/WAITING + last error + last sample ts), Reconnect button.
-- **ObdStatusCard** (Session screen): Connected/Waiting states, RPM/SPEED/EFFICIENCY, instant km/L (hidden when GPS speed < 3 km/h or accuracy > 20 m), average km/L, fuel-source chip, Reconnect.
-- **OBD metric row** (TripPanel): instant/avg km/L cells, fuel-source chip, instant hidden when null.
+- **ObdStatusCard** (Session screen): Connected/Waiting states, RPM/SPEED/EFFICIENCY, instant km/L, fuel-source chip, Reconnect.
+- **OBD metric row** (TripPanel): instant km/L cell, fuel-source chip.
+
+### Phase 2 (planned — OBD Phase 2)
+- **ObdStatusCard** (Session screen): adds session-average km/L row; at idle (speed=0, RPM>0) the instant cell shows L/h instead of "--".
+- **OBD metric row** (TripPanel): adds instant km/L (if not already), trip-average km/L, and L/h-at-idle display.
+- **Idle display rule:** show `X.X L/h` when OBD connected + speed = 0 + RPM > 0. Show "--" when OBD disconnected or engine off (RPM = 0).
 
 ---
 

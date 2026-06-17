@@ -75,8 +75,8 @@ The developer / support operator — uses the Observer to inspect accessibility 
 - **User benefit:** On-device diagnostics of app/screen activity without remote dependencies.
 
 ### Feature 4: OBD-II Telemetry (ELM327 Bluetooth Classic)
-- **What it does:** Polls RPM, speed, and fuel-rate from an ELM327 adapter; surfaces instantaneous and average km/L on the Session screen and Trip panel.
-- **User benefit:** Live vehicle efficiency and engine data tied to sessions and trips.
+- **What it does:** Polls RPM, speed, and fuel-rate from an ELM327 adapter; surfaces instantaneous km/L, L/h at idle, and session/trip average km/L on the Session screen and Trip panel.
+- **User benefit:** Live vehicle efficiency and engine data tied to sessions and trips; idle fuel rate visible when stationary.
 
 ### Feature 5 (Planned): Registration + Face-first Authentication
 - **What it does:** Registration gate, Google Sign-In, CameraX/ML Kit face enrollment, app-wide auth overlay.
@@ -92,6 +92,7 @@ The developer / support operator — uses the Observer to inspect accessibility 
 - ✅ CR-0002 Session always-recording switch [Phase: Sessions]
 - ✅ Observer Phase 1 — Local foundation (verified on device 2026-05-29)
 - ✅ OBD Phase 1 — ELM327 telemetry (live RPM/speed verified on device 2026-06-08; indirect speed-density fuel estimate)
+- ❌ OBD Phase 2 — Fuel consumption enhancement (idle L/h display; session + trip average km/L; Trip panel fuel metrics)
 
 ### In progress / planned
 
@@ -135,6 +136,9 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-04:** Starting a trip while always-recording is OFF auto-starts always-recording and the Session switch reflects ON.
 - **FR-05:** Observer captures only packages matching a user-configured allowlist (empty allowlist = capture all); history is not user-deletable.
 - **FR-06:** OBD samples are stored only while a session is active; trips/sessions link to samples via time-window queries (no FKs).
+- **FR-07:** When OBD is connected, speed = 0, and RPM > 0 (idle), the fuel consumption display shows the instantaneous fuel flow rate in L/h rather than "--".
+- **FR-08:** Session average km/L is the ratio of cumulative GPS distance to cumulative fuel consumed since the session started; it persists across app restarts and resets when a new session begins.
+- **FR-09:** Trip average km/L is the ratio of trip GPS distance to cumulative fuel consumed since the trip started; it persists to the trip record.
 
 ---
 
@@ -155,8 +159,9 @@ CR-0001 always-recorded sessions + canonical log; CR-0002 Session-screen switch 
 ### Phase — Observer (in progress)
 P1 local foundation (done, verified) → P2 inspection UI (in progress) → P3 filtering/settings → P4 sync engine → P5 Neon V1 → P6 registration + face enrollment → P7 auth + hardening.
 
-### Phase — OBD-II (Phase 1 delivered)
-ELM327 Bluetooth Classic telemetry: RPM/speed/fuel, km/L on Session + Trip panel; indirect speed-density fuel estimate for no-MAF vehicles.
+### Phase — OBD-II (Phase 1 delivered; Phase 2 planned)
+- **Phase 1 (done):** ELM327 Bluetooth Classic telemetry: RPM/speed/fuel, instant km/L on Session + Trip panel; indirect speed-density fuel estimate for no-MAF vehicles.
+- **Phase 2 (planned):** Idle L/h display; session average km/L (persisted to `recording_session`); trip average km/L (persisted to `trip`); Trip screen fuel metrics. DB migration 4→5.
 
 ---
 

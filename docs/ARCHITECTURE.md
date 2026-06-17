@@ -53,6 +53,13 @@ ObdSampleEntity (obd_sample)
   ├── timestampMs, rpm, obdSpeedKmh
   ├── fuelRateLph, mafGramsPerSecond, fuelRateSource
   └── adapterElapsedMs   (no FK to trip/session — linked by time-window queries)
+
+SessionEntity (recording_session) — OBD accumulator columns (added DB v5)
+  ├── obdFuelConsumedL  (REAL, default 0.0) — cumulative L consumed this session
+  └── obdGpsDistanceKm  (REAL, default 0.0) — cumulative GPS km this session
+
+TrackEntity (trip) — OBD accumulator column (added DB v5)
+  └── obdFuelConsumedL  (REAL, default 0.0) — cumulative L consumed this trip
 ```
 
 ### Key Invariants
@@ -124,7 +131,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), current version **4**. Migrations: `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample).
+Room database (`TrackDatabase`), current version **5** (planned; code is at 4 until OBD Phase 2 is implemented). Migrations: `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns on `recording_session` and `trip`).
 
 `obd_sample` table:
 
@@ -140,6 +147,8 @@ Room database (`TrackDatabase`), current version **4**. Migrations: `MIGRATION_1
 | adapterElapsedMs | Long? | round-trip time to adapter |
 
 Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAVAILABLE`. Speed-density estimate: `MAF(g/s) = (RPM × MAP_kPa × VE × Displacement_L × 28.97)/(120 × 8.314 × IAT_K)`, `fuel(L/h) = MAF/(14.7×λ) × 3600/745` (VE=0.85, gasoline; engine displacement is a user pref, default 1193 cc).
+
+**OBD Phase 2 accumulation (planned):** `ObdPollingService` accumulates fuel consumed and GPS distance into `recording_session` and `trip` on each sample (delta-t × fuelRateLph / 3 600 000). Session average km/L = `obdGpsDistanceKm / obdFuelConsumedL`; trip average km/L = `trip.distance_m/1000 / trip.obdFuelConsumedL`. At idle (speed = 0, RPM > 0), the UI shows the instantaneous fuel rate as L/h instead of "--".
 
 ---
 
