@@ -43,7 +43,14 @@
       "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe install *)",
       "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe shell *)",
       "Bash(~/AppData/Local/Android/Sdk/platform-tools/adb.exe pull *)",
-      "Bash($ADB pull *)"
+      "Bash($ADB pull *)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs '-I{}' sh -c ' *)",
+      "Bash(python3 *)",
+      "Bash(/c/Users/rinal/AppData/Local/Microsoft/WindowsApps/python3 --version)",
+      "Bash(JAVA_HOME=\"C:\\\\Users\\\\rinal\\\\.jdks\\\\jbr-17.0.14\" ./gradlew :app:assembleDebug --no-daemon)",
+      "Bash(\"C:/Users/rinal/AppData/Local/Android/Sdk/platform-tools/adb.exe\" shell *)",
+      "Read(//tmp/**)"
     ]
   }
 }
