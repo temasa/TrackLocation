@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.TextSnippet
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,6 +70,7 @@ import com.kolee.tracklocation.ui.theme.TripMuted
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -206,6 +208,7 @@ fun SnapshotViewerSheet(
                     parsed = parsed,
                     mode = mode,
                     hasReadableText = hasReadableText,
+                    truncationMetadata = event.truncationMetadata,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -450,10 +453,62 @@ private fun SegmentedControl(
 }
 
 @Composable
+private fun TruncationBanner(truncationMetadata: String?) {
+    if (truncationMetadata == null) return
+    val (label, count) = try {
+        val o = JSONObject(truncationMetadata)
+        val l = when (o.getString("reason")) {
+            "node_limit"  -> "node limit"
+            "depth_limit" -> "depth limit"
+            "size_limit"  -> "size limit"
+            else -> return
+        }
+        l to o.getInt("nodesCaptured")
+    } catch (e: Exception) { return }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 4.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(ObserverAmberBg)
+            .border(1.dp, ObserverAmberHair, RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Warning,
+            contentDescription = null,
+            tint = ObserverAmber,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = "Tree truncated — $label",
+            color = ObserverAmber,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.05).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "($count nodes captured)",
+            color = ObserverAmber.copy(alpha = 0.65f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun ContentArea(
     parsed: ParsedSnapshot,
     mode: ContentMode,
     hasReadableText: Boolean,
+    truncationMetadata: String?,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -464,15 +519,22 @@ private fun ContentArea(
         modifier = modifier
             .fillMaxWidth()
             .background(Color(0xFFFBFCFA))
-            .border(width = 1.dp, color = Color(0xFFEEF0EC), shape = RoundedCornerShape(0.dp))
-            .verticalScroll(scrollState)
-            .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 24.dp),
+            .border(width = 1.dp, color = Color(0xFFEEF0EC), shape = RoundedCornerShape(0.dp)),
     ) {
-        when {
-            parsed.parseError != null -> ParseErrorContent(parsed = parsed, mode = mode)
-            !hasReadableText -> NoReadableTextContent()
-            mode == ContentMode.Formatted -> FormattedContent(nodes = parsed.nodes ?: emptyList())
-            else -> RawJsonContent(rawJson = parsed.rawJson)
+        TruncationBanner(truncationMetadata)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 24.dp),
+        ) {
+            when {
+                parsed.parseError != null -> ParseErrorContent(parsed = parsed, mode = mode)
+                !hasReadableText -> NoReadableTextContent()
+                mode == ContentMode.Formatted -> FormattedContent(nodes = parsed.nodes ?: emptyList())
+                else -> RawJsonContent(rawJson = parsed.rawJson)
+            }
         }
     }
 }

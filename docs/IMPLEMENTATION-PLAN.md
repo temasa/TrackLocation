@@ -18,11 +18,11 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — Observer Phase 2: Truncation banner
+### Current — Observer Phase 2: Complete ✅
 
 **Parallel work:** ✅ OBD Phase 1 is complete and hardware-verified (RPM/speed streaming, km/L calculation, session gating, stability hardening all working on SM-G965F with ELM327).
 
-**Next action:** Submit the truncation-warning spec (`docs/design-handoff/observer_truncation/OBSERVER_TRUNCATION_SPEC.md`) + screenshots to Google Stitch / Claude Design for visual approval, then implement the truncation banner in `SnapshotViewerSheet.kt` with the approved design.
+**Observer Phase 2 is now fully implemented:** cursor pagination, snapshot viewer sheet, and truncation warning banner are all done. Build verified on device (2026-06-17). Next: verify the truncation banner visually on device with a real truncated event, then move to Observer Phase 3 (Filtering + Settings).
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
 > Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md, then continue Observer Phase 2 (truncation banner). Inspect the repo and the §6 Task Log; resume from the first incomplete item. Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a). Stop for review at the truncation banner implementation.
@@ -98,6 +98,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-06-17 | Observer Phase 2 — truncation warning banner in SnapshotViewerSheet (`TruncationBanner` composable; pinned above scroll region; amber tokens; silent degradation on null/bad JSON) | Completed | `---` | `assembleDebug` OK; installed on device 213052810e037ece; State A confirmed (no banner, no crash, both Formatted and Raw JSON modes work); State B/C pending — 0 of 9 793 stored events have truncationMetadata, need live complex-UI capture to trigger |
 | 2026-06-15 | Hardware verification complete — OBD Phase 1 (ELM327 streaming) | Completed | `ab16161` | Live on device: RPM/speed streaming verified; km/L calculation functional; connection stable; session gating working; orphan reaper verified on restart |
 | 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Device verified: build OK; app survives force-stop/restart; OBD FGS running; no crashes; 98 MB memory |
 | 2026-06-08 | OBD — live device verification + connection bug fixes | Completed | `211ef56` | Live on device: RPM/speed streaming, no crashes; `assembleDebug` OK |
