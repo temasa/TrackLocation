@@ -19,6 +19,14 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        def localProperties = new Properties()
+        def localPropertiesFile = rootProject.file('local.properties')
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.newDataInputStream())
+        }
+        def mapsKey = localProperties.getProperty('GOOGLE_MAPS_KEY', '')
+        resValue "string", "google_maps_key_placeholder", mapsKey
     }
 
     buildTypes {
