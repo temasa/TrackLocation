@@ -26,6 +26,13 @@ interface SessionDao {
     @Query("UPDATE recording_session SET isActive = 0, endedAt = :endedAt WHERE isActive = 1 AND endedAt IS NULL AND (startedAt + durationMillis) < :staleBefore")
     suspend fun closeStaleActiveSessions(endedAt: Long, staleBefore: Long)
 
+    /**
+     * OBD Phase 2: atomically add a fuel/distance increment to the session's accumulators.
+     * [sessionId] matches the String primary key of `recording_session`.
+     */
+    @Query("UPDATE recording_session SET obdFuelConsumedL = obdFuelConsumedL + :fuelL, obdGpsDistanceKm = obdGpsDistanceKm + :distKm WHERE id = :sessionId")
+    suspend fun addObdAccumulator(sessionId: String, fuelL: Double, distKm: Double)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(item: SessionEntity)
 

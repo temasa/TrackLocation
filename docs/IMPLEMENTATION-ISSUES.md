@@ -121,7 +121,45 @@ git log --oneline -2  # See decision commit
 
 ## Active Issues
 
-*(None currently — design is scaffolded and ready for development)*
+### Issue #1: OBD Phase 2 Slice 2 — no live trip id to accumulate fuel into
+
+**Sprint/Task:** OBD-P2-S2 (trip half — plan Slice 2 steps 2–3)
+**Severity:** Blocker
+**Status:** Resolved
+
+**Problem:**
+IMPLEMENTATION-PLAN.md Slice 2 steps 2–3 say:
+> add `var activeTripId` … listen for `ACTION_TRIP_START`/`ACTION_TRIP_STOP` sent by `TrackingService`; on start receive `tripId` and set `activeTripId` … `TrackingService` … when a trip starts, `sendBroadcast(Intent(ACTION_TRIP_START).putExtra("tripId", tripId))`.
+
+This assumes a persisted trip row (with an id) exists while a trip is active. In the actual codebase it does not:
+- `TrackingService.startTrip()` / `stopTrip()` never write a `track` row; a trip lives only in `TrackingService.locationUiState` (in-memory) during recording.
+- The `track` row is created **at trip stop** by `ShareViewModel.onTripCtaTap()` via `insertTrack(...)`, with an **auto-generated `idx`** (`@PrimaryKey(autoGenerate = true)`).
+- Therefore there is no stable `track.idx` during an active trip to pass to `TrackDao.addObdFuel(idx, …)`.
+
+Giving an active trip a live DB id means changing **when/where trip rows are persisted** — locked trip behavior (AGENTS.md §2/§13; do not invent per §3/§9).
+
+**Context:**
+The session half of Slice 2 (persisting `recording_session.obdFuelConsumedL`/`obdGpsDistanceKm`) is fully implementable and has been implemented, because `recording_session` rows exist live with a known `String` id. Only the trip half is blocked. The Slice 1 column `track.obdFuelConsumedL` already exists.
+
+**Options:**
+1. **Insert the `track` row at trip start** (move/duplicate trip persistence into `TrackingService`, keep a stable `activeTripIdx`, finalize on stop; broadcast the idx to OBD). — Pros: matches plan; live incremental accumulation; trip row exists during trip. Cons: changes locked trip lifecycle; risk of empty/orphan trip rows on mid-trip kill (needs reaper); moves creation away from `ShareViewModel`.
+2. **Derive trip fuel from `obd_sample` time-window** (no live trip id). Live trip-avg (Slice 4) queries `obdSampleDao.samplesBetween(tripStartMs, now)` and integrates fuel; write the total into `track.obdFuelConsumedL` at stop when `ShareViewModel` creates the row. — Pros: no change to trip lifecycle; reuses persisted samples; matches the original OBD Phase 1 Slice 4 approach; keeps the Slice 1 column meaningful. Cons: column populated at stop rather than incrementally; live avg is a windowed query.
+3. **Defer trip accumulation to Slice 4 only**, compute trip-avg in the UI from `obd_sample`, leave `track.obdFuelConsumedL` unused for now. — Pros: smallest change, unblocks immediately. Cons: Slice 1 column unused; postpones the decision.
+
+**Recommendation:** Option 2 — avoids changing locked trip-persistence behavior, reuses the `obd_sample` rows already written during a session, still delivers a live trip-average in Slice 4, and populates `track.obdFuelConsumedL` at trip stop so the column stays meaningful.
+
+**Asked:** 2026-07-02
+**Asking:** Claude Code (Opus 4.8)
+
+**Decision:** Option 2 above — **derive trip fuel from `obd_sample`** (no change to trip-persistence lifecycle). Chosen by user 2026-07-02.
+
+**Action taken (2026-07-02, static — unbuilt per AGENTS.md §5a):**
+- Added `ObdSampleDao.samplesBetweenOnce(startMs, endMs): List<ObdSampleEntity>` (one-shot suspend variant of `samplesBetween`).
+- `ShareViewModel.onTripCtaTap()` now integrates fuel over the trip window `[tripStartedAt, now]` at trip stop (`integrateFuelLiters(...)`, same `0 < dt < 60 s` guard as the service) and writes the total into `TrackEntity.obdFuelConsumedL` when the trip row is created. Injected `obdSampleDao` into `ShareViewModel` + factory. `0.0` when OBD was not connected (no samples).
+- Live trip-average km/L **display** is deferred to Slice 4 (Trip screen UI), which will query the same window; that surface is UI and routes through claude.ai/design first.
+
+**Decided:** 2026-07-02
+**Deciding:** User (rinaldi.ch@gmail.com)
 
 ---
 

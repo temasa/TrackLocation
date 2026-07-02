@@ -17,6 +17,13 @@ interface ObdSampleDao {
     @Query("SELECT * FROM obd_sample WHERE timestampMs BETWEEN :startMs AND :endMs ORDER BY timestampMs ASC")
     fun samplesBetween(startMs: Long, endMs: Long): Flow<List<ObdSampleEntity>>
 
+    /**
+     * One-shot (non-Flow) variant for integrating fuel over a finished window, e.g. computing a
+     * trip's total litres at trip stop. Ascending by time so consecutive dt gaps are positive.
+     */
+    @Query("SELECT * FROM obd_sample WHERE timestampMs BETWEEN :startMs AND :endMs ORDER BY timestampMs ASC")
+    suspend fun samplesBetweenOnce(startMs: Long, endMs: Long): List<ObdSampleEntity>
+
     @Query("DELETE FROM obd_sample WHERE timestampMs < :cutoffMs")
     suspend fun deleteOlderThan(cutoffMs: Long)
 }

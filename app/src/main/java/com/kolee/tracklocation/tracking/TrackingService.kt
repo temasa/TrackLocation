@@ -131,6 +131,7 @@ class TrackingService: Service() {
 
         val intent = Intent(this, ObdPollingService::class.java).apply {
             action = ObdPollingService.ACTION_SESSION_ON
+            putExtra(ObdPollingService.EXTRA_SESSION_ID, activeSession?.id)
         }
         startService(intent)
     }
@@ -161,6 +162,7 @@ class TrackingService: Service() {
 
                 val obdIntent = Intent(this@TrackingService, ObdPollingService::class.java).apply {
                     action = ObdPollingService.ACTION_SESSION_ON
+                    putExtra(ObdPollingService.EXTRA_SESSION_ID, session.id)
                 }
                 startService(obdIntent)
             }

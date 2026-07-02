@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AllowlistRuleEntity::class,
         ObdSampleEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -63,6 +63,17 @@ abstract class TrackDatabase: RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_packageName` ON `observer_event` (`packageName`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_lastSeenAt` ON `observer_event` (`lastSeenAt`)")
+            }
+        }
+
+        // OBD Phase 2 Slice 1: fuel-consumption accumulators persisted per session and per trip.
+        // NOTE: the domain "trip" table is physically named `track` (PK `idx`); the plan's
+        // `ALTER TABLE trip` text refers to this table.
+        private val MIGRATION_4_5 = object: Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `recording_session` ADD COLUMN `obdFuelConsumedL` REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE `recording_session` ADD COLUMN `obdGpsDistanceKm` REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE `track` ADD COLUMN `obdFuelConsumedL` REAL NOT NULL DEFAULT 0.0")
             }
         }
 
@@ -226,7 +237,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
                 return instance

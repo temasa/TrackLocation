@@ -12,5 +12,6 @@ data class TrackEntity(
     val duration: Long = 0L,
     val pathPoints: String = "",
     val startLocationId: Long? = null,
-    val endLocationId: Long? = null
+    val endLocationId: Long? = null,
+    val obdFuelConsumedL: Double = 0.0
 )

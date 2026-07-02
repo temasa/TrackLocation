@@ -18,14 +18,22 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — OBD Phase 2: Planned (not started)
+### Current — OBD Phase 2: In Progress (Slices 1–3 done; next Slice 4 — Trip panel UI, needs design handoff)
 
-**OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics. Requires DB migration 4→5 (accumulator columns on `recording_session` and `trip`).
+**OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
+
+**Slice 1 (schema + MIGRATION_4_5) — done 2026-07-02 (static, unbuilt):** accumulator columns `obdFuelConsumedL`/`obdGpsDistanceKm` on `recording_session`, `obdFuelConsumedL` on `track`; DB bumped v4→5 (inline `MIGRATION_4_5`); DAO increment methods added.
+
+**Slice 2 (service/DB accumulation) — done 2026-07-02 (static, unbuilt):** `ObdPollingService` persists per-poll fuel/distance increments into the active `recording_session` row; `TrackingService` passes `EXTRA_SESSION_ID`. Trip fuel resolved via **Issue #1 → derive from `obd_sample`**: `ShareViewModel.onTripCtaTap()` integrates fuel over the trip window at stop and writes `track.obdFuelConsumedL`.
+
+**Slice 3 (Session `ObdStatusCard` UI) — done 2026-07-02 (static, unbuilt):** design handoff produced + verified in Claude Design (existing TrackLocation project, `rinaldi.ch` account, Haiku 4.5 — page "OBD Status Card", 4 artboards). Code in `SessionsScreen.kt`: EFFICIENCY cell shows `L/h` at idle else `km/L`; new `SESSION AVG` row from persisted accumulators; fuel-source chip reflects real source.
+
+**Next — Slice 4 (Trip panel UI):** live trip-average km/L (+ idle L/h) in `TripPanel`, derived from the `obd_sample` window since `tripStartedAt` (per Slice 2 as-built / Issue #1 note). UI → produce a claude.ai/design handoff in the existing TrackLocation project (`rinaldi.ch`, cheapest model) before coding. Build/device verification for Slices 1–3 pending explicit permission (AGENTS.md §5a).
 
 **Observer Phase 2** is complete and fully verified on device (cursor pagination + snapshot viewer + truncation banner, all states confirmed 2026-07-02).
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
-> Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md, then implement OBD Phase 2 (fuel consumption enhancement). Start with Slice 1 (schema + MIGRATION_4_5). Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
+> Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md, then continue OBD Phase 2. Slices 1–3 are done; implement Slice 4 (Trip panel km/L UI). Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
 
 ### Completed (newest first)
 
@@ -65,7 +73,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | Observer Phase 1 — Local Foundation | Implemented | Implemented | Verified on device (2026-05-29) |
 | Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer + truncation banner) | Implemented | Verified on device (2026-07-02) |
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
-| OBD Phase 2 — Fuel consumption enhancement | Planned | Planned | Not started |
+| OBD Phase 2 — Fuel consumption enhancement | In Progress (Slices 1–3 done: schema + DB accumulation + Session card, static) | Slice 3 design done (Claude Design); Slice 4 Trip panel needs handoff | Slices 1–3 not yet built/device-verified (AGENTS.md §5a) |
 | Observer Phase 3 — Filtering + Settings | Planned | Planned | Not started |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
@@ -99,7 +107,10 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-06-17 | OBD Phase 2 — fuel consumption enhancement (idle L/h display; session + trip average km/L persisted to DB; Trip screen fuel metrics; DB migration 4→5) | Planned | — | Not started |
+| 2026-07-02 | OBD Phase 2 Slice 1 — schema + MIGRATION_4_5 (accumulator columns `obdFuelConsumedL`/`obdGpsDistanceKm` on `recording_session`, `obdFuelConsumedL` on `track`; DB v4→5; `SessionDao.addObdAccumulator`, `TrackDao.addObdFuel`). Deviations from plan text: files are flat under `data/roomdb/` (no `entity/`/`dao/`/`migration/` subfolders); migration is inline in `TrackDatabase.kt` per existing convention (no separate `Migration4to5.kt`); session PK is `String` (not `Long`); the "trip" table is physically `track` with `Int` PK `idx` — SQL uses `ALTER TABLE track` and `WHERE idx = :tripIdx`. | Completed | `---` | Static inspection only — no Gradle/device run (AGENTS.md §5a). Build + migration verification pending explicit permission. |
+| 2026-07-02 | OBD Phase 2 Slice 2 — service/DB fuel accumulation. **Session:** `ObdPollingService` persists per-poll fuel/distance increments into the active `recording_session` row (`SessionDao.addObdAccumulator`, dt guard 0<dt<60s); `TrackingService` passes `EXTRA_SESSION_ID` on both `ACTION_SESSION_ON` sends. **Trip (Issue #1 resolved — derive from `obd_sample`):** `ShareViewModel.onTripCtaTap()` integrates fuel over `[tripStartedAt, now]` at trip stop and writes `TrackEntity.obdFuelConsumedL`; added `ObdSampleDao.samplesBetweenOnce`; injected `obdSampleDao` into `ShareViewModel`. | Completed | `---` | Static only (AGENTS.md §5a). Build + device (drive with OBD → confirm `recording_session` accumulators grow and persist across restart; `track.obdFuelConsumedL` populated at trip stop) pending explicit permission. |
+| 2026-07-02 | OBD Phase 2 Slice 3 — Session `ObdStatusCard` UI. Design handoff produced + verified in Claude Design (existing TrackLocation project, `rinaldi.ch` account, Haiku 4.5) as page "OBD Status Card" (4 artboards). Code in `screens/sessions/SessionsScreen.kt`: EFFICIENCY cell shows `X.X L/h` at idle (speed<3, RPM>0) else km/L; new `SESSION AVG` row reads persisted `recording_session` accumulators (`ObdPollingService` computes `avgKmL` from `getActiveSession()`); fuel-source chip now reflects real source (Direct/Inferred/Estimated/Unavailable, amber tint for non-direct). | Completed | `---` | Static only (AGENTS.md §5a). Design verified in Claude Design (idle L/h + session-avg render correctly). Build/device pending explicit permission. |
+| 2026-06-17 | OBD Phase 2 — fuel consumption enhancement (idle L/h display; session + trip average km/L persisted to DB; Trip screen fuel metrics; DB migration 4→5) | In Progress | — | Slices 1–3 done (schema + accumulation + Session card); Slice 4 (Trip panel UI) not started — needs design handoff |
 | 2026-06-17 | Observer Phase 2 — truncation warning banner in SnapshotViewerSheet (`TruncationBanner` composable; pinned above scroll region; amber tokens; silent degradation on null/bad JSON) | Completed | `6733233` | Device verified 2026-07-02: State A confirmed (no banner, no crash, both Formatted and Raw JSON modes work); State B/C confirmed (truncation banner displays correctly with live data) |
 | 2026-06-15 | Hardware verification complete — OBD Phase 1 (ELM327 streaming) | Completed | `ab16161` | Live on device: RPM/speed streaming verified; km/L calculation functional; connection stable; session gating working; orphan reaper verified on restart |
 | 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Device verified: build OK; app survives force-stop/restart; OBD FGS running; no crashes; 98 MB memory |
@@ -130,8 +141,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 ## 7. Current Status
 
 - **PRD:** v0.2
-- **DB version:** Room 4 (migrations 1→2, 2→3, 3→4)
-- **Active work:** OBD Phase 2 fuel consumption enhancement (Slice 1: schema + migration 4→5)
+- **DB version:** Room 5 (migrations 1→2, 2→3, 3→4, 4→5)
+- **Active work:** OBD Phase 2 fuel consumption enhancement (Slice 1 done; next: Slice 2 service accumulation)
 - **Reference docs:** §13
 
 ---
@@ -447,6 +458,13 @@ A single spec doc at `docs/design-handoff/obd_phase1/OBD_PHASE1_SPEC.md` covers 
 5. **Edit** `data/roomdb/dao/SessionDao.kt` — What: add method to increment session accumulators. How: add `@Query("UPDATE recording_session SET obdFuelConsumedL = obdFuelConsumedL + :fuelL, obdGpsDistanceKm = obdGpsDistanceKm + :distKm WHERE id = :sessionId") suspend fun addObdAccumulator(sessionId: Long, fuelL: Double, distKm: Double)`
 6. **Edit** `data/roomdb/dao/TrackDao.kt` — What: add method to increment trip accumulator. How: add `@Query("UPDATE trip SET obdFuelConsumedL = obdFuelConsumedL + :fuelL WHERE id = :tripId") suspend fun addObdFuel(tripId: Long, fuelL: Double)`
 
+**As-built (2026-07-02) — reconciled with actual schema; applies to Slices 2–4 too:**
+- Files are flat under `data/roomdb/` — no `entity/`/`dao/`/`migration/` subfolders. Steps 1–2 edited `data/roomdb/SessionEntity.kt` and `data/roomdb/TrackEntity.kt`; the columns are plain fields (no `@ColumnInfo` needed since Room derives the column name from the field name).
+- Step 3: migration is **inline** in `TrackDatabase.kt` as `MIGRATION_4_5` (matches existing `MIGRATION_1_2`…`MIGRATION_3_4` convention) — no separate `Migration4to5.kt` file.
+- The domain **"trip" is the physical `track` table** (`@Entity(tableName = "track")`, PK `idx: Int`, `distance: Int` meters). Migration uses `ALTER TABLE track ADD COLUMN obdFuelConsumedL …`.
+- `recording_session` PK `id` is **`String`**, not `Long`. `SessionDao.addObdAccumulator(sessionId: String, …)`.
+- `TrackDao.addObdFuel(tripIdx: Int, fuelL: Double)` uses `WHERE idx = :tripIdx` (not `WHERE id`).
+
 ---
 
 ### Slice 2 — Service Accumulation
@@ -465,6 +483,11 @@ A single spec doc at `docs/design-handoff/obd_phase1/OBD_PHASE1_SPEC.md` covers 
 1. **Edit** `feature/obd/service/ObdPollingService.kt` — What: accumulate fuel per sample. How: (a) add `var lastSampleTimestampMs: Long = 0L` field; (b) on each successful sample with `fuelRateLph != null`: compute `dtH = (nowMs - lastSampleTimestampMs) / 3_600_000.0`; compute `fuelIncrementL = fuelRateLph * dtH`; if `dtH > 0 && dtH < 60.0` (guard against gaps > 1 min); update `lastSampleTimestampMs = nowMs`; call `sessionDao.addObdAccumulator(activeSessionId, fuelIncrementL, gpsDistKmIncrement)` if session active; call `trackDao.addObdFuel(activeTripId, fuelIncrementL)` if trip active
 2. **Edit** `feature/obd/service/ObdPollingService.kt` — What: track active trip id. How: add `var activeTripId: Long? = null`; listen for trip start/stop broadcasts (`ACTION_TRIP_START` / `ACTION_TRIP_STOP`) sent by `TrackingService`; on `ACTION_TRIP_START`, receive `tripId` extra and set `activeTripId`; on `ACTION_TRIP_STOP`, set `activeTripId = null`
 3. **Edit** `tracking/TrackingService.kt` — What: broadcast trip start/stop to OBD service. How: when a trip starts, `sendBroadcast(Intent(ACTION_TRIP_START).putExtra("tripId", tripId))`; when trip stops, broadcast `ACTION_TRIP_STOP`
+
+**As-built (2026-07-02) — session half done; trip half blocked:**
+- **Step 1 (session):** implemented, but using the poll loop's existing `dtSeconds` (not a new `lastSampleTimestampMs` — the loop already tracks `lastPollTimeMs`). Per-poll increments `fuelIncrementL`/`distIncrementKm` (guard `0 < dtSeconds < 60`) are added to the active `recording_session` row via `SessionDao.addObdAccumulator(sessionId: String, …)`. `sessionDao` obtained from `TrackApp`.
+- **Session id plumbing:** the plan never said how the service learns the session id. Added `ObdPollingService.EXTRA_SESSION_ID`; `TrackingService` sets it on both `ACTION_SESSION_ON` sends (`startAlwaysRecording` + `resumeIfActiveSession`); service stores `activeSessionId` and clears it on `ACTION_SESSION_OFF`.
+- **Steps 2–3 (trip): superseded by Issue #1 decision — derive from `obd_sample` instead of a live trip id.** No live `track` row/id exists during an active trip (created at stop by `ShareViewModel`, autogenerated `idx`), so the plan's `activeTripId` broadcasting was not viable without changing locked trip-persistence behavior. Instead: added `ObdSampleDao.samplesBetweenOnce(startMs, endMs)`; `ShareViewModel.onTripCtaTap()` integrates fuel over `[tripStartedAt, now]` at trip stop (`integrateFuelLiters`, same `0<dt<60 s` guard) and writes `TrackEntity.obdFuelConsumedL`; `obdSampleDao` injected into `ShareViewModel` + factory. No `ACTION_TRIP_START/STOP` broadcasts and no `activeTripId` in the service. Live trip-average display is Slice 4 (queries the same window). See IMPLEMENTATION-ISSUES #1.
 
 ---
 
@@ -504,6 +527,8 @@ A single spec doc at `docs/design-handoff/obd_phase1/OBD_PHASE1_SPEC.md` covers 
 1. **Edit** `feature/obd/ObdUiState.kt` — What: add `tripAvgKmL: Double?` to Connected state. How: compute from active trip's `obdFuelConsumedL` and `trip.distance`; set in service after each sample
 2. **Edit** `feature/obd/service/ObdPollingService.kt` — What: populate `tripAvgKmL`. How: after updating trip accumulator, read trip's `distance` (in meters from TrackEntity) and `obdFuelConsumedL`; compute `tripAvgKmL = (distance/1000.0) / fuelL`; include in UI state emission
 3. **Edit** `screens/track/components/TripPanel.kt` — What: add OBD fuel rows. How: add instant km/L cell (shows L/h at idle, `--` otherwise); add trip-avg km/L cell; both hidden when `obdConnected == false`
+
+**Note (Issue #1 decision) — steps 1–2 must not assume a live trip accumulator.** There is no `track` row/id during an active trip (created only at trip stop; see Slice 2 as-built + IMPLEMENTATION-ISSUES #1). So the **live** trip-average must be derived from the `obd_sample` window since `tripStartedAt`: fuel = `integrateFuelLiters(obdSampleDao.samplesBetween(tripStartedAt, now))`, distance = live trip distance from `TrackingService.locationUiState.distanceInMeters`, `tripAvgKmL = (distance/1000.0) / fuel`. The persisted `track.obdFuelConsumedL` (written at trip stop in Slice 2) is for **completed** trip detail, not the live active-trip figure. Also UI → design handoff first.
 
 ---
 

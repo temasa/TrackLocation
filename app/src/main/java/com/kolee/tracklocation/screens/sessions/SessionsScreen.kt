@@ -705,11 +705,16 @@ private fun ObdStatusCard(
                         val shouldShowKmL = obdState.instantKmL != null &&
                                 locationUiState.speedInKMH > 3f &&
                                 locationUiState.accuracyMeters <= 20f
+                        // At idle (engine on, essentially stationary) show the instantaneous fuel
+                        // rate in L/h instead of "—" (OBD Phase 2 Slice 3).
+                        val fuelLph = obdState.fuelRateLph
+                        val isIdle = locationUiState.speedInKMH < 3f && (obdState.rpm ?: 0) > 0
                         Text(
-                            text = if (shouldShowKmL) {
-                                String.format("%.1f km/L", obdState.instantKmL)
-                            } else {
-                                "—"
+                            text = when {
+                                shouldShowKmL -> String.format("%.1f km/L", obdState.instantKmL)
+                                isIdle && fuelLph != null && fuelLph > 0.0 ->
+                                    String.format("%.1f L/h", fuelLph)
+                                else -> "—"
                             },
                             color = TripInk,
                             fontSize = 18.sp,
@@ -718,6 +723,36 @@ private fun ObdStatusCard(
                     }
                 }
 
+                // Session-average km/L (persisted; survives app restart) — OBD Phase 2 Slice 3.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "SESSION AVG",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = obdState.avgKmL?.let { String.format("%.1f km/L", it) } ?: "—",
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Fuel-source chip reflecting the actual source of the rate reading.
+                val fuelSourceLabel = when (obdState.fuelSource) {
+                    "DIRECT_FUEL_RATE" -> "Direct (OBD)"
+                    "MAF_DERIVED" -> "Inferred (MAF)"
+                    "SPEED_DENSITY" -> "Estimated"
+                    else -> "Unavailable"
+                }
+                val fuelSourceTint = if (obdState.fuelSource == "DIRECT_FUEL_RATE") TripGreen else Color(0xFFB8860B)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -731,12 +766,12 @@ private fun ObdStatusCard(
                             .weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = TripGreen.copy(alpha = 0.12f)
+                            containerColor = fuelSourceTint.copy(alpha = 0.12f)
                         )
                     ) {
                         Text(
-                            text = "DIRECT (OBD)",
-                            color = TripGreen,
+                            text = fuelSourceLabel,
+                            color = fuelSourceTint,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )

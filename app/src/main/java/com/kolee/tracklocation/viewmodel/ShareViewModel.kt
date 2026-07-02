@@ -13,6 +13,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.android.gms.maps.model.LatLng
 import com.kolee.tracklocation.data.roomdb.LocationDao
+import com.kolee.tracklocation.data.roomdb.ObdSampleDao
+import com.kolee.tracklocation.data.roomdb.ObdSampleEntity
 import com.kolee.tracklocation.data.roomdb.SessionDao
 import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.TrackApp
@@ -29,7 +31,8 @@ class ShareViewModel(
     private val appContext: Context,
     private val databaseDao: TrackDao,
     private val locationDao: LocationDao,
-    private val sessionDao: SessionDao
+    private val sessionDao: SessionDao,
+    private val obdSampleDao: ObdSampleDao
 ): ViewModel() {
 
     var locationUiState = TrackingService.locationUiState
@@ -48,6 +51,24 @@ class ShareViewModel(
         viewModelScope.launch {
             databaseDao.insertTrack(item)
         }
+    }
+
+    /**
+     * Integrate instantaneous fuel rate (L/h) over time into total litres, mirroring the
+     * per-poll accumulation in ObdPollingService: for each consecutive sample pair, add
+     * `fuelRateLph × dtHours` using the same 0 < dt < 60 s guard so a long gap (adapter drop,
+     * backgrounding) doesn't inflate the total. [samples] must be ascending by timestamp.
+     */
+    private fun integrateFuelLiters(samples: List<ObdSampleEntity>): Double {
+        var liters = 0.0
+        for (i in 1 until samples.size) {
+            val rate = samples[i].fuelRateLph ?: continue
+            val dtSeconds = (samples[i].timestampMs - samples[i - 1].timestampMs) / 1000.0
+            if (dtSeconds > 0 && dtSeconds < 60.0) {
+                liters += rate * dtSeconds / 3600.0
+            }
+        }
+        return liters
     }
 
     init {
@@ -70,6 +91,12 @@ class ShareViewModel(
                 val startId = current.activeTripStartLocationId
                 val endId = current.activeTripEndLocationId
                 if (startId != null && endId != null && endId >= startId) {
+                    // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
+                    // during the trip window (there is no live trip row/id to accumulate into —
+                    // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
+                    val tripFuelConsumedL = integrateFuelLiters(
+                        obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+                    )
                     insertTrack(
                         TrackEntity(
                             timestamp = current.tripStartedAt,
@@ -77,7 +104,8 @@ class ShareViewModel(
                             duration = current.durationTimer,
                             pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
                             startLocationId = startId,
-                            endLocationId = endId
+                            endLocationId = endId,
+                            obdFuelConsumedL = tripFuelConsumedL
                         )
                     )
                 }
@@ -131,7 +159,8 @@ class ShareViewModel(
                     appContext = application.applicationContext,
                     databaseDao = application.databaseDao,
                     locationDao = application.locationDao,
-                    sessionDao = application.sessionDao
+                    sessionDao = application.sessionDao,
+                    obdSampleDao = application.obdSampleDao
                 )
             }
         }

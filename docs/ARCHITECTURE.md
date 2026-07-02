@@ -86,7 +86,7 @@ TrackEntity (trip) — OBD accumulator column (added DB v5)
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 4) | Local-first storage with migrations |
+| Persistence | Room (current DB version 5) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -131,7 +131,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), current version **5** (planned; code is at 4 until OBD Phase 2 is implemented). Migrations: `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns on `recording_session` and `trip`).
+Room database (`TrackDatabase`), current version **5** (code at v5 as of OBD Phase 2 Slice 1, 2026-07-02; not yet built/device-verified per AGENTS.md §5a). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
 
 `obd_sample` table:
 
@@ -148,7 +148,10 @@ Room database (`TrackDatabase`), current version **5** (planned; code is at 4 un
 
 Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAVAILABLE`. Speed-density estimate: `MAF(g/s) = (RPM × MAP_kPa × VE × Displacement_L × 28.97)/(120 × 8.314 × IAT_K)`, `fuel(L/h) = MAF/(14.7×λ) × 3600/745` (VE=0.85, gasoline; engine displacement is a user pref, default 1193 cc).
 
-**OBD Phase 2 accumulation (planned):** `ObdPollingService` accumulates fuel consumed and GPS distance into `recording_session` and `trip` on each sample (delta-t × fuelRateLph / 3 600 000). Session average km/L = `obdGpsDistanceKm / obdFuelConsumedL`; trip average km/L = `trip.distance_m/1000 / trip.obdFuelConsumedL`. At idle (speed = 0, RPM > 0), the UI shows the instantaneous fuel rate as L/h instead of "--".
+**OBD Phase 2 accumulation (Slices 1–2 done, static; UI Slices 3–4 planned):**
+- **Session (live accumulation):** `ObdPollingService` integrates each poll's fuel/distance (`delta-t × fuelRateLph / 3 600 000`, guard `0 < dt < 60 s`) into the active `recording_session` row via `SessionDao.addObdAccumulator`; `TrackingService` passes the session id (`EXTRA_SESSION_ID`) on session start/resume. Session average km/L = `obdGpsDistanceKm / obdFuelConsumedL`. Survives app/service restarts.
+- **Trip (derived from samples — Issue #1):** a `track` row has no id until the trip stops, so fuel is **not** accumulated live. At trip stop, `ShareViewModel.onTripCtaTap()` integrates the `obd_sample` rows over `[tripStartedAt, now]` (`ObdSampleDao.samplesBetweenOnce`) and writes the total into `track.obdFuelConsumedL`. Trip average km/L = `track.distance_m/1000 / track.obdFuelConsumedL` for completed trips; the live active-trip figure (Slice 4) queries the same window against live trip distance. `SessionDao.addObdAccumulator` is used; `TrackDao.addObdFuel` (added in Slice 1) is currently unused under this approach.
+- At idle (speed = 0, RPM > 0), the UI shows the instantaneous fuel rate as L/h instead of "--" (Slices 3–4).
 
 ---
 

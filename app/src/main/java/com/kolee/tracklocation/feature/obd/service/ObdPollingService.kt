@@ -47,6 +47,9 @@ class ObdPollingService : Service() {
     private var maxRetryDelaySeconds = 120
     private var bluetoothSocket: BluetoothSocket? = null
     private var sessionActive = false
+    // String PK of the active recording_session row (passed in via ACTION_SESSION_ON), so fuel/
+    // distance increments can be persisted into that row and survive app/service restarts.
+    private var activeSessionId: String? = null
     // Single coroutine owning the whole connect → init → poll → backoff lifecycle.
     // Guarantees only one connection attempt exists at a time (no socket-stomping races).
     private var connectionJob: kotlinx.coroutines.Job? = null
@@ -76,6 +79,8 @@ class ObdPollingService : Service() {
         const val ACTION_SESSION_ON = "com.kolee.tracklocation.obd.ACTION_SESSION_ON"
         const val ACTION_SESSION_OFF = "com.kolee.tracklocation.obd.ACTION_SESSION_OFF"
         const val ACTION_RECONNECT_NOW = "com.kolee.tracklocation.obd.ACTION_RECONNECT_NOW"
+        // String id of the recording_session that ACTION_SESSION_ON refers to.
+        const val EXTRA_SESSION_ID = "com.kolee.tracklocation.obd.EXTRA_SESSION_ID"
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -99,6 +104,7 @@ class ObdPollingService : Service() {
                 // is the first command the service received (no prior ACTION_START).
                 startForegroundNotification()
                 sessionActive = true
+                activeSessionId = intent?.getStringExtra(EXTRA_SESSION_ID)
                 sessionDistanceKm = 0.0
                 sessionFuelLiters = 0.0
                 emaKmL = null
@@ -106,6 +112,7 @@ class ObdPollingService : Service() {
             }
             ACTION_SESSION_OFF -> {
                 sessionActive = false
+                activeSessionId = null
                 updateConnectedState()
             }
             ACTION_RECONNECT_NOW -> {
@@ -390,17 +397,35 @@ class ObdPollingService : Service() {
                         emaKmL = null
                     }
 
+                    // Session-average km/L, sourced from the PERSISTED accumulators so it survives
+                    // app/service restarts (Slice 3). Null until some fuel has been consumed.
+                    var avgKmL: Double? = null
                     if (sessionActive) {
-                        if (fuelRateLph != null && dtSeconds > 0) {
-                            sessionFuelLiters += fuelRateLph * dtSeconds / 3600.0
-                        }
-                        sessionDistanceKm += gpsSpeedKmh * dtSeconds / 3600.0
-                    }
+                        // Guard against a huge increment after a long stall/gap (e.g. adapter
+                        // reconnect, backgrounding): only integrate plausible poll intervals.
+                        val dtGuardOk = dtSeconds > 0 && dtSeconds < 60.0
+                        val fuelIncrementL = if (fuelRateLph != null && dtGuardOk) {
+                            fuelRateLph * dtSeconds / 3600.0
+                        } else 0.0
+                        val distIncrementKm = if (dtGuardOk) gpsSpeedKmh * dtSeconds / 3600.0 else 0.0
+                        sessionFuelLiters += fuelIncrementL
+                        sessionDistanceKm += distIncrementKm
 
-                    val avgKmL = if (sessionFuelLiters > 0.01 && sessionDistanceKm > 0.01) {
-                        sessionDistanceKm / sessionFuelLiters
-                    } else {
-                        null
+                        // Persist the increments into the recording_session row.
+                        val sessionDao = (applicationContext as com.kolee.tracklocation.TrackApp).sessionDao
+                        val sid = activeSessionId
+                        if (sid != null && (fuelIncrementL > 0.0 || distIncrementKm > 0.0)) {
+                            sessionDao.addObdAccumulator(sid, fuelIncrementL, distIncrementKm)
+                        }
+
+                        // Read the persisted totals back to compute the session average shown on
+                        // the Session screen (ObdStatusCard "SESSION AVG"). Survives restarts.
+                        val activeSession = sessionDao.getActiveSession()
+                        val persistedFuelL = activeSession?.obdFuelConsumedL ?: 0.0
+                        val persistedDistKm = activeSession?.obdGpsDistanceKm ?: 0.0
+                        if (persistedFuelL > 0.01 && persistedDistKm > 0.01) {
+                            avgKmL = persistedDistKm / persistedFuelL
+                        }
                     }
 
                     obdUiState.value = ObdUiState.Connected(
