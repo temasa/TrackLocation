@@ -7,12 +7,13 @@ description: AI-assistant instructions for TrackLocation (create-project schema 
 
 Instructions for AI Coding Assistants — TrackLocation
 
-**Document Version:** 0.2
+**Document Version:** 0.3
 **Status:** Active
-**Last Updated:** 2026-06-15
+**Last Updated:** 2026-07-02
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
 > Migrated 2026-06-15 to the create-project governance schema. Generic methodology is template-owned; TrackLocation-specific rules are preserved in §2, §3, §5a, and §12.
+> 2026-07-02: §5b imported from the `utbk-platform` project's governance rules (user directive — these rules take priority over the generic template where they overlap).
 
 ---
 
@@ -97,6 +98,69 @@ After: list assumptions/deviations and remaining work; mark the task **Completed
 Do **not** run a Gradle build, full test suite, emulator, or device run without explicit user permission. This includes `./gradlew assembleDebug`, `./gradlew build`, `./gradlew testDebugUnitTest`, `./gradlew connectedDebugAndroidTest`. The user's laptop is resource-constrained.
 
 Lightweight static inspection, file reads, search, and small local edits are allowed. If a build/test/emulator run is not performed, document this clearly in the task log. Local JDK for any permitted Gradle run: `C:\Users\rinal\.jdks\jbr-17.0.14` (inject `JAVA_HOME` inline).
+
+---
+
+## 5b. Imported Governance Rules (from `utbk-platform`, 2026-07-02 — MANDATORY, overrides conflicting sections above)
+
+These rules were imported at the user's explicit direction and take priority over §5, §6, §8, and §8a where they overlap.
+
+### Coding Permission Rule
+Do not write or modify any code before explicitly asking for and receiving the user's permission — this includes creating files, editing existing files, running code-generating commands, or any codebase change. Allowed without permission: reading files, searching, exploring, planning, and explaining. Always present the plan first and wait for explicit approval ("yes", "go ahead", "proceed", "do it", or similar) before touching any code.
+
+### Execution Rule
+Once the user approves an action that writes to project documents or writes/modifies code, delegate the execution to a sub-agent using the `haiku` model. The main model (Sonnet) handles planning, analysis, impact assessment, and decision-making only — it never writes files or modifies code directly after the planning phase. Applies to: any file in `docs/`, any source file, any other project file modification.
+
+### Fixing Rule
+Before fixing any error, always analyze the root cause first and report it to the user — including what caused it, which file/line, and why — before proceeding with the fix. Once the cause is understood and approved:
+- **Simple fix** (single file, obvious/localized cause — typo, wrong variable, missing import, incorrect value) → delegate to a `haiku` sub-agent.
+- **Complex fix** (multiple files, architectural issue, requires understanding system state, cascading failures, race conditions, non-obvious root cause) → delegate to a `sonnet` sub-agent.
+
+Never proceed with a fix — simple or complex — without first reporting the cause to the user.
+
+### Commit Rule
+Once the user approves a git commit, delegate the execution to a sub-agent using the `haiku` model. The main model drafts the commit message and confirms staged files only; the sub-agent runs `git add`, `git commit`, and (if requested) `git push`. Never run `git commit` directly from the main model.
+
+### Task-Completion Documentation Rule
+**Scope: documentation changes only** (does not govern code changes — those follow the Coding Task Rule below). When something recordable is finished — a decision reached (UI, UX, architectural, scope, governance), an error encountered with a lesson learned, or a status/milestone worth logging — do NOT auto-write docs. Follow six steps:
+
+1. **Plan the record** — identify everything worth capturing.
+2. **Show what needs recording** — present the actual content to be written, not a vague summary.
+3. **Show the routing** — name the destination doc/section per TrackLocation's existing routing table (§8), and **audit all project docs for stale references**: scan `PRD.md`, `ARCHITECTURE.md`, `IMPLEMENTATION-PLAN.md`, `UI-SPEC.md`, `ERRORS-LOG.md`, `IMPLEMENTATION-ISSUES.md`, and `adr/` for existing content the new decision now contradicts or invalidates, even if not a primary routing target.
+4. **Wait for approval** — do not write anything until the user approves the plan.
+5. **Route the content** — after approval, delegate the writes to a sub-agent (per the Execution Rule).
+6. **Commit** — after the documents are written, commit (per the Commit Rule).
+
+Never write docs without showing the plan first; never leave recorded changes uncommitted. This rule never fires on context-window summarization or a silent buffer reset.
+
+### Coding Task Rule
+**Scope: code changes only.** Three phases:
+
+- **Phase 1 — Documentation gate.** Verify the intended change is already recorded in project documentation AND those docs are committed. If not documented and committed, halt, inform the user, and offer to run the Task-Completion Documentation Rule first, then resume.
+- **Phase 2 — Plan gate.** Present the planned code changes and wait for approval per the Coding Permission Rule.
+- **Phase 3 — Execute, then commit.** Delegate the code changes to a sub-agent, preferring the most cost-effective model adequate for complexity (`haiku` for simple/localized, `sonnet` for complex/multi-file/architectural). After completion, always commit (per the Commit Rule). Before committing, check whether the changes form one coherent conceptual change; if not, propose splitting into multiple atomic commits for approval.
+
+### Verification Rule
+**Scope: confirming a change works.** Applies after a coding task or fix, and whenever verification is requested. Delegate verification to a sub-agent, preferring the most cost-effective model adequate for complexity (`haiku` for deterministic checks, `sonnet` when interpreting behavior against intent).
+- **Deterministic checks** (tests, build, type-check, lint) — the sub-agent runs them and reports pass/fail directly; pass/fail is objective.
+- **Interpretive verification** (behavior matches intent, UI correctness, subtle regressions) — the sub-agent executes and returns raw evidence (output, logs, screenshots); **the main model always interprets and declares the final pass/fail** — a sub-agent must never be the final judge here.
+
+Report outcomes faithfully: if a check fails, say so with the output; never label a partial or ambiguous result as "verified."
+
+### Test Rule
+**Scope: automated tests.** Tests are written or updated only when the user explicitly requests them; not required by default. Writing/modifying tests is a coding task (follows the Coding Task Rule). Running tests is verification (follows the Verification Rule).
+
+### Slice Documentation Rule (adapted from utbk-platform's Sprint Documentation Rule)
+Before a slice starts, its entry in `docs/IMPLEMENTATION-PLAN.md §4` must have a "How to Verify" block written (already required by §6 below). Before a slice is marked complete in the §6 Task Log, if the slice maps to tracked user stories, a US→Task traceability table must be filled in immediately after the User Stories table:
+
+| US # | User Story (short) | Implemented by |
+|------|--------------------|----------------|
+| US-01 | ... | Task ID(s) |
+
+Backfilling for already-completed slices is handled via the Task-Completion Documentation Rule.
+
+### Subagent Transparency Rule
+Whenever delegating to a sub-agent, always explicitly state the model being used in the response — e.g. "Delegating to a haiku sub-agent" or "Running a sonnet sub-agent for this." Never spawn a sub-agent silently without naming the model.
 
 ---
 
