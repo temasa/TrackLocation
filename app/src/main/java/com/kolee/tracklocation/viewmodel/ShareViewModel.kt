@@ -54,6 +54,14 @@ class ShareViewModel(
     }
 
     /**
+     * OBD Phase 2 Slice 4: total litres consumed since [startMs] (trip start) up to now, integrated
+     * from the recorded `obd_sample` rows. Used to compute a live trip-average km/L on the Track
+     * screen (there is no live trip row/id — see IMPLEMENTATION-ISSUES #1). 0.0 if no OBD samples.
+     */
+    suspend fun tripFuelLitersSince(startMs: Long): Double =
+        integrateFuelLiters(obdSampleDao.samplesBetweenOnce(startMs, System.currentTimeMillis()))
+
+    /**
      * Integrate instantaneous fuel rate (L/h) over time into total litres, mirroring the
      * per-poll accumulation in ObdPollingService: for each consecutive sample pair, add
      * `fuelRateLph × dtHours` using the same 0 < dt < 60 s guard so a long gap (adapter drop,

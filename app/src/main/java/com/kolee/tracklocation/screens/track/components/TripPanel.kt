@@ -138,6 +138,10 @@ fun TripPanel(
             TimerCtaRow(state = state, onCtaTap = onCtaTap)
             Spacer(Modifier.height(10.dp))
             StatsRow(state = state)
+            if (state.obdConnected) {
+                Spacer(Modifier.height(9.dp))
+                ObdRow(state = state)
+            }
         }
 
         // Invisible live-region for state-change announcements
@@ -301,6 +305,65 @@ private fun MetricCell(
             }
             Text(text = unit, style = UnitLabelStyle)
         }
+        Spacer(Modifier.height(2.dp))
+        Text(text = value, style = MetricValueStyle)
+    }
+}
+
+// OBD Phase 2 Slice 4 — fuel row: instant km/L (or idle L/h) + live trip-average km/L.
+@Composable
+private fun ObdRow(state: TrackPanelState) {
+    val fuelValue = when {
+        state.instantKmL != null -> "%.1f km/L".format(state.instantKmL)
+        state.idleFuelLph != null -> "%.1f L/h".format(state.idleFuelLph)
+        else -> "—"
+    }
+    val avgValue = state.tripAvgKmL?.let { "%.1f km/L".format(it) } ?: "—"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawLine(
+                    color = PanelBorder,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            .padding(top = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        ObdMetricCell(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.Start,
+            label = "FUEL",
+            value = fuelValue,
+            accessibilityText = "Fuel, $fuelValue"
+        )
+        ObdMetricCell(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.End,
+            label = "TRIP AVG",
+            value = avgValue,
+            accessibilityText = "Trip average, $avgValue"
+        )
+    }
+}
+
+@Composable
+private fun ObdMetricCell(
+    modifier: Modifier,
+    horizontalAlignment: Alignment.Horizontal,
+    label: String,
+    value: String,
+    accessibilityText: String
+) {
+    Column(
+        modifier = modifier.semantics { contentDescription = accessibilityText },
+        horizontalAlignment = horizontalAlignment
+    ) {
+        Text(text = label, style = UnitLabelStyle)
         Spacer(Modifier.height(2.dp))
         Text(text = value, style = MetricValueStyle)
     }

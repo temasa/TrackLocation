@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kolee.tracklocation.feature.obd.service.ObdPollingService
+import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.screens.track.components.MapControls
 import com.kolee.tracklocation.screens.track.components.TrackMap
@@ -28,6 +30,7 @@ import kotlinx.coroutines.delay
 fun TrackScreen() {
     val viewModel: ShareViewModel = viewModel(factory = ShareViewModel.Factory)
     val locationUiState by viewModel.locationUiState.collectAsState()
+    val obdState by ObdPollingService.obdUiState.collectAsState()
 
     var performRequestPermission by remember { mutableStateOf(true) }
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -38,6 +41,32 @@ fun TrackScreen() {
         isShowPanel = true
     }
 
+    // OBD Phase 2 Slice 4 — fuel metrics for the Trip panel.
+    val connectedObd = obdState as? ObdUiState.Connected
+    val obdRpm = connectedObd?.rpm ?: 0
+    // Instant km/L only when moving with a good GPS fix; idle fuel rate (L/h) when essentially stopped.
+    val instantKmL = connectedObd?.instantKmL
+        ?.takeIf { locationUiState.speedInKMH > 3f && locationUiState.accuracyMeters <= 20f }
+    val idleFuelLph = connectedObd?.fuelRateLph
+        ?.takeIf { locationUiState.speedInKMH < 3f && obdRpm > 0 }
+
+    // Live trip-average km/L: integrate fuel from obd_sample rows since trip start (there is no live
+    // trip DB row — see IMPLEMENTATION-ISSUES #1) and divide the live trip distance by it.
+    var tripAvgKmL by remember { mutableStateOf<Double?>(null) }
+    LaunchedEffect(locationUiState.isTracking, locationUiState.tripStartedAt) {
+        if (locationUiState.isTracking && locationUiState.tripStartedAt > 0L) {
+            while (true) {
+                val startMs = viewModel.locationUiState.value.tripStartedAt
+                val fuelL = viewModel.tripFuelLitersSince(startMs)
+                val distKm = viewModel.locationUiState.value.distanceInMeters / 1000.0
+                tripAvgKmL = if (fuelL > 0.01 && distKm > 0.01) distKm / fuelL else null
+                delay(2000)
+            }
+        } else {
+            tripAvgKmL = null
+        }
+    }
+
     val panelState = TrackPanelState(
         tripState = when {
             locationUiState.isPaused -> TripState.PAUSED
@@ -46,7 +75,12 @@ fun TrackScreen() {
         },
         elapsedMs = locationUiState.durationTimer,
         distanceKm = locationUiState.distanceInMeters / 1000.0,
-        speedKmh = locationUiState.speedInKMH.toDouble()
+        speedKmh = locationUiState.speedInKMH.toDouble(),
+        obdConnected = connectedObd != null,
+        instantKmL = instantKmL,
+        idleFuelLph = idleFuelLph,
+        tripAvgKmL = tripAvgKmL,
+        fuelSource = connectedObd?.fuelSource
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
