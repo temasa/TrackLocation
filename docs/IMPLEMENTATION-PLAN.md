@@ -22,7 +22,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics. Requires DB migration 4→5 (accumulator columns on `recording_session` and `trip`).
 
-**Observer Phase 2** is complete (cursor pagination + snapshot viewer + truncation banner, build verified 2026-06-17). Truncation banner State B/C pending a real truncated event capture.
+**Observer Phase 2** is complete and fully verified on device (cursor pagination + snapshot viewer + truncation banner, all states confirmed 2026-07-02).
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
 > Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md, then implement OBD Phase 2 (fuel consumption enhancement). Start with Slice 1 (schema + MIGRATION_4_5). Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
@@ -63,7 +63,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | CR-0001 Always-recorded Location Sessions | Implemented | Implemented | Verified by user |
 | CR-0002 Session always-recording switch | Implemented | Implemented | Verified by user |
 | Observer Phase 1 — Local Foundation | Implemented | Implemented | Verified on device (2026-05-29) |
-| Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer); truncation code ready | Truncation banner spec drafted, awaiting design | Not fully verified on device |
+| Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer + truncation banner) | Implemented | Verified on device (2026-07-02) |
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | OBD Phase 2 — Fuel consumption enhancement | Planned | Planned | Not started |
 | Observer Phase 3 — Filtering + Settings | Planned | Planned | Not started |
@@ -100,7 +100,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
 | 2026-06-17 | OBD Phase 2 — fuel consumption enhancement (idle L/h display; session + trip average km/L persisted to DB; Trip screen fuel metrics; DB migration 4→5) | Planned | — | Not started |
-| 2026-06-17 | Observer Phase 2 — truncation warning banner in SnapshotViewerSheet (`TruncationBanner` composable; pinned above scroll region; amber tokens; silent degradation on null/bad JSON) | Completed | `6733233` | `assembleDebug` OK; installed on device 213052810e037ece; State A confirmed (no banner, no crash, both Formatted and Raw JSON modes work); State B/C pending — 0 of 9 793 stored events have truncationMetadata, need live complex-UI capture to trigger |
+| 2026-06-17 | Observer Phase 2 — truncation warning banner in SnapshotViewerSheet (`TruncationBanner` composable; pinned above scroll region; amber tokens; silent degradation on null/bad JSON) | Completed | `6733233` | Device verified 2026-07-02: State A confirmed (no banner, no crash, both Formatted and Raw JSON modes work); State B/C confirmed (truncation banner displays correctly with live data) |
 | 2026-06-15 | Hardware verification complete — OBD Phase 1 (ELM327 streaming) | Completed | `ab16161` | Live on device: RPM/speed streaming verified; km/L calculation functional; connection stable; session gating working; orphan reaper verified on restart |
 | 2026-06-15 | Stability — silent-stop + exception hardening: TrackingService sticky-restart resume from open session, serviceScope CoroutineExceptionHandler, SecurityException guard on location updates, 1 ms→1 s timer; launch-time orphan reaper now stale-only (closeStaleActiveSessions, 2 min grace) to avoid racing resume; OBD FGS promotion on SESSION_ON + startForeground guard + null Bluetooth-adapter handling | Completed | `16c9f4e` | Device verified: build OK; app survives force-stop/restart; OBD FGS running; no crashes; 98 MB memory |
 | 2026-06-08 | OBD — live device verification + connection bug fixes | Completed | `211ef56` | Live on device: RPM/speed streaming, no crashes; `assembleDebug` OK |
@@ -131,7 +131,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 - **PRD:** v0.2
 - **DB version:** Room 4 (migrations 1→2, 2→3, 3→4)
-- **Active work:** Observer Phase 2 truncation banner (design handoff)
+- **Active work:** OBD Phase 2 fuel consumption enhancement (Slice 1: schema + migration 4→5)
 - **Reference docs:** §13
 
 ---
