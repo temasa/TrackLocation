@@ -25,6 +25,12 @@ interface ObserverEventDao {
     @Query("SELECT * FROM observer_event WHERE lastSeenAt < :beforeLastSeenAt ORDER BY lastSeenAt DESC LIMIT :limit")
     suspend fun getEventsNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
 
+    @Query("SELECT oe.* FROM observer_event oe JOIN observer_event_fts ON observer_event_fts.rowid = oe.id WHERE observer_event_fts MATCH :query ORDER BY oe.lastSeenAt DESC LIMIT :limit")
+    suspend fun getFilteredEventsFirstPage(query: String, limit: Int): List<ObservedEventEntity>
+
+    @Query("SELECT oe.* FROM observer_event oe JOIN observer_event_fts ON observer_event_fts.rowid = oe.id WHERE observer_event_fts MATCH :query AND oe.lastSeenAt < :beforeLastSeenAt ORDER BY oe.lastSeenAt DESC LIMIT :limit")
+    suspend fun getFilteredEventsNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
+
     @Query("SELECT * FROM observer_event WHERE lastSeenAt > :afterLastSeenAt ORDER BY lastSeenAt DESC")
     fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEventEntity>>
 

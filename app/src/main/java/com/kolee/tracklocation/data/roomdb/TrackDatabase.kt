@@ -14,9 +14,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SessionEntity::class,
         ObservedEventEntity::class,
         AllowlistRuleEntity::class,
-        ObdSampleEntity::class
+        ObdSampleEntity::class,
+        ObservedEventFtsEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -63,6 +64,17 @@ abstract class TrackDatabase: RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_packageName` ON `observer_event` (`packageName`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_event_lastSeenAt` ON `observer_event` (`lastSeenAt`)")
+            }
+        }
+
+        // Observer Phase 3 Slice 1: external-content FTS4 index over observer_event (ADR-005).
+        // Room drops and recreates the external-content sync triggers around migrations, so this
+        // migration only needs to create the FTS virtual table and rebuild its index from the
+        // existing rows; Room re-establishes the insert/update/delete sync triggers afterward.
+        private val MIGRATION_5_6 = object: Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE VIRTUAL TABLE IF NOT EXISTS `observer_event_fts` USING FTS4(`packageName` TEXT, `activityName` TEXT, `textSummary` TEXT, content=`observer_event`)")
+                db.execSQL("INSERT INTO `observer_event_fts`(`observer_event_fts`) VALUES('rebuild')")
             }
         }
 
@@ -237,7 +249,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
                 INSTANCE = instance
                 return instance

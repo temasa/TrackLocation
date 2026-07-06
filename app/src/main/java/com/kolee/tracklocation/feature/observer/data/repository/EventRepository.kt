@@ -13,6 +13,8 @@ interface EventRepository {
     suspend fun getFirstPage(limit: Int): List<ObservedEvent>
     suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
     fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>>
+    suspend fun getFilteredFirstPage(query: String, limit: Int): List<ObservedEvent>
+    suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
 }
 
 class EventRepositoryImpl(context: Context) : EventRepository {
@@ -30,6 +32,12 @@ class EventRepositoryImpl(context: Context) : EventRepository {
 
     override suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
         dao.getEventsNextPage(beforeLastSeenAt, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getFilteredFirstPage(query: String, limit: Int): List<ObservedEvent> =
+        dao.getFilteredEventsFirstPage(query, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
+        dao.getFilteredEventsNextPage(query, beforeLastSeenAt, limit).reversed().map { it.toDomain() }
 
     override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> =
         dao.getEventsNewerThan(afterLastSeenAt).map { entities ->
@@ -68,4 +76,6 @@ class FakeEventRepository : EventRepository {
     override suspend fun getFirstPage(limit: Int): List<ObservedEvent> = emptyList()
     override suspend fun getNextPage(beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
     override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> = flowOf(emptyList())
+    override suspend fun getFilteredFirstPage(query: String, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
 }
