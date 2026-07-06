@@ -10,7 +10,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 **Document Version:** 0.1  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-06-15 11:44:58  
+**Last Updated:** 2026-07-06 22:12:25  
 **Owned By:** Project Team
 
 ---
@@ -51,6 +51,7 @@ Log an entry whenever an error occurs during any of these phases:
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
 | ERR-001 | 2024-01-15 10:23:45 | 2024-01-15 10:41:02 | Build | S1-T2 | Example: Gradle JDK version mismatch | Resolved |
+| ERR-002 | 2026-07-06 22:05:00 | 2026-07-06 22:12:25 | Build | OBD Phase 2 deploy | Google Maps API key resValue name mismatch | Resolved |
 
 *(Add a row here for every new entry — update Resolved At when fixed)*
 
@@ -99,6 +100,38 @@ Always check JDK version first when the build error looks like a type error but 
 ---
 
 *(Replace the example above and add new entries below this line)*
+
+---
+
+### ERR-002: Google Maps API key resValue name mismatch — resource linking failed
+
+**Found At:** 2026-07-06 22:05:00  
+**Resolved At:** 2026-07-06 22:12:25  
+**Phase:** Build  
+**Sprint/Task:** OBD Phase 2 — device deploy  
+**Environment:** local (Gradle :app:installDebug, device SM-G965F Android 10)  
+**Status:** Resolved  
+
+**Error Message / Output:**
+```
+> Task :app:processDebugResources FAILED
+> Android resource linking failed
+AndroidManifest.xml:69: error: resource string/google_maps_key (aka com.kolee.tracklocation:string/google_maps_key) not found.
+error: failed processing manifest.
+```
+
+**Root Cause:**
+Commit `00cf587` ("fix(security): move Google Maps API key to local.properties") injected the key via `resValue "string", "google_maps_key_placeholder", mapsKey` in `app/build.gradle`, but `AndroidManifest.xml` still references `@string/google_maps_key`. The generated resource name (`google_maps_key_placeholder`) did not match the manifest reference (`google_maps_key`), so resource linking could not resolve `string/google_maps_key`. The key value itself was present in `local.properties`; only the resource name was wrong.
+
+**Resolution:**
+Renamed the generated resource in `app/build.gradle` line 29 to match the manifest reference:
+```groovy
+resValue "string", "google_maps_key", mapsKey
+```
+Re-ran `:app:installDebug` → BUILD SUCCESSFUL, installed on SM-G965F.
+
+**Lesson Learned:**
+When moving a value into a build-injected `resValue`, the resource name must stay identical to every `@string/...` reference in the manifest and layouts. A rename silently breaks `processDebugResources` (resource linking), not Kotlin compilation — so it will not surface until an actual build/install is run. Grep every `@string/<name>` reference before renaming an injected resource.
 
 ---
 

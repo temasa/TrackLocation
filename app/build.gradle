@@ -26,7 +26,7 @@ android {
             localProperties.load(localPropertiesFile.newDataInputStream())
         }
         def mapsKey = localProperties.getProperty('GOOGLE_MAPS_KEY', '')
-        resValue "string", "google_maps_key_placeholder", mapsKey
+        resValue "string", "google_maps_key", mapsKey
     }
 
     buildTypes {
