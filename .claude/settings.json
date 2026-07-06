@@ -1,5 +1,17 @@
 {
   "allowListedTools": [],
   "permissions": {},
-  "hooks": {}
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[AGENTS.md §5 reminder] Did you mark completed tasks in docs/IMPLEMENTATION-PLAN.md §6 Task Log (Ended, Git Revision, Verification) and commit? If not, do it before this turn ends.'"
+          }
+        ]
+      }
+    ]
+  }
 }

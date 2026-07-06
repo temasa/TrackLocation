@@ -7,13 +7,14 @@ description: AI-assistant instructions for TrackLocation (create-project schema 
 
 Instructions for AI Coding Assistants — TrackLocation
 
-**Document Version:** 0.3
+**Document Version:** 0.4
 **Status:** Active
-**Last Updated:** 2026-07-02
+**Last Updated:** 2026-07-06
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
 > Migrated 2026-06-15 to the create-project governance schema. Generic methodology is template-owned; TrackLocation-specific rules are preserved in §2, §3, §5a, and §12.
 > 2026-07-02: §5b imported from the `utbk-platform` project's governance rules (user directive — these rules take priority over the generic template where they overlap).
+> 2026-07-06: §5c and §8b back-ported from the `create-project` skill template (Task Tracking Consolidation, Decision & Documentation Workflow) — content that predated TrackLocation's 2026-06-15 migration but was not carried over.
 
 ---
 
@@ -164,6 +165,12 @@ Whenever delegating to a sub-agent, always explicitly state the model being used
 
 ---
 
+## 5c. Task Tracking Consolidation
+
+**All slice task tracking lives exclusively in `docs/IMPLEMENTATION-PLAN.md` §6 (Task Log).** Never create standalone checklist or tracking files outside the `docs/` directory. This rule ensures a single source of truth and prevents contradictory task status across multiple files. If an operational checklist is needed, merge it into the Task Log and delete the standalone file.
+
+---
+
 ## 6. First Vertical Slice
 
 TrackLocation is past its first slice — GPS tracking, sessions (CR-0001/0002), Observer P1, and OBD P1 are implemented and verified. New work follows the per-slice pattern in `docs/IMPLEMENTATION-PLAN.md §4` (each slice: what it does, observable result, how to verify, numbered steps with What/How).
@@ -217,6 +224,32 @@ When the user states a decision, feature, change, or constraint — analyze impa
 
 ---
 
+## 8b. Decision & Documentation Workflow
+
+When a decision is finalized, analyze the impact across all project documents, show the user what needs updating, get approval, then update before proceeding to code.
+
+### When to Trigger (Decision Finalized)
+
+- User says: "Add X", "I want to implement X", "Let's do X"
+- After a grilling/design session and user says "OK, I'm going with this"
+- Explicit commitment language detected
+
+### When NOT to Trigger (Still Exploring)
+
+- User asks: "What do you think about X?" / "Should we add X?"
+- During back-and-forth discussion (not finalized)
+- If uncertain, ask: "Should I update the docs for this?"
+
+### Workflow (Once Decision is Finalized)
+
+1. **Identify which docs are affected:** PRD.md, UI-SPEC.md, IMPLEMENTATION-PLAN.md, ARCHITECTURE.md, AGENTS.md, WORKFLOW.md
+2. **Show the user the impact analysis** — which docs, which sections need updates, what changes are required
+3. **Wait for user approval or rejection** — present the planned changes and ask "Ready for me to update the docs?"
+4. **If approved:** update all impacted sections, bump document versions per DOCUMENT-CONTROL.md
+5. **After docs are updated, confirm:** "Docs are updated. Ready to proceed with implementation?"
+
+---
+
 ## 9. Blocker Protocol
 
 If implementation finds a contradiction/ambiguity/missing decision in locked docs, **halt and raise a blocker** — do not guess. Full protocol in `docs/IMPLEMENTATION-ISSUES.md`: developer writes the issue and commits `[doc-issue] …`, halts; architect updates docs, commits `[doc-decision] …`; developer resumes.
@@ -240,6 +273,7 @@ Errors during compilation, build, deployment, or verification are permanent lear
 - `docs/ERRORS-LOG.md` — error learning log
 - `docs/DOCUMENT-CONTROL.md` — version register
 - `docs/WORKFLOW.md` — human-facing workflow
+- `docs/PLANNING-LOG.md` — temporary planning/design session continuity log (deleted once feedback items close)
 
 ---
 

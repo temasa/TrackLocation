@@ -47,9 +47,10 @@ When any controlled document changes, update both:
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-06-15 |
-| `AGENTS.md` | 0.3 | Active (template + preserved project rules + imported utbk-platform governance §5b) | Tech Lead | 2026-07-02 |
+| `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.2 | Active | Project Team | 2026-06-15 |
+| `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
 | `docs/DOCUMENT-CONTROL.md` | 0.1 | Active | Product Manager | 2026-06-15 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
@@ -75,6 +76,8 @@ Draft documents normally begin at `0.1`.
 | 2026-06-15 11:44:58 | (all) | — | 0.1 | Scaffolded from generic project-initialization template via the create-project skill. | Template / Project Team |
 | 2026-06-15 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, AGENTS, CLAUDE, README | 0.1 | 0.2/0.1 | **Full adoption migration:** routed legacy `product-spec.md`, `change-requests.md`, `implementation-plan.md`, `progress.md`, `DESIGN_SYSTEM.md` content into the template schema; created ADR-001…004 from CRs/decisions; retired the five legacy docs. Nothing dropped (full audit preserved in IMPLEMENTATION-PLAN Appendix B). | Claude Code |
 | 2026-07-02 | AGENTS.md | 0.2 | 0.3 | Added §5b "Imported Governance Rules" — a full governance rule set (Coding Permission, Execution, Fixing, Commit, Task-Completion Documentation, Coding Task, Verification, Test, Slice Documentation, Subagent Transparency rules) ported from the `utbk-platform` project at the user's explicit direction; these rules override §5/§6/§8/§8a where they conflict. | Claude Code |
+| 2026-07-06 | AGENTS.md | 0.3 | 0.4 | Added §5c "Task Tracking Consolidation" and §8b "Decision & Documentation Workflow" — back-ported from the `create-project` skill template; this content predated TrackLocation's 2026-06-15 migration but was not carried over. Also added a `docs/PLANNING-LOG.md` reference to §11. | Claude Code |
+| 2026-07-06 | docs/PLANNING-LOG.md | — | 0.1 | New document scaffolded from the `create-project` skill template — temporary planning/design session continuity log for the Two-Track Work Model's design track (AGENTS.md §12). | Claude Code |
 
 ---
 
