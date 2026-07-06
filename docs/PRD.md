@@ -91,12 +91,13 @@ The developer / support operator — uses the Observer to inspect accessibility 
 - ✅ CR-0001 Always-recorded Location Sessions [Phase: Sessions]
 - ✅ CR-0002 Session always-recording switch [Phase: Sessions]
 - ✅ Observer Phase 1 — Local foundation (verified on device 2026-05-29)
+- ✅ Observer Phase 2 — Inspection UI (pagination + snapshot viewer + truncation banner; verified on device 2026-07-02)
 - ✅ OBD Phase 1 — ELM327 telemetry (live RPM/speed verified on device 2026-06-08; indirect speed-density fuel estimate)
 - ❌ OBD Phase 2 — Fuel consumption enhancement (idle L/h display; session + trip average km/L; Trip panel fuel metrics)
 
 ### In progress / planned
 
-- 🔄 Observer Phase 2 — Inspection UI (pagination done; truncation banner awaiting design)
+- 🔄 Observer Phase 3 — Filtering + Settings (S1 filter data layer in progress; text search via Room @Fts4 external-content, see ADR-005)
 - ❌ Observer Phases 3–7 (filtering, sync engine, Neon V1, registration + face enrollment, auth + hardening)
 
 ### Rationale

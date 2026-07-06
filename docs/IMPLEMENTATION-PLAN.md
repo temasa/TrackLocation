@@ -18,7 +18,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — OBD Phase 2: built + installed on device (SM-G965F, 2026-07-06). Next: manual on-device drive test, then Observer Phase 3.
+### Current — Observer Phase 3 (Filtering + Settings): S1 filter data layer in progress. (OBD Phase 2 built + installed on SM-G965F 2026-07-06; manual on-device drive-test still pending — user.)
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -33,6 +33,8 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 **OBD Phase 2 is built + installed on device (SM-G965F, Android 10, 2026-07-06).** A pre-existing Google Maps API key resValue-name mismatch blocked the first build (fixed in `app/build.gradle`; see ERRORS-LOG ERR-002). Remaining: **manual** on-device drive test (drive with ELM327 → confirm idle L/h, session-avg persists across restart, trip-avg accumulates, `track.obdFuelConsumedL` written at stop). After that, next planned phase is **Observer Phase 3 (Filtering + Settings)**.
 
 **Observer Phase 2** is complete and fully verified on device (cursor pagination + snapshot viewer + truncation banner, all states confirmed 2026-07-02).
+
+**Observer Phase 3 (Filtering + Unified Settings)** is the active development phase. **S1 — filter data layer** (Room `@Fts4` external-content FTS over `observer_event` + filtered paginated DAO queries; DB migration 5→6) is next to code; the FTS approach is recorded in ADR-005. UI slices S3 (filter chips + no-results) and S4 (unified Observer Settings) go to a Claude Design handoff first (§12). Full slice breakdown in §4 / Appendix A.
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
 > Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md. OBD Phase 2 is code-complete (Slices 1–4, static). Next: build/device-verify OBD Phase 2 (with permission), or start Observer Phase 3. Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
@@ -76,7 +78,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer + truncation banner) | Implemented | Verified on device (2026-07-02) |
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | OBD Phase 2 — Fuel consumption enhancement | Implemented (Slices 1–4: schema + DB accumulation + Session card + Trip panel) | Slice 3 design done in Claude Design; Slice 4 reused existing language | Built + installed on device 2026-07-06; manual drive-test pending |
-| Observer Phase 3 — Filtering + Settings | Planned | Planned | Not started |
+| Observer Phase 3 — Filtering + Settings | In progress (S1 filter data layer) | S3/S4 pending design handoff | Not started (S1 build pending §5a) |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
 | Observer Phase 6 — Registration + Face Enrollment | Planned | Planned | Not started |
@@ -186,6 +188,7 @@ See `docs/ARCHITECTURE.md` (§4 stack, §2 domain model, §8 schema).
 | Observer navigation | Option B — under `Settings → Tools → Observer` | Keeps 4-tab baseline; see `docs/adr/003` |
 | OBD library | Raw AT I/O over Bluetooth socket (no kotlin-obd-api) | Library binary-incompatible with Kotlin 1.7.0; see `docs/adr/004` |
 | Fuel rate on no-MAF vehicles | Indirect speed-density estimate | Test vehicle exposes no MAF/015E PID |
+| Observer full-text search | Room `@Fts4` external-content over `observer_event` (not FTS5) | FTS5 needs a bundled SQLite driver for guaranteed Android support; FTS4 is guaranteed on platform SQLite; see `docs/adr/005` |
 
 ---
 
@@ -627,24 +630,66 @@ Planned:
 
 ## Observer Phase 3 — Filtering + Unified Settings
 
-### A. Code Implementation Work
+**Status:** In progress (S1 filter data layer). DB migration 5→6. Excludes clear/delete of Observer history (locked out — PRD §8, FR-05). Text search uses Room `@Fts4` external-content FTS (see ADR-005).
 
-Planned:
+**Goal:** Filter the Observer feed by package and by full-text search over event text, and consolidate Observer controls into unified Settings sections.
 
-- FTS5 support.
-- Filter query builder.
-- Package chips.
-- Global text chips.
-- Scoped per-package text filters.
-Note: clearing/deleting observer history is not included (explicitly disallowed by current decisions).
+Slices follow the standard format (what → observable → how to verify → steps). S1–S2 are code-only; S3–S4 introduce UI and require a Claude Design handoff first (§12 two-track model).
+
+### Slice 1 — Filter data layer (no UI)
+
+**What it does:** Adds full-text + package filtering to the event query layer via a Room `@Fts4` external-content table over `observer_event`; nothing visible in the UI yet.
+
+**Observable result:** Fresh install (or migration from DB v5) succeeds without crash; a filtered DAO query returns the correct package/text-scoped subset of events.
+
+**How to Verify:**
+- Build (with explicit permission per §5a) → `:app:compileDebugKotlin` no errors; Room schema processing accepts the FTS entity.
+- Install → no `MIGRATION_5_6` crash (Logcat); optional `adb shell run-as com.kolee.tracklocation sqlite3` shows the `observer_event_fts` virtual table.
+- Capture a few events → a temporary debug call / Logcat confirms the filtered query returns only matching rows; an empty filter returns the same rows as the existing first-page query.
+- Room `@Fts4` API confirmed via Context7 before coding (step 0).
+
+**Implementation steps:**
+1. **Verify (Context7)** — confirm Room 2.5.2 `@Fts4` external-content behavior (`contentEntity`, generated sync triggers, trigger drop/recreate around migrations).
+2. **Create** `data/roomdb/ObservedEventFtsEntity.kt` — `@Entity @Fts4(contentEntity = ObservedEventEntity::class)` indexing `packageName`, `activityName`, `textSummary`.
+3. **Edit** `data/roomdb/TrackDatabase.kt` — add `ObservedEventFtsEntity::class` to entities; bump `version = 5` to `6`; add inline `MIGRATION_5_6` (create the fts4 virtual table + external-content triggers; rebuild index from existing rows); chain into `addMigrations(...)`.
+4. **Edit** `data/roomdb/ObserverEventDao.kt` — add filtered first-page + next-page queries joining `observer_event` to `observer_event_fts` on `MATCH`, plus package-set `IN (:pkgs)`, ordered `lastSeenAt DESC` with `< :before` cursor and `LIMIT :limit`. Keep existing unfiltered queries for the empty-filter path.
+5. **Edit** `feature/observer/data/repository/EventRepository.kt` — extend the interface with `getFilteredFirstPage(...)` / `getFilteredNextPage(...)`; implement in `EventRepositoryImpl` mapping to domain; `FakeEventRepository` returns empty for the new methods.
+
+### Slice 2 — Filter state + query wiring (code)
+
+**What it does:** Introduces a filter model (selected packages, global text, per-package scoped text) and a query builder in `ObserverViewModel` / `EventRepository`; changing the filter re-runs the paginated load. Feed list reused as-is.
+
+**Observable result:** (dev-observable) applying a filter in state swaps the loaded page to the filtered result set; clearing restores the full feed.
+
+**How to Verify:** build (with permission); capture events; toggling filter state in the ViewModel yields the expected filtered feed and correct load-more behavior; live-new-events still respect the active filter.
+
+**Implementation steps:** (1) add a `FilterState` (packages set, globalQuery, per-package query map) to `ObserverUiState`; (2) build the effective query + package set; (3) route pagination (`getFirstPage`/`loadMore`) through filtered vs unfiltered DAO paths based on filter presence; (4) reset pagination cursors on filter change.
+
+### Slice 3 — Filter UI (design handoff first)
+
+**What it does:** Surfaces package chips, a global text search, and a no-results empty state in the feed.
+
+**Design gate:** Claude Design handoff for filter-chip interaction, active/selected states, and no-results treatment BEFORE code (§12). Attach current Observer feed + `FeedHeaderBar` + allowlist sheet screenshots.
+
+**How to Verify:** on device — selecting a package chip narrows the feed; typing a query filters live; clearing restores; no-results state shows the designed empty view; no regression to pagination/live events.
+
+**Implementation steps (post-design):** (1) filter row in `FeedHeaderBar.kt` (package chips + search field); (2) wire to `ObserverViewModel` filter state; (3) no-results branch in `EmptyState.kt`.
+
+### Slice 4 — Unified Observer Settings (design handoff first)
+
+**What it does:** Consolidates Observer controls (allowlist, filter defaults, service/capture status) into unified Settings sections.
+
+**Design gate:** Claude Design handoff for the Settings section layout BEFORE code (§12).
+
+**How to Verify:** on device — Observer Settings shows the designed sections; allowlist editing still works; capture toggle + service status accurate; no regression.
+
+**Implementation steps (post-design):** (1) Observer Settings section composables; (2) wire to existing allowlist + prefs; (3) navigation from feed to settings.
 
 ### B. UI Specification / Design Handoff Work
 
-Planned:
-
-- Filter chip interaction design.
-- No-results states.
-- Observer Settings sections.
+- S3 filter UI: filter-chip interaction, active/selected, no-results states.
+- S4 unified Observer Settings sections.
+Both require a Claude Design handoff before their code (§12); S1–S2 do not.
 
 ## Observer Rollout
 
