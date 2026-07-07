@@ -63,6 +63,10 @@ class TrackingService: Service() {
     private var activeSession: SessionEntity? = null
     private var lastSessionLocation: Location? = null
     private var lastTripLocation: Location? = null
+    private var dwellAnchorId: Long? = null
+    private var dwellAnchorLocation: Location? = null
+    private var dwellingOnAnchor: Boolean = false
+    private var dwellBreakStreak: Int = 0
     private val database by lazy { TrackDatabase.getDatabase(applicationContext) }
 
     companion object {
@@ -70,6 +74,9 @@ class TrackingService: Service() {
         private val _locationUiState = MutableStateFlow(LocationUiState())
         val locationUiState = _locationUiState.asStateFlow()
         val NOTIFICATION_ID = Random.nextInt(999) + 100
+        private const val DWELL_TOLERANCE_MIN_METERS = 15f
+        private const val DWELL_ACCURACY_FACTOR = 1.5f
+        private const val DWELL_BREAK_CONFIRM_FIXES = 2
     }
 
     private var isAlwaysRecording = false
@@ -205,6 +212,10 @@ class TrackingService: Service() {
         }
         activeSession = null
         lastSessionLocation = null
+        dwellAnchorId = null
+        dwellAnchorLocation = null
+        dwellingOnAnchor = false
+        dwellBreakStreak = 0
 
         val intent = Intent(this, ObdPollingService::class.java).apply {
             action = ObdPollingService.ACTION_SESSION_OFF
@@ -329,9 +340,40 @@ class TrackingService: Service() {
 
     private fun recordLocation(location: Location?) = location?.let { currentLocation ->
         serviceScope.launch {
+            val anchorLocation = dwellAnchorLocation
+            val anchorId = dwellAnchorId
+            if (anchorLocation != null && anchorId != null) {
+                val distance = distanceBetween(anchorLocation, currentLocation)
+                val tolerance = maxOf(
+                    DWELL_TOLERANCE_MIN_METERS,
+                    DWELL_ACCURACY_FACTOR * currentLocation.accuracy
+                )
+                if (distance <= tolerance) {
+                    // Within the dwell radius: collapse onto the existing anchor.
+                    // Bump last-seen timestamp + collapsedCount; add no session/trip distance.
+                    dwellBreakStreak = 0
+                    dwellingOnAnchor = true
+                    val dwellTs = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis()
+                    database.locationDao.updateDwellAnchor(anchorId, dwellTs)
+                    return@launch
+                }
+                if (dwellingOnAnchor) {
+                    // Out of radius while parked: require consecutive confirmations to reject a
+                    // single GPS outlier before breaking the dwell.
+                    dwellBreakStreak++
+                    if (dwellBreakStreak < DWELL_BREAK_CONFIRM_FIXES) {
+                        return@launch
+                    }
+                }
+            }
+            // Movement confirmed (or first fix / post-restart): insert a new anchor.
+            dwellBreakStreak = 0
+            dwellingOnAnchor = false
+            val timestamp = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis()
             val insertedId = database.locationDao.insertLocation(
                 LocationEntity(
-                    timestamp = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis(),
+                    timestamp = timestamp,
+                    dwellStartTimestamp = timestamp,
                     latitude = currentLocation.latitude,
                     longitude = currentLocation.longitude,
                     accuracyMeters = currentLocation.accuracy,
@@ -340,6 +382,8 @@ class TrackingService: Service() {
                     altitudeMeters = currentLocation.altitude
                 )
             )
+            dwellAnchorId = insertedId
+            dwellAnchorLocation = currentLocation
             updateActiveSession(currentLocation, insertedId)
             updateTripState(currentLocation, insertedId)
         }
