@@ -50,8 +50,9 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
-| ERR-001 | 2024-01-15 10:23:45 | 2024-01-15 10:41:02 | Build | S1-T2 | Example: Gradle JDK version mismatch | Resolved |
+| ERR-003 | 2026-07-07 | 2026-07-07 | Verification | ADR-006 dwell collapse | Dwell collapse froze live GPS speed → OBD idle metric wrong (km/L instead of L/h) + phantom session distance | Resolved |
 | ERR-002 | 2026-07-06 22:05:00 | 2026-07-06 22:12:25 | Build | OBD Phase 2 deploy | Google Maps API key resValue name mismatch | Resolved |
+| ERR-001 | 2024-01-15 10:23:45 | 2024-01-15 10:41:02 | Build | S1-T2 | Example: Gradle JDK version mismatch | Resolved |
 
 *(Add a row here for every new entry — update Resolved At when fixed)*
 
@@ -132,6 +133,43 @@ Re-ran `:app:installDebug` → BUILD SUCCESSFUL, installed on SM-G965F.
 
 **Lesson Learned:**
 When moving a value into a build-injected `resValue`, the resource name must stay identical to every `@string/...` reference in the manifest and layouts. A rename silently breaks `processDebugResources` (resource linking), not Kotlin compilation — so it will not surface until an actual build/install is run. Grep every `@string/<name>` reference before renaming an injected resource.
+
+---
+
+### ERR-003: Dwell collapse froze live GPS speed → OBD idle metric wrong (km/L instead of L/h) + phantom session distance
+
+**Found At:** 2026-07-07  
+**Resolved At:** 2026-07-07  
+**Phase:** Verification  
+**Sprint/Task:** ADR-006 dwell collapse on-device verification  
+**Environment:** local (Gradle :app:installDebug, device SM-G965F Android 10)  
+**Status:** Resolved  
+
+**Error Message / Output:**
+Identified by code analysis during ADR-006 dwell-collapse verification (prompted by a question about how fuel consumption is handled while the car is stopped) — NOT observed as a runtime failure. Predicted incorrect behavior: while parked during an active trip, the instant metric would show `km/L` instead of `L/h` at idle, and SESSION AVG would accrue phantom OBD distance, because both derive from a GPS speed value the collapse branch no longer refreshes.
+
+**Root Cause:**
+In `TrackingService.recordLocation`, the dwell collapse branch called `database.locationDao.updateDwellAnchor(anchorId, dwellTs)` and then `return@launch` before `updateTripState(location, insertedId)`. The early return skipped the UI-state update in `updateTripState`, which normally refreshes `locationUiState.speedInKMH`, `currentLocation`, and `accuracyMeters` on every location fix. So when a car parked during an active trip, the speed froze at the last moving value. `ObdPollingService` reads `locationUiState.speedInKMH` for:
+1. **Time-integrated distance:** `distIncrementKm = gpsSpeedKmh × dt / 3600`, accruing to `session.obdGpsDistanceKm` even when speed was stale
+2. **Idle detection:** `if (speed < 3 km/h && RPM > 0) show L/h else show km/L`, so a stale non-zero speed fooled the check into displaying km/L instead of L/h
+
+Result: stopped car showed km/L (wrong), accumulated phantom OBD distance (wrong), SESSION AVG km/L was corrupted.
+
+**Resolution:**
+Added an explicit UI-state refresh in the collapse branch before `return@launch` (lines 359–365 in `TrackingService.kt`):
+```kotlin
+_locationUiState.update { state ->
+    state.copy(
+        currentLocation = LatLng(currentLocation.latitude, currentLocation.longitude),
+        speedInKMH = kmh(currentLocation),
+        accuracyMeters = currentLocation.accuracy
+    )
+}
+```
+This refresh updates live consumers (`speedInKMH ≈ 0` for a parked car) without inserting a DB row or adding to trip/session distance. After the fix, `assembleDebug` is clean (Room KAPT + Kotlin compile); on-device re-verification (stopped → L/h; no phantom SESSION AVG distance) is still PENDING.
+
+**Lesson Learned:**
+A write-time filter that skips the persistence path (e.g., collapse, dedup, sampling) can also skip live UI-state updates that OTHER subsystems depend on. When filtering writes, keep two concerns separate: (1) "what goes to the DB" and (2) "what live-state consumers read". The live signal must keep flowing even when you suppress the stored row. Always trace all readers of a StateFlow before adding early-return branches.
 
 ---
 

@@ -353,6 +353,16 @@ class TrackingService: Service() {
                     // Bump last-seen timestamp + collapsedCount; add no session/trip distance.
                     dwellBreakStreak = 0
                     dwellingOnAnchor = true
+                    // Keep live speed/position/accuracy fresh while parked (no row, no distance)
+                    // so OBD idle detection (km/L vs L/h) and its time-integrated distance read the
+                    // real ~0 speed instead of a stale frozen value. (ADR-006)
+                    _locationUiState.update { state ->
+                        state.copy(
+                            currentLocation = LatLng(currentLocation.latitude, currentLocation.longitude),
+                            speedInKMH = kmh(currentLocation),
+                            accuracyMeters = currentLocation.accuracy
+                        )
+                    }
                     val dwellTs = currentLocation.time.takeIf { it > 0L } ?: System.currentTimeMillis()
                     database.locationDao.updateDwellAnchor(anchorId, dwellTs)
                     return@launch

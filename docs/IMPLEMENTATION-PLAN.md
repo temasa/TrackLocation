@@ -114,6 +114,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-07-07 | Fix — dwell collapse froze live GPS speed, corrupting OBD instant/average fuel metric (km/L shown at idle instead of L/h; phantom session OBD distance); refresh speed/position/accuracy in the collapse branch (ERR-003) | Completed | --- | assembleDebug clean 2026-07-07; on-device re-verify (stopped → L/h, no phantom SESSION AVG distance) pending |
 | 2026-07-07 | Location Dwell Collapse — ADR-006 accepted + PRD §12 (BR-11) + ARCHITECTURE §8 (MIGRATION_6_7 schema) + Appendix A slice contract recorded | In Progress | `55c1c7b` | Docs recorded; code slice (service dwell state + migration) pending user build permission per AGENTS.md §5a |
 | 2026-07-07 | Location Dwell Collapse Slice 1 — schema: LocationEntity `dwellStartTimestamp`/`collapsedCount`, `MIGRATION_6_7` (DB v6→v7, backfill), `LocationDao.updateDwellAnchor` | Completed | `390b1ad` | `assembleDebug` clean 2026-07-07 (Room KAPT validated); on-device migration test pending |
 | 2026-07-07 | Location Dwell Collapse Slice 2 — `TrackingService` write-time dwell state machine: collapse within `max(15 m, 1.5×accuracy)` via `updateDwellAnchor` (no insert, no session/trip distance); parked-only 2-fix outlier rejection; new anchors record `dwellStartTimestamp` | Completed | `fc40ac9` | `assembleDebug` clean 2026-07-07 (Room KAPT validated schema/DAO/migration); on-device drive-test pending |

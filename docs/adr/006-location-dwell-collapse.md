@@ -35,6 +35,7 @@ Two new `LocationEntity` / `location_log` columns:
 - Raw intra-dwell fixes are not retained → cannot later re-tune the tolerance against historical stops, and cannot distinguish a dead stop from a slow crawl below tolerance.
 - `session.durationMillis` is not refreshed during a collapsed dwell until movement resumes (it is recomputed on the next real insert). Acceptable; can be bumped on the dwell UPDATE if desired.
 - Adds an `UPDATE` DAO path and in-memory anchor state to `TrackingService`.
+- Collapse must still refresh live speed/position/accuracy into `locationUiState` during a dwell (without inserting a row or adding GPS distance); otherwise OBD's time-integrated distance and its idle km/L-vs-L/h detection read a stale frozen speed — a regression found and fixed 2026-07-07 (see `docs/ERRORS-LOG.md`).
 
 ## Alternatives Considered
 
