@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.2
+**Document Version:** 0.3
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-06-15
+**Last Updated:** 2026-07-07
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -46,7 +46,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Screen | Status | Notes |
 |---|---|---|
 | Session | Current | First-class destination; sessions + always-recording switch + ObdStatusCard |
-| List | Current | Trip list only; no always-recording switch after CR-0002 |
+| List | Current | Trip list only; no always-recording switch after CR-0002; restyled 2026-07-07 for Sessions visual parity (UI-SPEC §3b) |
 | Track | Current | Starts/stops explicit trip ranges; glass panel + brand-green CTA; OBD km/L row |
 | Settings | Current | Unified operational settings; GENERAL / TOOLS / ABOUT |
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
@@ -94,13 +94,30 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 - Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 3-stat footer as a finished row.
 - Title: `Trip in progress` (instead of `Track #N`).
 - Trailing: **ACTIVE badge** — pulsing green dot + `ACTIVE` label (same treatment as the Sessions `ActiveBadge`).
-- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours.
+- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours; and `efficiency` — live km/L from `ObdPollingService.obdUiState` (`avgKmL`, else `instantKmL`); shows `"—"` when OBD is not connected, matching the Sessions OBD card.
 - Not clickable; no long-press delete (not a saved trip yet).
 - Reduced-motion: badge pulse uses the same infinite-transition pattern already present on this screen.
 
 **Empty-state rule:** show `EmptyTripsCard` only when there are no finished trips **AND** no active trip; while a trip is active the live row stands in.
 
 **Screenshots if externalised to Claude Design:** List/Trips screen (Recent trips + Current trip card) and the Sessions active row (ACTIVE badge + green border) as reference. No new visual language is introduced (reuses Sessions active-row + `TrackItemRow`), so no external design round-trip is required.
+
+---
+
+## 3b. Trips screen — Sessions visual parity (2026-07-07)
+
+**Decision:** The List/Trips screen is restyled to match the Sessions tab so switching tabs feels continuous. Active-trip data stays as the **first row of the list** (§3a) — no separate live card is added ("list row only" chosen over a duplicate info card).
+
+**Changes:**
+1. **Header** — "Trip Tracker" / **Trips** at 40sp ExtraBold, matching Sessions' "Sessions" header (was 36sp Bold).
+2. **Current-trip hero card** — keep the Start/Stop CTA and function; align corner radius, padding, and spacing to Sessions' card rhythm.
+3. **Remove** the metrics row (Trips / Distance / Hours) and the empty search bar. *(Both were code-only, never spec'd; removed for parity with Sessions' header → card → list structure.)*
+4. **"Recent trips / Newest first"** list header — align typography to Sessions' "Recorded sessions" header.
+5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `distance(km) ÷ obdFuelConsumedL` km/L, from the existing `TrackEntity.obdFuelConsumedL`; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
+
+**Data:** No schema change / no Room migration — all values derive from existing fields.
+
+**Design handoff:** Reuses the established Sessions/`TrackItemRow` visual language (no new visual design), so no external Claude Design round-trip is required. If externalised: attach the current Trips screen + Sessions screen as reference.
 
 ---
 
