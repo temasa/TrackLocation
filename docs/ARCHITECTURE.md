@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.4
+**Document Version:** 0.5
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-07-07
 **Owner:** Tech Lead
@@ -60,6 +60,10 @@ SessionEntity (recording_session) — OBD accumulator columns (added DB v5)
 
 TrackEntity (trip) — OBD accumulator column (added DB v5)
   └── obdFuelConsumedL  (REAL, default 0.0) — cumulative L consumed this trip
+
+FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
+  ├── pricePerLiter (REAL)
+  └── effectiveFromMs (Long, @Index) — current price = latest row; completed-trip cost uses the row effective at trip start
 ```
 
 ### Key Invariants
@@ -135,7 +139,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
+Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`.
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 
@@ -160,7 +164,7 @@ Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAV
 - **Session average** = `session.distanceMeters / obdFuelConsumedL` (was `obdGpsDistanceKm / obdFuelConsumedL`). The `obdGpsDistanceKm` column is **dropped** (destructive v7→v8) and no longer read.
 - **Trip average** = `distanceInMeters / (obd_sample fuel over [tripStartedAt, now])`, computed live; at Stop `ShareViewModel.onTripCtaTap` writes the re-integrated total into `track.obdFuelConsumedL`.
 - **Display:** the average shows once distance > 0.01 km and fuel > 0, else `—`. Idle (fuel accrues, distance flat) correctly degrades the average — relies on the ADR-006 stale-speed fix.
-- **Fuel cost (ADR-007 extension, no schema change):** `cost = litres × pricePerLitre`. Litres = the session live `obdFuelConsumedL` (Session card) or the in-memory trip total (Trips active-trip row). Price is a single current value persisted in `obd_prefs` under key `obd_fuel_price_per_liter` (Double, default 0.0). Cost is derived at display time — no new table/column. A process-lifetime in-memory holder keeps the price-change history + pointer for multi-step undo/redo (seeded from the persisted price; resets on process restart, so only the current price survives).
+- **Fuel cost (ADR-008):** `cost = litres × price`. Litres = session live `obdFuelConsumedL` (Session card) / in-memory trip total (active-trip row) / stored `track.obdFuelConsumedL` (completed row). Price is a first-class effective-dated entity `FuelPriceEntity(id, pricePerLiter, effectiveFromMs)` in the new `fuel_price` table (**MIGRATION_8_9**, DB→v9): current price = the row with max `effectiveFromMs`; Save/Undo/Redo append effective-now rows (non-destructive). Active session/trip use the current price; a **completed trip** uses the price effective at its **start** (`fuel_price` row with max `effectiveFromMs ≤ track.timestamp`, else `—`). Seed: a one-time code migration inserts the retired `obd_fuel_price_per_liter` scalar at `effectiveFromMs=0`. The `FuelPriceController` in-memory stack drives undo/redo; the DataStore scalar is deprecated as source of truth.
 
 ---
 

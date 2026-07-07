@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.4
+**Document Version:** 0.5
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-07-07
 **Owner:** Product Manager / UX Designer
@@ -94,7 +94,7 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 - Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 4-stat footer as a finished row.
 - Title: `Trip in progress` (instead of `Track #N`).
 - Trailing: **ACTIVE badge** — pulsing green dot + `ACTIVE` label (same treatment as the Sessions `ActiveBadge`).
-- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours; `efficiency` — live km/L from `ObdPollingService.obdUiState` (`avgKmL`, else `instantKmL`); shows `"—"` when OBD is not connected, matching the Sessions OBD card; and `cost` (Rp) — see §4 Fuel cost.
+- **Two stat rows** (OBD-connected): a **base row** — `distance (km)` from `distanceInMeters`, `duration` from `now - tripStartedAt`, `avg speed` = km ÷ elapsed-hours — and an **OBD row** — `instant km/L` (from `ObdUiState.Connected.instantKmL`; `—` at rest / poor fix, gated like the Session card), `L/h` (`fuelRateLph`), `trip avg km/L` (`tripAvgKmL`), and `cost` (`Rp`, tap to edit — see §4). Non-connected: OBD-row values render `—`. The card grows taller to fit the second row. This mirrors the Session OBD card's instant/average separation for a seamless cross-tab experience.
 - Not clickable; no long-press delete (not a saved trip yet).
 - Reduced-motion: badge pulse uses the same infinite-transition pattern already present on this screen.
 
@@ -114,8 +114,9 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 3. **Remove** the metrics row (Trips / Distance / Hours) and the empty search bar. *(Both were code-only, never spec'd; removed for parity with Sessions' header → card → list structure.)*
 4. **"Recent trips / Newest first"** list header — align typography to Sessions' "Recorded sessions" header.
 5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `distance(km) ÷ obdFuelConsumedL` km/L, from the existing `TrackEntity.obdFuelConsumedL`; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
+6. **Recent-trip rows — cost stat (ADR-008):** add a 5th stat, **cost** (`Rp`) = `obdFuelConsumedL × price effective at the trip's start` (from the `fuel_price` effective-dated log); shows `—` when `obdFuelConsumedL = 0` or no price was in effect at the trip's start. Final completed-row stats: km / duration / avg speed / average km/L / cost.
 
-**Data:** No schema change / no Room migration — all values derive from existing fields.
+**Data:** No schema change for §3b's efficiency stat; the cost stat (ADR-008) reads the new `fuel_price` table (migration v8→v9).
 
 **Design handoff:** Reuses the established Sessions/`TrackItemRow` visual language (no new visual design), so no external Claude Design round-trip is required. If externalised: attach the current Trips screen + Sessions screen as reference.
 
@@ -138,12 +139,14 @@ Averages remain a **single km/L** per surface (SESSION AVG on the Session card, 
 - Shows a value once distance > 0.01 km and fuel > 0, else `—`.
 - While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
 
-#### Fuel cost (Rp) — Session OBD card + Trips active-trip row
+#### Fuel cost (Rp) — Session OBD card + Trips active-trip row + completed trips
 
 - **Value:** `litres × price`, formatted `Rp` with a dot thousands separator and no decimals (e.g. `Rp 12.500`). Shows `—` when litres = 0 or the price is unset.
 - **Placement:** Session OBD card — a COST cell below the fuel metrics (below OBD Status). Trips active-trip row — an added COST stat (row goes from 4 to 5 stats; keep the existing stat styling, reflow density handled in code).
 - **Tap to edit:** tapping the cost opens a compact numeric `Rp` price editor with **Save (✓)** = apply and **Cancel (✗)** = discard the in-progress edit. Saving writes the shared current price and both surfaces update.
 - **Undo / redo:** `↶` reverts to the previous price, `↷` re-applies the undone price; full multi-step within the session; each control is disabled when there is nothing to undo/redo. History is in-memory and resets on app restart; the current price persists.
+- **Completed trips (ADR-008):** each completed-trip row also shows cost, priced by the `fuel_price` row effective at the trip's **start**; editing the price later never re-costs finished trips (`—` if no price applied then).
+- **Price model:** the price is an effective-dated entity (`fuel_price` table), not a scalar; Save/Undo/Redo append effective-now rows. Current price = latest row.
 
 ---
 

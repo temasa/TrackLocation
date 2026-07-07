@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.5
+**Version:** 0.6
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-07-07
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -63,6 +63,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 | 0.3 | 2026-07-07 | Added Location Efficiency — Dwell Collapse phase (ADR-006 accepted): §3 phase row + Appendix A two-slice contract; PRD §12 BR-11 recorded. |
 | 0.4 | 2026-07-07 | Added Fuel-Economy Unification phase (ADR-007 accepted): §3 phase row + Appendix A three-slice contract; instant two-cell + unified averaging + destructive v7→v8 column drop. |
 | 0.5 | 2026-07-07 | Added Fuel Cost feature (FR-12): inline `Rp` price entry with multi-step in-memory undo/redo; cost = litres × price on the Session OBD card + Trips active-trip row. No schema change. §3 phase row + Appendix A slice + §6 task-log row. |
+| 0.6 | 2026-07-07 | Fuel Cost v2 (ADR-008): fuel price becomes an effective-dated `fuel_price` entity (migration v8→v9); completed-trip cost priced at trip start; active-trip card separated into two rows (instant km/L, L/h, trip-avg km/L, cost). §3 phase row + Appendix A slice + §6 task-log row. |
 
 ---
 
@@ -83,6 +84,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | OBD Phase 2 — Fuel consumption enhancement | Implemented (Slices 1–4: schema + DB accumulation + Session card + Trip panel) | Slice 3 design done in Claude Design; Slice 4 reused existing language | Built + installed on device 2026-07-06; manual drive-test pending |
 | Observer Phase 3 — Filtering + Settings | Implemented (S1–S4) | Implemented (S3 filter UI + S4 Observer Settings; designs via Claude Design) | Complete — S1–S4 device-verified 2026-07-07 |
+| Fuel Cost v2 — price entity + completed cost + separated active metrics (ADR-008) | Planned | Spec'd in UI-SPEC §3a/§3b/§4 | Not started |
 | Location Efficiency — Dwell Collapse (ADR-006) | Planned | n/a (no new UI) | Not started |
 | Fuel-Economy Unification (ADR-007) | Planned | Spec'd in UI-SPEC §4 (no external handoff) | Not started |
 | Fuel Cost — inline price + cost display (FR-12) | Implemented (6 files; compile-clean) | Spec'd in UI-SPEC §4 (inline editor; no external handoff) | Static — `compileDebugKotlin` clean 2026-07-07; device drive-test pending |
@@ -118,7 +120,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-07-07 | Fuel Cost — code (FR-12): new `FuelPriceController` (in-memory multi-step undo/redo; persists only the current price to `obd_prefs`) + `FuelCostCell`/`FuelCostEditorDialog` (IDR `Rp` format; tap-to-edit `Dialog` + ↶/↷); new `obd_fuel_price_per_liter` pref; `ObdUiState.Connected` gains `sessionFuelConsumedL`/`tripFuelConsumedL`; tappable COST cell on Session `ObdStatusCard` + 5th `cost` stat on the Trips active-trip row. No schema change. Files: `FuelPriceController.kt`, `feature/obd/ui/FuelCostCell.kt`, `ObdPreferencesDataStore.kt`, `ObdPollingService.kt`, `SessionsScreen.kt`, `ListContent.kt`. | Completed | `---` | `:app:compileDebugKotlin` BUILD SUCCESSFUL 2026-07-07 (no new errors; 3 pre-existing warnings). Static only — device drive-test (cost = litres × price; undo/redo; price persists across restart) pending user (AGENTS.md §5a). |
+| 2026-07-07 | Fuel Cost v2 — docs (ADR-008): new ADR-008 (effective-dated `fuel_price` entity, completed-trip cost at trip start, non-destructive undo/redo appends); PRD FR-12 rewrite; ARCHITECTURE §2/§8 (FuelPriceEntity + MIGRATION_8_9, DB v9); UI-SPEC §3a two-row active card / §3b completed cost / §4; DOCUMENT-CONTROL. | In Progress | `---` | Docs recorded; code slice pending (Coding Task Rule Phase 2 approval + AGENTS.md §5a build permission). |
+| 2026-07-07 | Fuel Cost — code (FR-12): new `FuelPriceController` (in-memory multi-step undo/redo; persists only the current price to `obd_prefs`) + `FuelCostCell`/`FuelCostEditorDialog` (IDR `Rp` format; tap-to-edit `Dialog` + ↶/↷); new `obd_fuel_price_per_liter` pref; `ObdUiState.Connected` gains `sessionFuelConsumedL`/`tripFuelConsumedL`; tappable COST cell on Session `ObdStatusCard` + 5th `cost` stat on the Trips active-trip row. No schema change. Files: `FuelPriceController.kt`, `feature/obd/ui/FuelCostCell.kt`, `ObdPreferencesDataStore.kt`, `ObdPollingService.kt`, `SessionsScreen.kt`, `ListContent.kt`. | Completed | `c14627e` | `:app:compileDebugKotlin` BUILD SUCCESSFUL 2026-07-07 (no new errors; 3 pre-existing warnings). Static only — device drive-test (cost = litres × price; undo/redo; price persists across restart) pending user (AGENTS.md §5a). |
 | 2026-07-07 | Fuel Cost — docs (FR-12): PRD §9 FR-12, ARCHITECTURE §8 cost bullet + §5 ObdUiState fields, UI-SPEC §3a/§4 fuel-cost subsection; DOCUMENT-CONTROL register + change log. Cost = litres × `obd_fuel_price_per_liter` (IDR) on Session card + Trips active-trip row; inline price editor + multi-step in-memory undo/redo. No schema change. | Completed | `c1d1420` | Docs recorded (`c1d1420`); code implemented in the next commit. |
 | 2026-07-07 | Fix — ADR-007 Slice 1 v7→v8 crash: `fallbackToDestructiveMigrationFrom(7)` is illegal alongside `MIGRATION_6_7` (end version 7), so Room threw `IllegalArgumentException` at `getDatabase().build()` and the app crashed on launch before the DB opened (migration never ran; DB stuck at v7). Fix: replaced the destructive fallback with an explicit destructive `MIGRATION_7_8` (DROP + recreate `recording_session` without `obdGpsDistanceKm`) registered in `addMigrations(...)`. Files: `TrackDatabase.kt`. See ERR-004. | Completed | `d8b3d5b` | `installDebug` clean + device-verified 2026-07-07 on SM-G965F: logcat "DB version upgrading from 7 to 8", crash buffer empty, MainActivity rendered; Room open-time schema validation passed (proves `recording_session` recreated to v8 without `obdGpsDistanceKm`). |
 | 2026-07-07 | Fuel-Economy Unification — ADR-007 accepted + propagated (PRD FR, ARCHITECTURE §8, UI-SPEC §4); instant two-cell + single averaging derivation + destructive v7→v8 column drop | Completed | `553805a` | Docs recorded; code slices pending user build permission (AGENTS.md §5a) |
@@ -2100,6 +2103,27 @@ Scope decision:
 5. **Edit** `screens/sessions/SessionsScreen.kt` — add the cost cell below the OBD fuel metrics; compute cost from `obdState.sessionFuelConsumedL` × current price.
 6. **Edit** `screens/list/components/ListContent.kt` — add the cost stat to `ActiveTripRow`; compute cost from `obdState.tripFuelConsumedL` × current price.
 7. Add an IDR formatting helper (dot thousands, no decimals) if none exists.
+
+---
+
+### Fuel Cost v2 — price entity + completed cost + separated active metrics (ADR-008)
+
+**What it does:** Replaces the single-scalar fuel price with an effective-dated `fuel_price` entity; adds cost to completed-trip rows (priced at trip start); separates the active-trip card's fuel metrics into two rows (instant km/L, L/h, trip-avg km/L, cost) to match the Session card.
+
+**Observable result:** Completed trips show `Rp` cost using the price in effect when they started; changing the price later does not alter finished trips. The active-trip card shows a base row (km/duration/avg speed) and an OBD row (instant km/L / L/h / trip-avg km/L / cost). Undo/redo still work and never re-cost history.
+
+**How to verify (static + manual; build gated per AGENTS.md §5a):**
+- Compile: `:app:compileDebugKotlin` clean (only with explicit permission).
+- Manual: set price P1 → run trip A → set price P2 → run trip B → trip A cost uses P1, trip B uses P2 (unchanged when you later set P3). Trip with no price set before it started → cost `—`. Active card shows instant km/L, L/h, trip-avg km/L, cost as separate cells. Migration v8→v9 runs without crash; existing scalar seeds `fuel_price` at effectiveFromMs=0.
+
+**Implementation steps (What/How):**
+1. **Create** `data/roomdb/FuelPriceEntity.kt` — `@Entity(tableName=\"fuel_price\")` `id: Long PK auto`, `pricePerLiter: Double`, `effectiveFromMs: Long` (`@Index`).
+2. **Create** `data/roomdb/FuelPriceDao.kt` — `insert(entity)`; `currentPrice(): Flow<FuelPriceEntity?>` (max effectiveFromMs); `priceEffectiveAt(ts: Long): FuelPriceEntity?` (max effectiveFromMs ≤ ts); `count()`.
+3. **Edit** `data/roomdb/TrackDatabase.kt` — add `FuelPriceEntity` to entities; bump version 8→9; add `abstract fun fuelPriceDao()`; inline `MIGRATION_8_9` (`CREATE TABLE fuel_price ...` + index); chain into `addMigrations(...)`.
+4. **Edit** `feature/obd/FuelPriceController.kt` — persist to `fuel_price` (append effective-now rows) instead of the DataStore scalar; seed the in-memory stack from the current row; one-time seed from the retired scalar at `effectiveFromMs=0` if the table is empty.
+5. **Edit** `screens/list/components/TrackItemRow.kt` — add the cost stat; look up `priceEffectiveAt(item.timestamp)` × `obdFuelConsumedL`; `—` when 0 / no price.
+6. **Edit** `screens/list/components/ListContent.kt` — restructure `ActiveTripRow` into two stat rows; pass instant km/L, L/h, trip-avg km/L, cost; taller card.
+7. Retire `obd_fuel_price_per_liter` as source of truth (keep or remove the DataStore key; document choice).
 
 ## Local Build Note
 

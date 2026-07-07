@@ -7,7 +7,7 @@ description: Product Requirements Document — TrackLocation
 # Product Requirements Document
 ## TrackLocation
 
-**Document Version:** 0.5
+**Document Version:** 0.6
 **Status:** Active (migrated from product-spec.md + change-requests.md)
 **Created:** 2026-06-15
 **Last Updated:** 2026-07-07
@@ -142,7 +142,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-09:** Trip average km/L is the ratio of trip GPS distance to cumulative fuel consumed since the trip started; it persists to the trip record.
 - **FR-10:** Always-recording persists across app restarts. If an open session survives a force-stop/kill and is still recent (a location point within the ~2-minute launch grace window), the app resumes recording on next launch — the Session status card returns to Active and the session keeps accumulating. Sessions idle beyond the grace window are closed on launch and stay stopped.
 - **FR-11:** Fuel economy is presented as two instant metrics — **km/L** (shown when moving; `—` at rest) and **L/h** (shown whenever OBD is connected) — plus a single trip/session **average km/L**, derived uniformly as displayed displacement distance ÷ fuel integrated from `obd_sample` over the range (ADR-007).
-- **FR-12:** When OBD fuel data is available, the active Session card and the Trips-screen active-trip row display an estimated **fuel cost** = litres consumed × a user-set price per litre (IDR, `Rp`). The price is entered inline by tapping the cost (Save/Cancel), is shared across both surfaces, and persists as the current price; price changes support multi-step **undo/redo** held in-memory (session-scoped, resets on process restart — only the current price persists). Cost shows `—` when litres = 0 or no price is set. Cost is a live/derived display only and is not persisted per trip. (Cost is derived from the ADR-007 fuel pipeline; no schema change.)
+- **FR-12:** An estimated **fuel cost** (litres consumed × price per litre, IDR `Rp`) is shown on the active Session card, the active-trip row, and completed-trip rows. The price is a first-class **effective-dated entity** (`fuel_price`), edited inline by tapping the cost (Save/Cancel) with multi-step in-memory **undo/redo**; edits append effective-now price rows (non-destructive). Active surfaces use the **current** price; a **completed trip** uses the price in effect at its **start** time and never re-costs when the price later changes (`—` if no price was set by then). Cost shows `—` when litres = 0 or no applicable price exists. (See ADR-008; supersedes the FR-12 v1 'no schema change' note.)
 
 ---
 
