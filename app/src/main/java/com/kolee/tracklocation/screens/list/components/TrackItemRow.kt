@@ -48,6 +48,11 @@ fun TrackItemRow(
     } else {
         ""
     }
+    val efficiencyText = if (item.obdFuelConsumedL > 0.0) {
+        String.format(Locale.ENGLISH, "%.1f", (item.distance / 1000f) / item.obdFuelConsumedL)
+    } else {
+        "—"
+    }
 
     Column(
         modifier = Modifier
@@ -114,6 +119,11 @@ fun TrackItemRow(
             TrackStat(
                 value = averageSpeedText,
                 label = "avg speed",
+                modifier = Modifier.weight(1f)
+            )
+            TrackStat(
+                value = efficiencyText,
+                label = "km/L",
                 modifier = Modifier.weight(1f)
             )
         }

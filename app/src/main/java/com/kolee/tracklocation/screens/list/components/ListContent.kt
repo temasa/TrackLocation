@@ -54,13 +54,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.feature.obd.service.ObdPollingService
+import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.tracking.LocationUiState
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
 import com.kolee.tracklocation.ui.theme.TripBackground
-import com.kolee.tracklocation.ui.theme.TripBlue
 import com.kolee.tracklocation.ui.theme.TripBorder
-import com.kolee.tracklocation.ui.theme.TripGold
 import com.kolee.tracklocation.ui.theme.TripGreen
 import com.kolee.tracklocation.ui.theme.TripGreenDark
 import com.kolee.tracklocation.ui.theme.TripGreenMid
@@ -77,7 +77,6 @@ import com.kolee.tracklocation.ui.theme.TripHeroStopRed
 import com.kolee.tracklocation.ui.theme.TripInk
 import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
-import com.kolee.tracklocation.ui.theme.TripSurfaceMuted
 import com.kolee.tracklocation.viewmodel.Response
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 import kotlinx.coroutines.delay
@@ -120,13 +119,18 @@ private fun TrackSuccessState(
 ) {
     val uiState by viewModel.locationUiState.collectAsState()
     val isTripActive = uiState.isTracking
+    val obdState by ObdPollingService.obdUiState.collectAsState()
+    val activeEfficiencyText = (obdState as? ObdUiState.Connected)
+        ?.let { it.avgKmL ?: it.instantKmL }
+        ?.let { String.format(Locale.ENGLISH, "%.1f", it) }
+        ?: "—"
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            start = 20.dp,
+            start = 22.dp,
             top = 24.dp,
-            end = 20.dp,
+            end = 22.dp,
             bottom = 24.dp
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -139,18 +143,12 @@ private fun TrackSuccessState(
             )
         }
         item {
-            MetricsRow(trackList = trackList)
-        }
-        item {
-            SearchBar()
-        }
-        item {
             RecentTripsHeader()
         }
 
         if (isTripActive) {
             item(key = "active-trip-row") {
-                ActiveTripRow(uiState = uiState)
+                ActiveTripRow(uiState = uiState, efficiencyText = activeEfficiencyText)
             }
         }
 
@@ -187,7 +185,7 @@ private fun TrackSuccessState(
 }
 
 @Composable
-private fun ActiveTripRow(uiState: LocationUiState) {
+private fun ActiveTripRow(uiState: LocationUiState, efficiencyText: String) {
     val now by produceState(initialValue = System.currentTimeMillis(), uiState.isTracking) {
         while (true) {
             value = System.currentTimeMillis()
@@ -251,6 +249,7 @@ private fun ActiveTripRow(uiState: LocationUiState) {
             ActiveTripStat(value = distanceText, label = "km", modifier = Modifier.weight(1f))
             ActiveTripStat(value = durationText, label = "duration", modifier = Modifier.weight(1f))
             ActiveTripStat(value = avgSpeedText, label = "avg speed", modifier = Modifier.weight(1f))
+            ActiveTripStat(value = efficiencyText, label = "km/L", modifier = Modifier.weight(1f))
         }
     }
 }
@@ -349,15 +348,16 @@ private fun ListHeader() {
             Text(
                 text = "Trip Tracker",
                 color = TripMuted,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal
             )
             Text(
                 text = "Trips",
                 color = TripInk,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 42.sp
+                fontSize = 40.sp,
+                fontWeight = FontWeight.ExtraBold,
+                lineHeight = 42.sp,
+                letterSpacing = 0.sp
             )
         }
     }
@@ -584,104 +584,6 @@ private fun formatElapsed(elapsedMs: Long): String {
 }
 
 @Composable
-private fun MetricsRow(trackList: List<TrackEntity>) {
-    val totalTrips = trackList.size
-    val totalDistanceKm = trackList.sumOf { it.distance } / 1000f
-    val totalHours = trackList.sumOf { it.duration } / 3_600_000f
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(13.dp)
-    ) {
-        MetricCard(
-            value = totalTrips.toString(),
-            label = "Trips",
-            color = TripGreen,
-            modifier = Modifier.weight(1f)
-        )
-        MetricCard(
-            value = formatMetric(totalDistanceKm),
-            label = "Distance",
-            color = TripBlue,
-            modifier = Modifier.weight(1f)
-        )
-        MetricCard(
-            value = formatMetric(totalHours),
-            label = "Hours",
-            color = TripGold,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun MetricCard(
-    value: String,
-    label: String,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .height(76.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(TripSurface)
-            .border(1.dp, TripBorder, RoundedCornerShape(16.dp))
-            .padding(horizontal = 14.dp, vertical = 13.dp)
-    ) {
-        Text(
-            text = value,
-            color = color,
-            fontSize = 23.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1
-        )
-        Text(
-            text = label,
-            color = TripMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun SearchBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(TripSurface)
-            .border(1.dp, TripBorder, RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "",
-            color = TripMuted,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
-        Box(
-            modifier = Modifier
-                .height(32.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(TripSurfaceMuted)
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "",
-                color = TripInk,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
 private fun RecentTripsHeader() {
     Row(
         modifier = Modifier
@@ -692,15 +594,15 @@ private fun RecentTripsHeader() {
         Text(
             text = "Recent trips",
             color = TripInk,
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = "Newest first",
             color = TripMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Normal
         )
     }
 }
@@ -725,11 +627,3 @@ private fun EmptyTripsCard() {
     }
 }
 
-private fun formatMetric(value: Float): String {
-    if (value == 0f) return "0"
-    return if (value >= 100) {
-        String.format(Locale.ENGLISH, "%,.0f", value)
-    } else {
-        String.format(Locale.ENGLISH, "%.1f", value)
-    }
-}
