@@ -89,6 +89,33 @@ abstract class TrackDatabase: RoomDatabase() {
             }
         }
 
+        // ADR-007 Slice 1: drop unused `obdGpsDistanceKm` from `recording_session`.
+        // Destructive of the session table only (local test data discarded per ADR-007).
+        // Implemented as an explicit 7->8 migration because Room forbids
+        // fallbackToDestructiveMigrationFrom(7) alongside MIGRATION_6_7 (whose end version is 7).
+        private val MIGRATION_7_8 = object: Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `recording_session`")
+                db.execSQL(
+                    """
+                    CREATE TABLE `recording_session` (
+                        `id` TEXT NOT NULL,
+                        `startedAt` INTEGER NOT NULL,
+                        `endedAt` INTEGER,
+                        `startLocationId` INTEGER,
+                        `endLocationId` INTEGER,
+                        `distanceMeters` REAL NOT NULL,
+                        `durationMillis` INTEGER NOT NULL,
+                        `pointCount` INTEGER NOT NULL,
+                        `isActive` INTEGER NOT NULL,
+                        `obdFuelConsumedL` REAL NOT NULL DEFAULT 0.0,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         // OBD Phase 2 Slice 1: fuel-consumption accumulators persisted per session and per trip.
         // NOTE: the domain "trip" table is physically named `track` (PK `idx`); the plan's
         // `ALTER TABLE trip` text refers to this table.
@@ -260,8 +287,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
-                    .fallbackToDestructiveMigrationFrom(7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .build()
                 INSTANCE = instance
                 return instance

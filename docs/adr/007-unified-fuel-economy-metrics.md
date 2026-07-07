@@ -28,7 +28,7 @@ The split was pragmatic: a session has a live DB row to accumulate into from the
 - **Idle**: fuel accrues, distance flat → the average degrades correctly (relies on the ADR-006 stale-speed fix).
 
 ### Schema
-`obdGpsDistanceKm` becomes unused (session average switches to `session.distanceMeters`). Platform SQLite below API 34 lacks `ALTER … DROP COLUMN`, so a clean drop uses a **destructive** migration **v7→v8** scoped via `fallbackToDestructiveMigrationFrom(7)` (local test data discarded; acceptable pre-production). Follow-up task: remove even the scoped fallback before shipping.
+`obdGpsDistanceKm` becomes unused (session average switches to `session.distanceMeters`). Platform SQLite below API 34 lacks `ALTER … DROP COLUMN`, so a clean drop uses a **destructive** migration **v7→v8** scoped via `fallbackToDestructiveMigrationFrom(7)` (local test data discarded; acceptable pre-production). **Correction (2026-07-07, ERR-004):** `fallbackToDestructiveMigrationFrom(7)` proved infeasible — Room rejects it because `MIGRATION_6_7` (ADR-006) has end version 7, colliding with the fallback's start version 7, crashing the app on launch. Replaced with an explicit destructive `MIGRATION_7_8` (DROP + recreate `recording_session` without `obdGpsDistanceKm`, registered in `addMigrations`). The "remove the scoped fallback before shipping" follow-up is therefore moot — no destructive fallback remains.
 
 ## Consequences
 

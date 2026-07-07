@@ -10,7 +10,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 **Document Version:** 0.1  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-07-06 22:12:25  
+**Last Updated:** 2026-07-07  
 **Owned By:** Project Team
 
 ---
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-004 | 2026-07-07 | 2026-07-07 | Verification | ADR-007 Slice 1 v7→v8 | Room build crash — `fallbackToDestructiveMigrationFrom(7)` illegal alongside `MIGRATION_6_7` (end version 7); app crashed on launch | Resolved |
 | ERR-003 | 2026-07-07 | 2026-07-07 | Verification | ADR-006 dwell collapse | Dwell collapse froze live GPS speed → OBD idle metric wrong (km/L instead of L/h) + phantom session distance | Resolved |
 | ERR-002 | 2026-07-06 22:05:00 | 2026-07-06 22:12:25 | Build | OBD Phase 2 deploy | Google Maps API key resValue name mismatch | Resolved |
 | ERR-001 | 2024-01-15 10:23:45 | 2024-01-15 10:41:02 | Build | S1-T2 | Example: Gradle JDK version mismatch | Resolved |
@@ -101,6 +102,36 @@ Always check JDK version first when the build error looks like a type error but 
 ---
 
 *(Replace the example above and add new entries below this line)*
+
+---
+
+### ERR-004: Room build crash — `fallbackToDestructiveMigrationFrom(7)` collides with `MIGRATION_6_7`
+
+**Found At:** 2026-07-07  
+**Resolved At:** 2026-07-07  
+**Phase:** Verification  
+**Sprint/Task:** ADR-007 Slice 1 (Fuel-Economy Unification) — on-device verification  
+**Environment:** local (Gradle :app:installDebug, device SM-G965F Android 10)  
+**Status:** Resolved  
+
+**Error Message / Output:**
+```
+java.lang.IllegalArgumentException: Inconsistency detected. A Migration was supplied to
+addMigration(Migration... migrations) that has a start or end version equal to a start
+version supplied to fallbackToDestructiveMigrationFrom(int... startVersions). Start version: 7
+	at androidx.room.RoomDatabase$Builder.build(RoomDatabase.kt:1265)
+	at com.kolee.tracklocation.data.roomdb.TrackDatabase$Companion.getDatabase(TrackDatabase.kt:265)
+```
+Crashed on launch (MainActivity.onCreate → first DAO access) before the database ever opened; the v7→v8 upgrade never ran (device DB stayed at user_version 7 with obdGpsDistanceKm still present).
+
+**Root Cause:**
+Room forbids registering a migration whose start OR end version equals a start version passed to `fallbackToDestructiveMigrationFrom(...)`. ADR-006 added `MIGRATION_6_7` (end version = 7); ADR-007 Slice 1 added `fallbackToDestructiveMigrationFrom(7)` (start version = 7). The two collide at version 7, so `RoomDatabase.Builder.build()` throws. ADR-006's `MIGRATION_6_7` and ADR-007's destructive fallback are mutually exclusive — the ADR-007 mechanism was infeasible as written. KAPT schema validation passes at build time; this is a runtime builder check, so it only surfaces on device.
+
+**Resolution:**
+Replaced `.fallbackToDestructiveMigrationFrom(7)` with an explicit destructive `MIGRATION_7_8` in `TrackDatabase.kt`: `DROP TABLE IF EXISTS recording_session` then recreate it without `obdGpsDistanceKm` (matching the v8 `SessionEntity`), registered in `addMigrations(...)`. Device-verified: logcat "DB version upgrading from 7 to 8", crash buffer empty, MainActivity rendered, Room open-time schema validation passed.
+
+**Lesson Learned:**
+`fallbackToDestructiveMigrationFrom(N)` cannot coexist with any registered migration ending at N — use an explicit N→N+1 migration instead. When one ADR adds a migration ending at version N and another adds a destructive fallback from N, they conflict; check cross-ADR migration interactions. The conflict is a runtime `build()` check invisible to KAPT — always launch on device after changing the Room builder config.
 
 ---
 
