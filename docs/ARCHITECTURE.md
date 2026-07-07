@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.1
+**Document Version:** 0.2
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-06-15
+**Last Updated:** 2026-07-07
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -30,7 +30,7 @@ Core entities and their relationships (Room):
 ### Entity Relationships
 
 ```
-LocationEntity (location_log)   ← canonical append-only GPS points (source of truth)
+LocationEntity (location_log)   ← canonical GPS points (source of truth); stationary fixes collapse to one dwell anchor (ADR-006)
   └── referenced by id ranges
 
 SessionEntity (recording_session)
@@ -133,7 +133,9 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), current version **5** (code at v5 as of OBD Phase 2 Slice 1, 2026-07-02; not yet built/device-verified per AGENTS.md §5a). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
+Room database (`TrackDatabase`), target version **7** (code currently at **v6** — Observer FTS, ADR-005; v7 lands when ADR-006 dwell-collapse code ships; not yet built/device-verified per AGENTS.md §5a). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
+
+`location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 
 `obd_sample` table:
 

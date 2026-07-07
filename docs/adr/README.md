@@ -94,6 +94,7 @@ Links to docs, code, or external resources supporting this decision.
 | [003](003-observer-navigation-placement.md) | Observer Navigation Placement (Option B) | Accepted | 2026-05-18 |
 | [004](004-obd-raw-at-io.md) | OBD-II via Raw AT I/O + Indirect Speed-Density Fuel | Accepted | 2026-06-07 |
 | [005](005-observer-fts.md) | Observer Full-Text Search via Room @Fts4 External-Content | Proposed | 2026-07-06 |
+| [006](006-location-dwell-collapse.md) | Location Dwell Collapse (canonical log stores one anchor per stop) | Accepted | 2026-07-07 |
 
 ---
 
@@ -113,4 +114,4 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Last Updated:** 2026-07-06 22:12:25
+**Last Updated:** 2026-07-07

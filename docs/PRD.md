@@ -7,10 +7,10 @@ description: Product Requirements Document — TrackLocation
 # Product Requirements Document
 ## TrackLocation
 
-**Document Version:** 0.2
+**Document Version:** 0.3
 **Status:** Active (migrated from product-spec.md + change-requests.md)
 **Created:** 2026-06-15
-**Last Updated:** 2026-06-15
+**Last Updated:** 2026-07-07
 **Owner:** Project Team
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -172,7 +172,7 @@ P1 local foundation (done, verified) → P2 inspection UI (in progress) → P3 f
 Inviolable constraints (migrated from CR-0001/CR-0002 guardrails and product-spec rules):
 
 - **BR-01:** Sessions are separate from trips.
-- **BR-02:** The canonical location log is the source of truth for GPS points.
+- **BR-02:** The canonical location log is the source of truth for GPS points; while stationary it stores one collapsed dwell anchor per stop rather than raw jitter fixes (see BR-11, ADR-006).
 - **BR-03:** Trips reference location ranges with `startLocationId` and `endLocationId`.
 - **BR-04:** Starting a trip while always-recording is OFF auto-starts always-recording.
 - **BR-05:** Stopping a trip does not stop always-recording.
@@ -181,6 +181,7 @@ Inviolable constraints (migrated from CR-0001/CR-0002 guardrails and product-spe
 - **BR-08:** If a trip is active, the user cannot turn always-recording OFF (guarded) unless a future CR changes this rule.
 - **BR-09:** Observer history is not user-deletable/clearable; unsynced local events are never deleted.
 - **BR-10:** OBD samples are stored only while a session is active.
+- **BR-11:** During a stop, consecutive GPS fixes within tolerance `max(15 m, 1.5 × accuracy)` collapse into a single `location_log` anchor row: `timestamp` tracks the last confirmed-still fix (departure) and `dwellStartTimestamp` the first (arrival); `collapsedCount` counts the folded fixes and raw intra-dwell fixes are not retained. Movement is confirmed only after 2 consecutive out-of-tolerance fixes (single-outlier rejection); collapsed fixes add no session/trip distance. (ADR-006)
 
 ---
 
