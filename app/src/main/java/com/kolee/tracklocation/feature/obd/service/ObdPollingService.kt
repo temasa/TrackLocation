@@ -34,6 +34,7 @@ sealed class ObdUiState {
         val fuelSource: String = "UNAVAILABLE",
         val instantKmL: Double? = null,
         val avgKmL: Double? = null,
+        val tripAvgKmL: Double? = null,
         val sessionActive: Boolean = false
     ) : ObdUiState()
     data class Retrying(val attemptSeconds: Int = 0, val maxSeconds: Int = 120) : ObdUiState()
@@ -57,6 +58,9 @@ class ObdPollingService : Service() {
     private var sessionDistanceKm = 0.0
     private var sessionFuelLiters = 0.0
     private var emaKmL: Double? = null
+    // ADR-007 Slice 2: in-memory O(1) trip fuel accumulator (replaces the 2s obd_sample re-query).
+    private var tripFuelLiters = 0.0
+    private var tripAccumStartedAt = 0L
     private var lastPollTimeMs = 0L
     // After this many consecutive cycles with no fuel PID answer, stop probing fuel so the
     // wasted round-trips don't slow the RPM/speed refresh on vehicles lacking 015E/0110.
@@ -400,6 +404,7 @@ class ObdPollingService : Service() {
                     // Session-average km/L, sourced from the PERSISTED accumulators so it survives
                     // app/service restarts (Slice 3). Null until some fuel has been consumed.
                     var avgKmL: Double? = null
+                    var tripAvgKmL: Double? = null
                     if (sessionActive) {
                         // Guard against a huge increment after a long stall/gap (e.g. adapter
                         // reconnect, backgrounding): only integrate plausible poll intervals.
@@ -410,6 +415,27 @@ class ObdPollingService : Service() {
                         val distIncrementKm = if (dtGuardOk) gpsSpeedKmh * dtSeconds / 3600.0 else 0.0
                         sessionFuelLiters += fuelIncrementL
                         sessionDistanceKm += distIncrementKm
+
+                        // ADR-007 Slice 2: trip fuel as an O(1) in-memory accumulator, reseeded from
+                        // obd_sample on a new trip or after a mid-trip process restart.
+                        val gpsTripStartedAt = gpsState.tripStartedAt
+                        if (gpsState.isTracking && gpsTripStartedAt > 0L) {
+                            if (gpsTripStartedAt != tripAccumStartedAt) {
+                                val obdDao = (applicationContext as com.kolee.tracklocation.TrackApp).obdSampleDao
+                                tripFuelLiters = com.kolee.tracklocation.feature.obd.ObdFuelMath
+                                    .integrateFuelLiters(obdDao.samplesBetweenOnce(gpsTripStartedAt, now))
+                                tripAccumStartedAt = gpsTripStartedAt
+                            } else {
+                                tripFuelLiters += fuelIncrementL
+                            }
+                            val tripDistKm = gpsState.distanceInMeters / 1000.0
+                            if (tripFuelLiters > 0.01 && tripDistKm > 0.01) {
+                                tripAvgKmL = tripDistKm / tripFuelLiters
+                            }
+                        } else {
+                            tripFuelLiters = 0.0
+                            tripAccumStartedAt = 0L
+                        }
 
                         // Persist the increments into the recording_session row.
                         val sessionDao = (applicationContext as com.kolee.tracklocation.TrackApp).sessionDao
@@ -435,6 +461,7 @@ class ObdPollingService : Service() {
                         fuelSource = fuelSource,
                         instantKmL = instantKmL,
                         avgKmL = avgKmL,
+                        tripAvgKmL = tripAvgKmL,
                         sessionActive = sessionActive
                     )
 

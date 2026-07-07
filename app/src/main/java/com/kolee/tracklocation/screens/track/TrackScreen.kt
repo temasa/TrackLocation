@@ -56,22 +56,9 @@ fun TrackScreen() {
     val idleFuelLph = connectedObd?.fuelRateLph
         ?.takeIf { locationUiState.speedInKMH < 3f && obdRpm > 0 }
 
-    // Live trip-average km/L: integrate fuel from obd_sample rows since trip start (there is no live
-    // trip DB row — see IMPLEMENTATION-ISSUES #1) and divide the live trip distance by it.
-    var tripAvgKmL by remember { mutableStateOf<Double?>(null) }
-    LaunchedEffect(locationUiState.isTracking, locationUiState.tripStartedAt) {
-        if (locationUiState.isTracking && locationUiState.tripStartedAt > 0L) {
-            while (true) {
-                val startMs = viewModel.locationUiState.value.tripStartedAt
-                val fuelL = viewModel.tripFuelLitersSince(startMs)
-                val distKm = viewModel.locationUiState.value.distanceInMeters / 1000.0
-                tripAvgKmL = if (fuelL > 0.01 && distKm > 0.01) distKm / fuelL else null
-                delay(2000)
-            }
-        } else {
-            tripAvgKmL = null
-        }
-    }
+    // Live trip-average km/L: ADR-007 Slice 2 — sourced from the ObdPollingService in-memory
+    // O(1) trip accumulator (replaces the 2s obd_sample re-query LaunchedEffect loop).
+    val tripAvgKmL = connectedObd?.tripAvgKmL
 
     val panelState = TrackPanelState(
         tripState = when {

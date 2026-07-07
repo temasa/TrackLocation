@@ -200,12 +200,21 @@ class TrackingService: Service() {
         val endedAt = System.currentTimeMillis()
         serviceScope.launch {
             if (sessionToClose != null) {
+                // ADR-007: obd_sample is the authoritative fuel source at session close —
+                // re-integrate the full session window rather than trusting the live per-poll
+                // accumulator, so any missed/duplicated increments are corrected. Note: retention
+                // pruning of obd_sample could under-count sessions older than the retention
+                // window; irrelevant for normal same-day session closes.
+                val reintegratedFuelL = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(
+                    database.obdSampleDao.samplesBetweenOnce(sessionToClose.startedAt, endedAt)
+                )
                 database.sessionDao.insertSession(
                     sessionToClose.copy(
                         endedAt = endedAt,
                         endLocationId = sessionToClose.endLocationId,
                         durationMillis = endedAt - sessionToClose.startedAt,
-                        isActive = false
+                        isActive = false,
+                        obdFuelConsumedL = reintegratedFuelL
                     )
                 )
             }

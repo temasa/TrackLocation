@@ -66,18 +66,10 @@ class ShareViewModel(
      * per-poll accumulation in ObdPollingService: for each consecutive sample pair, add
      * `fuelRateLph × dtHours` using the same 0 < dt < 60 s guard so a long gap (adapter drop,
      * backgrounding) doesn't inflate the total. [samples] must be ascending by timestamp.
+     * ADR-007: delegates to the shared canonical integral in ObdFuelMath.
      */
-    private fun integrateFuelLiters(samples: List<ObdSampleEntity>): Double {
-        var liters = 0.0
-        for (i in 1 until samples.size) {
-            val rate = samples[i].fuelRateLph ?: continue
-            val dtSeconds = (samples[i].timestampMs - samples[i - 1].timestampMs) / 1000.0
-            if (dtSeconds > 0 && dtSeconds < 60.0) {
-                liters += rate * dtSeconds / 3600.0
-            }
-        }
-        return liters
-    }
+    private fun integrateFuelLiters(samples: List<ObdSampleEntity>): Double =
+        com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(samples)
 
     init {
         viewModelScope.launch {
