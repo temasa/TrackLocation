@@ -5,6 +5,13 @@ sealed class AllowlistScope {
     data class FilteredCount(val active: Int, val total: Int) : AllowlistScope()
 }
 
+data class FilterState(
+    val selectedPackages: Set<String> = emptySet(),
+    val query: String = "",
+) {
+    val isActive: Boolean get() = selectedPackages.isNotEmpty() || query.isNotBlank()
+}
+
 data class ObserverUiState(
     val serviceEnabled: Boolean = false,
     val captureRunning: Boolean = true,
@@ -17,6 +24,7 @@ data class ObserverUiState(
     val snackbarMessage: String? = null,
     val canLoadMore: Boolean = false,
     val isLoadingMore: Boolean = false,
+    val filter: FilterState = FilterState(),
 )
 
 data class AllowlistDraftRule(

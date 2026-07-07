@@ -15,6 +15,11 @@ interface EventRepository {
     fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>>
     suspend fun getFilteredFirstPage(query: String, limit: Int): List<ObservedEvent>
     suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
+    suspend fun getPackageFirstPage(pkgs: List<String>, limit: Int): List<ObservedEvent>
+    suspend fun getPackageNextPage(pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
+    suspend fun getPackageTextFirstPage(query: String, pkgs: List<String>, limit: Int): List<ObservedEvent>
+    suspend fun getPackageTextNextPage(query: String, pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent>
+    suspend fun distinctPackages(): List<String>
 }
 
 class EventRepositoryImpl(context: Context) : EventRepository {
@@ -38,6 +43,21 @@ class EventRepositoryImpl(context: Context) : EventRepository {
 
     override suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
         dao.getFilteredEventsNextPage(query, beforeLastSeenAt, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getPackageFirstPage(pkgs: List<String>, limit: Int): List<ObservedEvent> =
+        dao.getPackageEventsFirstPage(pkgs, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getPackageNextPage(pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
+        dao.getPackageEventsNextPage(pkgs, beforeLastSeenAt, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getPackageTextFirstPage(query: String, pkgs: List<String>, limit: Int): List<ObservedEvent> =
+        dao.getPackageTextEventsFirstPage(query, pkgs, limit).reversed().map { it.toDomain() }
+
+    override suspend fun getPackageTextNextPage(query: String, pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> =
+        dao.getPackageTextEventsNextPage(query, pkgs, beforeLastSeenAt, limit).reversed().map { it.toDomain() }
+
+    override suspend fun distinctPackages(): List<String> =
+        dao.distinctPackages()
 
     override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> =
         dao.getEventsNewerThan(afterLastSeenAt).map { entities ->
@@ -78,4 +98,9 @@ class FakeEventRepository : EventRepository {
     override fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEvent>> = flowOf(emptyList())
     override suspend fun getFilteredFirstPage(query: String, limit: Int): List<ObservedEvent> = emptyList()
     override suspend fun getFilteredNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getPackageFirstPage(pkgs: List<String>, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getPackageNextPage(pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getPackageTextFirstPage(query: String, pkgs: List<String>, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun getPackageTextNextPage(query: String, pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEvent> = emptyList()
+    override suspend fun distinctPackages(): List<String> = emptyList()
 }

@@ -31,6 +31,24 @@ interface ObserverEventDao {
     @Query("SELECT oe.* FROM observer_event oe JOIN observer_event_fts ON observer_event_fts.rowid = oe.id WHERE observer_event_fts MATCH :query AND oe.lastSeenAt < :beforeLastSeenAt ORDER BY oe.lastSeenAt DESC LIMIT :limit")
     suspend fun getFilteredEventsNextPage(query: String, beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
 
+    // package-only
+    @Query("SELECT * FROM observer_event WHERE packageName IN (:pkgs) ORDER BY lastSeenAt DESC LIMIT :limit")
+    suspend fun getPackageEventsFirstPage(pkgs: List<String>, limit: Int): List<ObservedEventEntity>
+
+    @Query("SELECT * FROM observer_event WHERE packageName IN (:pkgs) AND lastSeenAt < :beforeLastSeenAt ORDER BY lastSeenAt DESC LIMIT :limit")
+    suspend fun getPackageEventsNextPage(pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
+
+    // package + text (FTS)
+    @Query("SELECT oe.* FROM observer_event oe JOIN observer_event_fts ON observer_event_fts.rowid = oe.id WHERE observer_event_fts MATCH :query AND oe.packageName IN (:pkgs) ORDER BY oe.lastSeenAt DESC LIMIT :limit")
+    suspend fun getPackageTextEventsFirstPage(query: String, pkgs: List<String>, limit: Int): List<ObservedEventEntity>
+
+    @Query("SELECT oe.* FROM observer_event oe JOIN observer_event_fts ON observer_event_fts.rowid = oe.id WHERE observer_event_fts MATCH :query AND oe.packageName IN (:pkgs) AND oe.lastSeenAt < :beforeLastSeenAt ORDER BY oe.lastSeenAt DESC LIMIT :limit")
+    suspend fun getPackageTextEventsNextPage(query: String, pkgs: List<String>, beforeLastSeenAt: Long, limit: Int): List<ObservedEventEntity>
+
+    // distinct package options (for Slice 3 chips)
+    @Query("SELECT DISTINCT packageName FROM observer_event ORDER BY packageName ASC")
+    suspend fun distinctPackages(): List<String>
+
     @Query("SELECT * FROM observer_event WHERE lastSeenAt > :afterLastSeenAt ORDER BY lastSeenAt DESC")
     fun getEventsNewerThan(afterLastSeenAt: Long): Flow<List<ObservedEventEntity>>
 

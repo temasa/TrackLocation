@@ -20,6 +20,7 @@ import com.kolee.tracklocation.feature.observer.data.repository.EventRepositoryI
 import com.kolee.tracklocation.feature.observer.domain.model.AllowlistDraftRule
 import com.kolee.tracklocation.feature.observer.domain.model.AllowlistScope
 import com.kolee.tracklocation.feature.observer.domain.model.AllowlistUiState
+import com.kolee.tracklocation.feature.observer.domain.model.FilterState
 import com.kolee.tracklocation.feature.observer.domain.model.MatchType
 import com.kolee.tracklocation.feature.observer.domain.model.ObservedEvent
 import com.kolee.tracklocation.feature.observer.domain.model.ObserverUiState
@@ -80,7 +81,7 @@ class ObserverViewModel(
 
         // Load first page then subscribe to live new events
         viewModelScope.launch {
-            val firstPage = eventRepository.getFirstPage(PAGE_SIZE)
+            val firstPage = loadFilteredFirstPage(_uiState.value.filter)
             _loadedEvents.addAll(firstPage)
             _loadedIds.addAll(firstPage.map { it.id })
             if (firstPage.isNotEmpty()) {
@@ -95,7 +96,10 @@ class ObserverViewModel(
 
             // Subscribe only to events newer than what was just loaded
             eventRepository.getEventsNewerThan(_newestLastSeenAt).collect { newerEvents ->
-                val newOnes = newerEvents.filter { it.id !in _loadedIds }
+                val filter = _uiState.value.filter
+                val newOnes = newerEvents
+                    .filter { it.id !in _loadedIds }
+                    .filter { !filter.isActive || matchesFilter(it, filter) }
                 if (newOnes.isNotEmpty()) {
                     _loadedEvents.addAll(newOnes)
                     _loadedIds.addAll(newOnes.map { it.id })
@@ -216,7 +220,7 @@ class ObserverViewModel(
         if (!_uiState.value.canLoadMore || _uiState.value.isLoadingMore) return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
-            val older = eventRepository.getNextPage(_oldestLastSeenAt, PAGE_SIZE)
+            val older = loadFilteredNextPage(_uiState.value.filter, _oldestLastSeenAt)
             val newOnes = older.filter { it.id !in _loadedIds }
             if (newOnes.isNotEmpty()) {
                 _loadedIds.addAll(newOnes.map { it.id })
@@ -233,6 +237,105 @@ class ObserverViewModel(
                 isLoadingMore = false,
             )}
         }
+    }
+
+    // Filtering ----------------------------------------------------------------
+
+    fun setQuery(q: String) {
+        _uiState.update { it.copy(filter = it.filter.copy(query = q)) }
+        reloadForFilter()
+    }
+
+    fun togglePackage(pkg: String) {
+        _uiState.update {
+            val current = it.filter.selectedPackages
+            val updated = if (pkg in current) current - pkg else current + pkg
+            it.copy(filter = it.filter.copy(selectedPackages = updated))
+        }
+        reloadForFilter()
+    }
+
+    fun clearFilter() {
+        _uiState.update { it.copy(filter = FilterState()) }
+        reloadForFilter()
+    }
+
+    private fun reloadForFilter() {
+        viewModelScope.launch {
+            _loadedEvents.clear()
+            _loadedIds.clear()
+            _oldestLastSeenAt = Long.MAX_VALUE
+            _newestLastSeenAt = 0L
+
+            val firstPage = loadFilteredFirstPage(_uiState.value.filter)
+            _loadedEvents.addAll(firstPage)
+            _loadedIds.addAll(firstPage.map { it.id })
+            if (firstPage.isNotEmpty()) {
+                _oldestLastSeenAt = firstPage.first().timestampMs
+                _newestLastSeenAt = firstPage.last().timestampMs
+            }
+            _uiState.update { it.copy(
+                events = _loadedEvents.toList(),
+                totalEventCount = _loadedEvents.size,
+                canLoadMore = firstPage.size >= PAGE_SIZE,
+            )}
+        }
+    }
+
+    // Routes the first-page load through the active filter (none / query / packages / both).
+    private suspend fun loadFilteredFirstPage(filter: FilterState): List<ObservedEvent> {
+        val pkgs = filter.selectedPackages.toList()
+        val fts = formatFtsQuery(filter.query)
+        return when {
+            pkgs.isNotEmpty() && fts != null ->
+                eventRepository.getPackageTextFirstPage(fts, pkgs, PAGE_SIZE)
+            pkgs.isNotEmpty() ->
+                eventRepository.getPackageFirstPage(pkgs, PAGE_SIZE)
+            fts != null ->
+                eventRepository.getFilteredFirstPage(fts, PAGE_SIZE)
+            else ->
+                eventRepository.getFirstPage(PAGE_SIZE)
+        }
+    }
+
+    // Routes the next-page (older) load through the active filter.
+    private suspend fun loadFilteredNextPage(filter: FilterState, beforeLastSeenAt: Long): List<ObservedEvent> {
+        val pkgs = filter.selectedPackages.toList()
+        val fts = formatFtsQuery(filter.query)
+        return when {
+            pkgs.isNotEmpty() && fts != null ->
+                eventRepository.getPackageTextNextPage(fts, pkgs, beforeLastSeenAt, PAGE_SIZE)
+            pkgs.isNotEmpty() ->
+                eventRepository.getPackageNextPage(pkgs, beforeLastSeenAt, PAGE_SIZE)
+            fts != null ->
+                eventRepository.getFilteredNextPage(fts, beforeLastSeenAt, PAGE_SIZE)
+            else ->
+                eventRepository.getNextPage(beforeLastSeenAt, PAGE_SIZE)
+        }
+    }
+
+    // Formats free user text into an FTS4 MATCH expression: trim, strip double-quotes,
+    // split on whitespace, append '*' to each token for prefix matching. Returns null when blank.
+    private fun formatFtsQuery(raw: String): String? {
+        val trimmed = raw.trim()
+        if (trimmed.isBlank()) return null
+        val tokens = trimmed
+            .replace("\"", "")
+            .split(Regex("\\s+"))
+            .filter { it.isNotBlank() }
+            .map { "$it*" }
+        if (tokens.isEmpty()) return null
+        return tokens.joinToString(" ")
+    }
+
+    // In-memory match used by the live tail when a filter is active.
+    private fun matchesFilter(event: ObservedEvent, filter: FilterState): Boolean {
+        val packageOk = filter.selectedPackages.isEmpty() ||
+            event.packageName in filter.selectedPackages
+        val queryOk = filter.query.isBlank() ||
+            listOfNotNull(event.packageName, event.activityName, event.textSummary)
+                .any { it.contains(filter.query, ignoreCase = true) }
+        return packageOk && queryOk
     }
 
     private fun isOurServiceEnabled(): Boolean {
