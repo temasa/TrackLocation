@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,8 +55,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.feature.obd.FuelPriceController
+import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
+import com.kolee.tracklocation.feature.obd.ui.FuelCostEditorDialog
+import com.kolee.tracklocation.feature.obd.ui.formatIdr
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.tracking.LocationUiState
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
@@ -125,6 +130,19 @@ private fun TrackSuccessState(
         ?.let { String.format(Locale.ENGLISH, "%.1f", it) }
         ?: "—"
 
+    // Fuel Cost (FR-12): attach the shared price controller once, observe its state.
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        FuelPriceController.attach(ObdPreferencesDataStore(context.applicationContext))
+    }
+    val priceState by FuelPriceController.state.collectAsState()
+    var showPriceDialog by remember { mutableStateOf(false) }
+    val tripFuelConsumedL = (obdState as? ObdUiState.Connected)?.tripFuelConsumedL
+    val price = priceState.currentPrice
+    val costText = if (tripFuelConsumedL != null && price > 0.0) {
+        formatIdr(tripFuelConsumedL * price)
+    } else "—"
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -148,7 +166,12 @@ private fun TrackSuccessState(
 
         if (isTripActive) {
             item(key = "active-trip-row") {
-                ActiveTripRow(uiState = uiState, efficiencyText = activeEfficiencyText)
+                ActiveTripRow(
+                    uiState = uiState,
+                    efficiencyText = activeEfficiencyText,
+                    costText = costText,
+                    onCostClick = { showPriceDialog = true }
+                )
             }
         }
 
@@ -182,10 +205,31 @@ private fun TrackSuccessState(
             }
         }
     }
+
+    // Fuel Cost (FR-12): shared price editor with in-memory undo/redo.
+    if (showPriceDialog) {
+        FuelCostEditorDialog(
+            current = priceState.currentPrice,
+            canUndo = priceState.canUndo,
+            canRedo = priceState.canRedo,
+            onSave = { newPrice ->
+                FuelPriceController.set(newPrice)
+                showPriceDialog = false
+            },
+            onUndo = { FuelPriceController.undo() },
+            onRedo = { FuelPriceController.redo() },
+            onDismiss = { showPriceDialog = false }
+        )
+    }
 }
 
 @Composable
-private fun ActiveTripRow(uiState: LocationUiState, efficiencyText: String) {
+private fun ActiveTripRow(
+    uiState: LocationUiState,
+    efficiencyText: String,
+    costText: String,
+    onCostClick: () -> Unit
+) {
     val now by produceState(initialValue = System.currentTimeMillis(), uiState.isTracking) {
         while (true) {
             value = System.currentTimeMillis()
@@ -250,6 +294,15 @@ private fun ActiveTripRow(uiState: LocationUiState, efficiencyText: String) {
             ActiveTripStat(value = durationText, label = "duration", modifier = Modifier.weight(1f))
             ActiveTripStat(value = avgSpeedText, label = "avg speed", modifier = Modifier.weight(1f))
             ActiveTripStat(value = efficiencyText, label = "km/L", modifier = Modifier.weight(1f))
+            // Fuel Cost (FR-12): 5th stat, tappable to edit the shared price. Row now has 5 stats
+            // (density note: labels may compress; acceptable per UI-SPEC §4).
+            ActiveTripStat(
+                value = costText,
+                label = "cost",
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onCostClick() }
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -25,6 +26,8 @@ class ObdPreferencesDataStore(private val context: Context) {
     private val OBD_LAST_ERROR = stringPreferencesKey("obd_last_error")
     private val OBD_LAST_SAMPLE_TS = longPreferencesKey("obd_last_sample_ts")
     private val OBD_ENGINE_DISPLACEMENT_CC = intPreferencesKey("obd_engine_displacement_cc")
+    // Fuel Cost (FR-12): shared current price per litre in IDR. 0.0 = unset (cost shows "—").
+    private val OBD_FUEL_PRICE_PER_LITER = doublePreferencesKey("obd_fuel_price_per_liter")
 
     val obdServiceEnabled: Flow<Boolean> = context.obdDataStore.data
         .map { prefs -> prefs[OBD_SERVICE_ENABLED] ?: false }
@@ -54,6 +57,10 @@ class ObdPreferencesDataStore(private val context: Context) {
     // that expose neither direct fuel rate (015E) nor MAF (0110). 0 disables the estimate.
     val obdEngineDisplacementCc: Flow<Int> = context.obdDataStore.data
         .map { prefs -> prefs[OBD_ENGINE_DISPLACEMENT_CC] ?: 1193 }
+
+    // Fuel Cost (FR-12): current price per litre in IDR; 0.0 means unset.
+    val obdFuelPricePerLiter: Flow<Double> = context.obdDataStore.data
+        .map { prefs -> prefs[OBD_FUEL_PRICE_PER_LITER] ?: 0.0 }
 
     suspend fun setObdServiceEnabled(enabled: Boolean) {
         context.obdDataStore.edit { prefs ->
@@ -106,6 +113,12 @@ class ObdPreferencesDataStore(private val context: Context) {
     suspend fun setObdEngineDisplacementCc(cc: Int) {
         context.obdDataStore.edit { prefs ->
             prefs[OBD_ENGINE_DISPLACEMENT_CC] = cc
+        }
+    }
+
+    suspend fun setObdFuelPricePerLiter(price: Double) {
+        context.obdDataStore.edit { prefs ->
+            prefs[OBD_FUEL_PRICE_PER_LITER] = price
         }
     }
 }

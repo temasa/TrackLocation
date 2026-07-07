@@ -15,6 +15,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +64,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.data.roomdb.SessionEntity
+import com.kolee.tracklocation.feature.obd.FuelPriceController
+import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
+import com.kolee.tracklocation.feature.obd.ui.FuelCostEditorDialog
+import com.kolee.tracklocation.feature.obd.ui.formatIdr
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
@@ -103,6 +109,14 @@ fun SessionsScreen() {
     )
     val locationUiState by viewModel.locationUiState.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
+
+    // Fuel Cost (FR-12): attach the shared price controller once, then observe its state.
+    LaunchedEffect(Unit) {
+        FuelPriceController.attach(ObdPreferencesDataStore(context.applicationContext))
+    }
+    val priceState by FuelPriceController.state.collectAsState()
+    var showPriceDialog by remember { mutableStateOf(false) }
+
     val sessions = viewModel.sessionsState.mapIndexed { index, session ->
         session.toUiItem(index = sessionsIndex(viewModel.sessionsState.size, index))
     }
@@ -137,9 +151,16 @@ fun SessionsScreen() {
             )
 
             if (obdState is ObdUiState.Connected || obdState is ObdUiState.Waiting) {
+                val sessionFuelConsumedL = (obdState as? ObdUiState.Connected)?.sessionFuelConsumedL
+                val price = priceState.currentPrice
+                val costText = if (sessionFuelConsumedL != null && price > 0.0) {
+                    formatIdr(sessionFuelConsumedL * price)
+                } else "—"
                 ObdStatusCard(
                     obdState = obdState,
                     locationUiState = locationUiState,
+                    costText = costText,
+                    onCostClick = { showPriceDialog = true },
                     onReconnect = {
                         val intent = Intent(context, ObdPollingService::class.java).apply {
                             action = ObdPollingService.ACTION_RECONNECT_NOW
@@ -165,6 +186,22 @@ fun SessionsScreen() {
                     requestRecordingPermission = false
                     performTrackingService(context, Actions.START_RECORDING)
                 }
+            )
+        }
+
+        // Fuel Cost (FR-12): shared price editor with in-memory undo/redo.
+        if (showPriceDialog) {
+            FuelCostEditorDialog(
+                current = priceState.currentPrice,
+                canUndo = priceState.canUndo,
+                canRedo = priceState.canRedo,
+                onSave = { newPrice ->
+                    FuelPriceController.set(newPrice)
+                    showPriceDialog = false
+                },
+                onUndo = { FuelPriceController.undo() },
+                onRedo = { FuelPriceController.redo() },
+                onDismiss = { showPriceDialog = false }
             )
         }
     }
@@ -612,6 +649,8 @@ private fun SessionPulseRing(delayMs: Int) {
 private fun ObdStatusCard(
     obdState: ObdUiState,
     locationUiState: com.kolee.tracklocation.tracking.LocationUiState,
+    costText: String,
+    onCostClick: () -> Unit,
     onReconnect: () -> Unit
 ) {
     Card(
@@ -748,6 +787,29 @@ private fun ObdStatusCard(
                         )
                         Text(
                             text = obdState.avgKmL?.let { String.format("%.1f km/L", it) } ?: "—",
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Fuel Cost (FR-12): tappable COST cell (litres × shared price). "—" when unset.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCostClick() }
+                        .padding(top = 8.dp, bottom = 4.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "COST",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = costText,
                             color = TripInk,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold

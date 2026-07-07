@@ -35,6 +35,10 @@ sealed class ObdUiState {
         val instantKmL: Double? = null,
         val avgKmL: Double? = null,
         val tripAvgKmL: Double? = null,
+        // Fuel Cost (FR-12): litres consumed this session / trip, for cost = litres × price.
+        // Null when zero (cost shows "—").
+        val sessionFuelConsumedL: Double? = null,
+        val tripFuelConsumedL: Double? = null,
         val sessionActive: Boolean = false
     ) : ObdUiState()
     data class Retrying(val attemptSeconds: Int = 0, val maxSeconds: Int = 120) : ObdUiState()
@@ -405,6 +409,8 @@ class ObdPollingService : Service() {
                     // app/service restarts (Slice 3). Null until some fuel has been consumed.
                     var avgKmL: Double? = null
                     var tripAvgKmL: Double? = null
+                    // Fuel Cost (FR-12): session litres from the persisted accumulator; null when 0.
+                    var sessionFuelConsumedL: Double? = null
                     if (sessionActive) {
                         // Guard against a huge increment after a long stall/gap (e.g. adapter
                         // reconnect, backgrounding): only integrate plausible poll intervals.
@@ -452,6 +458,7 @@ class ObdPollingService : Service() {
                         if (persistedFuelL > 0.01 && persistedDistKm > 0.01) {
                             avgKmL = persistedDistKm / persistedFuelL
                         }
+                        sessionFuelConsumedL = persistedFuelL.takeIf { it > 0.0 }
                     }
 
                     obdUiState.value = ObdUiState.Connected(
@@ -462,6 +469,8 @@ class ObdPollingService : Service() {
                         instantKmL = instantKmL,
                         avgKmL = avgKmL,
                         tripAvgKmL = tripAvgKmL,
+                        sessionFuelConsumedL = sessionFuelConsumedL,
+                        tripFuelConsumedL = tripFuelLiters.takeIf { gpsState.isTracking && it > 0.0 },
                         sessionActive = sessionActive
                     )
 
