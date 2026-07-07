@@ -140,6 +140,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-07:** When OBD is connected, speed = 0, and RPM > 0 (idle), the fuel consumption display shows the instantaneous fuel flow rate in L/h rather than "--".
 - **FR-08:** Session average km/L is the ratio of cumulative GPS distance to cumulative fuel consumed since the session started; it persists across app restarts and resets when a new session begins.
 - **FR-09:** Trip average km/L is the ratio of trip GPS distance to cumulative fuel consumed since the trip started; it persists to the trip record.
+- **FR-10:** Always-recording persists across app restarts. If an open session survives a force-stop/kill and is still recent (a location point within the ~2-minute launch grace window), the app resumes recording on next launch — the Session status card returns to Active and the session keeps accumulating. Sessions idle beyond the grace window are closed on launch and stay stopped.
 
 ---
 
