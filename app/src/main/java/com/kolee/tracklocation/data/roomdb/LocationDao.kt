@@ -12,6 +12,9 @@ interface LocationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLocation(item: LocationEntity): Long
 
+    @Query("UPDATE location_log SET timestamp = :timestamp, collapsedCount = collapsedCount + 1 WHERE id = :id")
+    suspend fun updateDwellAnchor(id: Long, timestamp: Long)
+
     @Query("SELECT * FROM location_log ORDER BY id DESC LIMIT 1")
     suspend fun getLatestLocation(): LocationEntity?
 

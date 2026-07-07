@@ -8,6 +8,8 @@ data class LocationEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
     val timestamp: Long = 0L,
+    val dwellStartTimestamp: Long = 0L,
+    val collapsedCount: Int = 1,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val accuracyMeters: Float? = null,

@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ObdSampleEntity::class,
         ObservedEventFtsEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -75,6 +75,17 @@ abstract class TrackDatabase: RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE VIRTUAL TABLE IF NOT EXISTS `observer_event_fts` USING FTS4(`packageName` TEXT, `activityName` TEXT, `textSummary` TEXT, content=`observer_event`)")
                 db.execSQL("INSERT INTO `observer_event_fts`(`observer_event_fts`) VALUES('rebuild')")
+            }
+        }
+
+        // ADR-006 Location Dwell Collapse: dwell-anchor columns on location_log.
+        // `dwellStartTimestamp` = arrival (backfilled from existing timestamp); `collapsedCount`
+        // = fixes folded into the anchor (default 1).
+        private val MIGRATION_6_7 = object: Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `location_log` ADD COLUMN `dwellStartTimestamp` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `location_log` ADD COLUMN `collapsedCount` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("UPDATE `location_log` SET `dwellStartTimestamp` = `timestamp`")
             }
         }
 
@@ -249,7 +260,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .build()
                 INSTANCE = instance
                 return instance
