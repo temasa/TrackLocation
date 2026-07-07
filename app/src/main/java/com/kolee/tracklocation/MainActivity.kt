@@ -13,6 +13,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.kolee.tracklocation.navigation.BottomNavigationScreen
 import com.kolee.tracklocation.navigation.NavGraph
+import androidx.core.content.ContextCompat
+import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.theme.TrackLocationTheme
 import kotlinx.coroutines.Dispatchers
@@ -37,10 +39,23 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             if (!TrackingService.locationUiState.value.isAlwaysRecording) {
                 val now = System.currentTimeMillis()
-                (application as TrackApp).sessionDao.closeStaleActiveSessions(
+                val sessionDao = (application as TrackApp).sessionDao
+                sessionDao.closeStaleActiveSessions(
                     endedAt = now,
                     staleBefore = now - RESUME_GRACE_MILLIS
                 )
+                // Always-recording is meant to survive a restart. A user force-stop kills the
+                // process without a START_STICKY redelivery, so a still-open (non-stale) session
+                // would be left with no running service — the Session card reads Inactive while
+                // the list still shows the session ACTIVE. If such a session survives the stale
+                // reap, resume recording by re-entering the (healed) always-recording path, which
+                // adopts the open session instead of creating a duplicate.
+                if (sessionDao.getActiveSession() != null) {
+                    val resumeIntent = Intent(this@MainActivity, TrackingService::class.java).apply {
+                        action = Actions.START_RECORDING.name
+                    }
+                    ContextCompat.startForegroundService(this@MainActivity, resumeIntent)
+                }
             }
             // Auto-start OBD service if enabled. Read the launch-time value only (first());
             // collecting the flow would re-fire ACTION_START on every DataStore write. Runtime
