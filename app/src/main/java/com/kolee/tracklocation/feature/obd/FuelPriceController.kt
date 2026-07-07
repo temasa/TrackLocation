@@ -1,5 +1,7 @@
 package com.kolee.tracklocation.feature.obd
 
+import com.kolee.tracklocation.data.roomdb.FuelPriceDao
+import com.kolee.tracklocation.data.roomdb.FuelPriceEntity
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,13 +13,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Fuel Cost (FR-12) — process-lifetime singleton owning the shared current fuel price
+ * Fuel Cost (ADR-008) — process-lifetime singleton owning the shared current fuel price
  * (IDR per litre) plus an in-memory multi-step undo/redo history.
  *
- * Only the current price is persisted (via [ObdPreferencesDataStore.setObdFuelPricePerLiter]);
- * the undo/redo history is intentionally in-memory only and resets on process restart.
- * On first [attach] the history is seeded from the persisted current price so cost display and
- * undo/redo start from the last saved value.
+ * Persistence is the `fuel_price` table (effective-dated, append-only): every Save/Undo/Redo
+ * appends a new row with `effectiveFromMs = now`, so completed-trip costs (priced at the trip's
+ * start time) never change retroactively. The in-memory stack still drives which value is
+ * "current" for the active session/trip. On first [attach], a one-time seed migrates the legacy
+ * DataStore scalar into the table if it is still empty.
  */
 object FuelPriceController {
 
@@ -34,7 +37,7 @@ object FuelPriceController {
     private val history: MutableList<Double> = mutableListOf()
     private var index: Int = -1
 
-    private var prefs: ObdPreferencesDataStore? = null
+    private var fuelPriceDao: FuelPriceDao? = null
     private var attached = false
 
     private val _state = MutableStateFlow(FuelPriceState(currentPrice = 0.0, canUndo = false, canRedo = false))
@@ -55,23 +58,32 @@ object FuelPriceController {
     }
 
     private fun persistCurrent() {
-        val p = prefs ?: return
+        val dao = fuelPriceDao ?: return
         val price = currentPrice()
-        scope.launch { p.setObdFuelPricePerLiter(price) }
+        scope.launch {
+            dao.insert(FuelPriceEntity(pricePerLiter = price, effectiveFromMs = System.currentTimeMillis()))
+        }
     }
 
     /**
-     * Idempotent. On the first call, captures [prefs] and seeds the history from the FIRST
-     * persisted price value. Safe to call from every screen's LaunchedEffect(Unit).
+     * Idempotent. On the first call, captures [fuelPriceDao] and seeds the history from the
+     * current row in the `fuel_price` table (seeding the table from the legacy DataStore scalar
+     * first, if the table is still empty). Safe to call from every screen's LaunchedEffect(Unit).
      */
-    fun attach(prefs: ObdPreferencesDataStore) {
+    fun attach(fuelPriceDao: FuelPriceDao, prefs: ObdPreferencesDataStore) {
         if (attached) return
         attached = true
-        this.prefs = prefs
+        this.fuelPriceDao = fuelPriceDao
         scope.launch {
-            val seed = prefs.obdFuelPricePerLiter.first()
+            if (fuelPriceDao.count() == 0) {
+                val scalar = prefs.obdFuelPricePerLiter.first()
+                if (scalar > 0.0) {
+                    fuelPriceDao.insert(FuelPriceEntity(pricePerLiter = scalar, effectiveFromMs = 0L))
+                }
+            }
+            val cur = fuelPriceDao.currentPriceOnce()?.pricePerLiter ?: 0.0
             history.clear()
-            history.add(seed)
+            history.add(cur)
             index = 0
             emitState()
         }

@@ -36,6 +36,7 @@ import java.util.Locale
 @Composable
 fun TrackItemRow(
     item: TrackEntity,
+    costText: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -124,6 +125,11 @@ fun TrackItemRow(
             TrackStat(
                 value = efficiencyText,
                 label = "km/L",
+                modifier = Modifier.weight(1f)
+            )
+            TrackStat(
+                value = costText,
+                label = "cost",
                 modifier = Modifier.weight(1f)
             )
         }

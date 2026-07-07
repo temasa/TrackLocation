@@ -112,7 +112,10 @@ fun SessionsScreen() {
 
     // Fuel Cost (FR-12): attach the shared price controller once, then observe its state.
     LaunchedEffect(Unit) {
-        FuelPriceController.attach(ObdPreferencesDataStore(context.applicationContext))
+        FuelPriceController.attach(
+            (context.applicationContext as com.kolee.tracklocation.TrackApp).fuelPriceDao,
+            ObdPreferencesDataStore(context.applicationContext)
+        )
     }
     val priceState by FuelPriceController.state.collectAsState()
     var showPriceDialog by remember { mutableStateOf(false) }

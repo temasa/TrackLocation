@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -125,23 +126,48 @@ private fun TrackSuccessState(
     val uiState by viewModel.locationUiState.collectAsState()
     val isTripActive = uiState.isTracking
     val obdState by ObdPollingService.obdUiState.collectAsState()
-    val activeEfficiencyText = (obdState as? ObdUiState.Connected)
-        ?.let { it.avgKmL ?: it.instantKmL }
-        ?.let { String.format(Locale.ENGLISH, "%.1f", it) }
-        ?: "—"
+    val connected = obdState as? ObdUiState.Connected
 
-    // Fuel Cost (FR-12): attach the shared price controller once, observe its state.
+    // Fuel Cost (ADR-008): attach the shared price controller once, observe its state.
     val context = LocalContext.current
+    val fuelPriceDao = remember {
+        (context.applicationContext as com.kolee.tracklocation.TrackApp).fuelPriceDao
+    }
     LaunchedEffect(Unit) {
-        FuelPriceController.attach(ObdPreferencesDataStore(context.applicationContext))
+        FuelPriceController.attach(fuelPriceDao, ObdPreferencesDataStore(context.applicationContext))
     }
     val priceState by FuelPriceController.state.collectAsState()
     var showPriceDialog by remember { mutableStateOf(false) }
-    val tripFuelConsumedL = (obdState as? ObdUiState.Connected)?.tripFuelConsumedL
+    val tripFuelConsumedL = connected?.tripFuelConsumedL
     val price = priceState.currentPrice
     val costText = if (tripFuelConsumedL != null && price > 0.0) {
         formatIdr(tripFuelConsumedL * price)
     } else "—"
+
+    // ADR-008: active-row OBD stats, separated from the base row.
+    val instantKmLText = if (connected?.instantKmL != null &&
+        uiState.speedInKMH > 3f &&
+        uiState.accuracyMeters <= 20f
+    ) {
+        String.format(Locale.ENGLISH, "%.1f", connected.instantKmL)
+    } else "—"
+    val lphText = connected?.fuelRateLph?.takeIf { it > 0.0 }
+        ?.let { String.format(Locale.ENGLISH, "%.1f", it) }
+        ?: "—"
+    val tripAvgKmLText = connected?.tripAvgKmL
+        ?.let { String.format(Locale.ENGLISH, "%.1f", it) }
+        ?: "—"
+
+    // ADR-008: completed-trip costs, precomputed in batch keyed by trip idx.
+    val tripCosts = remember { mutableStateMapOf<Int, String>() }
+    LaunchedEffect(trackList, priceState) {
+        for (t in trackList) {
+            val p = fuelPriceDao.priceEffectiveAt(t.timestamp)
+            tripCosts[t.idx] = if (t.obdFuelConsumedL > 0.0 && p != null && p.pricePerLiter > 0.0) {
+                formatIdr(t.obdFuelConsumedL * p.pricePerLiter)
+            } else "—"
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -168,7 +194,9 @@ private fun TrackSuccessState(
             item(key = "active-trip-row") {
                 ActiveTripRow(
                     uiState = uiState,
-                    efficiencyText = activeEfficiencyText,
+                    instantKmLText = instantKmLText,
+                    lphText = lphText,
+                    tripAvgKmLText = tripAvgKmLText,
                     costText = costText,
                     onCostClick = { showPriceDialog = true }
                 )
@@ -190,6 +218,7 @@ private fun TrackSuccessState(
 
                 TrackItemRow(
                     item = item,
+                    costText = tripCosts[item.idx] ?: "—",
                     onClick = { onSelect.invoke(item.idx) },
                     onLongClick = { showDialogForDeletion = true }
                 )
@@ -226,7 +255,9 @@ private fun TrackSuccessState(
 @Composable
 private fun ActiveTripRow(
     uiState: LocationUiState,
-    efficiencyText: String,
+    instantKmLText: String,
+    lphText: String,
+    tripAvgKmLText: String,
     costText: String,
     onCostClick: () -> Unit
 ) {
@@ -250,7 +281,7 @@ private fun ActiveTripRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(124.dp)
+            .height(156.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(TripSurface)
             .border(1.5.dp, TripGreen, RoundedCornerShape(18.dp))
@@ -285,6 +316,7 @@ private fun ActiveTripRow(
                 .height(1.dp)
                 .background(TripBorder)
         )
+        // ADR-008: base row — distance / duration / avg speed.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -293,9 +325,16 @@ private fun ActiveTripRow(
             ActiveTripStat(value = distanceText, label = "km", modifier = Modifier.weight(1f))
             ActiveTripStat(value = durationText, label = "duration", modifier = Modifier.weight(1f))
             ActiveTripStat(value = avgSpeedText, label = "avg speed", modifier = Modifier.weight(1f))
-            ActiveTripStat(value = efficiencyText, label = "km/L", modifier = Modifier.weight(1f))
-            // Fuel Cost (FR-12): 5th stat, tappable to edit the shared price. Row now has 5 stats
-            // (density note: labels may compress; acceptable per UI-SPEC §4).
+        }
+        // ADR-008: OBD row — instant km/L / L/h / trip-average km/L / cost (tappable).
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            ActiveTripStat(value = instantKmLText, label = "km/L", modifier = Modifier.weight(1f))
+            ActiveTripStat(value = lphText, label = "L/h", modifier = Modifier.weight(1f))
+            ActiveTripStat(value = tripAvgKmLText, label = "avg km/L", modifier = Modifier.weight(1f))
             ActiveTripStat(
                 value = costText,
                 label = "cost",

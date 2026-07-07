@@ -15,9 +15,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ObservedEventEntity::class,
         AllowlistRuleEntity::class,
         ObdSampleEntity::class,
-        ObservedEventFtsEntity::class
+        ObservedEventFtsEntity::class,
+        FuelPriceEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -28,6 +29,7 @@ abstract class TrackDatabase: RoomDatabase() {
     abstract val observerEventDao: ObserverEventDao
     abstract val allowlistRuleDao: AllowlistRuleDao
     abstract val obdSampleDao: ObdSampleDao
+    abstract val fuelPriceDao: FuelPriceDao
 
     companion object {
         @Volatile
@@ -119,6 +121,14 @@ abstract class TrackDatabase: RoomDatabase() {
         // OBD Phase 2 Slice 1: fuel-consumption accumulators persisted per session and per trip.
         // NOTE: the domain "trip" table is physically named `track` (PK `idx`); the plan's
         // `ALTER TABLE trip` text refers to this table.
+        // ADR-008: fuel price as an effective-dated entity. Additive-only — new table + index.
+        private val MIGRATION_8_9 = object: Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `fuel_price` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pricePerLiter` REAL NOT NULL, `effectiveFromMs` INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_fuel_price_effectiveFromMs` ON `fuel_price` (`effectiveFromMs`)")
+            }
+        }
+
         private val MIGRATION_4_5 = object: Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `recording_session` ADD COLUMN `obdFuelConsumedL` REAL NOT NULL DEFAULT 0.0")
@@ -287,7 +297,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .build()
                 INSTANCE = instance
                 return instance

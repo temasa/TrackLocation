@@ -27,6 +27,9 @@ class TrackApp: Application() {
     val obdSampleDao by lazy {
         TrackDatabase.getDatabase(this).obdSampleDao
     }
+    val fuelPriceDao by lazy {
+        TrackDatabase.getDatabase(this).fuelPriceDao
+    }
 
     override fun onCreate() {
         super.onCreate()
