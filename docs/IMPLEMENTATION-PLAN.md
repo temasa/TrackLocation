@@ -18,7 +18,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — Observer Phase 3 (Filtering + Settings): S1–S2 done (data layer + filter state/query wiring, built + device-verified). Next: S3 filter UI — needs a Claude Design handoff first (§12). (OBD Phase 2 built + installed; manual drive-test still pending — user.)
+### Current — Observer Phase 3 (Filtering + Settings): S1–S2 done + device-verified; S3 design handoff done (Claude Design "Observer Filter Bar", user-approved 2026-07-07); S3 code next. (OBD Phase 2 built + installed; manual drive-test still pending — user.)
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -34,7 +34,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 **Observer Phase 2** is complete and fully verified on device (cursor pagination + snapshot viewer + truncation banner, all states confirmed 2026-07-02).
 
-**Observer Phase 3 (Filtering + Unified Settings)** is the active development phase. **S1 — filter data layer** (Room `@Fts4` external-content FTS over `observer_event` + filtered paginated DAO queries; DB migration 5→6) is complete — built + migration-verified on device 2026-07-06 (`MIGRATION_5_6` ran cleanly, no Room schema-identity crash); the FTS approach is recorded in ADR-005. **S2 — filter state + query wiring** is complete (built + device-verified 2026-07-07): `FilterState` + filter-aware pagination router + in-memory live-tail filtering, no UI yet. **Next: S3 — filter UI** (package chips, text search, no-results), which requires a Claude Design handoff first (§12), followed by S4 (unified Observer Settings). Full slice breakdown in §4 / Appendix A.
+**Observer Phase 3 (Filtering + Unified Settings)** is the active development phase. **S1 — filter data layer** (Room `@Fts4` external-content FTS over `observer_event` + filtered paginated DAO queries; DB migration 5→6) is complete — built + migration-verified on device 2026-07-06 (`MIGRATION_5_6` ran cleanly, no Room schema-identity crash); the FTS approach is recorded in ADR-005. **S2 — filter state + query wiring** is complete (built + device-verified 2026-07-07): `FilterState` + filter-aware pagination router + in-memory live-tail filtering, no UI yet. **S3 — filter UI** (package chips, text search, no-results): the Claude Design handoff is done (page "Observer Filter Bar", 3 artboards, user-approved 2026-07-07) and code is next; the mockup rendered dark but the code uses the existing light Observer palette. S4 (unified Observer Settings) still needs a design handoff first (§12). Full slice breakdown in §4 / Appendix A.
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
 > Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md. OBD Phase 2 is code-complete (Slices 1–4, static). Next: build/device-verify OBD Phase 2 (with permission), or start Observer Phase 3. Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
@@ -78,7 +78,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer + truncation banner) | Implemented | Verified on device (2026-07-02) |
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | OBD Phase 2 — Fuel consumption enhancement | Implemented (Slices 1–4: schema + DB accumulation + Session card + Trip panel) | Slice 3 design done in Claude Design; Slice 4 reused existing language | Built + installed on device 2026-07-06; manual drive-test pending |
-| Observer Phase 3 — Filtering + Settings | In progress (S1–S2 done: FTS filter data + state/query wiring) | S3/S4 pending design handoff | S1–S2 built + verified on device (S1 2026-07-06, S2 2026-07-07); S3 design handoff next |
+| Observer Phase 3 — Filtering + Settings | In progress (S1–S2 done; S3 code next) | S3 design done (Claude Design "Observer Filter Bar", 2026-07-07); S4 pending design | S1–S2 built + verified; S3 code next |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
 | Observer Phase 6 — Registration + Face Enrollment | Planned | Planned | Not started |
@@ -150,7 +150,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 - **PRD:** v0.2
 - **DB version:** Room 6 (migrations 1→2, 2→3, 3→4, 4→5, 5→6)
-- **Active work:** Observer Phase 3 filtering (Slices 1–2 done + device-verified; next: Slice 3 filter UI — design handoff first)
+- **Active work:** Observer Phase 3 filtering (Slices 1–2 done + device-verified; S3 design handoff done, S3 code next)
 - **Reference docs:** §13
 
 ---
@@ -671,7 +671,7 @@ Slices follow the standard format (what → observable → how to verify → ste
 
 **What it does:** Surfaces package chips, a global text search, and a no-results empty state in the feed.
 
-**Design gate:** Claude Design handoff for filter-chip interaction, active/selected states, and no-results treatment BEFORE code (§12). Attach current Observer feed + `FeedHeaderBar` + allowlist sheet screenshots.
+**Design gate — DONE (2026-07-07):** Claude Design handoff produced in the existing TrackLocation project (rinaldi.ch account, Haiku 4.5) as page **"Observer Filter Bar"** — 3 artboards (filter bar default; filter bar active with 2 selected chips [check icon + bold outline, not color-only] + match count; no-results with a Clear-filters button). User-approved 2026-07-07. **Note:** the mockup rendered dark, but the actual Observer feed is light — the code follows the mockup's layout/interaction while using the existing light Observer palette (`0xFFF1F4F0` bg, `0xFF0A0A0A` text, `0xFF737373` muted, `0xFFE7EAE6` borders, `ObserverAmber`/`TripGreen` accents).
 
 **How to Verify:** on device — selecting a package chip narrows the feed; typing a query filters live; clearing restores; no-results state shows the designed empty view; no regression to pagination/live events.
 
