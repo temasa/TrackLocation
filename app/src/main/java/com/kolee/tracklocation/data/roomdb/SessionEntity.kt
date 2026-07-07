@@ -15,6 +15,5 @@ data class SessionEntity(
     val durationMillis: Long = 0L,
     val pointCount: Int = 0,
     val isActive: Boolean = false,
-    val obdFuelConsumedL: Double = 0.0,
-    val obdGpsDistanceKm: Double = 0.0
+    val obdFuelConsumedL: Double = 0.0
 )

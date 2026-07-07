@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ObdSampleEntity::class,
         ObservedEventFtsEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -261,6 +261,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     "track_db"
                 )
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .fallbackToDestructiveMigrationFrom(7)
                     .build()
                 INSTANCE = instance
                 return instance

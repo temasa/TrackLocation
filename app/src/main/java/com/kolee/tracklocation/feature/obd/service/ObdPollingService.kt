@@ -414,15 +414,15 @@ class ObdPollingService : Service() {
                         // Persist the increments into the recording_session row.
                         val sessionDao = (applicationContext as com.kolee.tracklocation.TrackApp).sessionDao
                         val sid = activeSessionId
-                        if (sid != null && (fuelIncrementL > 0.0 || distIncrementKm > 0.0)) {
-                            sessionDao.addObdAccumulator(sid, fuelIncrementL, distIncrementKm)
+                        if (sid != null && fuelIncrementL > 0.0) {
+                            sessionDao.addObdAccumulator(sid, fuelIncrementL)
                         }
 
                         // Read the persisted totals back to compute the session average shown on
                         // the Session screen (ObdStatusCard "SESSION AVG"). Survives restarts.
                         val activeSession = sessionDao.getActiveSession()
                         val persistedFuelL = activeSession?.obdFuelConsumedL ?: 0.0
-                        val persistedDistKm = activeSession?.obdGpsDistanceKm ?: 0.0
+                        val persistedDistKm = (activeSession?.distanceMeters ?: 0.0) / 1000.0
                         if (persistedFuelL > 0.01 && persistedDistKm > 0.01) {
                             avgKmL = persistedDistKm / persistedFuelL
                         }
