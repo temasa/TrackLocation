@@ -128,10 +128,15 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 - **ObdStatusCard** (Session screen): Connected/Waiting states, RPM/SPEED/EFFICIENCY, instant km/L, fuel-source chip, Reconnect.
 - **OBD metric row** (TripPanel): instant km/L cell, fuel-source chip.
 
-### Phase 2 (planned — OBD Phase 2)
-- **ObdStatusCard** (Session screen): adds session-average km/L row; at idle (speed=0, RPM>0) the instant cell shows L/h instead of "--".
-- **OBD metric row** (TripPanel): adds instant km/L (if not already), trip-average km/L, and L/h-at-idle display.
-- **Idle display rule:** show `X.X L/h` when OBD connected + speed = 0 + RPM > 0. Show "--" when OBD disconnected or engine off (RPM = 0).
+### Phase 2 — Fuel-economy metrics (revised per ADR-007)
+Instant fuel economy is shown as **two always-on cells** (no unit toggling), on **both** the Session `ObdStatusCard` and the `TripPanel`:
+- **km/L** — shown only when moving (speed > ~3 km/h, good fix); shows `—` at rest.
+- **L/h** — always shown when OBD is connected (current fuel rate); `—` when OBD disconnected / engine off (RPM = 0).
+
+Averages remain a **single km/L** per surface (SESSION AVG on the Session card, TRIP AVG on the Trip panel):
+- `avg km/L = displayed displacement distance ÷ fuel` (unified session/trip derivation — ADR-007).
+- Shows a value once distance > 0.01 km and fuel > 0, else `—`.
+- While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
 
 ---
 

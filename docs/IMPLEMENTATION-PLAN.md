@@ -61,6 +61,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 | 0.1 | (legacy) | Two-track implementation contract maintained in `implementation-plan.md`. |
 | 0.2 | 2026-06-15 | Migrated to create-project schema; legacy plan → Appendix A, progress.md → Appendix B; summarized §6 task log. |
 | 0.3 | 2026-07-07 | Added Location Efficiency — Dwell Collapse phase (ADR-006 accepted): §3 phase row + Appendix A two-slice contract; PRD §12 BR-11 recorded. |
+| 0.4 | 2026-07-07 | Added Fuel-Economy Unification phase (ADR-007 accepted): §3 phase row + Appendix A three-slice contract; instant two-cell + unified averaging + destructive v7→v8 column drop. |
 
 ---
 
@@ -82,6 +83,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | OBD Phase 2 — Fuel consumption enhancement | Implemented (Slices 1–4: schema + DB accumulation + Session card + Trip panel) | Slice 3 design done in Claude Design; Slice 4 reused existing language | Built + installed on device 2026-07-06; manual drive-test pending |
 | Observer Phase 3 — Filtering + Settings | Implemented (S1–S4) | Implemented (S3 filter UI + S4 Observer Settings; designs via Claude Design) | Complete — S1–S4 device-verified 2026-07-07 |
 | Location Efficiency — Dwell Collapse (ADR-006) | Planned | n/a (no new UI) | Not started |
+| Fuel-Economy Unification (ADR-007) | Planned | Spec'd in UI-SPEC §4 (no external handoff) | Not started |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
 | Observer Phase 6 — Registration + Face Enrollment | Planned | Planned | Not started |
@@ -114,7 +116,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-07-07 | Fix — dwell collapse froze live GPS speed, corrupting OBD instant/average fuel metric (km/L shown at idle instead of L/h; phantom session OBD distance); refresh speed/position/accuracy in the collapse branch (ERR-003) | Completed | --- | assembleDebug clean 2026-07-07; on-device re-verify (stopped → L/h, no phantom SESSION AVG distance) pending |
+| 2026-07-07 | Fuel-Economy Unification — ADR-007 accepted + propagated (PRD FR, ARCHITECTURE §8, UI-SPEC §4); instant two-cell + single averaging derivation + destructive v7→v8 column drop | In Progress | --- | Docs recorded; code slices pending user build permission (AGENTS.md §5a) |
+| 2026-07-07 | Fix — dwell collapse froze live GPS speed, corrupting OBD instant/average fuel metric (km/L shown at idle instead of L/h; phantom session OBD distance); refresh speed/position/accuracy in the collapse branch (ERR-003) | Completed | `3404731` | assembleDebug clean 2026-07-07; on-device re-verify (stopped → L/h, no phantom SESSION AVG distance) pending |
 | 2026-07-07 | Location Dwell Collapse — ADR-006 accepted + PRD §12 (BR-11) + ARCHITECTURE §8 (MIGRATION_6_7 schema) + Appendix A slice contract recorded | In Progress | `55c1c7b` | Docs recorded; code slice (service dwell state + migration) pending user build permission per AGENTS.md §5a |
 | 2026-07-07 | Location Dwell Collapse Slice 1 — schema: LocationEntity `dwellStartTimestamp`/`collapsedCount`, `MIGRATION_6_7` (DB v6→v7, backfill), `LocationDao.updateDwellAnchor` | Completed | `390b1ad` | `assembleDebug` clean 2026-07-07 (Room KAPT validated); on-device migration test pending |
 | 2026-07-07 | Location Dwell Collapse Slice 2 — `TrackingService` write-time dwell state machine: collapse within `max(15 m, 1.5×accuracy)` via `updateDwellAnchor` (no insert, no session/trip distance); parked-only 2-fix outlier rejection; new anchors record `dwellStartTimestamp` | Completed | `fc40ac9` | `assembleDebug` clean 2026-07-07 (Room KAPT validated schema/DAO/migration); on-device drive-test pending |
@@ -1062,6 +1065,26 @@ After inspection:
 - *Observable result:* A stationary vehicle produces one `location_log` row whose `timestamp` advances while parked; session/trip distance does not grow while stopped; moving away starts a new anchor.
 - *How to verify:* (build/device permission required) With always-recording ON, keep the device stationary ~2 min → confirm a single new row with rising `timestamp` and `collapsedCount`, and session distance unchanged; then move >20 m → confirm a new row is inserted and the path continues.
 - *Steps:* (1) Add anchor state to `TrackingService` — What: `dwellAnchorId: Long?`, `dwellAnchorLocation: Location?`, `outOfToleranceStreak: Int`. (2) In `recordLocation`, branch on distance vs tolerance — within → UPDATE anchor `timestamp` + `collapsedCount`, return without adding session/trip distance; out (streak ≥ 2) → INSERT new anchor, reset streak, set `dwellStartTimestamp` = fix time; How: `Location.distanceBetween`, tolerance `maxOf(15f, 1.5f * accuracy)`. (3) Add `LocationDao.updateDwellAnchor(id, timestamp)` doing `UPDATE location_log SET timestamp = :timestamp, collapsedCount = collapsedCount + 1 WHERE id = :id`. (4) Anchor state is in-memory only, so an app/service restart mid-dwell starts a fresh anchor.
+
+### Phase — Fuel-Economy Unification (ADR-007)
+
+**Slice 1 — Schema: drop `obdGpsDistanceKm`, destructive v7→v8.**
+- *What it does:* Removes `obdGpsDistanceKm` from `SessionEntity`; bumps `@Database(version = 8)`; registers `fallbackToDestructiveMigrationFrom(7)` in `TrackDatabase.getDatabase` (no hand-written 7→8 migration — destructive, local test data discarded). Simplifies `SessionDao.addObdAccumulator` to fuel-only.
+- *Observable result:* App installs over v7 and recreates the DB clean (existing local rows wiped — acceptable pre-production); no schema-validation crash.
+- *How to verify:* (build permission required) Install over v7; app opens without a Room `IllegalStateException`; `recording_session` no longer has `obdGpsDistanceKm`.
+- *Steps:* (1) Remove field from `SessionEntity`. (2) Remove `obdGpsDistanceKm` from `addObdAccumulator` query + signature; update callers in `ObdPollingService`. (3) `@Database(version = 8)`, add `.fallbackToDestructiveMigrationFrom(7)` to the builder. (4) Add a follow-up task to remove the scoped destructive fallback before production.
+
+**Slice 2 — Unified averaging (Option B).**
+- *What it does:* Session average switches to `session.distanceMeters / obdFuelConsumedL`. Both session and trip use one definition: displayed displacement distance ÷ `obd_sample` fuel. Live value = O(1) incremental cache; authoritative value re-integrated from `obd_sample` at close (session end + trip stop); mid-drive restart reseeds the in-memory trip fuel via one `obd_sample` integration.
+- *Observable result:* Session AVG matches the distance shown on the Session card; session and trip averages agree for the same drive; both update live and degrade while idling; survive restart.
+- *How to verify:* (build/device permission) Drive with OBD connected → SESSION AVG and TRIP AVG populate (distance > 0.01 km, fuel > 0) and track each other; idle at a light → both degrade; force-stop + relaunch mid-trip → trip average resumes (reseeded), not reset to a wrong value.
+- *Steps:* (1) In `ObdPollingService`, compute session avg from `session.distanceMeters` (read back) ÷ `obdFuelConsumedL`; stop reading `obdGpsDistanceKm`. (2) Keep/confirm trip live avg = `distanceInMeters` ÷ `tripFuelLitersSince`. (3) At session end / trip stop, persist the `obd_sample`-re-integrated fuel as authoritative. (4) On service restart with an active trip, reseed the in-memory trip fuel from `obd_sample` over `[tripStartedAt, now]`.
+
+**Slice 3 — Instant two-cell UI (km/L + L/h).**
+- *What it does:* Replaces the toggling instant cell with two always-on cells (km/L, `—` at rest; L/h, always when OBD connected) on both `ObdStatusCard` (Session) and `TripPanel`. Keeps a single SESSION AVG / TRIP AVG km/L with the `—`-until-distance rule.
+- *Observable result:* Both km/L and L/h visible simultaneously; km/L shows `—` while stopped; L/h shows the idle rate; no unit switching.
+- *How to verify:* (build/device permission) Moving → km/L shows a value and L/h shows the rate; stop with engine on → km/L flips to `—`, L/h keeps a value; both cards consistent.
+- *Steps:* (1) `SessionsScreen` `ObdStatusCard`: render two cells (km/L / L/h) instead of the toggling cell. (2) `TripPanel` `ObdRow`: same two-cell layout. (3) Apply the `—`-at-rest rule to km/L and the average display rule (distance > 0.01 km & fuel > 0).
 
 ---
 

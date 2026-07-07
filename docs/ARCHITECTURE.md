@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.2
+**Document Version:** 0.3
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-07-07
 **Owner:** Tech Lead
@@ -133,7 +133,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), target version **7** (code currently at **v6** — Observer FTS, ADR-005; v7 lands when ADR-006 dwell-collapse code ships; not yet built/device-verified per AGENTS.md §5a). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
+Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table).
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 
@@ -152,10 +152,12 @@ Room database (`TrackDatabase`), target version **7** (code currently at **v6** 
 
 Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAVAILABLE`. Speed-density estimate: `MAF(g/s) = (RPM × MAP_kPa × VE × Displacement_L × 28.97)/(120 × 8.314 × IAT_K)`, `fuel(L/h) = MAF/(14.7×λ) × 3600/745` (VE=0.85, gasoline; engine displacement is a user pref, default 1193 cc).
 
-**OBD Phase 2 accumulation (Slices 1–2 done, static; UI Slices 3–4 planned):**
-- **Session (live accumulation):** `ObdPollingService` integrates each poll's fuel/distance (`delta-t × fuelRateLph / 3 600 000`, guard `0 < dt < 60 s`) into the active `recording_session` row via `SessionDao.addObdAccumulator`; `TrackingService` passes the session id (`EXTRA_SESSION_ID`) on session start/resume. Session average km/L = `obdGpsDistanceKm / obdFuelConsumedL`. Survives app/service restarts.
-- **Trip (derived from samples — Issue #1):** a `track` row has no id until the trip stops, so fuel is **not** accumulated live. At trip stop, `ShareViewModel.onTripCtaTap()` integrates the `obd_sample` rows over `[tripStartedAt, now]` (`ObdSampleDao.samplesBetweenOnce`) and writes the total into `track.obdFuelConsumedL`. Trip average km/L = `track.distance_m/1000 / track.obdFuelConsumedL` for completed trips; the live active-trip figure (Slice 4) queries the same window against live trip distance. `SessionDao.addObdAccumulator` is used; `TrackDao.addObdFuel` (added in Slice 1) is currently unused under this approach.
-- At idle (speed = 0, RPM > 0), the UI shows the instantaneous fuel rate as L/h instead of "--" (Slices 3–4).
+**OBD Phase 2 accumulation — unified per ADR-007:**
+- **One averaging definition (session and trip):** `avg km/L = displacement distance ÷ fuel`. Distance = Σ `distanceBetween` over adjacent `location_log` samples = the **displayed** distance (`session.distanceMeters` for the session, trip `distanceInMeters`/`track.distance` for the trip). Fuel = Σ `fuelRate × dt` over `obd_sample` in `[startedAt, now]`.
+- **Live value = O(1) incremental cache** (session: `obdFuelConsumedL`; trip: in-memory total since `tripStartedAt`). **Authoritative value at close = re-integrate `obd_sample`** over the final window and persist it; `obd_sample` is the single source of truth for fuel, the cache is a disposable live proxy (ADR-007 "Option B" — cache = memoized integral of the canonical rows). Mid-drive restart reseeds the in-memory trip total by one `obd_sample` integration.
+- **Session average** = `session.distanceMeters / obdFuelConsumedL` (was `obdGpsDistanceKm / obdFuelConsumedL`). The `obdGpsDistanceKm` column is **dropped** (destructive v7→v8) and no longer read.
+- **Trip average** = `distanceInMeters / (obd_sample fuel over [tripStartedAt, now])`, computed live; at Stop `ShareViewModel.onTripCtaTap` writes the re-integrated total into `track.obdFuelConsumedL`.
+- **Display:** the average shows once distance > 0.01 km and fuel > 0, else `—`. Idle (fuel accrues, distance flat) correctly degrades the average — relies on the ADR-006 stale-speed fix.
 
 ---
 
