@@ -111,17 +111,7 @@ class TrackingService: Service() {
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun startAlwaysRecording() {
-        if (!isAlwaysRecording) {
-            activeSession = SessionEntity(
-                id = UUID.randomUUID().toString(),
-                startedAt = System.currentTimeMillis(),
-                isActive = true
-            )
-            serviceScope.launch {
-                activeSession?.let { database.sessionDao.insertSession(it) }
-            }
-        }
-
+        val wasRecording = isAlwaysRecording
         isAlwaysRecording = true
         requestLocationUpdate()
         startForeground(
@@ -129,9 +119,36 @@ class TrackingService: Service() {
             createNotification(this, "Recording location history...")
         )
 
+        if (!wasRecording) {
+            // Enforce the single-active-session invariant. A prior session can be left
+            // isActive=1 in the DB (e.g. force-stopped mid-session then reopened inside the
+            // launch reaper's grace window, so it wasn't reaped and START_STICKY didn't resume
+            // it). Close every open row first to heal any duplicates/orphans, then ADOPT the
+            // most-recent open session (preserving its distance/points) or create a fresh one —
+            // so exactly one row ends up isActive=1.
+            serviceScope.launch {
+                val now = System.currentTimeMillis()
+                val existing = database.sessionDao.getActiveSession()
+                database.sessionDao.closeAllActiveSessions(endedAt = now)
+                val session = existing?.copy(isActive = true, endedAt = null)
+                    ?: SessionEntity(
+                        id = UUID.randomUUID().toString(),
+                        startedAt = now,
+                        isActive = true
+                    )
+                database.sessionDao.insertSession(session)
+                activeSession = session
+                startObdSession(session.id)
+            }
+        } else {
+            startObdSession(activeSession?.id)
+        }
+    }
+
+    private fun startObdSession(sessionId: String?) {
         val intent = Intent(this, ObdPollingService::class.java).apply {
             action = ObdPollingService.ACTION_SESSION_ON
-            putExtra(ObdPollingService.EXTRA_SESSION_ID, activeSession?.id)
+            putExtra(ObdPollingService.EXTRA_SESSION_ID, sessionId)
         }
         startService(intent)
     }

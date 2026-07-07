@@ -27,6 +27,14 @@ interface SessionDao {
     suspend fun closeStaleActiveSessions(endedAt: Long, staleBefore: Long)
 
     /**
+     * Close ALL currently-open sessions (isActive = 1, endedAt IS NULL). Used to enforce the
+     * single-active-session invariant when (re)starting always-recording: any duplicate/orphaned
+     * open rows are reaped before the adopted or freshly-created session is written.
+     */
+    @Query("UPDATE recording_session SET isActive = 0, endedAt = :endedAt WHERE isActive = 1 AND endedAt IS NULL")
+    suspend fun closeAllActiveSessions(endedAt: Long)
+
+    /**
      * OBD Phase 2: atomically add a fuel/distance increment to the session's accumulators.
      * [sessionId] matches the String primary key of `recording_session`.
      */
