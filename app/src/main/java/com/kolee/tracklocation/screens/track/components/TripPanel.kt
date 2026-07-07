@@ -313,11 +313,8 @@ private fun MetricCell(
 // OBD Phase 2 Slice 4 — fuel row: instant km/L (or idle L/h) + live trip-average km/L.
 @Composable
 private fun ObdRow(state: TrackPanelState) {
-    val fuelValue = when {
-        state.instantKmL != null -> "%.1f km/L".format(state.instantKmL)
-        state.idleFuelLph != null -> "%.1f L/h".format(state.idleFuelLph)
-        else -> "—"
-    }
+    val kmlValue = state.instantKmL?.let { "%.1f km/L".format(it) } ?: "—"
+    val lphValue = state.fuelRateLph?.takeIf { it > 0.0 }?.let { "%.1f L/h".format(it) } ?: "—"
     val avgValue = state.tripAvgKmL?.let { "%.1f km/L".format(it) } ?: "—"
 
     Row(
@@ -338,8 +335,15 @@ private fun ObdRow(state: TrackPanelState) {
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.Start,
             label = "FUEL",
-            value = fuelValue,
-            accessibilityText = "Fuel, $fuelValue"
+            value = kmlValue,
+            accessibilityText = "Fuel, $kmlValue"
+        )
+        ObdMetricCell(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            label = "L/H",
+            value = lphValue,
+            accessibilityText = "Litres per hour, $lphValue"
         )
         ObdMetricCell(
             modifier = Modifier.weight(1f),

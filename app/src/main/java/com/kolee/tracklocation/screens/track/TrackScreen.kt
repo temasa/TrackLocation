@@ -85,6 +85,7 @@ fun TrackScreen() {
         obdConnected = connectedObd != null,
         instantKmL = instantKmL,
         idleFuelLph = idleFuelLph,
+        fuelRateLph = connectedObd?.fuelRateLph,
         tripAvgKmL = tripAvgKmL,
         fuelSource = connectedObd?.fuelSource
     )

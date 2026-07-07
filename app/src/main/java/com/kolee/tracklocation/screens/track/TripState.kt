@@ -11,6 +11,7 @@ data class TrackPanelState(
     val obdConnected: Boolean = false,
     val instantKmL: Double? = null,
     val idleFuelLph: Double? = null,
+    val fuelRateLph: Double? = null,
     val tripAvgKmL: Double? = null,
     val fuelSource: String? = null,
 )

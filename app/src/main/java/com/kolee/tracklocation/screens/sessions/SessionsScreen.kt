@@ -709,17 +709,23 @@ private fun ObdStatusCard(
                         val shouldShowKmL = obdState.instantKmL != null &&
                                 locationUiState.speedInKMH > 3f &&
                                 locationUiState.accuracyMeters <= 20f
-                        // At idle (engine on, essentially stationary) show the instantaneous fuel
-                        // rate in L/h instead of "—" (OBD Phase 2 Slice 3).
-                        val fuelLph = obdState.fuelRateLph
-                        val isIdle = locationUiState.speedInKMH < 3f && (obdState.rpm ?: 0) > 0
                         Text(
-                            text = when {
-                                shouldShowKmL -> String.format("%.1f km/L", obdState.instantKmL)
-                                isIdle && fuelLph != null && fuelLph > 0.0 ->
-                                    String.format("%.1f L/h", fuelLph)
-                                else -> "—"
-                            },
+                            text = if (shouldShowKmL) String.format("%.1f km/L", obdState.instantKmL) else "—",
+                            color = TripInk,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "FUEL RATE",
+                            color = TripMuted,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = obdState.fuelRateLph?.takeIf { it > 0.0 }
+                                ?.let { String.format("%.1f L/h", it) } ?: "—",
                             color = TripInk,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
