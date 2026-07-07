@@ -57,6 +57,8 @@ import com.kolee.tracklocation.feature.observer.presentation.components.EventRow
 import com.kolee.tracklocation.feature.observer.presentation.components.FeedHeaderBar
 import com.kolee.tracklocation.feature.observer.presentation.components.JumpToLatestFab
 import com.kolee.tracklocation.feature.observer.presentation.components.ObserverEmptyState
+import com.kolee.tracklocation.feature.observer.presentation.components.ObserverFilterBar
+import com.kolee.tracklocation.feature.observer.presentation.components.ObserverNoResultsState
 import com.kolee.tracklocation.feature.observer.presentation.components.ServiceBanner
 import com.kolee.tracklocation.feature.observer.presentation.viewmodel.ObserverViewModel
 import com.kolee.tracklocation.ui.theme.ObserverAmber
@@ -254,6 +256,18 @@ fun ObserverFeedScreen(navController: NavController) {
                 CapturePausedBanner()
             }
 
+            ObserverFilterBar(
+                query = uiState.filter.query,
+                packageOptions = uiState.packageOptions,
+                selectedPackages = uiState.filter.selectedPackages,
+                matchCount = uiState.totalEventCount,
+                isActive = uiState.filter.isActive,
+                onQueryChange = viewModel::setQuery,
+                onTogglePackage = viewModel::togglePackage,
+                onClear = viewModel::clearFilter,
+                modifier = Modifier.padding(horizontal = 18.dp),
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Event list with sticky feed header
@@ -274,9 +288,15 @@ fun ObserverFeedScreen(navController: NavController) {
                     )
                 }
 
-                if (uiState.events.isEmpty() && uiState.captureRunning) {
-                    item {
-                        ObserverEmptyState()
+                if (uiState.events.isEmpty()) {
+                    if (uiState.filter.isActive) {
+                        item {
+                            ObserverNoResultsState(onClearFilters = viewModel::clearFilter)
+                        }
+                    } else if (uiState.captureRunning) {
+                        item {
+                            ObserverEmptyState()
+                        }
                     }
                 } else {
                     itemsIndexed(uiState.events, key = { _, event -> event.id }) { index, event ->

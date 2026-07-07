@@ -25,6 +25,7 @@ data class ObserverUiState(
     val canLoadMore: Boolean = false,
     val isLoadingMore: Boolean = false,
     val filter: FilterState = FilterState(),
+    val packageOptions: List<String> = emptyList(),
 )
 
 data class AllowlistDraftRule(

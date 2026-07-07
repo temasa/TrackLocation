@@ -112,6 +112,8 @@ class ObserverViewModel(
             }
         }
 
+        loadPackageOptions()
+
         // Load applied allowlist rules once from DB (drafts are managed in ViewModel state)
         viewModelScope.launch {
             allowlistRuleDao.getAllRules().take(1).collect { entities ->
@@ -279,6 +281,14 @@ class ObserverViewModel(
                 totalEventCount = _loadedEvents.size,
                 canLoadMore = firstPage.size >= PAGE_SIZE,
             )}
+        }
+        loadPackageOptions()
+    }
+
+    private fun loadPackageOptions() {
+        viewModelScope.launch {
+            val pkgs = eventRepository.distinctPackages()
+            _uiState.update { it.copy(packageOptions = pkgs) }
         }
     }
 
