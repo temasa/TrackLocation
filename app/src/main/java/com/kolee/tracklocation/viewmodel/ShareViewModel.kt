@@ -98,25 +98,29 @@ class ShareViewModel(
             if (current.isTracking && !current.isPaused) {
                 val startId = current.activeTripStartLocationId
                 val endId = current.activeTripEndLocationId
-                if (startId != null && endId != null && endId >= startId) {
-                    // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
-                    // during the trip window (there is no live trip row/id to accumulate into —
-                    // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
-                    val tripFuelConsumedL = integrateFuelLiters(
-                        obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+                // A trip's start/end location IDs are only set once the first GPS fix arrives
+                // (up to LOCATION_UPDATE_INTERVAL later). Persist the trip regardless so a short
+                // trip started+stopped before any fix (or with no signal) still shows in the list —
+                // keep the IDs only when the range is valid, else null so getPathPointsForTrack
+                // falls back to the stored pathPoints string.
+                val hasValidRange = startId != null && endId != null && endId >= startId
+                // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
+                // during the trip window (there is no live trip row/id to accumulate into —
+                // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
+                val tripFuelConsumedL = integrateFuelLiters(
+                    obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+                )
+                insertTrack(
+                    TrackEntity(
+                        timestamp = current.tripStartedAt,
+                        distance = current.distanceInMeters,
+                        duration = current.durationTimer,
+                        pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
+                        startLocationId = if (hasValidRange) startId else null,
+                        endLocationId = if (hasValidRange) endId else null,
+                        obdFuelConsumedL = tripFuelConsumedL
                     )
-                    insertTrack(
-                        TrackEntity(
-                            timestamp = current.tripStartedAt,
-                            distance = current.distanceInMeters,
-                            duration = current.durationTimer,
-                            pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
-                            startLocationId = startId,
-                            endLocationId = endId,
-                            obdFuelConsumedL = tripFuelConsumedL
-                        )
-                    )
-                }
+                )
                 sendServiceCommand(Actions.STOP_TRIP)
             } else if (!current.isTracking) {
                 sendServiceCommand(Actions.START_TRIP)
