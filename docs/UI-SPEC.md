@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.3
+**Document Version:** 0.4
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-07-07
 **Owner:** Product Manager / UX Designer
@@ -91,10 +91,10 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 **Layout decision:** Keep the existing "Current trip" card (it holds the Start/Stop CTA); ADD the live row below the "Recent trips" header, above the newest finished row. (Alternative "remove the card, live row only" was considered and rejected to keep the Start/Stop control in place.)
 
 **Visual (reuses existing language — no new visual design):** adapts `TrackItemRow` with the Sessions active-row accent:
-- Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 3-stat footer as a finished row.
+- Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 4-stat footer as a finished row.
 - Title: `Trip in progress` (instead of `Track #N`).
 - Trailing: **ACTIVE badge** — pulsing green dot + `ACTIVE` label (same treatment as the Sessions `ActiveBadge`).
-- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours; and `efficiency` — live km/L from `ObdPollingService.obdUiState` (`avgKmL`, else `instantKmL`); shows `"—"` when OBD is not connected, matching the Sessions OBD card.
+- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours; `efficiency` — live km/L from `ObdPollingService.obdUiState` (`avgKmL`, else `instantKmL`); shows `"—"` when OBD is not connected, matching the Sessions OBD card; and `cost` (Rp) — see §4 Fuel cost.
 - Not clickable; no long-press delete (not a saved trip yet).
 - Reduced-motion: badge pulse uses the same infinite-transition pattern already present on this screen.
 
@@ -137,6 +137,13 @@ Averages remain a **single km/L** per surface (SESSION AVG on the Session card, 
 - `avg km/L = displayed displacement distance ÷ fuel` (unified session/trip derivation — ADR-007).
 - Shows a value once distance > 0.01 km and fuel > 0, else `—`.
 - While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
+
+#### Fuel cost (Rp) — Session OBD card + Trips active-trip row
+
+- **Value:** `litres × price`, formatted `Rp` with a dot thousands separator and no decimals (e.g. `Rp 12.500`). Shows `—` when litres = 0 or the price is unset.
+- **Placement:** Session OBD card — a COST cell below the fuel metrics (below OBD Status). Trips active-trip row — an added COST stat (row goes from 4 to 5 stats; keep the existing stat styling, reflow density handled in code).
+- **Tap to edit:** tapping the cost opens a compact numeric `Rp` price editor with **Save (✓)** = apply and **Cancel (✗)** = discard the in-progress edit. Saving writes the shared current price and both surfaces update.
+- **Undo / redo:** `↶` reverts to the previous price, `↷` re-applies the undone price; full multi-step within the session; each control is disabled when there is nothing to undo/redo. History is in-memory and resets on app restart; the current price persists.
 
 ---
 

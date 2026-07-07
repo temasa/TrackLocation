@@ -35,8 +35,8 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.4 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-07-07 |
-| `docs/ARCHITECTURE.md` | 0.3 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-07 |
+| `docs/PRD.md` | 0.5 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-07-07 |
+| `docs/ARCHITECTURE.md` | 0.4 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-07 |
 | `docs/adr/README.md` | 0.1 | Active (4 ADRs indexed) | Tech Lead | 2026-06-15 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -44,8 +44,8 @@ When any controlled document changes, update both:
 | `docs/adr/004-obd-raw-at-io.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
 | `docs/adr/006-location-dwell-collapse.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/007-unified-fuel-economy-metrics.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.4 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-07 |
-| `docs/UI-SPEC.md` | 0.3 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-07 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.5 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-07 |
+| `docs/UI-SPEC.md` | 0.4 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-06-15 |
@@ -83,6 +83,7 @@ Draft documents normally begin at `0.1`.
 | 2026-07-07 | docs/adr/006-location-dwell-collapse.md | — | 0.1 | New ADR (Proposed) — Location Dwell Collapse: collapse stationary GPS fixes into one canonical `location_log` anchor per stop (new `dwellStartTimestamp`/`collapsedCount` columns, Room MIGRATION_6_7). Downstream PRD §12 / ARCHITECTURE / IMPLEMENTATION-PLAN edits pending acceptance. | Claude Code |
 | 2026-07-07 | PRD, ARCHITECTURE, IMPLEMENTATION-PLAN, adr/006 | 0.2/0.1/0.2/0.1 | 0.3/0.2/0.3/1.0 | ADR-006 accepted (Location Dwell Collapse). Propagated: PRD §12 (BR-02 amended + new BR-11), ARCHITECTURE §4/§8 (dwell columns `dwellStartTimestamp`/`collapsedCount` + MIGRATION_6_7, DB v7, corrected stale v5 note), IMPLEMENTATION-PLAN §3 phase row + Appendix A two-slice contract. Code pending build permission. | Claude Code |
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/007 | 0.3/0.2/0.2/0.3/— | 0.4/0.3/0.3/0.4/1.0 | ADR-007 accepted — Unified Fuel-Economy Metrics: instant two-cell (km/L + L/h), single averaging derivation (displacement distance ÷ obd_sample fuel, Option B incremental cache, authoritative at close), drop obdGpsDistanceKm via destructive v7→v8. Propagated to PRD/ARCHITECTURE/UI-SPEC/IMPLEMENTATION-PLAN. Code pending. | Claude Code |
+| 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | 0.4/0.3/0.3/0.4 | 0.5/0.4/0.4/0.5 | Added Fuel Cost feature (FR-12): estimated fuel cost (IDR `Rp`) = litres × user-set price on the Session OBD card + Trips active-trip row; inline tap-to-edit price (Save/Cancel) with multi-step in-memory undo/redo; price persisted in `obd_prefs` (`obd_fuel_price_per_liter`), `ObdUiState.Connected` gains `sessionFuelConsumedL`/`tripFuelConsumedL`. No schema change, no ADR. | Claude Code |
 
 ---
 

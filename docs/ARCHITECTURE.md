@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.3
+**Document Version:** 0.4
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-07-07
 **Owner:** Tech Lead
@@ -111,6 +111,8 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
    → ObdSampleEntity (Room)            ← written only when session active (ACTION_SESSION_ON/OFF)
 ```
 
+   `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
+
 ---
 
 ## 6. Security & Authorization Model
@@ -158,6 +160,7 @@ Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAV
 - **Session average** = `session.distanceMeters / obdFuelConsumedL` (was `obdGpsDistanceKm / obdFuelConsumedL`). The `obdGpsDistanceKm` column is **dropped** (destructive v7→v8) and no longer read.
 - **Trip average** = `distanceInMeters / (obd_sample fuel over [tripStartedAt, now])`, computed live; at Stop `ShareViewModel.onTripCtaTap` writes the re-integrated total into `track.obdFuelConsumedL`.
 - **Display:** the average shows once distance > 0.01 km and fuel > 0, else `—`. Idle (fuel accrues, distance flat) correctly degrades the average — relies on the ADR-006 stale-speed fix.
+- **Fuel cost (ADR-007 extension, no schema change):** `cost = litres × pricePerLitre`. Litres = the session live `obdFuelConsumedL` (Session card) or the in-memory trip total (Trips active-trip row). Price is a single current value persisted in `obd_prefs` under key `obd_fuel_price_per_liter` (Double, default 0.0). Cost is derived at display time — no new table/column. A process-lifetime in-memory holder keeps the price-change history + pointer for multi-step undo/redo (seeded from the persisted price; resets on process restart, so only the current price survives).
 
 ---
 
