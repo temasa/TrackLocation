@@ -4,6 +4,7 @@ package com.kolee.tracklocation.screens.sessions
 
 import android.content.Context
 import android.content.Intent
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -96,7 +97,10 @@ private data class SessionUiItem(
 @Composable
 fun SessionsScreen() {
     val context = LocalContext.current
-    val viewModel: ShareViewModel = viewModel(factory = ShareViewModel.Factory)
+    val viewModel: ShareViewModel = viewModel(
+        viewModelStoreOwner = context as ComponentActivity,
+        factory = ShareViewModel.Factory
+    )
     val locationUiState by viewModel.locationUiState.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
     val sessions = viewModel.sessionsState.mapIndexed { index, session ->

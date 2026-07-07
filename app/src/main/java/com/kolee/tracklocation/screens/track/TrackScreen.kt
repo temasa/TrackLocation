@@ -16,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
@@ -28,7 +30,11 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun TrackScreen() {
-    val viewModel: ShareViewModel = viewModel(factory = ShareViewModel.Factory)
+    val activity = LocalContext.current as ComponentActivity
+    val viewModel: ShareViewModel = viewModel(
+        viewModelStoreOwner = activity,
+        factory = ShareViewModel.Factory
+    )
     val locationUiState by viewModel.locationUiState.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
 

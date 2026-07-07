@@ -8,6 +8,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.screens.list.components.ListContent
 import com.kolee.tracklocation.ui.theme.TripBackground
@@ -18,7 +20,9 @@ import com.kolee.tracklocation.viewmodel.ShareViewModel
 fun ListScreen(
     onSelect: (trackIdx: Int) -> Unit
 ) {
+    val activity = LocalContext.current as ComponentActivity
     val viewModel: ShareViewModel = viewModel(
+        viewModelStoreOwner = activity,
         factory = ShareViewModel.Factory
     )
     val responseState = viewModel.responseState
