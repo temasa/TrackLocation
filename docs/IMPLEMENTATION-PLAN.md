@@ -18,7 +18,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — Observer Phase 3 (Filtering + Settings): S1–S3 done + device-verified (S3 filter UI on-device 2026-07-07). Next: S4 (unified Observer Settings) — needs a Claude Design handoff first (§12). (OBD Phase 2 built + installed; manual drive-test still pending — user.)
+### Current — Observer Phase 3 (Filtering + Settings): S1–S3 done + device-verified; S4 design handoff done (Claude Design "Observer Settings", user-approved 2026-07-07); S4 code next. (OBD Phase 2 built + installed; manual drive-test still pending — user.)
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -34,7 +34,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 **Observer Phase 2** is complete and fully verified on device (cursor pagination + snapshot viewer + truncation banner, all states confirmed 2026-07-02).
 
-**Observer Phase 3 (Filtering + Unified Settings)** is the active development phase. **S1 — filter data layer** (Room `@Fts4` external-content FTS over `observer_event` + filtered paginated DAO queries; DB migration 5→6) is complete — built + migration-verified on device 2026-07-06 (`MIGRATION_5_6` ran cleanly, no Room schema-identity crash); the FTS approach is recorded in ADR-005. **S2 — filter state + query wiring** is complete (built + device-verified 2026-07-07): `FilterState` + filter-aware pagination router + in-memory live-tail filtering, no UI yet. **S3 — filter UI** (package chips, text search, no-results) is complete and device-verified 2026-07-07 (chip select, FTS text search, and the no-results state all confirmed on-device); the Claude Design handoff was "Observer Filter Bar" (mockup dark, code uses the light Observer palette). **Next: S4 — unified Observer Settings**, which still needs a Claude Design handoff first (§12). Full slice breakdown in §4 / Appendix A.
+**Observer Phase 3 (Filtering + Unified Settings)** is the active development phase. **S1 — filter data layer** (Room `@Fts4` external-content FTS over `observer_event` + filtered paginated DAO queries; DB migration 5→6) is complete — built + migration-verified on device 2026-07-06 (`MIGRATION_5_6` ran cleanly, no Room schema-identity crash); the FTS approach is recorded in ADR-005. **S2 — filter state + query wiring** is complete (built + device-verified 2026-07-07): `FilterState` + filter-aware pagination router + in-memory live-tail filtering, no UI yet. **S3 — filter UI** (package chips, text search, no-results) is complete and device-verified 2026-07-07 (chip select, FTS text search, and the no-results state all confirmed on-device); the Claude Design handoff was "Observer Filter Bar" (mockup dark, code uses the light Observer palette). **S4 — unified Observer Settings**: the Claude Design handoff is done (page "Observer Settings", 2 light artboards, user-approved 2026-07-07) and code is next — it adds a dedicated Observer Settings screen (reached from the feed) consolidating service status, capture toggle, and allowlist. Full slice breakdown in §4 / Appendix A.
 
 **Claude Code prompt** (paste at repo root; safe to re-paste to resume):
 > Read AGENTS.md and docs/IMPLEMENTATION-PLAN.md. OBD Phase 2 is code-complete (Slices 1–4, static). Next: build/device-verify OBD Phase 2 (with permission), or start Observer Phase 3. Do not run Gradle/tests/emulator/device without explicit permission (AGENTS.md §5a).
@@ -78,7 +78,7 @@ Single authoritative plan for TrackLocation development: phases, per-slice break
 | Observer Phase 2 — Inspection UI | Implemented (pagination + snapshot viewer + truncation banner) | Implemented | Verified on device (2026-07-02) |
 | OBD Phase 1 — ELM327 telemetry | Implemented (4 slices) | Implemented | Verified on device (2026-06-15): RPM/speed streaming, km/L calculation, session gating, stability tested |
 | OBD Phase 2 — Fuel consumption enhancement | Implemented (Slices 1–4: schema + DB accumulation + Session card + Trip panel) | Slice 3 design done in Claude Design; Slice 4 reused existing language | Built + installed on device 2026-07-06; manual drive-test pending |
-| Observer Phase 3 — Filtering + Settings | In progress (S1–S3 done) | S3 design done + implemented; S4 pending design | S1–S3 built + device-verified (S3 filter UI 2026-07-07); S4 design handoff next |
+| Observer Phase 3 — Filtering + Settings | In progress (S1–S3 done; S4 code next) | S3 + S4 designs done (Claude Design) | S1–S3 built + device-verified; S4 code next |
 | Observer Phase 4 — Sync Engine + Retention | Planned | Planned | Not started |
 | Observer Phase 5 — Neon V1 Remote | Planned | Planned | Not started |
 | Observer Phase 6 — Registration + Face Enrollment | Planned | Planned | Not started |
@@ -151,7 +151,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 - **PRD:** v0.2
 - **DB version:** Room 6 (migrations 1→2, 2→3, 3→4, 4→5, 5→6)
-- **Active work:** Observer Phase 3 filtering (Slices 1–3 done + device-verified; next: Slice 4 unified Observer Settings — design handoff first)
+- **Active work:** Observer Phase 3 filtering (Slices 1–3 done + device-verified; S4 design handoff done, S4 code next)
 - **Reference docs:** §13
 
 ---
@@ -682,7 +682,7 @@ Slices follow the standard format (what → observable → how to verify → ste
 
 **What it does:** Consolidates Observer controls (allowlist, filter defaults, service/capture status) into unified Settings sections.
 
-**Design gate:** Claude Design handoff for the Settings section layout BEFORE code (§12).
+**Design gate — DONE (2026-07-07):** Claude Design handoff produced in the existing TrackLocation project (rinaldi.ch account, Haiku 4.5) as page **"Observer Settings"** — 2 light-themed artboards: main settings (SERVICE status [Disabled soft-red + text label / green Enabled], CAPTURE toggle, ALLOWLIST rules with EXACT/REGEX tags + delete + "+ Add rule", "history cannot be cleared" footer) and an "Allowlist — add rule" modal (pattern field + EXACT/REGEX toggle + Save/Cancel). User-approved 2026-07-07. Light theme matches the app's real Settings screen (white cards on `0xFFF1F4F0`). Introduces a dedicated Observer Settings screen reached from the feed (user-approved navigation addition).
 
 **How to Verify:** on device — Observer Settings shows the designed sections; allowlist editing still works; capture toggle + service status accurate; no regression.
 
