@@ -118,6 +118,9 @@ private fun TrackSuccessState(
     onSelect: (trackIdx: Int) -> Unit,
     viewModel: ShareViewModel
 ) {
+    val uiState by viewModel.locationUiState.collectAsState()
+    val isTripActive = uiState.isTracking
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -130,7 +133,6 @@ private fun TrackSuccessState(
     ) {
         item { ListHeader() }
         item {
-            val uiState by viewModel.locationUiState.collectAsState()
             CurrentTripCard(
                 uiState = uiState,
                 onCtaTap = { viewModel.onTripCtaTap() }
@@ -146,9 +148,17 @@ private fun TrackSuccessState(
             RecentTripsHeader()
         }
 
+        if (isTripActive) {
+            item(key = "active-trip-row") {
+                ActiveTripRow(uiState = uiState)
+            }
+        }
+
         if (trackList.isEmpty()) {
-            item {
-                EmptyTripsCard()
+            if (!isTripActive) {
+                item {
+                    EmptyTripsCard()
+                }
             }
         } else {
             items(
@@ -173,6 +183,159 @@ private fun TrackSuccessState(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ActiveTripRow(uiState: LocationUiState) {
+    val now by produceState(initialValue = System.currentTimeMillis(), uiState.isTracking) {
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
+    val elapsedMs = if (uiState.tripStartedAt > 0L) {
+        (now - uiState.tripStartedAt).coerceAtLeast(0L)
+    } else 0L
+    val distanceKm = uiState.distanceInMeters / 1000f
+    val distanceText = "${String.format(Locale.ENGLISH, "%.2f", distanceKm)} km"
+    val durationText = formatElapsed(elapsedMs)
+    val avgSpeedText = run {
+        val hours = elapsedMs / 3_600_000f
+        if (hours > 0f) "${String.format(Locale.ENGLISH, "%.1f", distanceKm / hours)} km/h" else "0.0 km/h"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(124.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(TripSurface)
+            .border(1.5.dp, TripGreen, RoundedCornerShape(18.dp))
+            .padding(horizontal = 18.dp, vertical = 18.dp)
+    ) {
+        Row(modifier = Modifier.weight(1f)) {
+            ActiveRouteIndicator()
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 14.dp)
+            ) {
+                Text(
+                    text = "Trip in progress",
+                    color = TripInk,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "",
+                    color = TripInk,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 28.dp)
+                )
+            }
+            ActiveTripBadge()
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(TripBorder)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+        ) {
+            ActiveTripStat(value = distanceText, label = "km", modifier = Modifier.weight(1f))
+            ActiveTripStat(value = durationText, label = "duration", modifier = Modifier.weight(1f))
+            ActiveTripStat(value = avgSpeedText, label = "avg speed", modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun ActiveRouteIndicator() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(top = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .clip(CircleShape)
+                .border(1.dp, TripGreen, CircleShape)
+        )
+        Box(
+            modifier = Modifier
+                .size(width = 2.dp, height = 30.dp)
+                .background(TripGreen.copy(alpha = 0.55f))
+        )
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .clip(CircleShape)
+                .background(TripGreen)
+        )
+    }
+}
+
+@Composable
+private fun ActiveTripBadge() {
+    val transition = rememberInfiniteTransition()
+    val dotAlpha by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(TripGreen.copy(alpha = 0.12f))
+            .padding(start = 8.dp, top = 4.dp, end = 10.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .alpha(dotAlpha)
+                .clip(CircleShape)
+                .background(TripGreen)
+        )
+        Text(
+            text = "ACTIVE",
+            color = TripGreen,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun ActiveTripStat(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = value,
+            color = TripInk,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1
+        )
+        Text(
+            text = label,
+            color = TripMuted,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
