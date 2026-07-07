@@ -97,7 +97,7 @@ The developer / support operator — uses the Observer to inspect accessibility 
 
 ### In progress / planned
 
-- 🔄 Observer Phase 3 — Filtering + Settings (S1 filter data layer in progress; text search via Room @Fts4 external-content, see ADR-005)
+- ✅ Observer Phase 3 — Filtering + Unified Settings (FTS text search + package-chip filtering + dedicated Observer Settings screen; device-verified 2026-07-07; see ADR-005)
 - ❌ Observer Phases 3–7 (filtering, sync engine, Neon V1, registration + face enrollment, auth + hardening)
 
 ### Rationale

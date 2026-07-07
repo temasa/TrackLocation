@@ -14,5 +14,6 @@ sealed class Screen(
     object SettingsScreen: Screen(R.string.settings_screen, R.drawable.baseline_settings_24, "settings_screen")
     object DetailScreen: Screen(R.string.details_screen, R.drawable.ic_location_pin, "details_screen")
     object ObserverFeedScreen: Screen(R.string.observer_feed_screen, R.drawable.baseline_settings_24, "observer_feed_screen")
+    object ObserverSettingsScreen: Screen(R.string.settings_screen, R.drawable.baseline_settings_24, "observer_settings_screen")
     object ObdSettingsScreen: Screen(R.string.settings_screen, R.drawable.baseline_settings_24, "obd_settings_screen")
 }

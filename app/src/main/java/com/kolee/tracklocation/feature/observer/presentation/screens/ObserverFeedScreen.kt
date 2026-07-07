@@ -1,7 +1,6 @@
 package com.kolee.tracklocation.feature.observer.presentation.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -17,10 +16,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
@@ -47,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.kolee.tracklocation.feature.observer.presentation.components.AllowlistBottomSheet
 import com.kolee.tracklocation.feature.observer.presentation.components.SnapshotViewerSheet
 import com.kolee.tracklocation.feature.observer.domain.model.ObservedEvent
 import com.kolee.tracklocation.feature.observer.presentation.components.AutoScrollReadout
@@ -61,7 +58,7 @@ import com.kolee.tracklocation.feature.observer.presentation.components.Observer
 import com.kolee.tracklocation.feature.observer.presentation.components.ObserverNoResultsState
 import com.kolee.tracklocation.feature.observer.presentation.components.ServiceBanner
 import com.kolee.tracklocation.feature.observer.presentation.viewmodel.ObserverViewModel
-import com.kolee.tracklocation.ui.theme.ObserverAmber
+import com.kolee.tracklocation.navigation.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -70,13 +67,11 @@ import kotlinx.coroutines.launch
 fun ObserverFeedScreen(navController: NavController) {
     val viewModel: ObserverViewModel = viewModel(factory = ObserverViewModel.Factory)
     val uiState by viewModel.uiState.collectAsState()
-    val allowlistState by viewModel.allowlistUiState.collectAsState()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var showAllowlist by remember { mutableStateOf(false) }
     var snapshotEvent by remember { mutableStateOf<ObservedEvent?>(null) }
 
     // In-memory auto-scroll state — resets to true on screen entry per spec
@@ -197,34 +192,20 @@ fun ObserverFeedScreen(navController: NavController) {
                     color = Color(0xFF0A0A0A),
                     modifier = Modifier.weight(1f),
                 )
-                // Allowlist icon with optional draft dot
+                // Observer settings gear
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .clickable { showAllowlist = true }
-                        .semantics {
-                            contentDescription = if (uiState.allowlistDraftPending)
-                                "Allowlist, draft changes not applied"
-                            else "Allowlist"
-                        },
+                        .clickable { navController.navigate(Screen.ObserverSettingsScreen.route) }
+                        .semantics { contentDescription = "Observer settings" },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FilterAlt,
+                        imageVector = Icons.Default.Settings,
                         contentDescription = null,
                         tint = Color(0xFF0A0A0A),
                         modifier = Modifier.size(24.dp),
                     )
-                    if (uiState.allowlistDraftPending) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .align(Alignment.TopEnd)
-                                .padding(end = 6.dp, top = 6.dp)
-                                .background(ObserverAmber, CircleShape)
-                                .border(1.5.dp, Color(0xFFF1F4F0), CircleShape)
-                        )
-                    }
                 }
             }
 
@@ -340,18 +321,6 @@ fun ObserverFeedScreen(navController: NavController) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 8.dp),
-        )
-    }
-
-    // Allowlist bottom sheet
-    if (showAllowlist) {
-        AllowlistBottomSheet(
-            state = allowlistState,
-            onAddRule = viewModel::addDraftRule,
-            onUpdateRule = viewModel::updateDraftRule,
-            onDeleteRule = viewModel::deleteDraftRule,
-            onApply = viewModel::applyAllowlist,
-            onClose = { showAllowlist = false },
         )
     }
 
