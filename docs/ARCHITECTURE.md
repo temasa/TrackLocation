@@ -66,6 +66,7 @@ TrackEntity (trip) — OBD accumulator column (added DB v5)
 
 - The canonical `location_log` is the single source of truth for GPS points (see PRD §12 BR-01/BR-02).
 - Sessions and trips are ranges/views over the canonical log; deleting a trip never deletes location rows.
+- **Session invariant:** at most one `recording_session` row has `isActive = 1` at any time. Starting always-recording adopts the existing open session rather than creating a duplicate; the launch-time reaper and stop path close open sessions.
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
 
