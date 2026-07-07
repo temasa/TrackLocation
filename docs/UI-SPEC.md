@@ -84,6 +84,26 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 
 ---
 
+## 3a. Active Trip Row (List screen — live in-progress trip)
+
+**Decision (2026-07-07):** Mirror the Sessions tab's live-active behaviour on the List/Trips screen. Because there is **no live trip DB row** (a `track` row is written only at Stop — see IMPLEMENTATION-ISSUES #1), the in-progress trip is rendered as a **synthesized live row** derived from `TrackingService.locationUiState`, prepended to "Recent trips" while `isTracking`. On Stop it disappears and the newly-saved finished `Track #N` row takes its place.
+
+**Layout decision:** Keep the existing "Current trip" card (it holds the Start/Stop CTA); ADD the live row below the "Recent trips" header, above the newest finished row. (Alternative "remove the card, live row only" was considered and rejected to keep the Start/Stop control in place.)
+
+**Visual (reuses existing language — no new visual design):** adapts `TrackItemRow` with the Sessions active-row accent:
+- Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 3-stat footer as a finished row.
+- Title: `Trip in progress` (instead of `Track #N`).
+- Trailing: **ACTIVE badge** — pulsing green dot + `ACTIVE` label (same treatment as the Sessions `ActiveBadge`).
+- Stats (live, tick each second): `distance (km)` from `distanceInMeters`; `duration` from `now - tripStartedAt`; `avg speed` = km ÷ elapsed-hours.
+- Not clickable; no long-press delete (not a saved trip yet).
+- Reduced-motion: badge pulse uses the same infinite-transition pattern already present on this screen.
+
+**Empty-state rule:** show `EmptyTripsCard` only when there are no finished trips **AND** no active trip; while a trip is active the live row stands in.
+
+**Screenshots if externalised to Claude Design:** List/Trips screen (Recent trips + Current trip card) and the Sessions active row (ACTIVE badge + green border) as reference. No new visual language is introduced (reuses Sessions active-row + `TrackItemRow`), so no external design round-trip is required.
+
+---
+
 ## 4. OBD UI Surfaces
 
 ### Phase 1 (implemented)
