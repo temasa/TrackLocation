@@ -25,8 +25,8 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.KeyboardArrowLeft
-import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.TextSnippet
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -302,13 +302,13 @@ private fun TitleRow(
         }
         // Prev / Next navigation
         CircleIconButton(
-            icon = Icons.Outlined.KeyboardArrowLeft,
+            icon = Icons.Outlined.KeyboardArrowUp,
             contentDescription = "Previous event",
             enabled = canPrev && onPrev != null,
             onClick = { onPrev?.invoke() },
         )
         CircleIconButton(
-            icon = Icons.Outlined.KeyboardArrowRight,
+            icon = Icons.Outlined.KeyboardArrowDown,
             contentDescription = "Next event",
             enabled = canNext && onNext != null,
             onClick = { onNext?.invoke() },
