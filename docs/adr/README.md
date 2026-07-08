@@ -97,8 +97,8 @@ Links to docs, code, or external resources supporting this decision.
 | [006](006-location-dwell-collapse.md) | Location Dwell Collapse (canonical log stores one anchor per stop) | Accepted | 2026-07-07 |
 | [007](007-unified-fuel-economy-metrics.md) | Unified Fuel-Economy Metrics (instant two-cell + single averaging derivation) | Accepted | 2026-07-07 |
 | [008](008-fuel-price-effective-dated-entity.md) | Fuel Price as an Effective-Dated Entity | Accepted | 2026-07-07 |
-| [009](009-dual-mode-track-navigation.md) | Dual-mode Track Screen — Follow-a-Route Navigation | Proposed | 2026-07-08 |
-| [010](010-self-learning-route-store.md) | Self-learning Local Route Store | Proposed | 2026-07-08 |
+| [009](009-dual-mode-track-navigation.md) | Dual-mode Track Screen — Follow-a-Route Navigation | Accepted | 2026-07-08 |
+| [010](010-self-learning-route-store.md) | Self-learning Local Route Store | Accepted | 2026-07-08 |
 
 ---
 

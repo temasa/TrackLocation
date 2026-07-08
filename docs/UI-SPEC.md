@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.5
+**Document Version:** 0.6
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-07-07
+**Last Updated:** 2026-07-08
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -135,6 +135,19 @@ The `SnapshotViewerSheet` bottom-sheet (opened by tapping a snapshot-bearing Obs
 **Prev / Next event navigation (2026-07-08).** The title row gains two circular chevron buttons immediately left of the close button. They move the sheet to the previous (older) / next (newer) event **without leaving the overlay**, iterating only over snapshot-bearing events (`treeSnapshot != null`) so every target renders real content. Buttons render disabled/greyed at the ends of the list (and whenever the host supplies no handler). Sheet exposes `onPrev/onNext/canPrev/canNext` (defaulted → back-compatible); wired in `ObserverFeedScreen` over `uiState.events`.
 
 ---
+
+## 3d. Track Navigation (dual-mode) — pending design handoff (ADR-009)
+
+New Track-screen UI for follow-a-route navigation. Per AGENTS §12 the visuals are **design-handoff-first** — this section records *what* surfaces are needed, not final visual specs (a design handoff is produced before code):
+
+- **Destination search** — place-search field with autocomplete on the Track screen; entry point to "Start trip + navigate".
+- **Start control** — offers "Start trip (track only)" vs "Start trip + navigate"; reuses the existing `TripPanel` CTA language.
+- **Route + read-out** — route polyline to follow; remaining distance + ETA shown alongside existing trip metrics.
+- **Navigation-perspective toggle** — new control in `MapControls` (heading-up + follow, no tilt); decoupled from trip/nav state; default off (north-up).
+- **Directional car marker** — rotates to GPS heading (replaces the static pin); holds last heading at rest.
+- **Road-ahead candidates** — translucent polylines for previously-driven continuations (ADR-010), visually distinct from the solid live path.
+
+Screenshots to attach for the handoff: current Track map + `TripPanel`, `MapControls`, bottom nav, Sessions card (for visual language). **Open:** routing engine (affects whether ETA is live-traffic or static).
 
 ## 4. OBD UI Surfaces
 

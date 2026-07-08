@@ -1,6 +1,6 @@
 # ADR-010: Self-learning Local Route Store (reuse own GPS traces for free road-ahead)
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-07-08
 **Decided By:** Claude Code (grilling session) + project owner
 

@@ -7,10 +7,10 @@ description: Product Requirements Document — TrackLocation
 # Product Requirements Document
 ## TrackLocation
 
-**Document Version:** 0.6
+**Document Version:** 0.7
 **Status:** Active (migrated from product-spec.md + change-requests.md)
 **Created:** 2026-06-15
-**Last Updated:** 2026-07-07
+**Last Updated:** 2026-07-08
 **Owner:** Project Team
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -82,6 +82,11 @@ The developer / support operator — uses the Observer to inspect accessibility 
 - **What it does:** Registration gate, Google Sign-In, CameraX/ML Kit face enrollment, app-wide auth overlay.
 - **User benefit:** Protects access while background capture/sync/GPS continue.
 
+### Feature 6 (Planned): Track Navigation (follow-a-route) + Self-learning Route Store
+- **What it does:** On the Track screen a trip can be started with an optional destination; the app draws a road route to follow (route line + remaining distance + ETA) and re-routes on deviation. A user-selectable "navigation perspective" rotates the map heading-up and follows a directional car marker. Road-ahead prediction — and later routing — is served for free from the user's own driven traces via a derived local route store; external routing APIs are used only for roads not yet driven.
+- **User benefit:** Turn a recorded drive into a guided one without leaving the tracking model, at near-zero routing-API cost for the roads the user actually drives.
+- See ADR-009 (navigation) and ADR-010 (self-learning route store).
+
 ---
 
 ## 7. MVP Definition
@@ -126,6 +131,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - BLE OBD adapters; in-app BT discovery/PIN entry (system-settings pairing only).
 - User-facing clear/delete of Observer history.
 - Remote sync/backend, Neon, registration, and auth (later phases).
+- Full turn-by-turn navigation (voice, maneuver-by-maneuver guidance, auto-reroute beyond the ADR-009 follow-a-route model).
 
 ---
 
@@ -143,6 +149,8 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-10:** Always-recording persists across app restarts. If an open session survives a force-stop/kill and is still recent (a location point within the ~2-minute launch grace window), the app resumes recording on next launch — the Session status card returns to Active and the session keeps accumulating. Sessions idle beyond the grace window are closed on launch and stay stopped.
 - **FR-11:** Fuel economy is presented as two instant metrics — **km/L** (shown when moving; `—` at rest) and **L/h** (shown whenever OBD is connected) — plus a single trip/session **average km/L**, derived uniformly as displayed displacement distance ÷ fuel integrated from `obd_sample` over the range (ADR-007).
 - **FR-12:** An estimated **fuel cost** (litres consumed × price per litre, IDR `Rp`) is shown on the active Session card, the active-trip row, and completed-trip rows. The price is a first-class **effective-dated entity** (`fuel_price`), edited inline by tapping the cost (Save/Cancel) with multi-step in-memory **undo/redo**; edits append effective-now price rows (non-destructive). Active surfaces use the **current** price; a **completed trip** uses the price in effect at its **start** time and never re-costs when the price later changes (`—` if no price was set by then). Cost shows `—` when litres = 0 or no applicable price exists. (See ADR-008; supersedes the FR-12 v1 'no schema change' note.)
+- **FR-13:** On the Track screen a trip may be started with an optional destination (place-search autocomplete). Navigation is a sub-mode of a trip — never independent of one. Starting "trip + navigate" starts always-recording/session as any trip does; ending navigation (manual) ends the trip (`STOP_TRIP`, persisted) but never turns off always-recording. No auto-arrival — the user ends manually. The destination is mutable mid-trip. Off-route deviation (~50 m, gated by 2–3 consecutive fixes, ≥15 s apart) triggers a re-route. Process death resumes both trip and navigation; routing failures fail soft (the trip always records track-only). Remaining distance + ETA show alongside trip metrics. (ADR-009)
+- **FR-14:** A derived, rebuildable **local route store** is built from the user's own canonical location traces (never from cached third-party routing content). Road-ahead prediction — including multiple previously-driven continuations at a junction — is served from this store for free; external routing is used only for roads not yet driven. The canonical location log remains untouched and is the source the store derives from. (ADR-010)
 
 ---
 
@@ -184,6 +192,10 @@ Inviolable constraints (migrated from CR-0001/CR-0002 guardrails and product-spe
 - **BR-09:** Observer history is not user-deletable/clearable; unsynced local events are never deleted.
 - **BR-10:** OBD samples are stored only while a session is active.
 - **BR-11:** During a stop, consecutive GPS fixes within tolerance `max(15 m, 1.5 × accuracy)` collapse into a single `location_log` anchor row: `timestamp` tracks the last confirmed-still fix (departure) and `dwellStartTimestamp` the first (arrival); `collapsedCount` counts the folded fixes and raw intra-dwell fixes are not retained. Movement is confirmed only after 2 consecutive out-of-tolerance fixes (single-outlier rejection); collapsed fixes add no session/trip distance. (ADR-006)
+- **BR-12:** Navigation on the Track screen is always a sub-mode of a trip; there is no navigation without an active trip. (ADR-009)
+- **BR-13:** Navigation and its trip share one lifecycle — ending navigation ends the trip — but ending a trip never turns always-recording OFF; the always-recording switch remains solely on the Session screen (BR-07 unchanged). (ADR-009)
+- **BR-14:** A routing/network failure must never cost trip data: the trip always starts and records track-only when routing is unavailable. (ADR-009)
+- **BR-15:** The local route store is a derived index built only from the user's own location log; third-party routing results are never cached/stored to build routes, and the canonical location log is never modified by the store. (ADR-010, PRD §4)
 
 ---
 

@@ -1,6 +1,6 @@
 # ADR-009: Dual-mode Track Screen — Follow-a-Route Navigation as a Sub-mode of a Trip
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-07-08
 **Decided By:** Claude Code (grilling session) + project owner
 

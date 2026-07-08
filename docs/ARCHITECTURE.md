@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.5
+**Document Version:** 0.6
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-07-07
+**Last Updated:** 2026-07-08
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -64,6 +64,10 @@ TrackEntity (trip) — OBD accumulator column (added DB v5)
 FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
   ├── pricePerLiter (REAL)
   └── effectiveFromMs (Long, @Index) — current price = latest row; completed-trip cost uses the row effective at trip start
+
+KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10, ADR-010); rebuildable, never source-of-truth
+  ├── simplified directed polyline (Douglas–Peucker) + bearingDegrees
+  └── indexed by grid cell for road-ahead lookup (CellIndex)
 ```
 
 ### Key Invariants
@@ -92,7 +96,7 @@ FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-0
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 5) | Local-first storage with migrations |
+| Persistence | Room (current DB version 10) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -139,7 +143,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`.
+Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE known_segment` (a derived, simplified directed-polyline store) plus a grid-cell index for road-ahead lookup — derived from and fully rebuildable from `location_log`, never source-of-truth.
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 
@@ -189,6 +193,16 @@ Single Android APK; no backend in current phases. Future: Neon Postgres (V1 dire
 - Surface "fuel data unavailable on this vehicle" in OBD UI for no-fuel-PID vehicles.
 
 ---
+
+## 12. Track Navigation & Local Route Store (ADR-009 / ADR-010)
+
+**Dual-mode Track screen (ADR-009).** The Track screen keeps live tracking and adds follow-a-route navigation as a **sub-mode of a trip** (never independent). "Start trip + navigate" reuses the existing `START_TRIP` path (which already starts always-recording); ending navigation ends the trip via `STOP_TRIP` but never stops always-recording. Off-route recalculation fires at ~50 m, gated by 2–3 consecutive off-route fixes and ≥15 s between calls. Routing failures fail soft (trip always records track-only). `LocationUiState` gains a `bearingDegrees` (heading) field, surfaced from the `Location.bearing` already captured in `TrackingService`/`LocationEntity`.
+
+**"Navigation perspective" camera.** A decoupled, user-toggled map view that sets `CameraPosition.bearing = heading` and follows the vehicle (heading-up), with **no tilt** (Compose-Maps 1.2-safe). A directional car marker uses `Marker(rotation = heading)`.
+
+**Local route store (ADR-010).** New derived components (business logic out of Compose, data behind repository per §3): `TraceIngester` (on session/trip end, background — simplify + segment the new `location_log` slice into `known_segment` rows), `RoutePredictor` (current LatLng + bearing → 0..N candidate ahead-polylines from the grid-cell index), and `LocalRouteRepository` (DAO wrapper). The store is derived and rebuildable; the canonical `location_log` is never modified. `TrackDatabase` moves to **v10** via `MIGRATION_9_10`.
+
+**Open (parked):** routing engine for genuinely-new roads — Google Directions/Places (paid, live traffic) vs free hosted OSM (OpenRouteService/GraphHopper) vs self-hosted OSM (OSRM/Valhalla); traffic-aware vs static ETA (traffic only on Google); the always-on ghost-route external-API cost (largely superseded by this store). Stage B (a full routable graph over the user's own network) is deferred to its own future ADR.
 
 ## Reference Documents
 
