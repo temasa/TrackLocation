@@ -2162,6 +2162,22 @@ Scope decision:
 
 - **Git Revision:** `99125ea`
 
+### Completed-trip cost color alternation (cosmetic)
+
+**What it does:** On the Trips list, the completed-trip cost **value** alternates between `TripInk` (#0A0A0A) and `TripGreen` (#16A34A), toggling each time a row's cost differs from the row above. Equal-cost runs (including consecutive `—`) share a color. Purely cosmetic — no data, ordering, label, or other-stat change.
+
+**Observable result:** Scanning the completed-trip list top→down, the cost number's colour flips at each boundary where the cost value changes; runs of identical cost keep one colour.
+
+**How to verify (static + manual; build gated per AGENTS.md §5a):**
+- Compile: `:app:compileDebugKotlin` clean (only with explicit user permission).
+- Manual: with several completed trips of differing costs, confirm the cost colour toggles between ink and green at each change and stays constant across equal-cost runs.
+
+**Implementation steps (What/How):**
+1. **Edit** `screens/list/components/ListContent.kt` — in the existing `tripCosts` `LaunchedEffect`, also populate a `mutableStateMapOf<Int, Boolean>` toggle: walk `trackList` in order, flip the flag whenever `cost != prevCost`; pass `costColor = if (flag) TripGreen else TripInk` into `TrackItemRow`.
+2. **Edit** `screens/list/components/TrackItemRow.kt` — add `costColor: Color = TripInk`; add a `valueColor: Color = TripInk` param to the private `TrackStat`; pass `valueColor = costColor` only for the cost stat.
+
+- **Git Revision:** `---` (backfill next commit)
+
 ## Local Build Note
 
 Preferred local JDK path from earlier progress:
