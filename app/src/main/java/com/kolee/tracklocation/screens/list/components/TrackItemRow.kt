@@ -7,6 +7,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,9 +21,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
 import com.kolee.tracklocation.ui.theme.TripBorder
 import com.kolee.tracklocation.ui.theme.TripGreen
 import com.kolee.tracklocation.ui.theme.TripInk
@@ -58,7 +61,7 @@ fun TrackItemRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(124.dp)
+            .height(156.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(TripSurface)
             .border(1.dp, TripBorder, RoundedCornerShape(18.dp))
@@ -102,6 +105,8 @@ fun TrackItemRow(
                 .height(1.dp)
                 .background(TripBorder)
         )
+        // Base row — distance / duration / avg speed (mirrors ActiveTripRow's two-row grid so
+        // the five metrics no longer clip in a single cramped 5-column row).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -122,6 +127,13 @@ fun TrackItemRow(
                 label = "avg speed",
                 modifier = Modifier.weight(1f)
             )
+        }
+        // Fuel row — km/L / cost. Empty third cell keeps columns aligned with the base row.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
             TrackStat(
                 value = efficiencyText,
                 label = "km/L",
@@ -132,6 +144,7 @@ fun TrackItemRow(
                 label = "cost",
                 modifier = Modifier.weight(1f)
             )
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -172,15 +185,18 @@ private fun TrackStat(
         Text(
             text = value,
             color = TripInk,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = MonospaceFontFamily,
+            letterSpacing = (-0.3).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Text(
             text = label,
             color = TripMuted,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Start
         )
     }
