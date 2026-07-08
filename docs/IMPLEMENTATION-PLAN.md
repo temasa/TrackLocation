@@ -2145,6 +2145,7 @@ Scope decision:
 4. **Wire** `onFuelClick = { showPriceDialog = true }` at the `ListHeader()` call site, reusing the existing `showPriceDialog` state and `FuelCostEditorDialog`.
 
 - **Git Revision:** `f98c7d1`
+- **Verified (2026-07-08, device SM-G965F / Android 10):** `installDebug` OK; tapping the header fuel icon opens the "Fuel price (Rp / litre)" editor (prefilled current price, Undo/Redo/Cancel/Save); Cancel dismisses. PASS.
 
 ### Completed-trip fuel-price read-out (Trips screen)
 
@@ -2161,6 +2162,7 @@ Scope decision:
 2. **Edit** `screens/list/components/TrackItemRow.kt` — add `onCostClick: () -> Unit`; wrap the cost `TrackStat` cell in `Modifier.clickable(onClick = onCostClick)` so the cost tap is independent of the row's `combinedClickable`.
 
 - **Git Revision:** `99125ea`
+- **Verified (2026-07-08, device SM-G965F / Android 10):** `installDebug` OK; tapping a completed trip's cost cell shows the read-only Toast "Track #39 fuel price: Rp 16.250 / litre"; no editable dialog opened (ADR-008 read-only). PASS.
 
 ### Completed-trip cost color alternation (cosmetic)
 
