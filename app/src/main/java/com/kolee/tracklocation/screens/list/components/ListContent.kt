@@ -163,13 +163,20 @@ private fun TrackSuccessState(
     // ADR-008: completed-trip costs, precomputed in batch keyed by trip idx.
     val tripCosts = remember { mutableStateMapOf<Int, String>() }
     val tripPrices = remember { mutableStateMapOf<Int, Double>() }
+    val tripCostColorFlags = remember { mutableStateMapOf<Int, Boolean>() }
     LaunchedEffect(trackList, priceState) {
+        var toggle = false
+        var prevCost: String? = null
         for (t in trackList) {
             val p = fuelPriceDao.priceEffectiveAt(t.timestamp)
-            tripCosts[t.idx] = if (t.obdFuelConsumedL > 0.0 && p != null && p.pricePerLiter > 0.0) {
+            val cost = if (t.obdFuelConsumedL > 0.0 && p != null && p.pricePerLiter > 0.0) {
                 formatIdr(t.obdFuelConsumedL * p.pricePerLiter)
             } else "—"
+            tripCosts[t.idx] = cost
             tripPrices[t.idx] = p?.pricePerLiter ?: 0.0
+            if (prevCost != null && cost != prevCost) toggle = !toggle
+            tripCostColorFlags[t.idx] = toggle
+            prevCost = cost
         }
     }
 
@@ -227,7 +234,8 @@ private fun TrackSuccessState(
                     onLongClick = { showDialogForDeletion = true },
                     onCostClick = {
                         showTripFuelPriceToast(context, item.idx, tripPrices[item.idx] ?: 0.0)
-                    }
+                    },
+                    costColor = if (tripCostColorFlags[item.idx] == true) TripGreen else TripInk
                 )
 
                 if (showDialogForDeletion) {

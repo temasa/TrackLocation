@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,7 +44,8 @@ fun TrackItemRow(
     costText: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onCostClick: () -> Unit = {}
+    onCostClick: () -> Unit = {},
+    costColor: Color = TripInk
 ) {
     val distanceText = "${String.format("%.2f", item.distance / 1000f)} km"
     val timeText = TimeUtilFormatter.getTime(item.duration)
@@ -146,7 +148,8 @@ fun TrackItemRow(
                 label = "cost",
                 modifier = Modifier
                     .weight(1f)
-                    .clickable(onClick = onCostClick)
+                    .clickable(onClick = onCostClick),
+                valueColor = costColor
             )
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -183,12 +186,13 @@ private fun RouteIndicator() {
 private fun TrackStat(
     value: String,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueColor: Color = TripInk
 ) {
     Column(modifier = modifier) {
         Text(
             text = value,
-            color = TripInk,
+            color = valueColor,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = MonospaceFontFamily,

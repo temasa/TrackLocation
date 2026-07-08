@@ -2176,7 +2176,7 @@ Scope decision:
 1. **Edit** `screens/list/components/ListContent.kt` — in the existing `tripCosts` `LaunchedEffect`, also populate a `mutableStateMapOf<Int, Boolean>` toggle: walk `trackList` in order, flip the flag whenever `cost != prevCost`; pass `costColor = if (flag) TripGreen else TripInk` into `TrackItemRow`.
 2. **Edit** `screens/list/components/TrackItemRow.kt` — add `costColor: Color = TripInk`; add a `valueColor: Color = TripInk` param to the private `TrackStat`; pass `valueColor = costColor` only for the cost stat.
 
-- **Git Revision:** `---` (backfill next commit)
+- **Git Revision:** `45dc7dc`
 
 ## Local Build Note
 
