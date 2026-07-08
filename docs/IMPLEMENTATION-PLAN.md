@@ -2146,6 +2146,22 @@ Scope decision:
 
 - **Git Revision:** `---` (backfill next commit)
 
+### Completed-trip fuel-price read-out (Trips screen)
+
+**What it does:** Tapping the **cost** cell on a completed `TrackItemRow` shows a Toast with the historic fuel price applied to that trip (the `fuel_price` row effective at the trip's start), price-per-litre only. Read-only per ADR-008 — never opens the editable price editor, so finished trips are never re-costed.
+
+**Observable result:** On the Trips tab, tapping a completed trip's cost cell shows a Toast e.g. "Track #12 fuel price: Rp 12.500 / litre" (or "No fuel price recorded for this trip" when no price was in effect at the trip's start). The row's tap-to-open-detail and long-press-to-delete still work elsewhere on the row.
+
+**How to verify (static + manual; build gated per AGENTS.md §5a):**
+- Compile: `:app:compileDebugKotlin` clean (only with explicit user permission).
+- Manual: set price P1 → run/finish trip A → set price P2; tap trip A's cost cell → Toast shows P1 (not P2). Trip with no price before it started → Toast says no price recorded.
+
+**Implementation steps (What/How):**
+1. **Edit** `screens/list/components/ListContent.kt` — add a `tripPrices: MutableMap<Int, Double>` populated in the existing `LaunchedEffect` alongside `tripCosts` (store `priceEffectiveAt(t.timestamp)?.pricePerLiter ?: 0.0`); add a Toast helper (reuse `formatIdr`); pass `onCostClick` into `TrackItemRow`.
+2. **Edit** `screens/list/components/TrackItemRow.kt` — add `onCostClick: () -> Unit`; wrap the cost `TrackStat` cell in `Modifier.clickable(onClick = onCostClick)` so the cost tap is independent of the row's `combinedClickable`.
+
+- **Git Revision:** `---` (backfill next commit)
+
 ## Local Build Note
 
 Preferred local JDK path from earlier progress:
