@@ -2128,6 +2128,24 @@ Scope decision:
 6. **Edit** `screens/list/components/ListContent.kt` — restructure `ActiveTripRow` into two stat rows; pass instant km/L, L/h, trip-avg km/L, cost; taller card.
 7. Retire `obd_fuel_price_per_liter` as source of truth (keep or remove the DataStore key; document choice).
 
+### Fuel-price header entry point (Trips screen)
+
+**What it does:** Adds a tappable fuel-pump icon to the Trips `ListHeader`, opening the existing fuel-price editor (`FuelCostEditorDialog`) from anywhere on the screen — not only during an active trip. Previously the editor was reachable only via the active-trip row's COST cell.
+
+**Observable result:** On the Trips tab, a fuel-pump icon sits at the right of the "Trips" title. Tapping it opens the `Rp` price editor; Save / Undo / Redo behave exactly as when opened from the COST cell.
+
+**How to verify (static + manual; build gated per AGENTS.md §5a):**
+- Compile: `:app:compileDebugKotlin` clean (only with explicit user permission).
+- Manual: on the Trips tab with **no active trip**, tap the header fuel icon → editor opens → set a price → completed-trip costs reflect it; Undo/Redo work; Cancel discards.
+
+**Implementation steps (What/How):**
+1. **Create** `app/src/main/res/drawable/ic_fuel_pump.xml` — a small fuel-pump vector drawable (24dp viewport).
+2. **Edit** `screens/list/components/ListContent.kt` — thread an `onFuelClick: () -> Unit` parameter from `TrackSuccessState` into `ListHeader()`.
+3. **Edit** `ListHeader()` — make its `Row` `Arrangement.SpaceBetween` (keep the title Column) and add a trailing tappable `Icon(painterResource(...))` calling `onFuelClick`.
+4. **Wire** `onFuelClick = { showPriceDialog = true }` at the `ListHeader()` call site, reusing the existing `showPriceDialog` state and `FuelCostEditorDialog`.
+
+- **Git Revision:** `---` (backfill next commit)
+
 ## Local Build Note
 
 Preferred local JDK path from earlier progress:
