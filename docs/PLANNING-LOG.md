@@ -40,7 +40,7 @@ Track each open feedback item with its status:
 
 | ID | Title | Status | Owner | Last Updated | Notes |
 |----|-------|--------|-------|--------------|-------|
-| NAV-01 | Dual-mode Track: follow-a-route navigation (ADR-009) | closed | Planning Session | 2026-07-08 | ADR-009 accepted + propagated; routing engine + traffic-ETA + ghost-cost still OPEN; UI needs design handoff (§12) |
+| NAV-01 | Dual-mode Track: follow-a-route navigation (ADR-009) | closed | Planning Session | 2026-07-08 | ADR-009 accepted + propagated; routing engine + traffic-ETA RESOLVED (ADR-011: OpenRouteService, static ETA); ghost-cost superseded by ADR-010; UI needs design handoff (§12) |
 | NAV-02 | Self-learning local route store (ADR-010) | closed | Planning Session | 2026-07-08 | ADR-010 accepted + propagated; Stage A now, Stage B deferred to a future ADR |
 
 **Status options:**

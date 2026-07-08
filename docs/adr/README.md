@@ -99,6 +99,7 @@ Links to docs, code, or external resources supporting this decision.
 | [008](008-fuel-price-effective-dated-entity.md) | Fuel Price as an Effective-Dated Entity | Accepted | 2026-07-07 |
 | [009](009-dual-mode-track-navigation.md) | Dual-mode Track Screen — Follow-a-Route Navigation | Accepted | 2026-07-08 |
 | [010](010-self-learning-route-store.md) | Self-learning Local Route Store | Accepted | 2026-07-08 |
+| [011](011-routing-engine-adapter.md) | Routing Engine via Connector-Adapter (OpenRouteService → self-hosted OSM) | Accepted | 2026-07-08 |
 
 ---
 

@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.6
+**Document Version:** 0.7
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-07-08
 **Owner:** Tech Lead
@@ -202,7 +202,9 @@ Single Android APK; no backend in current phases. Future: Neon Postgres (V1 dire
 
 **Local route store (ADR-010).** New derived components (business logic out of Compose, data behind repository per §3): `TraceIngester` (on session/trip end, background — simplify + segment the new `location_log` slice into `known_segment` rows), `RoutePredictor` (current LatLng + bearing → 0..N candidate ahead-polylines from the grid-cell index), and `LocalRouteRepository` (DAO wrapper). The store is derived and rebuildable; the canonical `location_log` is never modified. `TrackDatabase` moves to **v10** via `MIGRATION_9_10`.
 
-**Open (parked):** routing engine for genuinely-new roads — Google Directions/Places (paid, live traffic) vs free hosted OSM (OpenRouteService/GraphHopper) vs self-hosted OSM (OSRM/Valhalla); traffic-aware vs static ETA (traffic only on Google); the always-on ghost-route external-API cost (largely superseded by this store). Stage B (a full routable graph over the user's own network) is deferred to its own future ADR.
+**Routing engine (ADR-011).** For roads not covered by the local store, routing goes through a `RoutingEngine` **port** (`route(origin, dest, opts) → RouteResult(polyline, distanceMeters, durationSeconds)`) with a first `OpenRouteServiceAdapter` connector (`POST /v2/directions/driving-car`, API-key auth, encoded-polyline geometry reused by the existing decode). Ports-and-adapters keeps the provider swappable: self-hosted ORS is a base-URL swap in the same adapter; OSRM/Valhalla/Google are new adapters. ETA is **static** (ORS has no live traffic). The ORS key is not hardcoded (§13); ORS/OSM attribution is displayed wherever routes appear.
+
+**Still open (parked):** *when* to migrate to self-hosted OSM (deliberately deferred). Stage B (a full routable graph over the user's own network) is deferred to its own future ADR.
 
 ## Reference Documents
 

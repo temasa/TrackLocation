@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.6
+**Document Version:** 0.7
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-07-08
 **Owner:** Product Manager / UX Designer
@@ -146,8 +146,9 @@ New Track-screen UI for follow-a-route navigation. Per AGENTS §12 the visuals a
 - **Navigation-perspective toggle** — new control in `MapControls` (heading-up + follow, no tilt); decoupled from trip/nav state; default off (north-up).
 - **Directional car marker** — rotates to GPS heading (replaces the static pin); holds last heading at rest.
 - **Road-ahead candidates** — translucent polylines for previously-driven continuations (ADR-010), visually distinct from the solid live path.
+- **Routing attribution** — visible "© openrouteservice.org | © OpenStreetMap contributors" wherever a route is shown (ADR-011 requirement).
 
-Screenshots to attach for the handoff: current Track map + `TripPanel`, `MapControls`, bottom nav, Sessions card (for visual language). **Open:** routing engine (affects whether ETA is live-traffic or static).
+Screenshots to attach for the handoff: current Track map + `TripPanel`, `MapControls`, bottom nav, Sessions card (for visual language). **Engine:** OpenRouteService (ADR-011) — ETA is static (no live traffic).
 
 ## 4. OBD UI Surfaces
 

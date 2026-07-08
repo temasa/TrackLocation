@@ -36,7 +36,7 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.7 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-07-08 |
-| `docs/ARCHITECTURE.md` | 0.6 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-08 |
+| `docs/ARCHITECTURE.md` | 0.7 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-08 |
 | `docs/adr/README.md` | 0.1 | Active (4 ADRs indexed) | Tech Lead | 2026-06-15 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -47,8 +47,9 @@ When any controlled document changes, update both:
 | `docs/adr/008-fuel-price-effective-dated-entity.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/009-dual-mode-track-navigation.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/010-self-learning-route-store.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.7 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-08 |
-| `docs/UI-SPEC.md` | 0.6 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-08 |
+| `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.8 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-08 |
+| `docs/UI-SPEC.md` | 0.7 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-08 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-06-15 |
@@ -89,6 +90,7 @@ Draft documents normally begin at `0.1`.
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | 0.4/0.3/0.3/0.4 | 0.5/0.4/0.4/0.5 | Added Fuel Cost feature (FR-12): estimated fuel cost (IDR `Rp`) = litres × user-set price on the Session OBD card + Trips active-trip row; inline tap-to-edit price (Save/Cancel) with multi-step in-memory undo/redo; price persisted in `obd_prefs` (`obd_fuel_price_per_liter`), `ObdUiState.Connected` gains `sessionFuelConsumedL`/`tripFuelConsumedL`. No schema change, no ADR. | Claude Code |
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/008 | 0.5/0.4/0.4/0.5/— | 0.6/0.5/0.5/0.6/1.0 | ADR-008 accepted — fuel price as an effective-dated `fuel_price` entity (migration v8→v9): completed-trip cost priced at trip start (non-retroactive), active-trip card split into two metric rows (instant km/L, L/h, trip-avg km/L, cost). Supersedes the FR-12 v1 'no schema change' note. Code pending. | Claude Code |
 | 2026-07-08 | docs/adr/009-dual-mode-track-navigation.md, docs/adr/010-self-learning-route-store.md, docs/adr/README.md | — | 0.1/0.1 | Two new ADRs (Proposed) from a grilling session: ADR-009 dual-mode Track screen (follow-a-route navigation as a sub-mode of a trip — one coupled trip↔navigation lifecycle, manual end, mutable destination, 50 m/2-3-fix/15 s deviation recalc, fail-soft, heading-up "navigation perspective" toggle + directional car marker); ADR-010 self-learning local route store (reject caching Google results on ToS grounds; build a derived, rebuildable route store from the user's own GPS traces — Stage A trace-reuse road-ahead + branches, Stage B routable graph deferred). Routing engine, traffic-vs-static ETA, and ghost-route-via-external-API cost left OPEN. Also fixed a stale ADR index (008 was missing). PRD/ARCHITECTURE/UI-SPEC/IMPLEMENTATION-PLAN propagation deferred to ADR acceptance. | Claude Code |
+| 2026-07-08 | adr/011, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/009, adr/README | —/0.6/0.6/0.7/1.0/— | 1.0/0.7/0.7/0.8/1.0/— | ADR-011 accepted — routing engine via connector-adapter: OpenRouteService hosted free tier now, portable to self-hosted OSM by a base-URL swap (`RoutingEngine` port + `OpenRouteServiceAdapter`); static ETA; ORS/OSM attribution; key not hardcoded. Resolves ADR-009's routing-engine + traffic-ETA open questions. ARCHITECTURE §12 RoutingEngine/adapter; UI-SPEC §3d attribution surface. Remaining parked: when to migrate to self-hosted OSM. | Claude Code |
 | 2026-07-08 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/009, adr/010, adr/README | 0.6/0.5/0.5/0.6/0.1/0.1 | 0.7/0.6/0.6/0.7/1.0/1.0 | ADR-009 (dual-mode Track navigation) + ADR-010 (self-learning route store) accepted and propagated. PRD: Feature 6, FR-13/FR-14, BR-12…BR-15, Out-of-Scope turn-by-turn. ARCHITECTURE: derived `known_segment`/CellIndex, MIGRATION_9_10 (DB→v10), new §12. UI-SPEC: §3d nav surfaces (design-handoff-pending). Routing engine, traffic-vs-static ETA, and ghost-route external-API cost left OPEN. Code gated (design handoff §12 + build permission §5a). | Claude Code |
 
 ---

@@ -35,8 +35,8 @@ The Track screen (`screens/track/TrackScreen.kt`) is today a live location track
 
 ## Open Questions (parked at owner's direction)
 
-- **Routing engine:** Google paid Directions/Places (has live traffic, existing Maps key) vs free hosted OSM (OpenRouteService / GraphHopper free tiers — daily caps, no live traffic) vs self-hosted OSM (OSRM / Valhalla — free per-call, needs a server). Undecided.
-- **Traffic-aware vs static ETA:** provisionally traffic-aware, but that only holds on Google; a free OSM engine forces a static ETA. Contingent on the engine choice.
+- **Routing engine:** **Resolved by ADR-011** — OpenRouteService (hosted free tier) via a connector-adapter, portable to self-hosted OSM by a base-URL swap. ETA is therefore static (no live traffic).
+- **Traffic-aware vs static ETA:** **Resolved** — static ETA (OpenRouteService has no live traffic; ADR-011). Live traffic would require a future Google adapter.
 - **Always-on "ghost road-ahead" via external API** and its ongoing cost — superseded in preference by the self-learning local route store (see ADR-010), which serves road-ahead from the user's own traces for free.
 - **Google Maps Platform ToS grey area:** drawing third-party (OSM) routing lines on top of a Google basemap needs verification before shipping.
 
