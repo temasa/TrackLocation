@@ -25,8 +25,11 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.TextSnippet
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -133,6 +136,10 @@ private fun fmtTime(ms: Long): String = dateFormatter.format(Date(ms))
 fun SnapshotViewerSheet(
     event: ObservedEvent,
     onDismiss: () -> Unit,
+    onPrev: (() -> Unit)? = null,
+    onNext: (() -> Unit)? = null,
+    canPrev: Boolean = false,
+    canNext: Boolean = false,
 ) {
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
     val sheetHeight = (screenHeightDp * 0.88f).dp
@@ -195,7 +202,14 @@ fun SnapshotViewerSheet(
                     ),
             ) {
                 DragHandle()
-                TitleRow(event = event, onDismiss = onDismiss)
+                TitleRow(
+                    event = event,
+                    onDismiss = onDismiss,
+                    onPrev = onPrev,
+                    onNext = onNext,
+                    canPrev = canPrev,
+                    canNext = canNext,
+                )
                 MetaStrip(event = event)
                 ModeToolbar(
                     mode = mode,
@@ -236,13 +250,20 @@ private fun DragHandle() {
 }
 
 @Composable
-private fun TitleRow(event: ObservedEvent, onDismiss: () -> Unit) {
+private fun TitleRow(
+    event: ObservedEvent,
+    onDismiss: () -> Unit,
+    onPrev: (() -> Unit)?,
+    onNext: (() -> Unit)?,
+    canPrev: Boolean,
+    canNext: Boolean,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -279,63 +300,108 @@ private fun TitleRow(event: ObservedEvent, onDismiss: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        // Prev / Next navigation
+        CircleIconButton(
+            icon = Icons.Outlined.KeyboardArrowLeft,
+            contentDescription = "Previous event",
+            enabled = canPrev && onPrev != null,
+            onClick = { onPrev?.invoke() },
+        )
+        CircleIconButton(
+            icon = Icons.Outlined.KeyboardArrowRight,
+            contentDescription = "Next event",
+            enabled = canNext && onNext != null,
+            onClick = { onNext?.invoke() },
+        )
         // Close button
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF1F4F0))
-                .border(1.dp, Color(0xFFE7EAE6), CircleShape)
-                .clickable(onClick = onDismiss),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Close,
-                contentDescription = "Close",
-                modifier = Modifier.size(16.dp),
-                tint = TripInk,
-            )
-        }
+        CircleIconButton(
+            icon = Icons.Outlined.Close,
+            contentDescription = "Close",
+            enabled = true,
+            onClick = onDismiss,
+        )
+    }
+}
+
+@Composable
+private fun CircleIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(Color(0xFFF1F4F0))
+            .border(1.dp, Color(0xFFE7EAE6), CircleShape)
+            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(16.dp),
+            tint = if (enabled) TripInk else Color(0xFFCDD1CB),
+        )
     }
 }
 
 @Composable
 private fun MetaStrip(event: ObservedEvent) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        MetaChip(
-            label = "EVENT",
-            value = event.eventType.removePrefix("TYPE_"),
-            valueColor = TripGreenLabel,
-        )
-        MetaChip(
-            label = "FIRST SEEN",
-            value = fmtTime(event.firstSeenMs),
-            valueColor = TripInk,
-        )
-        MetaChip(
-            label = "LAST SEEN",
-            value = fmtTime(event.timestampMs),
-            valueColor = TripInk,
-        )
-        if (event.repeatCount > 1) {
-            MetaChip(
-                label = "REPEAT",
-                value = "×${event.repeatCount}",
-                valueColor = ObserverAmber,
+        // Event type — full width, no label
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFFE7EAE6), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = event.eventType.removePrefix("TYPE_"),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.Monospace,
+                color = TripGreenLabel,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+        }
+        // First seen / Last seen (+ repeat)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            MetaChip(
+                label = "FIRST SEEN",
+                value = fmtTime(event.firstSeenMs),
+                valueColor = TripInk,
+                modifier = Modifier.weight(1f),
+            )
+            MetaChip(
+                label = "LAST SEEN",
+                value = fmtTime(event.timestampMs),
+                valueColor = TripInk,
+                modifier = Modifier.weight(1f),
+            )
+            if (event.repeatCount > 1) {
+                MetaChip(
+                    label = "REPEAT",
+                    value = "×${event.repeatCount}",
+                    valueColor = ObserverAmber,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun MetaChip(label: String, value: String, valueColor: Color) {
+private fun MetaChip(label: String, value: String, valueColor: Color, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .border(1.dp, Color(0xFFE7EAE6), RoundedCornerShape(10.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
@@ -345,6 +411,8 @@ private fun MetaChip(label: String, value: String, valueColor: Color) {
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.6.sp,
             color = Color(0xFFA3A3A3),
+            maxLines = 1,
+            softWrap = false,
         )
         Text(
             text = value,

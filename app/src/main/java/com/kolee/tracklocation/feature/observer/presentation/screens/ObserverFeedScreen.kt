@@ -324,11 +324,17 @@ fun ObserverFeedScreen(navController: NavController) {
         )
     }
 
-    // Snapshot viewer sheet
+    // Snapshot viewer sheet — prev/next navigate among snapshot-bearing events
     snapshotEvent?.let { ev ->
+        val snapEvents = uiState.events.filter { it.treeSnapshot != null }
+        val idx = snapEvents.indexOfFirst { it.id == ev.id }
         SnapshotViewerSheet(
             event = ev,
             onDismiss = { snapshotEvent = null },
+            onPrev = { if (idx > 0) snapshotEvent = snapEvents[idx - 1] },
+            onNext = { if (idx in 0 until snapEvents.lastIndex) snapshotEvent = snapEvents[idx + 1] },
+            canPrev = idx > 0,
+            canNext = idx in 0 until snapEvents.lastIndex,
         )
     }
 }

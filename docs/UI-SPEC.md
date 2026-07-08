@@ -51,7 +51,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Settings | Current | Unified operational settings; GENERAL / TOOLS / ABOUT |
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
-| Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy) |
+| Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -120,6 +120,16 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 **Data:** No schema change for §3b's efficiency stat; the cost stat (ADR-008) reads the new `fuel_price` table (migration v8→v9).
 
 **Design handoff:** Reuses the established Sessions/`TrackItemRow` visual language (no new visual design), so no external Claude Design round-trip is required. If externalised: attach the current Trips screen + Sessions screen as reference.
+
+---
+
+## 3c. Observer Snapshot Viewer sheet (2026-07-08)
+
+The `SnapshotViewerSheet` bottom-sheet (opened by tapping a snapshot-bearing Observer feed row) shows the captured accessibility node tree for one event.
+
+**Meta strip — layout fix (2026-07-08).** The EVENT / FIRST SEEN / LAST SEEN chips previously shared one `Row`; a long event type (e.g. `WINDOW_CONTENT_CHANGED`) squeezed the last chip until its label wrapped one character per line (vertical `L-A-S-T-S-E-E-N`). The strip is now a `Column`: **row 1** is the event-type value alone in a full-width bordered box (no "EVENT" label); **row 2** holds FIRST SEEN and LAST SEEN chips at equal `weight(1f)`, with REPEAT appended when `repeatCount > 1`. Chip labels are pinned to `maxLines = 1, softWrap = false` so a squeezed label can never wrap vertically again.
+
+**Prev / Next event navigation (2026-07-08).** The title row gains two circular chevron buttons immediately left of the close button. They move the sheet to the previous (older) / next (newer) event **without leaving the overlay**, iterating only over snapshot-bearing events (`treeSnapshot != null`) so every target renders real content. Buttons render disabled/greyed at the ends of the list (and whenever the host supplies no handler). Sheet exposes `onPrev/onNext/canPrev/canNext` (defaulted → back-compatible); wired in `ObserverFeedScreen` over `uiState.events`.
 
 ---
 
