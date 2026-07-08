@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -160,12 +162,14 @@ private fun TrackSuccessState(
 
     // ADR-008: completed-trip costs, precomputed in batch keyed by trip idx.
     val tripCosts = remember { mutableStateMapOf<Int, String>() }
+    val tripPrices = remember { mutableStateMapOf<Int, Double>() }
     LaunchedEffect(trackList, priceState) {
         for (t in trackList) {
             val p = fuelPriceDao.priceEffectiveAt(t.timestamp)
             tripCosts[t.idx] = if (t.obdFuelConsumedL > 0.0 && p != null && p.pricePerLiter > 0.0) {
                 formatIdr(t.obdFuelConsumedL * p.pricePerLiter)
             } else "—"
+            tripPrices[t.idx] = p?.pricePerLiter ?: 0.0
         }
     }
 
@@ -179,7 +183,7 @@ private fun TrackSuccessState(
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item { ListHeader() }
+        item { ListHeader(onFuelClick = { showPriceDialog = true }) }
         item {
             CurrentTripCard(
                 uiState = uiState,
@@ -220,7 +224,10 @@ private fun TrackSuccessState(
                     item = item,
                     costText = tripCosts[item.idx] ?: "—",
                     onClick = { onSelect.invoke(item.idx) },
-                    onLongClick = { showDialogForDeletion = true }
+                    onLongClick = { showDialogForDeletion = true },
+                    onCostClick = {
+                        showTripFuelPriceToast(context, item.idx, tripPrices[item.idx] ?: 0.0)
+                    }
                 )
 
                 if (showDialogForDeletion) {
@@ -431,10 +438,11 @@ private fun ActiveTripStat(
 }
 
 @Composable
-private fun ListHeader() {
+private fun ListHeader(onFuelClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Bottom
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -452,7 +460,30 @@ private fun ListHeader() {
                 letterSpacing = 0.sp
             )
         }
+        Icon(
+            painter = painterResource(id = R.drawable.ic_fuel_pump),
+            contentDescription = "Set fuel price",
+            tint = TripInk,
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(onClick = onFuelClick)
+                .padding(6.dp)
+                .size(26.dp)
+        )
     }
+}
+
+private fun showTripFuelPriceToast(
+    context: android.content.Context,
+    trackIdx: Int,
+    pricePerLiter: Double
+) {
+    val msg = if (pricePerLiter > 0.0) {
+        "Track #$trackIdx fuel price: ${formatIdr(pricePerLiter)} / litre"
+    } else {
+        "No fuel price recorded for this trip"
+    }
+    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
 }
 
 @Composable

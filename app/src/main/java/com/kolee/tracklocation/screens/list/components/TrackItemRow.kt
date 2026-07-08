@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +42,8 @@ fun TrackItemRow(
     item: TrackEntity,
     costText: String,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    onCostClick: () -> Unit = {}
 ) {
     val distanceText = "${String.format("%.2f", item.distance / 1000f)} km"
     val timeText = TimeUtilFormatter.getTime(item.duration)
@@ -142,7 +144,9 @@ fun TrackItemRow(
             TrackStat(
                 value = costText,
                 label = "cost",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onCostClick)
             )
             Spacer(modifier = Modifier.weight(1f))
         }

@@ -2144,7 +2144,7 @@ Scope decision:
 3. **Edit** `ListHeader()` — make its `Row` `Arrangement.SpaceBetween` (keep the title Column) and add a trailing tappable `Icon(painterResource(...))` calling `onFuelClick`.
 4. **Wire** `onFuelClick = { showPriceDialog = true }` at the `ListHeader()` call site, reusing the existing `showPriceDialog` state and `FuelCostEditorDialog`.
 
-- **Git Revision:** `---` (backfill next commit)
+- **Git Revision:** `f98c7d1`
 
 ### Completed-trip fuel-price read-out (Trips screen)
 
@@ -2160,7 +2160,7 @@ Scope decision:
 1. **Edit** `screens/list/components/ListContent.kt` — add a `tripPrices: MutableMap<Int, Double>` populated in the existing `LaunchedEffect` alongside `tripCosts` (store `priceEffectiveAt(t.timestamp)?.pricePerLiter ?: 0.0`); add a Toast helper (reuse `formatIdr`); pass `onCostClick` into `TrackItemRow`.
 2. **Edit** `screens/list/components/TrackItemRow.kt` — add `onCostClick: () -> Unit`; wrap the cost `TrackStat` cell in `Modifier.clickable(onClick = onCostClick)` so the cost tap is independent of the row's `combinedClickable`.
 
-- **Git Revision:** `---` (backfill next commit)
+- **Git Revision:** `99125ea`
 
 ## Local Build Note
 
