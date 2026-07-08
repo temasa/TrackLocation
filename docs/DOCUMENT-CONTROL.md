@@ -45,6 +45,8 @@ When any controlled document changes, update both:
 | `docs/adr/006-location-dwell-collapse.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/007-unified-fuel-economy-metrics.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/008-fuel-price-effective-dated-entity.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
+| `docs/adr/009-dual-mode-track-navigation.md` | 0.1 | Proposed | Tech Lead | 2026-07-08 |
+| `docs/adr/010-self-learning-route-store.md` | 0.1 | Proposed | Tech Lead | 2026-07-08 |
 | `docs/IMPLEMENTATION-PLAN.md` | 0.6 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-07 |
 | `docs/UI-SPEC.md` | 0.5 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
@@ -86,6 +88,7 @@ Draft documents normally begin at `0.1`.
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/007 | 0.3/0.2/0.2/0.3/— | 0.4/0.3/0.3/0.4/1.0 | ADR-007 accepted — Unified Fuel-Economy Metrics: instant two-cell (km/L + L/h), single averaging derivation (displacement distance ÷ obd_sample fuel, Option B incremental cache, authoritative at close), drop obdGpsDistanceKm via destructive v7→v8. Propagated to PRD/ARCHITECTURE/UI-SPEC/IMPLEMENTATION-PLAN. Code pending. | Claude Code |
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | 0.4/0.3/0.3/0.4 | 0.5/0.4/0.4/0.5 | Added Fuel Cost feature (FR-12): estimated fuel cost (IDR `Rp`) = litres × user-set price on the Session OBD card + Trips active-trip row; inline tap-to-edit price (Save/Cancel) with multi-step in-memory undo/redo; price persisted in `obd_prefs` (`obd_fuel_price_per_liter`), `ObdUiState.Connected` gains `sessionFuelConsumedL`/`tripFuelConsumedL`. No schema change, no ADR. | Claude Code |
 | 2026-07-07 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/008 | 0.5/0.4/0.4/0.5/— | 0.6/0.5/0.5/0.6/1.0 | ADR-008 accepted — fuel price as an effective-dated `fuel_price` entity (migration v8→v9): completed-trip cost priced at trip start (non-retroactive), active-trip card split into two metric rows (instant km/L, L/h, trip-avg km/L, cost). Supersedes the FR-12 v1 'no schema change' note. Code pending. | Claude Code |
+| 2026-07-08 | docs/adr/009-dual-mode-track-navigation.md, docs/adr/010-self-learning-route-store.md, docs/adr/README.md | — | 0.1/0.1 | Two new ADRs (Proposed) from a grilling session: ADR-009 dual-mode Track screen (follow-a-route navigation as a sub-mode of a trip — one coupled trip↔navigation lifecycle, manual end, mutable destination, 50 m/2-3-fix/15 s deviation recalc, fail-soft, heading-up "navigation perspective" toggle + directional car marker); ADR-010 self-learning local route store (reject caching Google results on ToS grounds; build a derived, rebuildable route store from the user's own GPS traces — Stage A trace-reuse road-ahead + branches, Stage B routable graph deferred). Routing engine, traffic-vs-static ETA, and ghost-route-via-external-API cost left OPEN. Also fixed a stale ADR index (008 was missing). PRD/ARCHITECTURE/UI-SPEC/IMPLEMENTATION-PLAN propagation deferred to ADR acceptance. | Claude Code |
 
 ---
 

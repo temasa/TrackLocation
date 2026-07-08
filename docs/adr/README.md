@@ -96,6 +96,9 @@ Links to docs, code, or external resources supporting this decision.
 | [005](005-observer-fts.md) | Observer Full-Text Search via Room @Fts4 External-Content | Proposed | 2026-07-06 |
 | [006](006-location-dwell-collapse.md) | Location Dwell Collapse (canonical log stores one anchor per stop) | Accepted | 2026-07-07 |
 | [007](007-unified-fuel-economy-metrics.md) | Unified Fuel-Economy Metrics (instant two-cell + single averaging derivation) | Accepted | 2026-07-07 |
+| [008](008-fuel-price-effective-dated-entity.md) | Fuel Price as an Effective-Dated Entity | Accepted | 2026-07-07 |
+| [009](009-dual-mode-track-navigation.md) | Dual-mode Track Screen — Follow-a-Route Navigation | Proposed | 2026-07-08 |
+| [010](010-self-learning-route-store.md) | Self-learning Local Route Store | Proposed | 2026-07-08 |
 
 ---
 
@@ -115,4 +118,4 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Last Updated:** 2026-07-07
+**Last Updated:** 2026-07-08

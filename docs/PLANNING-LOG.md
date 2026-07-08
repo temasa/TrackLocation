@@ -9,7 +9,7 @@ description: Temporary planning log — tracks active feedback and work during C
 
 **Document Version:** 0.1  
 **Status:** Active (temporary)  
-**Last Updated:** 2026-07-06  
+**Last Updated:** 2026-07-08  
 **Owned By:** Planning/Design Session
 
 ---
@@ -40,7 +40,8 @@ Track each open feedback item with its status:
 
 | ID | Title | Status | Owner | Last Updated | Notes |
 |----|-------|--------|-------|--------------|-------|
-| (none yet) | | | | | |
+| NAV-01 | Dual-mode Track: follow-a-route navigation (ADR-009) | pending-review | Planning Session | 2026-07-08 | Behavior tree settled; routing engine + traffic-ETA + ghost-cost OPEN; UI needs design handoff (§12) |
+| NAV-02 | Self-learning local route store (ADR-010) | pending-review | Planning Session | 2026-07-08 | Idea 1 (cache Google) rejected on ToS; Idea 2 adopted staged (A now, B later) |
 
 **Status options:**
 - `open` — Identified but not yet started
@@ -61,10 +62,10 @@ Use this section to track interim decisions, blockers, and context for the next 
 
 ## Session Notes
 
-**Last session ended at:** —  
-**Current context:** —  
-**Blockers:** —  
-**Next steps:** —
+**Last session ended at:** 2026-07-08
+**Current context:** Grilling session on dual-mode Track navigation + a self-learning route store to cost-optimize routing APIs. Two ADRs written (009, 010), both Proposed.
+**Blockers:** Owner parked the routing-engine choice (Google vs free hosted OSM vs self-hosted OSM), traffic-aware vs static ETA, and the always-on ghost-route external-API cost.
+**Next steps:** On ADR-009/010 acceptance, propagate to PRD §12 (new capability), ARCHITECTURE (derived route store, LocationUiState heading field), IMPLEMENTATION-PLAN §4/§6 (slices), and UI-SPEC + a design handoff for the search field / Start control / ETA placement / perspective toggle / car marker. Resolve the parked routing-engine question.
 
 ---
 
