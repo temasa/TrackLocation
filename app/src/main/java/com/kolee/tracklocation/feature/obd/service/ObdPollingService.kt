@@ -38,8 +38,7 @@ sealed class ObdUiState {
         // Fuel Cost (FR-12): litres consumed this session / trip, for cost = litres × price.
         // Null when zero (cost shows "—").
         val sessionFuelConsumedL: Double? = null,
-        val tripFuelConsumedL: Double? = null,
-        val sessionActive: Boolean = false
+        val tripFuelConsumedL: Double? = null
     ) : ObdUiState()
     data class Retrying(val attemptSeconds: Int = 0, val maxSeconds: Int = 120) : ObdUiState()
     data class Waiting(val lastError: String = "") : ObdUiState()
@@ -51,10 +50,6 @@ class ObdPollingService : Service() {
     private var retryDelaySeconds = 1
     private var maxRetryDelaySeconds = 120
     private var bluetoothSocket: BluetoothSocket? = null
-    private var sessionActive = false
-    // String PK of the active recording_session row (passed in via ACTION_SESSION_ON), so fuel/
-    // distance increments can be persisted into that row and survive app/service restarts.
-    private var activeSessionId: String? = null
     // Single coroutine owning the whole connect → init → poll → backoff lifecycle.
     // Guarantees only one connection attempt exists at a time (no socket-stomping races).
     private var connectionJob: kotlinx.coroutines.Job? = null
@@ -107,21 +102,18 @@ class ObdPollingService : Service() {
                 stopSelf()
             }
             ACTION_SESSION_ON -> {
-                // A recording session is starting (driven by TrackingService). Ensure we run as a
-                // proper foreground service so the poll loop survives backgrounding, even if this
-                // is the first command the service received (no prior ACTION_START).
+                // ADR-012: intents are advisory only (accumulation now gates on
+                // TrackingService.locationUiState.isAlwaysRecording, not this intent). Still ensure
+                // we run as a proper foreground service so the poll loop survives backgrounding,
+                // even if this is the first command the service received (no prior ACTION_START),
+                // and reset the per-session accumulators for the new session.
                 startForegroundNotification()
-                sessionActive = true
-                activeSessionId = intent?.getStringExtra(EXTRA_SESSION_ID)
                 sessionDistanceKm = 0.0
                 sessionFuelLiters = 0.0
                 emaKmL = null
-                updateConnectedState()
             }
             ACTION_SESSION_OFF -> {
-                sessionActive = false
-                activeSessionId = null
-                updateConnectedState()
+                // ADR-012: no-op — accumulation gating no longer depends on this intent.
             }
             ACTION_RECONNECT_NOW -> {
                 retryDelaySeconds = 1
@@ -174,7 +166,7 @@ class ObdPollingService : Service() {
                         scanCapabilities(socket)
                         capabilitiesScanned = true
                     }
-                    obdUiState.value = ObdUiState.Connected(sessionActive = sessionActive)
+                    obdUiState.value = ObdUiState.Connected()
                     retryDelaySeconds = 1
                     prefs.setObdLastState("Connected")
                     prefs.setObdLastError("")
@@ -411,7 +403,7 @@ class ObdPollingService : Service() {
                     var tripAvgKmL: Double? = null
                     // Fuel Cost (FR-12): session litres from the persisted accumulator; null when 0.
                     var sessionFuelConsumedL: Double? = null
-                    if (sessionActive) {
+                    if (gpsState.isAlwaysRecording) {
                         // Guard against a huge increment after a long stall/gap (e.g. adapter
                         // reconnect, backgrounding): only integrate plausible poll intervals.
                         val dtGuardOk = dtSeconds > 0 && dtSeconds < 60.0
@@ -443,17 +435,17 @@ class ObdPollingService : Service() {
                             tripAccumStartedAt = 0L
                         }
 
-                        // Persist the increments into the recording_session row.
+                        // ADR-012: single getActiveSession() read reused both to persist the
+                        // increment and to derive avgKmL, instead of a separate read before and after.
                         val sessionDao = (applicationContext as com.kolee.tracklocation.TrackApp).sessionDao
-                        val sid = activeSessionId
+                        val activeSession = sessionDao.getActiveSession()
+                        val sid = activeSession?.id
                         if (sid != null && fuelIncrementL > 0.0) {
                             sessionDao.addObdAccumulator(sid, fuelIncrementL)
                         }
-
-                        // Read the persisted totals back to compute the session average shown on
-                        // the Session screen (ObdStatusCard "SESSION AVG"). Survives restarts.
-                        val activeSession = sessionDao.getActiveSession()
-                        val persistedFuelL = activeSession?.obdFuelConsumedL ?: 0.0
+                        // Reflect the just-written increment locally so avgKmL stays accurate with
+                        // one query (the persisted row read above predates this cycle's increment).
+                        val persistedFuelL = (activeSession?.obdFuelConsumedL ?: 0.0) + (if (sid != null) fuelIncrementL else 0.0)
                         val persistedDistKm = (activeSession?.distanceMeters ?: 0.0) / 1000.0
                         if (persistedFuelL > 0.01 && persistedDistKm > 0.01) {
                             avgKmL = persistedDistKm / persistedFuelL
@@ -470,11 +462,10 @@ class ObdPollingService : Service() {
                         avgKmL = avgKmL,
                         tripAvgKmL = tripAvgKmL,
                         sessionFuelConsumedL = sessionFuelConsumedL,
-                        tripFuelConsumedL = tripFuelLiters.takeIf { gpsState.isTracking && it > 0.0 },
-                        sessionActive = sessionActive
+                        tripFuelConsumedL = tripFuelLiters.takeIf { gpsState.isTracking && it > 0.0 }
                     )
 
-                    if (sessionActive) {
+                    if (gpsState.isAlwaysRecording) {
                         val sample = ObdSampleEntity(
                             timestampMs = now,
                             rpm = rpm,
@@ -488,7 +479,7 @@ class ObdPollingService : Service() {
                         obdDao.insert(sample)
                     }
 
-                    if (sessionActive && now % 21600000L < 500L) {
+                    if (gpsState.isAlwaysRecording && now % 21600000L < 500L) {
                         val cutoffTime = now - (retentionDays * 86400000L)
                         val obdDao = (applicationContext as com.kolee.tracklocation.TrackApp).obdSampleDao
                         obdDao.deleteOlderThan(cutoffTime)
@@ -626,13 +617,6 @@ class ObdPollingService : Service() {
             } catch (e: Exception) {}
         }
         return Pair(null, "UNAVAILABLE")
-    }
-
-    private fun updateConnectedState() {
-        val current = obdUiState.value
-        if (current is ObdUiState.Connected) {
-            obdUiState.value = current.copy(sessionActive = sessionActive)
-        }
     }
 
     private fun closeSocketQuietly() {
