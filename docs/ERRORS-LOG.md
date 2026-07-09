@@ -10,7 +10,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 **Document Version:** 0.1  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-07-07  
+**Last Updated:** 2026-07-10  
 **Owned By:** Project Team
 
 ---
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-005 | 2026-07-10 | — | Verification | ADR-012 sessionActive decoupling | OBD connected + polling but `sessionActive=false` → avg km/L / cost / SESSION AVG / obd_sample writes skipped while instant km/L & L/h show | Open |
 | ERR-004 | 2026-07-07 | 2026-07-07 | Verification | ADR-007 Slice 1 v7→v8 | Room build crash — `fallbackToDestructiveMigrationFrom(7)` illegal alongside `MIGRATION_6_7` (end version 7); app crashed on launch | Resolved |
 | ERR-003 | 2026-07-07 | 2026-07-07 | Verification | ADR-006 dwell collapse | Dwell collapse froze live GPS speed → OBD idle metric wrong (km/L instead of L/h) + phantom session distance | Resolved |
 | ERR-002 | 2026-07-06 22:05:00 | 2026-07-06 22:12:25 | Build | OBD Phase 2 deploy | Google Maps API key resValue name mismatch | Resolved |
@@ -60,6 +61,29 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-005: OBD fuel accumulation silently gated off — connected but `sessionActive=false`
+
+**Found At:** 2026-07-10 (drive observation + code analysis)  
+**Resolved At:** —  
+**Phase:** Verification  
+**Sprint/Task:** ADR-012 — OBD accumulation gate decoupling  
+**Environment:** on-device drive (user), SM-G965F Android 10 (metrics observed on the Trips active-trip row)  
+**Status:** Open — root cause identified; fix documented in ADR-012, code pending  
+
+**Error Message / Output:**
+No crash. Observed: on the active-trip row, instant `km/L` and `L/h` display live values while `avg km/L` and `cost` stay `—` for the whole drive; completed-trip `km/L`/`cost` also blank.
+
+**Root Cause:**
+`ObdPollingService` gates all fuel accumulation, `obd_sample` inserts, and retention pruning on the private `sessionActive` flag, set only by `ACTION_SESSION_ON` from `TrackingService`. The OBD connection lifecycle (`ACTION_START` from `MainActivity` every launch, `ACTION_RECONNECT_NOW` from Reconnect buttons) is independent and never sets `sessionActive`, and `onStartCommand` has no null-intent recovery. So a fresh/restarted-and-reconnected `ObdPollingService` polls with `sessionActive=false` even though `TrackingService.isAlwaysRecording` (the UI-authoritative flag) is true — a two-flag divergence across two services synced only by best-effort intents. Instant km/L and L/h are computed OUTSIDE the `if (sessionActive)` block so they still show; avg km/L, cost, SESSION AVG, and sample writes are inside it, so they're skipped. Finished-trip km/L/cost re-integrate `obd_sample`, so with no samples written they're blank too. An independent impact analysis confirmed the accumulation math is correct — the fault is entirely state-wiring.
+
+**Resolution:**
+Pending (docs-first). Per ADR-012: gate the accumulation/sample-recording block on `gpsState.isAlwaysRecording` (already read each poll from `TrackingService.locationUiState`) instead of `sessionActive`; derive the session PK from `sessionDao.getActiveSession()` (single read/poll, reused); demote `ACTION_SESSION_ON/OFF` to foreground-promotion advisories; remove the dead `ObdUiState.Connected.sessionActive` field. Code + device re-verification to follow.
+
+**Lesson Learned:**
+Never gate one service's behavior on a private flag that mirrors another service's state via fire-and-forget intents — the two drift on independent lifecycles (connect order, single-service restart, START_STICKY null redelivery). Read the authoritative shared state directly. When a value has a "live per-poll" source and an "accumulated/gated" source, verify BOTH paths are fed by the same signal; a symptom where the instant value shows but the average doesn't points straight at a gate the instant path bypasses.
 
 ---
 

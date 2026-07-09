@@ -36,8 +36,8 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.7 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-07-08 |
-| `docs/ARCHITECTURE.md` | 0.7 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-08 |
-| `docs/adr/README.md` | 0.1 | Active (4 ADRs indexed) | Tech Lead | 2026-06-15 |
+| `docs/ARCHITECTURE.md` | 0.8 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-07-10 |
+| `docs/adr/README.md` | 0.1 | Active (12 ADRs indexed) | Tech Lead | 2026-07-10 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -48,11 +48,12 @@ When any controlled document changes, update both:
 | `docs/adr/009-dual-mode-track-navigation.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/010-self-learning-route-store.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.9 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-08 |
+| `docs/adr/012-obd-accumulation-recording-state.md` | 1.0 | Accepted | Project owner | 2026-07-10 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.10 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-07-10 |
 | `docs/UI-SPEC.md` | 0.7 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-07-08 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
-| `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-06-15 |
+| `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
 | `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.2 | Active | Project Team | 2026-06-15 |
@@ -93,6 +94,7 @@ Draft documents normally begin at `0.1`.
 | 2026-07-08 | adr/011, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/009, adr/README | —/0.6/0.6/0.7/1.0/— | 1.0/0.7/0.7/0.8/1.0/— | ADR-011 accepted — routing engine via connector-adapter: OpenRouteService hosted free tier now, portable to self-hosted OSM by a base-URL swap (`RoutingEngine` port + `OpenRouteServiceAdapter`); static ETA; ORS/OSM attribution; key not hardcoded. Resolves ADR-009's routing-engine + traffic-ETA open questions. ARCHITECTURE §12 RoutingEngine/adapter; UI-SPEC §3d attribution surface. Remaining parked: when to migrate to self-hosted OSM. | Claude Code |
 | 2026-07-08 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/009, adr/010, adr/README | 0.6/0.5/0.5/0.6/0.1/0.1 | 0.7/0.6/0.6/0.7/1.0/1.0 | ADR-009 (dual-mode Track navigation) + ADR-010 (self-learning route store) accepted and propagated. PRD: Feature 6, FR-13/FR-14, BR-12…BR-15, Out-of-Scope turn-by-turn. ARCHITECTURE: derived `known_segment`/CellIndex, MIGRATION_9_10 (DB→v10), new §12. UI-SPEC: §3d nav surfaces (design-handoff-pending). Routing engine, traffic-vs-static ETA, and ghost-route external-API cost left OPEN. Code gated (design handoff §12 + build permission §5a). | Claude Code |
 | 2026-07-08 | IMPLEMENTATION-PLAN, docs/design-handoff/track_navigation/TRACK_NAVIGATION_SPEC.md | 0.8/— | 0.9/— | Track Navigation design handoff (AGENTS §12) produced: new `TRACK_NAVIGATION_SPEC.md` (7 UI surfaces, states, screenshot checklist, Claude Design prompt); IMPLEMENTATION-PLAN §1/§6 rows; backfilled the ADR-011 task-log revision (`34ffe0a`). Design-track only; no code. | Claude Code |
+| 2026-07-10 | adr/012, ARCHITECTURE, IMPLEMENTATION-PLAN, ERRORS-LOG, adr/README | —/0.7/0.9/0.1/0.1 | 1.0/0.8/0.10/0.1/0.1 | ADR-012 accepted — OBD fuel accumulation gates on shared `isAlwaysRecording` state instead of the intent-synced `sessionActive` flag (fixes ERR-005: instant km/L & L/h show but avg km/L / cost / finished-trip fuel blank when OBD reconnects without a fresh ACTION_SESSION_ON). ARCHITECTURE §5 data-flow note updated (samples written while recording; SESSION_ON/OFF advisory); IMPLEMENTATION-PLAN §6 task row + backfilled the design-handoff `---` → `742f9da`; ERRORS-LOG ERR-005; adr/README index. Code gated (build permission §5a). | Claude Code |
 
 ---
 

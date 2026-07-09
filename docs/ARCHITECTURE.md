@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.7
+**Document Version:** 0.8
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-07-10
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -116,7 +116,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 ```
 ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw AT)
    → ObdUiState (StateFlow)            → Session screen / Trip panel (km/L, RPM, speed)
-   → ObdSampleEntity (Room)            ← written only when session active (ACTION_SESSION_ON/OFF)
+   → ObdSampleEntity (Room)            ← written only while recording (TrackingService.isAlwaysRecording; ADR-012 — SESSION_ON/OFF now advisory)
 ```
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
