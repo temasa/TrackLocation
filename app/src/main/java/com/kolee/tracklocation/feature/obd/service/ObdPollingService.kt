@@ -411,6 +411,15 @@ class ObdPollingService : Service() {
                             fuelRateLph * dtSeconds / 3600.0
                         } else 0.0
                         val distIncrementKm = if (dtGuardOk) gpsSpeedKmh * dtSeconds / 3600.0 else 0.0
+
+                        if (fuelRateLph != null && fuelIncrementL > 0.0) {
+                            val boundsOk = fuelRateLph in 0.1..100.0
+                            if (!boundsOk) {
+                                Log.w(TAG, "fuel_accumulation_bounds_warning: rate=${String.format("%.2f", fuelRateLph)}L/h " +
+                                    "increment=${String.format("%.4f", fuelIncrementL)}L source=$fuelSource (outside 0.1-100 range)")
+                            }
+                        }
+
                         sessionFuelLiters += fuelIncrementL
                         sessionDistanceKm += distIncrementKm
 
@@ -512,12 +521,15 @@ class ObdPollingService : Service() {
 
         if (sdCycle % 8 == 0) {
             extractDataBytes(writeATCommand(socket, "010F"), 0x41, 0x0F)?.getOrNull(0)?.let { a ->
-                cachedIatK = (a - 40) + 273.15
+                val iatC = a - 40
+                if (iatC in -40..125) {
+                    cachedIatK = iatC + 273.15
+                }
             }
             extractDataBytes(writeATCommand(socket, "0144"), 0x41, 0x44)?.let { b ->
                 if (b.size >= 2) {
                     val lambda = (2.0 / 65536.0) * (b[0] * 256 + b[1])
-                    if (lambda > 0.1) cachedLambda = lambda
+                    if (lambda in 0.5..2.0 && lambda > 0.1) cachedLambda = lambda
                 }
             }
         }
@@ -532,6 +544,7 @@ class ObdPollingService : Service() {
         val afr = 14.7 * cachedLambda
         val fuelGs = mafGs / afr
         val fuelLph = fuelGs * 3600.0 / 745.0
+        if (!fuelLph.isFinite() || fuelLph > 100.0) return null
         return Pair(fuelLph, mafGs)
     }
 
@@ -592,6 +605,12 @@ class ObdPollingService : Service() {
         return null
     }
 
+    private fun clampFuelRate(fuelLph: Double?): Double? {
+        if (fuelLph == null) return null
+        if (!fuelLph.isFinite()) return null
+        return fuelLph.coerceIn(0.1, 100.0)
+    }
+
     private fun parseObdFuel(response: String): Pair<Double?, String> {
         if (response.contains("41 5E")) {
             try {
@@ -599,7 +618,7 @@ class ObdPollingService : Service() {
                 val idx = parts.indexOfFirst { it.equals("5E", ignoreCase = true) }
                 if (idx >= 0 && idx + 1 < parts.size) {
                     val raw = parts[idx + 1].toInt(16)
-                    return Pair(raw * 0.05, "DIRECT_FUEL_RATE")
+                    return Pair(clampFuelRate(raw * 0.05), "DIRECT_FUEL_RATE")
                 }
             } catch (e: Exception) {}
         }
@@ -612,7 +631,7 @@ class ObdPollingService : Service() {
                     val b = parts[idx + 2].toInt(16)
                     val maf = (a * 256 + b) / 100.0
                     val fuelRate = maf * 3600.0 / (14.7 * 750.0)
-                    return Pair(fuelRate, "MAF_DERIVED")
+                    return Pair(clampFuelRate(fuelRate), "MAF_DERIVED")
                 }
             } catch (e: Exception) {}
         }

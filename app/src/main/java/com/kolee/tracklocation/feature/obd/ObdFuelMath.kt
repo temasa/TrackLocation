@@ -13,6 +13,7 @@ object ObdFuelMath {
         var liters = 0.0
         for (i in 1 until samples.size) {
             val rate = samples[i].fuelRateLph ?: continue
+            if (rate !in 0.1..100.0) continue
             val dtSeconds = (samples[i].timestampMs - samples[i - 1].timestampMs) / 1000.0
             if (dtSeconds > 0 && dtSeconds < 60.0) {
                 liters += rate * dtSeconds / 3600.0
