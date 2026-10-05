@@ -112,6 +112,9 @@ class TrackingService: Service() {
             // recording doesn't silently stop after a low-memory kill.
             null -> resumeIfActiveSession()
         }
+        // Request location updates on every service start (guard prevents duplicates).
+        // Ensures GPS is acquired as soon as the service starts, before any recording action.
+        requestLocationUpdate()
 
         return START_STICKY
     }

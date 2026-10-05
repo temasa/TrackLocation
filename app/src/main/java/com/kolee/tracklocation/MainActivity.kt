@@ -2,6 +2,8 @@ package com.kolee.tracklocation
 
 import android.content.Intent
 import android.os.Bundle
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +19,8 @@ import androidx.core.content.ContextCompat
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.theme.TrackLocationTheme
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -65,6 +69,40 @@ class MainActivity : ComponentActivity() {
                 val intent = Intent(this@MainActivity, com.kolee.tracklocation.feature.obd.service.ObdPollingService::class.java)
                 intent.action = com.kolee.tracklocation.feature.obd.service.ObdPollingService.ACTION_START
                 androidx.core.content.ContextCompat.startForegroundService(this@MainActivity, intent)
+            }
+            // Hybrid map initialization: fetch last known location at app startup to populate
+            // the map immediately, before Compose UI is set up. Guard with permission checks
+            // and handle SecurityException gracefully.
+            if (ContextCompat.checkSelfPermission(
+                this@MainActivity,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    this@MainActivity,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                try {
+                    LocationServices.getFusedLocationProviderClient(this@MainActivity)
+                        .lastLocation
+                        .addOnSuccessListener { location ->
+                            if (location != null) {
+                                TrackingService.locationUiState.value.apply {
+                                    TrackingService.locationUiState.update {
+                                        it.copy(
+                                            currentLocation = LatLng(
+                                                location.latitude,
+                                                location.longitude
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                } catch (e: SecurityException) {
+                    // Location permission lost; log and continue without blocking
+                    android.util.Log.e("MainActivity", "getLastLocation: permission lost", e)
+                }
             }
         }
         @OptIn(ExperimentalMaterial3Api::class)
