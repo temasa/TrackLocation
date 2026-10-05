@@ -438,7 +438,7 @@ private fun DrawScope.drawSpeedIcon(color: Color) {
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
-private fun backdropBlurModifier(): Modifier = Modifier.graphicsLayer {
+internal fun backdropBlurModifier(): Modifier = Modifier.graphicsLayer {
     renderEffect = android.graphics.RenderEffect
         .createBlurEffect(28f, 28f, android.graphics.Shader.TileMode.CLAMP)
         .asComposeRenderEffect()

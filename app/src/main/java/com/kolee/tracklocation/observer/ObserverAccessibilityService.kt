@@ -1,10 +1,15 @@
 package com.kolee.tracklocation.observer
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.graphics.Rect
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.kolee.tracklocation.MainActivity
 import com.kolee.tracklocation.data.roomdb.ObservedEventEntity
+import com.kolee.tracklocation.feature.observer.trip.GojekRules
+import com.kolee.tracklocation.feature.observer.trip.OrderTripRecorder
 import org.json.JSONArray
 import org.json.JSONObject
 import com.kolee.tracklocation.data.roomdb.TrackDatabase
@@ -22,6 +27,7 @@ class ObserverAccessibilityService : AccessibilityService() {
 
     private lateinit var prefs: ObserverPreferencesDataStore
     private lateinit var db: TrackDatabase
+    private lateinit var tripRecorder: OrderTripRecorder
 
     companion object {
         private const val MAX_TEXT_SUMMARY_LENGTH = 200
@@ -36,6 +42,7 @@ class ObserverAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         prefs = ObserverPreferencesDataStore(this)
         db = TrackDatabase.getDatabase(this)
+        tripRecorder = OrderTripRecorder(db.observerTripDao, ::launchTrackTakeover)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -73,6 +80,7 @@ class ObserverAccessibilityService : AccessibilityService() {
                             truncationMetadata = truncation,
                         )
                     )
+                    recordOrderTrip(packageName, snapshot, now)
                     return@launch
                 }
             }
@@ -91,7 +99,33 @@ class ObserverAccessibilityService : AccessibilityService() {
                 )
             )
 
+            recordOrderTrip(packageName, snapshot, now)
             pruneIfNeeded(now)
+        }
+    }
+
+    // ADR-013: Gojek order-card extraction. Parsing happens here (IO coroutine), never on the
+    // main-thread capture path. The recorder swallows its own exceptions.
+    private suspend fun recordOrderTrip(packageName: String, snapshot: String?, now: Long) {
+        if (packageName != GojekRules.PACKAGE_NAME || snapshot == null) return
+        tripRecorder.record(packageName, snapshot, now)
+    }
+
+    // ADR-014: bring the Track screen forward when an order becomes complete. Android 10+ may block
+    // background activity starts — that must never crash the service.
+    private fun launchTrackTakeover() {
+        try {
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    )
+                    .putExtra(MainActivity.EXTRA_OPEN_TRACK, true)
+            )
+        } catch (e: Exception) {
+            Log.w("ObserverService", "takeover launch blocked: ${e.javaClass.simpleName}")
         }
     }
 

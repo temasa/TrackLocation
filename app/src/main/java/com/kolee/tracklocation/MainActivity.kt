@@ -10,7 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.kolee.tracklocation.navigation.Screen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.kolee.tracklocation.navigation.BottomNavigationScreen
@@ -31,8 +37,31 @@ import kotlinx.coroutines.launch
 private const val RESUME_GRACE_MILLIS = 2 * 60 * 1000L
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        // ADR-014: set by the Observer service to bring the Track screen forward.
+        const val EXTRA_OPEN_TRACK = "open_track"
+    }
+
+    // Incremented per takeover request so repeated requests re-trigger the navigation effect.
+    private var openTrackRequest by mutableStateOf(0)
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleTakeoverIntent(intent)
+    }
+
+    private fun handleTakeoverIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_TRACK, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_TRACK)
+            openTrackRequest++
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleTakeoverIntent(intent)
         // Close sessions left active by a previous process kill or device shutdown.
         // Guard 1: if the service is still running (e.g. config change), the static flag is intact —
         // skip entirely to avoid closing a live session.
@@ -102,6 +131,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             TrackLocationTheme {
                 val navController = rememberNavController()
+                LaunchedEffect(openTrackRequest) {
+                    if (openTrackRequest > 0) {
+                        navController.navigate(Screen.TrackScreen.route) {
+                            launchSingleTop = true
+                            restoreState = true
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                        }
+                    }
+                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = { BottomNavigationScreen(navController = navController) }

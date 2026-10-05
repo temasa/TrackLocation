@@ -25,7 +25,7 @@ Per ARCHITECTURE (Observer events have no foreign keys to trips/sessions), `obse
 2. **App-specific rule table:** UI strings are localized and subject to change. Gojek parsing rules live in a small per-app configuration table keyed by package name (`com.gojek.partner`), **not** hardcoded in parser logic. Allows future rule additions for other apps without altering the parser.
 
 3. **Storage (migration numbering):** `TrackDatabase.kt` is v9 and ADR-010 has not shipped, so this work takes **MIGRATION_9_10 (DB→v10)**; ADR-010's `known_segment` migration will then be numbered 10→11 when it ships. Numbering follows ship order; the two swap if ADR-010 ships first.
-   New Room table `observer_trip` (pickupName, pickupAddress, dropName, dropAddress, payment, earningsRp, phase, firstSeenAt, lastSeenAt), separate from `observer_event`. Retention: 90 days OR 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete option (consistent with FR-05, Observer history not user-deletable).
+   New Room table `observer_trip` (pickupName, pickupAddress, dropName, dropAddress, payment, earningsRp, phase, firstSeenAt, lastSeenAt, handled — marked once the takeover for that order has been processed), separate from `observer_event`. Retention: 90 days OR 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete option (consistent with FR-05, Observer history not user-deletable).
 
 4. **Deduplication:** key a trip by `(pickupAddress, dropAddress)`. Update the row's phase and lastSeenAt each time the same order appears in a new event. Persist pickup+drop when first seen in pickup phase; skip premature drop-only snapshots from earlier resets.
 

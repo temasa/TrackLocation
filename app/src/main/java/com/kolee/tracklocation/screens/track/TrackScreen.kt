@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
+import com.kolee.tracklocation.screens.track.components.GojekOrderCard
 import com.kolee.tracklocation.screens.track.components.MapControls
 import com.kolee.tracklocation.screens.track.components.TrackMap
 import com.kolee.tracklocation.screens.track.components.TripPanel
@@ -36,6 +37,7 @@ fun TrackScreen() {
         factory = ShareViewModel.Factory
     )
     val locationUiState by viewModel.locationUiState.collectAsState()
+    val activeOrder by viewModel.activeOrder.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
 
     var performRequestPermission by remember { mutableStateOf(true) }
@@ -93,12 +95,22 @@ fun TrackScreen() {
                 enter = EnterTransition.None,
                 exit = fadeOut()
             ) {
-                TripPanel(
-                    state = panelState,
-                    onCtaTap = { viewModel.onTripCtaTap() },
-                    modifier = Modifier
-                        .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
-                )
+                val order = activeOrder
+                if (order != null) {
+                    // ADR-014 (provisional UI): order card replaces the trip panel while an order is active.
+                    GojekOrderCard(
+                        order = order,
+                        modifier = Modifier
+                            .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                    )
+                } else {
+                    TripPanel(
+                        state = panelState,
+                        onCtaTap = { viewModel.onTripCtaTap() },
+                        modifier = Modifier
+                            .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                    )
+                }
             }
         }
     }

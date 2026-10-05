@@ -31,6 +31,10 @@ class TrackApp: Application() {
         TrackDatabase.getDatabase(this).fuelPriceDao
     }
 
+    val observerTripDao by lazy {
+        TrackDatabase.getDatabase(this).observerTripDao
+    }
+
     override fun onCreate() {
         super.onCreate()
         val channel = NotificationChannel(

@@ -16,9 +16,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AllowlistRuleEntity::class,
         ObdSampleEntity::class,
         ObservedEventFtsEntity::class,
-        FuelPriceEntity::class
+        FuelPriceEntity::class,
+        ObserverTripEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -30,6 +31,7 @@ abstract class TrackDatabase: RoomDatabase() {
     abstract val allowlistRuleDao: AllowlistRuleDao
     abstract val obdSampleDao: ObdSampleDao
     abstract val fuelPriceDao: FuelPriceDao
+    abstract val observerTripDao: ObserverTripDao
 
     companion object {
         @Volatile
@@ -126,6 +128,31 @@ abstract class TrackDatabase: RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `fuel_price` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pricePerLiter` REAL NOT NULL, `effectiveFromMs` INTEGER NOT NULL)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_fuel_price_effectiveFromMs` ON `fuel_price` (`effectiveFromMs`)")
+            }
+        }
+
+        // ADR-013/014: device-only order extracted from the Gojek order card. Additive-only —
+        // new table + index; no data from existing tables is touched.
+        private val MIGRATION_9_10 = object: Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `observer_trip` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `pickupName` TEXT,
+                        `pickupAddress` TEXT,
+                        `dropName` TEXT,
+                        `dropAddress` TEXT,
+                        `payment` TEXT,
+                        `earningsRp` INTEGER,
+                        `phase` TEXT NOT NULL,
+                        `firstSeenAt` INTEGER NOT NULL,
+                        `lastSeenAt` INTEGER NOT NULL,
+                        `handled` INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_trip_lastSeenAt` ON `observer_trip` (`lastSeenAt`)")
             }
         }
 
@@ -297,7 +324,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .build()
                 INSTANCE = instance
                 return instance

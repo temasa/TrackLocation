@@ -15,16 +15,27 @@ import com.google.android.gms.maps.model.LatLng
 import com.kolee.tracklocation.data.roomdb.LocationDao
 import com.kolee.tracklocation.data.roomdb.ObdSampleDao
 import com.kolee.tracklocation.data.roomdb.ObdSampleEntity
+import com.kolee.tracklocation.data.roomdb.ObserverTripDao
+import com.kolee.tracklocation.data.roomdb.ObserverTripEntity
 import com.kolee.tracklocation.data.roomdb.SessionDao
 import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.data.roomdb.TrackDao
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.feature.observer.trip.OrderCard
+import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.tracking.Actions
+import com.kolee.tracklocation.tracking.LocationUiState
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.utils.LocationUtils
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ShareViewModel(
@@ -32,7 +43,8 @@ class ShareViewModel(
     private val databaseDao: TrackDao,
     private val locationDao: LocationDao,
     private val sessionDao: SessionDao,
-    private val obdSampleDao: ObdSampleDao
+    private val obdSampleDao: ObdSampleDao,
+    private val observerTripDao: ObserverTripDao
 ): ViewModel() {
 
     var locationUiState = TrackingService.locationUiState
@@ -45,6 +57,18 @@ class ShareViewModel(
     var selectedTrackPathPoints by mutableStateOf<List<LatLng>>(emptyList())
         private set
     private var job: Job? = null
+
+    // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
+    // while its latest row is not FINISHED and was seen within ACTIVE_ORDER_WINDOW_MS. The ticker
+    // re-evaluates staleness even when the table doesn't change.
+    val activeOrder: StateFlow<OrderCard?> = combine(
+        observerTripDao.latestOrderFlow(),
+        flow { while (true) { emit(System.currentTimeMillis()); delay(ORDER_STALENESS_TICK_MS) } }
+    ) { row, now ->
+        row?.takeIf {
+            it.phase != OrderPhase.FINISHED.name && now - it.lastSeenAt <= ACTIVE_ORDER_WINDOW_MS
+        }?.toOrderCard()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
 
     fun insertTrack(item: TrackEntity) {
@@ -82,43 +106,60 @@ class ShareViewModel(
                 sessionsState = sessions
             }
         }
+        // ADR-014 takeover: an order that became complete ends the active trip (once), then is
+        // marked handled whether or not a trip was running.
+        viewModelScope.launch {
+            observerTripDao.unhandledReadyFlow().collect { row ->
+                if (row == null) return@collect
+                val current = locationUiState.value
+                if (current.isTracking && !current.isPaused) {
+                    stopActiveTrip(current)
+                }
+                observerTripDao.markHandled(row.id)
+            }
+        }
     }
 
     fun onTripCtaTap() {
         val current = locationUiState.value
         viewModelScope.launch {
             if (current.isTracking && !current.isPaused) {
-                val startId = current.activeTripStartLocationId
-                val endId = current.activeTripEndLocationId
-                // A trip's start/end location IDs are only set once the first GPS fix arrives
-                // (up to LOCATION_UPDATE_INTERVAL later). Persist the trip regardless so a short
-                // trip started+stopped before any fix (or with no signal) still shows in the list —
-                // keep the IDs only when the range is valid, else null so getPathPointsForTrack
-                // falls back to the stored pathPoints string.
-                val hasValidRange = startId != null && endId != null && endId >= startId
-                // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
-                // during the trip window (there is no live trip row/id to accumulate into —
-                // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
-                val tripFuelConsumedL = integrateFuelLiters(
-                    obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
-                )
-                insertTrack(
-                    TrackEntity(
-                        timestamp = current.tripStartedAt,
-                        distance = current.distanceInMeters,
-                        duration = current.durationTimer,
-                        pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
-                        startLocationId = if (hasValidRange) startId else null,
-                        endLocationId = if (hasValidRange) endId else null,
-                        obdFuelConsumedL = tripFuelConsumedL
-                    )
-                )
-                sendServiceCommand(Actions.STOP_TRIP)
+                stopActiveTrip(current)
             } else if (!current.isTracking) {
                 sendServiceCommand(Actions.START_TRIP)
             }
             // PAUSED → LIVE resumption requires a RESUME_TRIP service action (future phase)
         }
+    }
+
+    /** Persists the active trip, then asks the service to stop it. Shared by the CTA and the takeover. */
+    private suspend fun stopActiveTrip(current: LocationUiState) {
+        val startId = current.activeTripStartLocationId
+        val endId = current.activeTripEndLocationId
+        // A trip's start/end location IDs are only set once the first GPS fix arrives
+        // (up to LOCATION_UPDATE_INTERVAL later). Persist the trip regardless so a short
+        // trip started+stopped before any fix (or with no signal) still shows in the list —
+        // keep the IDs only when the range is valid, else null so getPathPointsForTrack
+        // falls back to the stored pathPoints string.
+        val hasValidRange = startId != null && endId != null && endId >= startId
+        // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
+        // during the trip window (there is no live trip row/id to accumulate into —
+        // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
+        val tripFuelConsumedL = integrateFuelLiters(
+            obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+        )
+        insertTrack(
+            TrackEntity(
+                timestamp = current.tripStartedAt,
+                distance = current.distanceInMeters,
+                duration = current.durationTimer,
+                pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
+                startLocationId = if (hasValidRange) startId else null,
+                endLocationId = if (hasValidRange) endId else null,
+                obdFuelConsumedL = tripFuelConsumedL
+            )
+        )
+        sendServiceCommand(Actions.STOP_TRIP)
     }
 
     private fun sendServiceCommand(action: Actions) {
@@ -155,7 +196,20 @@ class ShareViewModel(
         return com.kolee.tracklocation.utils.LocationUtils.stringToPathPoints(track.pathPoints)
     }
 
+    private fun ObserverTripEntity.toOrderCard() = OrderCard(
+        phase = runCatching { OrderPhase.valueOf(phase) }.getOrDefault(OrderPhase.PICKUP),
+        pickupName = pickupName,
+        pickupAddress = pickupAddress,
+        dropName = dropName,
+        dropAddress = dropAddress,
+        payment = payment,
+        earningsRp = earningsRp
+    )
+
     companion object {
+        private const val ACTIVE_ORDER_WINDOW_MS = 2L * 60 * 60 * 1000
+        private const val ORDER_STALENESS_TICK_MS = 60_000L
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TrackApp)
@@ -164,7 +218,8 @@ class ShareViewModel(
                     databaseDao = application.databaseDao,
                     locationDao = application.locationDao,
                     sessionDao = application.sessionDao,
-                    obdSampleDao = application.obdSampleDao
+                    obdSampleDao = application.obdSampleDao,
+                    observerTripDao = application.observerTripDao
                 )
             }
         }
