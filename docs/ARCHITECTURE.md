@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.10
+**Document Version:** 0.11
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-05
 **Owner:** Tech Lead
@@ -135,15 +135,18 @@ ObserverAccessibilityService (write path)
    → after observer_event insert & observer_trip upsert
    → Gojek parser yields complete OrderCard (pickup+drop+payment+earnings)
    → emit "order ready" signal (one-shot per (pickupAddress, dropAddress))
-     → TrackingService receives signal
-        → sends STOP_TRIP if a trip is active (trip persisted; always-recording unaffected)
-     → MainActivity receives signal
-        → brings Track screen to foreground (android.app.Activity.startActivity, verified Android 10)
-   → Track screen displays OrderCardPanel instead of TripPanel (from pickup phase through Selesai)
+     → the Observer service starts MainActivity (FLAG_ACTIVITY_NEW_TASK + an extra selecting the Track screen)
+        → foreground launch from the background: to be verified on Android 10
+   → order-ready state is derived from the persisted observer_trip row (survives the activity being created after the signal)
+     → ShareViewModel observes it; when a not-yet-handled complete order appears while a trip is active, it runs the
+       manual-stop sequence once: onTripCtaTap() persists the trip (TrackEntity via insertTrack), then sends STOP_TRIP
+       (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
+     → a "handled" marker prevents repeats
+   → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through Selesai)
    → after Selesai, TripPanel returns
 ```
 
-**Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); no shared state or direct method calls. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). Any new permission required will be documented separately.
+**Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is stopped when the activity is next created. Any new permission required will be documented separately.
 
 ---
 
@@ -167,7 +170,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE known_segment` (a derived, simplified directed-polyline store) plus a grid-cell index for road-ahead lookup — derived from and fully rebuildable from `location_log`, never source-of-truth. **ADR-013 adds MIGRATION_10_11 (DB→v11):** `CREATE TABLE observer_trip (id INTEGER PK AUTOINCREMENT, pickupName TEXT, pickupAddress TEXT, dropName TEXT, dropAddress TEXT, payment TEXT, earningsRp INTEGER, phase TEXT NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL)` — numbered after ADR-010's MIGRATION_9_10; ADR-010 has not shipped, so `TrackDatabase.kt` is currently v9 and these numbers swap if ADR-013 ships first.
+Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds a migration for `known_segment` (originally planned as MIGRATION_9_10, DB→v10; renumbered 10→11 if ADR-013 ships first, see below):** `CREATE TABLE known_segment` (a derived, simplified directed-polyline store) plus a grid-cell index for road-ahead lookup — derived from and fully rebuildable from `location_log`, never source-of-truth. **ADR-013 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE observer_trip (id INTEGER PK AUTOINCREMENT, pickupName TEXT, pickupAddress TEXT, dropName TEXT, dropAddress TEXT, payment TEXT, earningsRp INTEGER, phase TEXT NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL)` — `TrackDatabase.kt` is currently v9 and ADR-010 has not shipped, so ADR-013 work takes the next free version (MIGRATION_9_10, DB→v10); ADR-010's `known_segment` migration will then be numbered 10→11 when it ships. Numbering follows ship order; the two swap if ADR-010 ships first.
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 

@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.9
+**Document Version:** 0.10
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-05
 **Owner:** Product Manager / UX Designer
@@ -165,6 +165,28 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; `TripPanel` returns after.
 
 **Related behavior (not visual design):** Automatic trip stop when order card first becomes complete (ADR-014); one-shot foreground launch when card is ready; always-recording remains active.
+
+**Handoff Instructions (AGENTS.md §12 template)**
+
+*Provisional code until the design returns:* the code ships a PROVISIONAL card reusing `TripPanel` tokens (no new visual language); it is replaced when the design handoff returns.
+
+*(a) Step-by-step process (Claude Design / Google Stitch):*
+1. Capture the screenshots in (b) from the running app (dark and light if available).
+2. Open Claude Design or Google Stitch, attach the screenshots, and paste the prompt in (d).
+3. Generate the three card states (pickup phase, drop-only phase, finished) for dark and light themes.
+4. Review against the constraints (glass-panel language, no colour-only meaning, no customer name/phone), then export the design and record it per `docs/WORKFLOW.md §3`.
+
+*(b) Screenshot checklist (attach current-app screens):*
+- Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states.
+- Bottom navigation.
+- Top app bar, if any.
+- The Session or List glass/section card, for the card style.
+
+*(c) Tool recommendation:* Claude Design or Google Stitch (external handoff, see `docs/WORKFLOW.md §3`); Stitch is suited to quick state variants, Claude Design to matching the existing "Kinetic Precision" system.
+
+*(d) Copy-paste-ready prompt:*
+
+> Design the "Gojek Order Card" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It replaces the `TripPanel` at the bottom of the Track screen (above the bottom navigation, over the map) while a Gojek order is active. Fields: a phase chip (Pickup / Drop / Done), pickup name + address, drop name + address, payment method, and earnings in Rp. States: (1) pickup phase shows pickup and drop; (2) drop-only phase shows only drop; (3) finished shows earnings only. Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Do not rely on colour alone to convey phase or state (use text/icon as well). The phase change must be announced through an accessibility live region. Customer name and phone number are never shown. Provide all three states in both themes.
 
 ---
 

@@ -14,9 +14,9 @@ This provides the driver with context (pickup/drop/payment/earnings) at the crit
 
 ## Decision
 
-1. **Auto-stop the active trip:** When the Gojek parser from ADR-013 first detects a complete order card (pickup, drop, payment, earnings), send the existing `STOP_TRIP` command to `TrackingService` **only if a trip is currently active**. The trip is persisted as usual. The always-recording session is never affected — it remains ON even after the trip stops.
+1. **Auto-stop the active trip:** When the Gojek parser from ADR-013 first detects a complete order card (pickup, drop, payment, earnings), stop the active trip **only if a trip is currently active**, by running the same sequence as a manual stop: `ShareViewModel.onTripCtaTap()` persists the trip (`TrackEntity`, via `insertTrack`) and then sends `STOP_TRIP`. A bare `STOP_TRIP` is not enough: `TrackingService.stopTrip()` only stops trip recording and the timer; it does not write the trip row. The always-recording session is never affected — it remains ON even after the trip stops.
 
-2. **Replace the trip card with an order card on the Track screen:** When a complete order card is available and a trip is not active (or was just stopped), the Track screen's `TripPanel` is replaced by an order card (`OrderCardPanel` or similar) displaying:
+2. **Replace the trip card with an order card on the Track screen:** When a complete order card is available and a trip is not active (or was just stopped), the Track screen's `TripPanel` is replaced by an order card (the order card (composable name chosen at implementation)) displaying:
    - Pickup: name + address
    - Drop: name + address
    - Payment method (GoPay, Kartu, etc.)
@@ -44,16 +44,16 @@ This provides the driver with context (pickup/drop/payment/earnings) at the crit
 ### Negative / accepted risks
 - **(a) Auto-stop exception to FR-13:** Deliberately stopping a trip without user confirmation is a violation of "the user ends manually" (FR-13, ADR-009). However, this is an intentional, Gojek-scoped exception tied to a real business event (order acceptance); it does **not** change the rule for other apps/navigation trips. Navigation trips (ADR-009) and manual trips still require manual end. This exception is documented as FR-16 and kept to Gojek only.
 
-- **(b) Background-activity-start restrictions (Android 10+):** Launching an activity from a background accessibility service is blocked by Android 10+ background-activity-start restrictions (`android.Manifest.permission.SCHEDULE_EXACT_ALARM`, `getForegroundServiceStartNotAllowedOnPlatformError`). Fallback mechanisms in priority order:
-  1. High-priority full-screen-intent notification (requires `SCHEDULE_EXACT_ALARM` or `setHighPriority()`; may require a new permission).
-  2. Notification with standard priority (will not bring the app to foreground, but still visible).
-  3. Silent background command (no user-visible notification; trip is auto-stopped silently).
-  
-  The chosen fallback will be documented in ARCHITECTURE and must be verified on the test device (Samsung SM-G965F, Android 10) and may require a new permission and a PRD/ARCHITECTURE note.
+- **(b) Background-activity-start restrictions (Android 10+):** Android 10+ restricts starting activities from the background; whether an accessibility service may do so on the test device (Samsung SM-G965F, Android 10) must be verified on the device. Fallback mechanisms in priority order:
+  1. A high-priority full-screen-intent notification (may require a new permission/notification channel, to be decided if needed).
+  2. A `SYSTEM_ALERT_WINDOW` overlay.
+
+  The chosen fallback will be documented in ARCHITECTURE and verified on the test device, and may require a PRD/ARCHITECTURE note.
+  - **Consequence for auto-stop:** the auto-stop runs in `ShareViewModel`, which exists only while the activity does. If the foreground launch is blocked and `ShareViewModel` does not exist, the trip is stopped when the activity is next created.
 
 - **(c) Driver-distraction trade-off:** The foreground jump takes the Gojek app out of the driver's hand mid-order-acceptance. Mitigated by firing only once per order (not on every state update). The driver can immediately back-switch to Gojek or dismiss the card.
 
-- **(d) Observer reliability:** The Observer service must not degrade GPS reliability. The Observer-to-tracking link is by signal/intent only (service isolation rule in ARCHITECTURE), not shared state. The auto-stop command is one-shot per order and does not introduce polling or repeating operations.
+- **(d) Observer reliability:** The Observer service must not degrade GPS reliability. The Observer-to-tracking link is by signal/intent only (service isolation rule in ARCHITECTURE), not shared state. The auto-stop is one-shot per order and does not introduce polling or repeating operations.
 
 - **(e) UI placement changed:** The earlier UI-SPEC (draft) proposed showing the order card on the Observer feed/detail. This decision moves the card to the Track screen, replacing `TripPanel`. A design handoff spec is required first (AGENTS.md §12); no visual design is defined yet.
 
@@ -94,23 +94,22 @@ This provides the driver with context (pickup/drop/payment/earnings) at the crit
 - The signal is fired once per order; subsequent updates to phase (drop-only, finished) do not re-fire.
 
 **Phase 2 — Auto-stop**
-- The signal is routed to `TrackingService` (via intent action or a shared state holder).
-- On receipt, `TrackingService` sends `STOP_TRIP` only if `isTracking() == true`.
+- The order-ready state is derived from the persisted `observer_trip` row (so it survives the activity being created after the signal), with a "handled" marker to prevent repeats.
+- `ShareViewModel` observes it and, when a not-yet-handled complete order appears while a trip is active, runs the manual-stop sequence once (persist the trip via `onTripCtaTap()` logic, then `STOP_TRIP`). `TrackingService.stopTrip()` itself only stops trip recording and the timer.
 - The always-recording session (`isAlwaysRecording`) is never touched — it remains active.
 
 **Phase 3 — Foreground Launch**
-- The signal is also routed to `MainActivity` (via intent action or a shared state holder).
-- On receipt, `MainActivity` launches itself to the foreground on the Track screen.
-- This must be verified on Android 10 (SM-G965F, adb tunnel) and may require a fallback (notification with full-screen intent, or a system alert overlay).
+- The Observer service itself starts `MainActivity` with `FLAG_ACTIVITY_NEW_TASK` and an extra that selects the Track screen.
+- Whether this is allowed from the background must be verified on Android 10 (SM-G965F, adb tunnel) and may require a fallback (full-screen-intent notification, or a `SYSTEM_ALERT_WINDOW` overlay).
 
 **Phase 4 — UI Integration**
-- Track screen detects when an order card is available and displays `OrderCardPanel` instead of `TripPanel`.
+- Track screen detects when an order card is available and displays the order card (composable name chosen at implementation) instead of `TripPanel`.
 - Card displays from pickup phase through "Sampai tujuan" (drop-only), then "Selesai" (finished).
 - After "Selesai", `TripPanel` returns (no persisted link to the order).
 - Design handoff (AGENTS.md §12) required before code.
 
 **Verification (to be detailed in the code task)**
-- Active trip stops and is persisted when a complete order card is detected; always-recording remains ON.
+- Active trip stops and is persisted (via the `ShareViewModel` manual-stop sequence) when a complete order card is detected; always-recording remains ON.
 - App comes to foreground on Track with the order card displayed (device SM-G965F, Android 10, adb tunnel).
 - Card updates through phases (pickup → drop-only → finished); `TripPanel` returns after "Selesai".
 - No second foreground jump for the same order (one-shot per order).
