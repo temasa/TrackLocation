@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.11
+**Version:** 0.12
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-05
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -20,7 +20,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ### Current — Two-ACTIVE-cards fix (single-active-session invariant) device-verified 2026-07-07. Active coding task: resume always-recording on relaunch after force-stop (an open non-stale session was leaving an Inactive card beside an ACTIVE session) — code fix pending (see §6 Task Log, In Progress). (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
 
-### Also documented — Gojek trip extraction (ADR-013), docs only, 2026-10-05. Code pending user approval; build/test needs explicit permission (AGENTS.md §5a).
+### Also documented — Gojek trip extraction (ADR-013) and order-card takeover (ADR-014), docs only, 2026-10-05. Code pending user approval; design handoff pending; build/test needs explicit permission (AGENTS.md §5a).
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -63,6 +63,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 | 0.1 | (legacy) | Two-track implementation contract maintained in `implementation-plan.md`. |
 | 0.2 | 2026-06-15 | Migrated to create-project schema; legacy plan → Appendix A, progress.md → Appendix B; summarized §6 task log. |
 | 0.11 | 2026-10-05 | Added Observer — Gojek Trip Extraction (ADR-013): device-local trip extraction from Gojek order screens into `observer_trip` table; parser + per-app rule table; 90d/5k retention; §4 slice + §6 task-log row. |
+| 0.12 | 2026-10-05 | Added ADR-014 (Gojek order card takeover): auto-stop trip + order card on Track screen + foreground launch when order is complete; extends §4 ADR-013 slice with steps 7–10 + verification; §6 task-log row; Next Step updated. |
 | 0.3 | 2026-07-07 | Added Location Efficiency — Dwell Collapse phase (ADR-006 accepted): §3 phase row + Appendix A two-slice contract; PRD §12 BR-11 recorded. |
 | 0.4 | 2026-07-07 | Added Fuel-Economy Unification phase (ADR-007 accepted): §3 phase row + Appendix A three-slice contract; instant two-cell + unified averaging + destructive v7→v8 column drop. |
 | 0.5 | 2026-07-07 | Added Fuel Cost feature (FR-12): inline `Rp` price entry with multi-step in-memory undo/redo; cost = litres × price on the Session OBD card + Trips active-trip row. No schema change. §3 phase row + Appendix A slice + §6 task-log row. |
@@ -133,6 +134,23 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 5. **Retention pruning:** `ObserverTripDao` gains `pruneOldTrips(maxAgeDays=90, maxRows=5000)`. Pruning caller/trigger decided at implementation time (follow the existing `observer_event` pruning pattern in the service).
 6. **UI: design handoff pending (AGENTS.md §12):** Observer Trip Card display (pickup/drop/earnings/payment layout), integration into Observer feed detail view, or separate trip feed tab. No code before design approval.
 
+**ADR-014 extension (planned, code pending approval):**
+
+7. **Trigger — one-shot "order ready" signal:** After the Gojek parser (step 2) yields an `OrderCard` with pickup+drop+payment+earnings populated for a given (pickupAddress, dropAddress) key, emit a one-shot "order ready" signal. This signal fires only the first time the card becomes complete; subsequent updates to the card's phase (drop-only, finished) do not re-fire. Signal must include the parsed order details and a flag indicating it is the first-complete event for this order.
+
+8. **Auto-stop trip:** Route the "order ready" signal to `TrackingService`. On receipt, `TrackingService` checks if a trip is currently active (`isTracking()`). If yes, send `STOP_TRIP`, persisting the trip as usual. The always-recording session (`isAlwaysRecording`) is **never** affected; it remains ON before, during, and after the trip stop.
+
+9. **Foreground launch:** Route the "order ready" signal to `MainActivity`. On receipt, launch the app to the foreground with the Track screen active. This action fires once per order (gates on the same one-shot event as step 7, not on subsequent phase updates). Must be verified on Android 10 (test device SM-G965F, adb tunnel); background-activity-start restrictions may require a fallback mechanism: (1) high-priority full-screen-intent notification, then (2) standard notification, then (3) silent background stop only. Any new permission required must be documented.
+
+10. **UI — order card on Track screen:** When an order card is ready, the Track screen's `TripPanel` is replaced by `OrderCardPanel` (or similar), displaying pickup, drop, payment, earnings, and the current order phase. The card displays from pickup phase through "Sampai tujuan" (drop-only), then "Selesai" (finished). At "Selesai", the card is hidden and `TripPanel` returns. Design handoff (AGENTS.md §12) required before implementation.
+
+**How to Verify (ADR-014 extension):**
+- Active trip stops and is persisted when a complete Gojek order card is first detected; always-recording remains ON (check DB: trip row written, session row still `isActive = 1`).
+- App comes to foreground on the Track screen with the order card displayed when the order becomes complete (device SM-G965F, Android 10, adb tunnel).
+- Order card updates through phases (pickup → drop-only → Selesai); `TripPanel` returns after Selesai (on-device UI verification).
+- No second foreground jump or auto-stop for the same order; the one-shot signal fires only once per (pickupAddress, dropAddress) key (DB + logcat verification).
+- GPS recording and observer_event capture are unaffected by the order-card flow (no service-isolation degradation; verify foreground launch does not interrupt location updates).
+
 ---
 
 ## 5. Timeline at a Glance
@@ -152,7 +170,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-10-05 | Docs — ADR-013 (Observer Trip Extraction: Gojek pickup/drop extraction into device-local `observer_trip` store, Gojek-only, no FK to trips/sessions, 90d/5k retention) accepted and propagated. New ADR-013 (Context/Decision/Consequences/Alternatives/References); PRD v0.7→0.8 (Feature 3 update, FR-15 new, §8 Included/Out-of-Scope); ARCHITECTURE v0.8→0.9 (ObserverTripEntity + retention note + MIGRATION_10_11 + parser note); UI-SPEC v0.7→0.8 (screen inventory row); IMPLEMENTATION-PLAN v0.10→0.11 (§4 slice + §1 change log + Next Step update); DOCUMENT-CONTROL register + change log; adr/README v0.1→0.2. Code gated (design handoff §12 + build permission §5a). | Completed | `---` | Docs only; no Gradle/device run (AGENTS §5a). How to Verify (code task, pending): (1) parser unit tests with fixture tree snapshots (pickup/drop-only/finished/partial phases, no PII); (2) DB migration runs v10→v11, no crash; (3) on-device Gojek order extraction with auto-dedup; (4) 90d/5k retention pruning; (5) design handoff + UI integration. |
+| 2026-10-05 | Docs — ADR-013 (Observer Trip Extraction: Gojek pickup/drop extraction into device-local `observer_trip` store, Gojek-only, no FK to trips/sessions, 90d/5k retention) accepted and propagated. New ADR-013 (Context/Decision/Consequences/Alternatives/References); PRD v0.7→0.8 (Feature 3 update, FR-15 new, §8 Included/Out-of-Scope); ARCHITECTURE v0.8→0.9 (ObserverTripEntity + retention note + MIGRATION_10_11 + parser note); UI-SPEC v0.7→0.8 (screen inventory row); IMPLEMENTATION-PLAN v0.10→0.11 (§4 slice + §1 change log + Next Step update); DOCUMENT-CONTROL register + change log; adr/README v0.1→0.2. Code gated (design handoff §12 + build permission §5a). | Completed | `b79c4f2` | Docs only; no Gradle/device run (AGENTS §5a). How to Verify (code task, pending): (1) parser unit tests with fixture tree snapshots (pickup/drop-only/finished/partial phases, no PII); (2) DB migration runs v10→v11, no crash; (3) on-device Gojek order extraction with auto-dedup; (4) 90d/5k retention pruning; (5) design handoff + UI integration. |
+| 2026-10-05 | Docs — ADR-014 (Gojek order card takeover: auto-stop trip, order card on Track screen, foreground) accepted; PRD FR-16, UI-SPEC, ARCHITECTURE updated (docs only) | Completed | `---` | Docs only; no build/test run. |
 | 2026-10-05 | Fix — TrackScreen map blank on startup (no GPS lock yet). Root cause: `LocationUiState.currentLocation` defaults to Seoul `LatLng(37.5716, 126.9763)`; map centers on this hardcoded location until first GPS fix arrives. Hybrid fix: (1) `MainActivity.onCreate` requests device's last known location from `FusedLocationProviderClient`, initializes `LocationUiState` with it instead of Seoul default; (2) `TrackingService.requestLocationUpdates()` moved to startup (not just on trip start) to acquire live GPS location continuously even before trips. Files: `MainActivity.kt`, `TrackingService.kt`, `LocationUiState.kt`. | Completed | `1e5d53c` | On-device: open TrackScreen without starting trip → map centers on actual device location (not Seoul), updates to live GPS within ~5 sec; no regressions on trip start/stop/Session/Observer tabs; battery drain acceptable (GPS in low-power mode). |
 | 2026-07-10 | Docs — ADR-012 (OBD fuel accumulation gates on shared recording state, not the intent-synced `sessionActive` flag) accepted. Root-caused ERR-005 (OBD connected + polling but `sessionActive=false` → avg km/L / cost / SESSION AVG / `obd_sample` writes all skipped while instant km/L & L/h show; two-flag divergence `isAlwaysRecording` vs `sessionActive`). Decision: gate on `gpsState.isAlwaysRecording`; derive session PK from `getActiveSession()` (single read/poll); demote `ACTION_SESSION_ON/OFF` to advisory; remove dead `ObdUiState.Connected.sessionActive`. Independent sonnet sub-agent ran a blast-radius + regression audit (UI-safe, privacy invariant preserved, no regressions; two accepted narrow risks). New ADR-012 + adr/README index; ERRORS-LOG ERR-005; ARCHITECTURE §5 data-flow note; DOCUMENT-CONTROL. No code (build permission §5a gated). | Completed | `71e23ae` | Docs only; no Gradle/device run (AGENTS §5a). How to Verify (code task, pending): relaunch app with always-recording already ON + OBD auto-reconnected, start a trip, drive → avg km/L & cost populate on the active-trip row and SESSION AVG on the Session screen; stop → finished trip shows km/L & cost. |
 | 2026-07-08 | Docs — ADR-011 (routing engine via connector-adapter) accepted. New ADR-011 (OpenRouteService hosted free tier now → self-hosted OSM by base-URL swap via a `RoutingEngine` port + `OpenRouteServiceAdapter`; static ETA; ORS/OSM attribution; key not hardcoded). Resolved ADR-009's routing-engine + traffic-ETA open questions; ARCHITECTURE 0.6→0.7 (§12 RoutingEngine/adapter, replaced the parked paragraph); UI-SPEC 0.6→0.7 (§3d attribution surface + engine note); DOCUMENT-CONTROL register + change log + adr/README index. No code (design handoff §12 + build permission §5a gated). | Completed | `34ffe0a` | Docs only; no Gradle/device run (AGENTS §5a). ORS API surface verified via Context7 (`POST /v2/directions/driving-car`; summary.distance/duration + encoded-polyline geometry; identical self-hosted API). |

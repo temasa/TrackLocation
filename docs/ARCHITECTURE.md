@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.9
+**Document Version:** 0.10
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-05
 **Owner:** Tech Lead
@@ -127,6 +127,23 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
 ```
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
+
+### Gojek Order-Card Takeover Flow (ADR-014)
+
+```
+ObserverAccessibilityService (write path)
+   → after observer_event insert & observer_trip upsert
+   → Gojek parser yields complete OrderCard (pickup+drop+payment+earnings)
+   → emit "order ready" signal (one-shot per (pickupAddress, dropAddress))
+     → TrackingService receives signal
+        → sends STOP_TRIP if a trip is active (trip persisted; always-recording unaffected)
+     → MainActivity receives signal
+        → brings Track screen to foreground (android.app.Activity.startActivity, verified Android 10)
+   → Track screen displays OrderCardPanel instead of TripPanel (from pickup phase through Selesai)
+   → after Selesai, TripPanel returns
+```
+
+**Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); no shared state or direct method calls. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). Any new permission required will be documented separately.
 
 ---
 

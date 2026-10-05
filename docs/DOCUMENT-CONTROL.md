@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.8 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-05 |
-| `docs/ARCHITECTURE.md` | 0.9 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-05 |
-| `docs/adr/README.md` | 0.2 | Active (13 ADRs indexed) | Tech Lead | 2026-10-05 |
+| `docs/PRD.md` | 0.9 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-05 |
+| `docs/ARCHITECTURE.md` | 0.10 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-05 |
+| `docs/adr/README.md` | 0.3 | Active (14 ADRs indexed) | Tech Lead | 2026-10-05 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -50,8 +50,9 @@ When any controlled document changes, update both:
 | `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/012-obd-accumulation-recording-state.md` | 1.0 | Accepted | Project owner | 2026-07-10 |
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.11 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-05 |
-| `docs/UI-SPEC.md` | 0.8 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-05 |
+| `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.12 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-05 |
+| `docs/UI-SPEC.md` | 0.9 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-05 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -97,6 +98,7 @@ Draft documents normally begin at `0.1`.
 | 2026-07-08 | IMPLEMENTATION-PLAN, docs/design-handoff/track_navigation/TRACK_NAVIGATION_SPEC.md | 0.8/— | 0.9/— | Track Navigation design handoff (AGENTS §12) produced: new `TRACK_NAVIGATION_SPEC.md` (7 UI surfaces, states, screenshot checklist, Claude Design prompt); IMPLEMENTATION-PLAN §1/§6 rows; backfilled the ADR-011 task-log revision (`34ffe0a`). Design-track only; no code. | Claude Code |
 | 2026-07-10 | adr/012, ARCHITECTURE, IMPLEMENTATION-PLAN, ERRORS-LOG, adr/README | —/0.7/0.9/0.1/0.1 | 1.0/0.8/0.10/0.1/0.1 | ADR-012 accepted — OBD fuel accumulation gates on shared `isAlwaysRecording` state instead of the intent-synced `sessionActive` flag (fixes ERR-005: instant km/L & L/h show but avg km/L / cost / finished-trip fuel blank when OBD reconnects without a fresh ACTION_SESSION_ON). ARCHITECTURE §5 data-flow note updated (samples written while recording; SESSION_ON/OFF advisory); IMPLEMENTATION-PLAN §6 task row + backfilled the design-handoff `---` → `742f9da`; ERRORS-LOG ERR-005; adr/README index. Code gated (build permission §5a). | Claude Code |
 | 2026-10-05 | adr/013 (new), adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/0.1/0.7/0.8/0.7/0.10/0.1 | 1.0/0.2/0.8/0.9/0.8/0.11/0.1 | ADR-013 accepted — Observer Trip Extraction (Gojek pickup/drop, device-only, no FK to trips/sessions, 90d/5k retention). New ADR-013 file. PRD: Feature 3 updated (Gojek extraction), FR-15 new (trip extraction feature), §8 Included/Out-of-Scope updated. ARCHITECTURE: ObserverTripEntity added to entity list, retention note, MIGRATION_10_11 added to schema section, parser + rule table mentioned in Observer component. UI-SPEC: Observer Trip Card (Gojek) added to screen inventory (design pending). IMPLEMENTATION-PLAN: §4 Observer — Gojek Trip Extraction slice (6-step implementation), §6 Task Log row (docs only, 2026-10-05), §1 Change Log entry, Next Step updated, version 0.10→0.11. adr/README: ADR-013 row added, version 0.1→0.2. DOCUMENT-CONTROL: register + change log updated. Code gated (design handoff §12 + build permission §5a). | Claude Code |
+| 2026-10-05 | adr/014 (new), adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | —/0.2/0.8/0.9/0.8/0.11 | 1.0/0.3/0.9/0.10/0.9/0.12 | ADR-014 accepted — Gojek Order Card Takeover of the Track Screen: auto-stop trip + order card on Track screen + one-shot foreground launch when order is complete. New ADR-014 file (Context/Decision/Consequences/Alternatives/References). PRD: FR-16 new (Gojek order-card takeover Gojek-scoped exception to FR-13), §8 Included bullet added, version 0.8→0.9. ARCHITECTURE: new Gojek Order-Card Takeover Flow subsection in §5 (Observer-to-tracking link by signal/intent, Android 10+ fallback note), version 0.9→0.10. UI-SPEC: existing "Observer Trip Card (Gojek)" row in screen inventory changed to "Gojek Order Card (Track screen)" with updated description; new §3e subsection (card states, placement, related behavior) added, version 0.8→0.9. IMPLEMENTATION-PLAN: §4 ADR-013 slice extended with ADR-014 steps 7–10 + verification block; §1 Change Log entry v0.12 added; §6 Task Log row added (docs only, 2026-10-05) + backfilled ADR-013 row revision `b79c4f2`; Next Step updated; version 0.11→0.12. adr/README: ADR-014 row added, version count → 14, version 0.2→0.3. Code gated (design handoff §12 + build permission §5a). | Claude Code |
 
 ---
 

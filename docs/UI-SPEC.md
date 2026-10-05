@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.8
+**Document Version:** 0.9
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-05
 **Owner:** Product Manager / UX Designer
@@ -52,7 +52,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
-| Observer Trip Card (Gojek) | Planned | Design handoff pending (AGENTS.md §12); shows extracted pickup/drop on the Observer feed/detail |
+| Gojek Order Card (Track screen) | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info (ADR-014); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -150,6 +150,23 @@ New Track-screen UI for follow-a-route navigation. Per AGENTS §12 the visuals a
 - **Routing attribution** — visible "© openrouteservice.org | © OpenStreetMap contributors" wherever a route is shown (ADR-011 requirement).
 
 Screenshots to attach for the handoff: current Track map + `TripPanel`, `MapControls`, bottom nav, Sessions card (for visual language). **Engine:** OpenRouteService (ADR-011) — ETA is static (no live traffic).
+
+---
+
+## 3e. Gojek Order Card (Track screen) — pending design handoff (ADR-014)
+
+New Track-screen UI surface to display extracted Gojek order card details when a complete order is ready. Per AGENTS §12 the visuals are **design-handoff-first** — this section records the structure, not final visual specs. Visual design will be produced in a design handoff before implementation.
+
+**Card states:**
+- **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
+- **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
+- **Finished phase** — Order marked "Selesai"; card is replaced by the normal `TripPanel`.
+
+**Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; `TripPanel` returns after.
+
+**Related behavior (not visual design):** Automatic trip stop when order card first becomes complete (ADR-014); one-shot foreground launch when card is ready; always-recording remains active.
+
+---
 
 ## 4. OBD UI Surfaces
 

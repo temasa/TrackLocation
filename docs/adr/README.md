@@ -102,6 +102,7 @@ Links to docs, code, or external resources supporting this decision.
 | [011](011-routing-engine-adapter.md) | Routing Engine via Connector-Adapter (OpenRouteService → self-hosted OSM) | Accepted | 2026-07-08 |
 | [012](012-obd-accumulation-recording-state.md) | OBD Fuel Accumulation Gates on Shared Recording State | Accepted | 2026-07-10 |
 | [013](013-observer-trip-extraction.md) | Observer Trip Extraction (Gojek pickup/drop, device-only) | Accepted | 2026-10-05 |
+| [014](014-gojek-order-card-takeover.md) | Gojek Order Card Takeover of the Track Screen | Accepted | 2026-10-05 |
 
 ---
 
@@ -121,5 +122,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 0.2
+**Version:** 0.3
 **Last Updated:** 2026-10-05
