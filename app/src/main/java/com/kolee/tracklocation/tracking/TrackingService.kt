@@ -73,6 +73,13 @@ class TrackingService: Service() {
         private const val TAG = "TrackingService"
         private val _locationUiState = MutableStateFlow(LocationUiState())
         val locationUiState = _locationUiState.asStateFlow()
+
+        fun seedLastKnownLocation(latLng: LatLng) {
+            _locationUiState.update {
+                if (it.currentLocation == LocationUiState().currentLocation) it.copy(currentLocation = latLng) else it
+            }
+        }
+
         val NOTIFICATION_ID = Random.nextInt(999) + 100
         private const val DWELL_TOLERANCE_MIN_METERS = 15f
         private const val DWELL_ACCURACY_FACTOR = 1.5f

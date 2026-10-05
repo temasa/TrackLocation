@@ -87,16 +87,9 @@ class MainActivity : ComponentActivity() {
                         .lastLocation
                         .addOnSuccessListener { location ->
                             if (location != null) {
-                                TrackingService.locationUiState.value.apply {
-                                    TrackingService.locationUiState.update {
-                                        it.copy(
-                                            currentLocation = LatLng(
-                                                location.latitude,
-                                                location.longitude
-                                            )
-                                        )
-                                    }
-                                }
+                                TrackingService.seedLastKnownLocation(
+                                    LatLng(location.latitude, location.longitude)
+                                )
                             }
                         }
                 } catch (e: SecurityException) {
