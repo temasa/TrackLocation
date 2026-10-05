@@ -28,7 +28,7 @@ This provides the driver with context (pickup/drop/payment/earnings) at the crit
 3. **Bring TrackLocation to the foreground:** When the complete order card is first detected, use an intent/activity-launch mechanism to bring `MainActivity` (Track screen) to the foreground. This fires **once per order** (i.e., only on the first snapshot that completes the card for a given pickup+drop pair), not on every state update. The driver is inside the Gojek app at that moment; this foreground jump allows quick context-switching back to TrackLocation without hunting the app switcher.
 
 ### Defaults (state them as defaults awaiting confirmation)
-- The order card displays from the pickup phase (card has all four fields) until the "Selesai" (finished) phase, then `TripPanel` returns.
+- The order card displays from the pickup phase (card has all four fields) until the "Selesai" (finished) phase, then `TripPanel` returns. The card also reverts when the user dismisses it, and a later order with the same addresses is a new order when the previous one is finished or older than 2 hours.
 - The foreground jump fires once per order, when the card first has all four fields.
 - This feature is device-only: the foreground launch, the trip auto-stop, and the order card are all local decisions with no sync/remote link.
 - Customer name, rating, and phone numbers are **never** stored or used (per ADR-013 PII rules).

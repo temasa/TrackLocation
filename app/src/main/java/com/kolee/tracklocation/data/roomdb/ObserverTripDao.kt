@@ -36,6 +36,9 @@ interface ObserverTripDao {
     @Query("UPDATE observer_trip SET handled = 1 WHERE id = :id")
     suspend fun markHandled(id: Long)
 
+    @Query("UPDATE observer_trip SET phase = 'FINISHED', handled = 1 WHERE id = :id")
+    suspend fun dismiss(id: Long)
+
     @Query("DELETE FROM observer_trip WHERE lastSeenAt < :cutoffMs")
     suspend fun deleteOlderThan(cutoffMs: Long)
 

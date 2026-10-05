@@ -46,7 +46,7 @@ class OrderTripRecorder(
                 val pickup = card.pickupAddress ?: return false
                 val drop = card.dropAddress ?: return false
                 val existing = dao.findByAddresses(pickup, drop)
-                if (existing == null) {
+                if (existing == null || !existing.isSameActiveOrder(now)) {
                     dao.insert(
                         ObserverTripEntity(
                             pickupName = card.pickupName,
@@ -76,7 +76,7 @@ class OrderTripRecorder(
             OrderPhase.DROP -> {
                 val drop = card.dropAddress ?: return false
                 val existing = dao.findLatestOpenByDropAddress(drop)
-                if (existing == null) {
+                if (existing == null || !existing.isSameActiveOrder(now)) {
                     dao.insert(
                         ObserverTripEntity(
                             pickupName = null,
@@ -112,6 +112,10 @@ class OrderTripRecorder(
             }
         }
     }
+
+    // A matching row is the same order only while unfinished and seen within the active window.
+    private fun ObserverTripEntity.isSameActiveOrder(now: Long): Boolean =
+        phase != OrderPhase.FINISHED.name && now - lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
 
     private fun ObserverTripEntity.isComplete(): Boolean =
         pickupAddress != null && dropAddress != null && payment != null && earningsRp != null

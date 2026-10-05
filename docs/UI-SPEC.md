@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.10
+**Document Version:** 0.11
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-05
 **Owner:** Product Manager / UX Designer
@@ -161,6 +161,8 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 - **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
 - **Finished phase** — Order marked "Selesai"; card is replaced by the normal `TripPanel`.
+
+**Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; `TripPanel` returns after.
 

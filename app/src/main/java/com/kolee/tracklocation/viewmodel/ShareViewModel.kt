@@ -22,6 +22,7 @@ import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.data.roomdb.TrackDao
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.feature.observer.trip.ORDER_ACTIVE_WINDOW_MS
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.tracking.Actions
@@ -59,14 +60,14 @@ class ShareViewModel(
     private var job: Job? = null
 
     // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
-    // while its latest row is not FINISHED and was seen within ACTIVE_ORDER_WINDOW_MS. The ticker
+    // while its latest row is not FINISHED and was seen within ORDER_ACTIVE_WINDOW_MS. The ticker
     // re-evaluates staleness even when the table doesn't change.
     val activeOrder: StateFlow<OrderCard?> = combine(
         observerTripDao.latestOrderFlow(),
         flow { while (true) { emit(System.currentTimeMillis()); delay(ORDER_STALENESS_TICK_MS) } }
     ) { row, now ->
         row?.takeIf {
-            it.phase != OrderPhase.FINISHED.name && now - it.lastSeenAt <= ACTIVE_ORDER_WINDOW_MS
+            it.phase != OrderPhase.FINISHED.name && now - it.lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
         }?.toOrderCard()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -117,6 +118,13 @@ class ShareViewModel(
                 }
                 observerTripDao.markHandled(row.id)
             }
+        }
+    }
+
+    /** Dismisses the active order card (e.g. a cancelled order that never reaches "Selesai"). */
+    fun dismissActiveOrder() {
+        viewModelScope.launch {
+            observerTripDao.findLatestOpen()?.let { observerTripDao.dismiss(it.id) }
         }
     }
 
@@ -207,7 +215,6 @@ class ShareViewModel(
     )
 
     companion object {
-        private const val ACTIVE_ORDER_WINDOW_MS = 2L * 60 * 60 * 1000
         private const val ORDER_STALENESS_TICK_MS = 60_000L
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {

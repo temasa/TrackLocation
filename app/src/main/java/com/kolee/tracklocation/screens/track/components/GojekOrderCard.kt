@@ -3,12 +3,14 @@ package com.kolee.tracklocation.screens.track.components
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -73,7 +76,8 @@ private val EarningsStyle = TextStyle(
 @Composable
 fun GojekOrderCard(
     order: OrderCard,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null
 ) {
     val panelBg = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PanelBg else PanelBgFallback
     val phaseLabel = when (order.phase) {
@@ -109,6 +113,7 @@ fun GojekOrderCard(
         Column {
             // Phase chip: text + dot, so the phase is not conveyed by color alone.
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
@@ -118,6 +123,25 @@ fun GojekOrderCard(
                         .background(color = phaseColor, shape = RoundedCornerShape(50))
                 )
                 Text(text = phaseLabel.uppercase(), style = CardLabelStyle)
+                if (onDismiss != null) {
+                    // PROVISIONAL (design handoff pending): lets a cancelled order (never "Selesai")
+                    // release the card and the trip Start/Stop control.
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .clickable(role = Role.Button, onClick = onDismiss)
+                                .semantics { contentDescription = "Dismiss order card" }
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "Dismiss", style = CardLabelStyle)
+                        }
+                    }
+                }
             }
 
             if (order.phase != OrderPhase.DROP && order.pickupAddress != null) {
