@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.8
+**Document Version:** 0.9
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-07-10
+**Last Updated:** 2026-10-05
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -49,6 +49,12 @@ ObservedEventEntity (observer_event)
 
 AllowlistRuleEntity (allowlist_rule)   ← EXACT / REGEX, packageName-only, case-sensitive
 
+ObserverTripEntity (observer_trip)   ← DERIVED from captured tree snapshots; Gojek-only extraction (ADR-013)
+  ├── pickupName, pickupAddress, dropName, dropAddress
+  ├── payment (e.g., GoPay/Kartu), earningsRp (integer)
+  ├── phase (pickup/drop-only/finished), firstSeenAt, lastSeenAt
+  └── no FKs to trips/sessions; deduplication key = (pickupAddress, dropAddress)
+
 ObdSampleEntity (obd_sample)
   ├── timestampMs, rpm, obdSpeedKmh
   ├── fuelRateLph, mafGramsPerSecond, fuelRateSource
@@ -78,6 +84,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 - **Recording resumes on restart:** on launch, `MainActivity` reaps only *stale* open sessions (no location point within the ~2-min grace window); a non-stale open session that outlived a force-stop (which `START_STICKY` does not redeliver) is resumed by starting `TrackingService` with `START_RECORDING`, which adopts it — keeping the live service state and the persisted session consistent (no Inactive-card-beside-Active-session mismatch).
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
+- `observer_trip` is retained independently: 90 days / 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete.
 
 ---
 
@@ -143,7 +150,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE known_segment` (a derived, simplified directed-polyline store) plus a grid-cell index for road-ahead lookup — derived from and fully rebuildable from `location_log`, never source-of-truth.
+Room database (`TrackDatabase`), at version **v7** (ADR-006 dwell-collapse shipped + built 2026-07-07); **ADR-007 moves it to v8** via a *destructive* migration (`fallbackToDestructiveMigrationFrom(7)`) that drops the now-unused `obdGpsDistanceKm` column (local test data discarded; no production data yet). Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE known_segment` (a derived, simplified directed-polyline store) plus a grid-cell index for road-ahead lookup — derived from and fully rebuildable from `location_log`, never source-of-truth. **ADR-013 adds MIGRATION_10_11 (DB→v11):** `CREATE TABLE observer_trip (id INTEGER PK AUTOINCREMENT, pickupName TEXT, pickupAddress TEXT, dropName TEXT, dropAddress TEXT, payment TEXT, earningsRp INTEGER, phase TEXT NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL)` — numbered after ADR-010's MIGRATION_9_10; ADR-010 has not shipped, so `TrackDatabase.kt` is currently v9 and these numbers swap if ADR-013 ships first.
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 

@@ -7,10 +7,10 @@ description: Product Requirements Document — TrackLocation
 # Product Requirements Document
 ## TrackLocation
 
-**Document Version:** 0.7
+**Document Version:** 0.8
 **Status:** Active (migrated from product-spec.md + change-requests.md)
 **Created:** 2026-06-15
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-10-05
 **Owner:** Project Team
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -71,8 +71,8 @@ The developer / support operator — uses the Observer to inspect accessibility 
 - **User benefit:** Continuous location history independent of any trip.
 
 ### Feature 3: Accessibility Event Observer (developer/support)
-- **What it does:** Local-first capture of accessibility events with allowlist filtering, tree snapshots, feed UI, and inspection.
-- **User benefit:** On-device diagnostics of app/screen activity without remote dependencies.
+- **What it does:** Local-first capture of accessibility events with allowlist filtering, tree snapshots, feed UI, inspection, and automatic Gojek driver order extraction (pickup/drop locations, payment, earnings).
+- **User benefit:** On-device diagnostics of app/screen activity without remote dependencies; automatic driver context capture for Gojek order tracking.
 
 ### Feature 4: OBD-II Telemetry (ELM327 Bluetooth Classic)
 - **What it does:** Polls RPM, speed, and fuel-rate from an ELM327 adapter; surfaces instantaneous km/L, L/h at idle, and session/trip average km/L on the Session screen and Trip panel.
@@ -121,7 +121,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 
 - Canonical append-only location log; sessions and trips as ranges over it.
 - Session screen as the primary always-recording control surface.
-- Observer under `Settings → Tools → Observer` (navigation Option B, accepted 2026-05-18).
+- Observer under `Settings → Tools → Observer` (navigation Option B, accepted 2026-05-18); automatic Gojek driver order extraction (Gojek-only, device-only).
 - OBD-II under `Settings → Tools → OBD`; ELM327 Bluetooth Classic SPP only.
 - Compose + Material 3 UI.
 
@@ -130,6 +130,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - New navigation items beyond `Session / List / Track / Settings`.
 - BLE OBD adapters; in-app BT discovery/PIN entry (system-settings pairing only).
 - User-facing clear/delete of Observer history.
+- Trip extraction for apps other than Gojek.
 - Remote sync/backend, Neon, registration, and auth (later phases).
 - Full turn-by-turn navigation (voice, maneuver-by-maneuver guidance, auto-reroute beyond the ADR-009 follow-a-route model).
 
@@ -151,6 +152,7 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-12:** An estimated **fuel cost** (litres consumed × price per litre, IDR `Rp`) is shown on the active Session card, the active-trip row, and completed-trip rows. The price is a first-class **effective-dated entity** (`fuel_price`), edited inline by tapping the cost (Save/Cancel) with multi-step in-memory **undo/redo**; edits append effective-now price rows (non-destructive). Active surfaces use the **current** price; a **completed trip** uses the price in effect at its **start** time and never re-costs when the price later changes (`—` if no price was set by then). Cost shows `—` when litres = 0 or no applicable price exists. (See ADR-008; supersedes the FR-12 v1 'no schema change' note.)
 - **FR-13:** On the Track screen a trip may be started with an optional destination (place-search autocomplete). Navigation is a sub-mode of a trip — never independent of one. Starting "trip + navigate" starts always-recording/session as any trip does; ending navigation (manual) ends the trip (`STOP_TRIP`, persisted) but never turns off always-recording. No auto-arrival — the user ends manually. The destination is mutable mid-trip. Off-route deviation (~50 m, gated by 2–3 consecutive fixes, ≥15 s apart) triggers a re-route. Process death resumes both trip and navigation; routing failures fail soft (the trip always records track-only). Remaining distance + ETA show alongside trip metrics. (ADR-009)
 - **FR-14:** A derived, rebuildable **local route store** is built from the user's own canonical location traces (never from cached third-party routing content). Road-ahead prediction — including multiple previously-driven continuations at a junction — is served from this store for free; external routing is used only for roads not yet driven. The canonical location log remains untouched and is the source the store derives from. (ADR-010)
+- **FR-15:** Observer automatically extracts pickup and drop locations (plus payment and earnings) from Gojek driver order screens (`com.gojek.partner`) into a device-local `observer_trip` store. Extraction is Gojek-only; always device-only (no sync); no link to sessions/trips (no foreign keys); customer name and phone numbers are never stored. Trips are deduplicated by pickup+drop address pair and persisted independently for 90 days / 5,000 rows, not user-deletable (consistent with FR-05). (ADR-013)
 
 ---
 

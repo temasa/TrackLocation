@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.7
+**Document Version:** 0.8
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-10-05
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -52,6 +52,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
+| Observer Trip Card (Gojek) | Planned | Design handoff pending (AGENTS.md §12); shows extracted pickup/drop on the Observer feed/detail |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
