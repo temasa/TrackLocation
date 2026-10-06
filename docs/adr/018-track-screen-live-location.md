@@ -16,7 +16,7 @@ The project owner wants to use the Track screen as a Waze/Google Maps replacemen
 
 1. **New `LiveLocationSource` (screen-scoped, lifecycle-aware):** Requests FusedLocationProviderClient high-accuracy updates (~1 s interval, ~500 ms fastest) **ONLY** while the Track screen is visible **AND** the app is in the foreground (ON_START/ON_STOP or RESUMED). Stops requesting otherwise. Exposes a `StateFlow` of the latest fix (lat/lng, speed, bearing, accuracy, time).
 
-2. **TrackScreen uses the live fix for DISPLAY:** Map dot/marker, follow mode, Recenter target. Fallback while no live fix has arrived: the last-known seed from TrackingService (today's behaviour). The Seoul placeholder is never shown or used.
+2. **TrackScreen uses the live fix for DISPLAY:** Map dot/marker, follow mode, Recenter target. Fallback while no live fix has arrived: the last-known position seeded by TrackingService; before any real position exists the map keeps today's default initial camera (the app's built-in default coordinates, not a real position).
 
 3. **Display-only: live fixes are NEVER stored.** TrackingService remains the only writer of the canonical location log, sessions, trips, OBD accumulation, and Gojek order auto-start/end. No schema change, no Room migration. PRD §12 locked rules untouched (canonical location log; sessions vs trips; always-recording switch stays on the Session screen).
 

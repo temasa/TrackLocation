@@ -34,6 +34,7 @@ import com.kolee.tracklocation.screens.track.components.GojekOrderCard
 import com.kolee.tracklocation.screens.track.components.MapControls
 import com.kolee.tracklocation.screens.track.components.TrackMap
 import com.kolee.tracklocation.screens.track.components.TripPanel
+import com.kolee.tracklocation.tracking.rememberLiveFix
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 import kotlinx.coroutines.delay
 
@@ -60,6 +61,9 @@ fun TrackScreen() {
 
     var performRequestPermission by remember { mutableStateOf(true) }
     var allPermissionsGranted by remember { mutableStateOf(false) }
+    // ADR-018: display-only live fix for the map dot/follow; recording stays on locationUiState.
+    val liveFix by rememberLiveFix(enabled = allPermissionsGranted)
+    val displayLocation = liveFix?.latLng ?: locationUiState.currentLocation
     var isShowPanel by remember { mutableStateOf(false) }
     // Map follow mode (UI-SPEC 3f): a user pan stops following; Recenter resumes it.
     var isFollowing by remember { mutableStateOf(true) }
@@ -104,7 +108,7 @@ fun TrackScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         TrackMap(
-            currentLocation = locationUiState.currentLocation,
+            currentLocation = displayLocation,
             pathPoints = locationUiState.pathPoints,
             plannedRoute = orderRoute.plannedRoute,
             runtimeRoute = orderRoute.runtimeRoute,
