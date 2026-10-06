@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.15 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-06 |
-| `docs/ARCHITECTURE.md` | 0.17 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-06 |
-| `docs/adr/README.md` | 0.6 | Active (17 ADRs indexed) | Tech Lead | 2026-10-06 |
+| `docs/PRD.md` | 0.16 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-06 |
+| `docs/ARCHITECTURE.md` | 0.18 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-06 |
+| `docs/adr/README.md` | 0.7 | Active (18 ADRs indexed) | Tech Lead | 2026-10-06 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -54,8 +54,9 @@ When any controlled document changes, update both:
 | `docs/adr/015-order-auto-start-trip.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/016-order-route-overlay.md` | 1.0 | Accepted (provider superseded by ADR-017) | Project owner | 2026-10-06 |
 | `docs/adr/017-order-route-provider-openrouteservice.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.21 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-06 |
-| `docs/UI-SPEC.md` | 0.17 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-06 |
+| `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.22 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-06 |
+| `docs/UI-SPEC.md` | 0.18 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-06 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -85,6 +86,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-06 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/018, adr/README, DOCUMENT-CONTROL | 0.15/0.17/0.17/0.21/—/0.6/0.1 | 0.16/0.18/0.18/0.22/1.0/0.7/0.1 | Track screen live location (ADR-018): display-only live GPS position independent of recording state. New ADR-018 file (Context/Decision/Consequences/Alternatives/Related ADRs/References); PRD v0.15→0.16 (FR-18 new: live location, foreground-only, never stored, fallback to last-known, no new permission, no schema, roadmap note on turn-by-turn/Waze features deferred to ADR-009 revisit, cross-link ADR-018); ARCHITECTURE v0.17→0.18 (LiveLocationSource component + display-only data-flow diagram separate from TrackingService recording path + battery + privacy notes); UI-SPEC v0.17→0.18 (§3f added live location note under the Recenter FAB section: describes source, fallback, display-only, battery, permission); IMPLEMENTATION-PLAN v0.21→0.22 (§1 change-log entry 0.22 added, §4 new "Track Screen — Live Location (ADR-018)" slice with 3 numbered steps + 7-point How to Verify block, §6 two new task-log rows "Docs 2026-10-06 Completed" + "Code 2026-10-06 Pending", Also documented header updated, version header); adr/README v0.6→0.7 (ADR-018 row added to index, count 17→18); this entry. No schema. Code pending user build permission (AGENTS.md §5a). | Claude Code |
 | 2026-10-06 | UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.16/0.20/0.1 | 0.17/0.21/0.1 | Track map Recenter FAB / Follow Mode (2026-10-06) — new UI-SPEC §3f subsection describing functional follow mode, gestures, FAB state transitions, a11y, interaction with routes, and handoff instructions (icon colors, screenshot checklist, Claude Design prompt). Updated Map Interface legacy note. IMPLEMENTATION-PLAN: added §1 change-log entry v0.21, §4 new Track Map slice (3 steps + 8-point How to Verify), §6 two new task-log rows (Docs Completed, Code Pending), updated Also documented line and version header. Backfilled ADR-017 code row Git Revision with 17ba949. No schema. Design handoff pending (AGENTS §12); code awaiting user approval (AGENTS §5b). | Claude Code |
 | 2026-06-15 11:44:58 | (all) | — | 0.1 | Scaffolded from generic project-initialization template via the create-project skill. | Template / Project Team |
 | 2026-06-15 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, AGENTS, CLAUDE, README | 0.1 | 0.2/0.1 | **Full adoption migration:** routed legacy `product-spec.md`, `change-requests.md`, `implementation-plan.md`, `progress.md`, `DESIGN_SYSTEM.md` content into the template schema; created ADR-001…004 from CRs/decisions; retired the five legacy docs. Nothing dropped (full audit preserved in IMPLEMENTATION-PLAN Appendix B). | Claude Code |

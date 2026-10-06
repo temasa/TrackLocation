@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.17
+**Document Version:** 0.18
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -296,6 +296,8 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **Map layers FAB:** Remains an inert placeholder (explicitly out of scope; a future decision).
 
 **Accessibility:** TalkBack users hear 'Recenter map' or 'Recenter map, map is not following' depending on state, so state is communicated via text as well as icon color. Screen-reader users can tap Recenter to resume following after panning.
+
+**Location source (ADR-018):** The blue dot, follow mode camera, and Recenter target all use a **live location fix** from a screen-scoped `LiveLocationSource` that requests high-accuracy location updates (~1 s interval) only while the Track screen is open and the app is in the foreground. Fallback while awaiting the first live fix (typically ~5 s after screen open): the last-known position seed from TrackingService. Live fixes are never stored (display-only; the canonical location log is unchanged). This ensures the Track screen behaves like Google Maps/Waze (position always reflects actual device location) regardless of recording state.
 
 **Interaction with routes:** While a Gojek order is active, the driver can pan away from the current location to inspect the planned or runtime route and the pickup/drop markers. The following state remains independent of the route display; panning turns following off, and tapping Recenter resumes it.
 

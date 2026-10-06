@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.17
+**Document Version:** 0.18
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-06
 **Owner:** Tech Lead
@@ -185,6 +185,35 @@ ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
 ```
 
 **Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is started when the activity is next created. `orderOwnsTrip` is in-memory; after process death the trip is not auto-ended. Any new permission required will be documented separately.
+
+### Track Screen — Live Location Display (ADR-018, display-only data path)
+
+```
+FusedLocationProviderClient → LiveLocationSource (screen-scoped, lifecycle-aware)
+   ├── Active only while TrackScreen visible AND app in foreground (ON_START/ON_STOP/RESUMED)
+   └── Exposes StateFlow<LiveFix?> (lat/lng, speed, bearing, accuracy, time)
+
+TrackScreen display logic:
+   displayLocation = liveLocationSource.collect() ?: trackingService.lastKnownSeed
+
+DISPLAY ONLY (never written to DB):
+   ├── Map dot/marker position
+   ├── Follow mode camera target
+   └── Recenter FAB target
+
+SEPARATE from TrackingService recording path:
+   TrackingService.locationUiState → canonical location_log (write path, persisted)
+   LiveLocationSource → TrackScreen display (read path, ephemeral)
+   
+   Result: live dot visible whenever screen open, regardless of recording state.
+   Canonical log unchanged (source of truth for sessions/trips/OBD).
+```
+
+**Permissions:** Uses existing `ACCESS_FINE_LOCATION` foreground permission; NO background location. If permission not granted, source stays idle and screen uses fallback seed (same as today).
+
+**Battery:** GPS at ~1 Hz only while TrackScreen visible (same cost model as Google Maps/Waze). FusedLocationProviderClient merges requests when both screen and service are active (service already running, so incremental cost small).
+
+**Privacy:** Live fixes never stored or transmitted. Only external call remains OrderRouteController → OpenRouteService (for order routes, ADR-017).
 
 ---
 
