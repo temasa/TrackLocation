@@ -11,7 +11,12 @@ data class OrderCardRules(
     val earningsLabel: String,
     val pickupButton: String,
     val dropButton: String,
-    val finishedButton: String
+    val finishedButton: String,
+    // ADR-015 terminal signals: bottom-nav labels that only co-occur on the home screen, and the
+    // cancel dialog's button + message marker.
+    val homeNavTexts: List<String> = emptyList(),
+    val cancelButton: String? = null,
+    val cancelMarker: String? = null
 )
 
 object GojekRules {
@@ -24,7 +29,10 @@ object GojekRules {
         earningsLabel = "Pendapatan",
         pickupButton = "Udah di titik jemput",
         dropButton = "Sampai tujuan",
-        finishedButton = "Selesai"
+        finishedButton = "Selesai",
+        homeNavTexts = listOf("Beranda", "Pendapatan", "Swadaya", "Pesan"),
+        cancelButton = "Oke, sip",
+        cancelMarker = "nge-cancel"
     )
 
     private val byPackage: Map<String, OrderCardRules> = mapOf(GOJEK.packageName to GOJEK)

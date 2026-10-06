@@ -59,6 +59,9 @@ class ShareViewModel(
         private set
     private var job: Job? = null
 
+    // ADR-015: true while the running trip was started or adopted by an order. In-memory only.
+    private var orderOwnsTrip = false
+
     // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
     // while its latest row is not FINISHED and was seen within ORDER_ACTIVE_WINDOW_MS. The ticker
     // re-evaluates staleness even when the table doesn't change.
@@ -107,16 +110,32 @@ class ShareViewModel(
                 sessionsState = sessions
             }
         }
-        // ADR-014 takeover: an order that became complete ends the active trip (once), then is
-        // marked handled whether or not a trip was running.
+        // ADR-015 start: a fresh, unfinished order starts a trip (or adopts one already running),
+        // then is marked handled. A stale or already-finished order never starts a trip.
         viewModelScope.launch {
             observerTripDao.unhandledReadyFlow().collect { row ->
                 if (row == null) return@collect
-                val current = locationUiState.value
-                if (current.isTracking && !current.isPaused) {
-                    stopActiveTrip(current)
+                if (row.phase != OrderPhase.FINISHED.name &&
+                    System.currentTimeMillis() - row.lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
+                ) {
+                    val current = locationUiState.value
+                    if (!current.isTracking) sendServiceCommand(Actions.START_TRIP)
+                    orderOwnsTrip = true
                 }
                 observerTripDao.markHandled(row.id)
+            }
+        }
+        // ADR-015 end: the order reaching FINISHED (Drop off, Cancelled, Cleared or dismissed) ends
+        // the trip only if the order owns it; a trip already stopped manually just clears the flag.
+        viewModelScope.launch {
+            observerTripDao.latestOrderFlow().collect { row ->
+                if (row?.phase == OrderPhase.FINISHED.name && orderOwnsTrip) {
+                    val current = locationUiState.value
+                    if (current.isTracking && !current.isPaused) {
+                        stopActiveTrip(current)
+                    }
+                    orderOwnsTrip = false
+                }
             }
         }
     }
@@ -140,7 +159,10 @@ class ShareViewModel(
         }
     }
 
-    /** Persists the active trip, then asks the service to stop it. Shared by the CTA and the takeover. */
+    /**
+     * Persists the active trip, then asks the service to stop it. Shared by the CTA and the
+     * ADR-015 order-end collector. Any stop (manual or order-driven) releases order ownership.
+     */
     private suspend fun stopActiveTrip(current: LocationUiState) {
         val startId = current.activeTripStartLocationId
         val endId = current.activeTripEndLocationId
@@ -168,6 +190,7 @@ class ShareViewModel(
             )
         )
         sendServiceCommand(Actions.STOP_TRIP)
+        orderOwnsTrip = false
     }
 
     private fun sendServiceCommand(action: Actions) {

@@ -3,10 +3,29 @@ package com.kolee.tracklocation.feature.observer.trip
 /**
  * Pure parser: ordered snapshot texts -> [OrderCard], or null when the texts are not a (complete)
  * order card. No Android imports; UI strings come from [OrderCardRules].
+ *
+ * ADR-015 order lifecycle (Gojek terms): Taken = [OrderPhase.PICKUP] card, Carrying =
+ * [OrderPhase.DROP] card, Drop off = [OrderPhase.FINISHED] card ("Selesai"). Two further terminal
+ * signals also yield a bare FINISHED card: the cancel message (Cancelled) and the driver home
+ * screen (Cleared).
  */
 object OrderCardParser {
 
     fun parse(texts: List<String>, rules: OrderCardRules): OrderCard? {
+        // Cancelled: checked first because the cancel message can co-occur with the order card's
+        // "Udah di titik jemput" button, which would otherwise be read as PICKUP.
+        val cancelButton = rules.cancelButton
+        val cancelMarker = rules.cancelMarker
+        if (cancelButton != null && texts.contains(cancelButton) &&
+            cancelMarker != null && texts.any { it.contains(cancelMarker, ignoreCase = true) }
+        ) {
+            return OrderCard(phase = OrderPhase.FINISHED)
+        }
+        // Cleared: the home screen (all bottom-nav labels present) means no order is being served.
+        if (rules.homeNavTexts.isNotEmpty() && texts.containsAll(rules.homeNavTexts)) {
+            return OrderCard(phase = OrderPhase.FINISHED)
+        }
+
         val phase = when {
             texts.contains(rules.pickupButton) -> OrderPhase.PICKUP
             texts.contains(rules.dropButton) -> OrderPhase.DROP
