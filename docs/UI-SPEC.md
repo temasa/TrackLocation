@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.16
+**Document Version:** 0.17
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -273,6 +273,56 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 
 ---
 
+## 3f. Track Map — Recenter FAB / Follow Mode (2026-10-06)
+
+**What it does:** Adds functional follow mode to the Track screen's map, driven by an `isFollowing` state flag. The map auto-animates the camera to follow the current location while following is ON. User gestures (drag/pinch/fling) turn following OFF, allowing the user to inspect the map or the route ahead. Tapping the Recenter FAB turns following back ON and animates to the current location. The Recenter FAB visual state reflects whether following is active (dark crosshair icon while following; muted grey icon when panned away).
+
+**States:**
+
+1. **Following** — `isFollowing = true` (default on entry). Camera auto-animates to the current location, preserving the user's current zoom level (or defaulting to `MAP_ZOOM` if zoomed out ≤ MAP_ZOOM - 3). Map is read-only (no user pan).
+2. **Panned Away** — `isFollowing = false`. Camera is static; the user has manually panned/pinched to inspect the route ahead or look at pickup/drop pins. Tapping the Recenter FAB resumes following.
+
+**Transitions:**
+
+- **Gesture → off:** User initiates a gesture (drag/pinch/fling) detected via `CameraMoveStartedReason.GESTURE` in the `CameraPositionState` callback; `isFollowing` → false, FAB icon → grey, and the camera stops auto-updating.
+- **Tap Recenter → on:** User taps the Recenter FAB; `isFollowing` → true, FAB icon → dark, and the camera animates to the current location.
+
+**Visual state (PROVISIONAL):**
+
+- **Recenter FAB:**
+  - **Following (dark):** Crosshair icon dark (`0xFF0A0A0A`), fully opaque. Content description: 'Recenter map'.
+  - **Panned away (muted grey):** Crosshair icon muted grey (~`0xFF9E9E9E`), fully opaque. Content description: 'Recenter map, map is not following' (a11y hint that the tap would resume following).
+  - Minimum touch target: 44dp FAB (note: below 48dp guideline; existing design).
+- **Map layers FAB:** Remains an inert placeholder (explicitly out of scope; a future decision).
+
+**Accessibility:** TalkBack users hear 'Recenter map' or 'Recenter map, map is not following' depending on state, so state is communicated via text as well as icon color. Screen-reader users can tap Recenter to resume following after panning.
+
+**Interaction with routes:** While a Gojek order is active, the driver can pan away from the current location to inspect the planned or runtime route and the pickup/drop markers. The following state remains independent of the route display; panning turns following off, and tapping Recenter resumes it.
+
+**Handoff Instructions (Recenter FAB visual state — PROVISIONAL, pending design handoff)**
+
+*Provisional code until the design returns:* the FAB icons and colour states ship in provisional styling (dark/grey swaps); they are refined when the design handoff returns.
+
+**Step-by-step process (Claude Design / Google Stitch):**
+1. Open Claude Design or Google Stitch and attach the screenshots in the checklist below.
+2. Review the Recenter FAB in both states: dark (following) and grey (panned away).
+3. Confirm the crosshair icon is legible at 44dp and the color contrast is sufficient in light and dark themes.
+4. Generate refined icon styling and color specifications if needed (e.g., stronger/softer grey, different icon weight or baseline).
+5. Export the design and record it per `docs/WORKFLOW.md §3`.
+
+**Screenshot checklist (attach current-app screens):**
+- Track map with `MapControls` in the **Following** state (dark Recenter + inert Layers FAB; map centered on current location, live location updates visible).
+- Track map with `MapControls` in the **Panned Away** state (grey Recenter + inert Layers FAB; camera has been manually dragged/pinched away from the current location, showing the route ahead or pickup/drop pins).
+- Light and dark theme variants if available.
+
+**Tool recommendation:** Claude Design primary (icon styling, color refinement, both-themes variants); Google Stitch alternative (external handoff, see `docs/WORKFLOW.md §3`).
+
+**Copy-paste-ready prompt:**
+
+> Design the "Recenter FAB" visual state for the Track map in TrackLocation (Android, Jetpack Compose, Material 3). The FAB has two states: (1) **Following** — dark crosshair icon (`0xFF0A0A0A` provisional) showing the camera is auto-following the current GPS location; tap does nothing. (2) **Panned Away** — muted grey crosshair icon (`~0xFF9E9E9E` provisional) showing the camera is static (user has panned/pinched to inspect the map); tap Recenter animates the camera back to the current location and resumes following. Provide both states in light and dark themes. Confirm the icon is legible at 44dp (below the 48dp Material guideline, existing design). Use simple geometric crosshair (no fill, outline only) or a plus-sign variant suitable for 44dp. Do not rely on color alone to convey state (text TalkBack labels distinguish the states). Provide SVG or vector export suitable for an Android `res/drawable` vector drawable.
+
+---
+
 ## 4. OBD UI Surfaces
 
 ### Phase 1 (implemented)
@@ -533,7 +583,7 @@ Standardized rows for navigation and configuration.
 Cards that encapsulate trip data. They use a vertical "Route Line" on the left margin (Primary Green) to visually link the session to the concept of a path. 
 
 ### Map Interface
-The map uses a minimalist, light-themed tile provider. Interactive controls (Recenter, Layers) are grouped as floating circular white buttons on the right side of the screen.
+The map uses a minimalist, light-themed tile provider. Interactive controls (Recenter, Layers) are grouped as floating circular white buttons on the right side of the screen. **Recenter FAB is now functional (§3f):** taps Recenter to resume following the current location. **Layers FAB remains an inert placeholder** (see §3f for details).
 
 ### Bottom Navigation
 A persistent white bar with a subtle top border. The active state is indicated by a soft green pill-shaped background behind the icon and bolded text labels.

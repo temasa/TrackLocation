@@ -54,8 +54,8 @@ When any controlled document changes, update both:
 | `docs/adr/015-order-auto-start-trip.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/016-order-route-overlay.md` | 1.0 | Accepted (provider superseded by ADR-017) | Project owner | 2026-10-06 |
 | `docs/adr/017-order-route-provider-openrouteservice.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.20 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-06 |
-| `docs/UI-SPEC.md` | 0.16 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-06 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.21 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-06 |
+| `docs/UI-SPEC.md` | 0.17 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-06 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -85,6 +85,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-06 | UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.16/0.20/0.1 | 0.17/0.21/0.1 | Track map Recenter FAB / Follow Mode (2026-10-06) — new UI-SPEC §3f subsection describing functional follow mode, gestures, FAB state transitions, a11y, interaction with routes, and handoff instructions (icon colors, screenshot checklist, Claude Design prompt). Updated Map Interface legacy note. IMPLEMENTATION-PLAN: added §1 change-log entry v0.21, §4 new Track Map slice (3 steps + 8-point How to Verify), §6 two new task-log rows (Docs Completed, Code Pending), updated Also documented line and version header. Backfilled ADR-017 code row Git Revision with 17ba949. No schema. Design handoff pending (AGENTS §12); code awaiting user approval (AGENTS §5b). | Claude Code |
 | 2026-06-15 11:44:58 | (all) | — | 0.1 | Scaffolded from generic project-initialization template via the create-project skill. | Template / Project Team |
 | 2026-06-15 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, AGENTS, CLAUDE, README | 0.1 | 0.2/0.1 | **Full adoption migration:** routed legacy `product-spec.md`, `change-requests.md`, `implementation-plan.md`, `progress.md`, `DESIGN_SYSTEM.md` content into the template schema; created ADR-001…004 from CRs/decisions; retired the five legacy docs. Nothing dropped (full audit preserved in IMPLEMENTATION-PLAN Appendix B). | Claude Code |
 | 2026-07-02 | AGENTS.md | 0.2 | 0.3 | Added §5b "Imported Governance Rules" — a full governance rule set (Coding Permission, Execution, Fixing, Commit, Task-Completion Documentation, Coding Task, Verification, Test, Slice Documentation, Subagent Transparency rules) ported from the `utbk-platform` project at the user's explicit direction; these rules override §5/§6/§8/§8a where they conflict. | Claude Code |
