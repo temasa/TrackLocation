@@ -9,7 +9,7 @@ description: Document control register and change log — fully generic, ready t
 
 **Document Version:** 0.1  
 **Status:** Active  
-**Last Updated:** 2026-10-05  
+**Last Updated:** 2026-10-06  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.10 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-05 |
-| `docs/ARCHITECTURE.md` | 0.12 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-05 |
-| `docs/adr/README.md` | 0.3 | Active (14 ADRs indexed) | Tech Lead | 2026-10-05 |
+| `docs/PRD.md` | 0.11 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-06 |
+| `docs/ARCHITECTURE.md` | 0.13 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-06 |
+| `docs/adr/README.md` | 0.4 | Active (15 ADRs indexed) | Tech Lead | 2026-10-06 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -50,9 +50,10 @@ When any controlled document changes, update both:
 | `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/012-obd-accumulation-recording-state.md` | 1.0 | Accepted | Project owner | 2026-07-10 |
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
-| `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.15 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-05 |
-| `docs/UI-SPEC.md` | 0.11 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-05 |
+| `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted (amended by ADR-015) | Project owner | 2026-10-05 |
+| `docs/adr/015-order-auto-start-trip.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.16 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-06 |
+| `docs/UI-SPEC.md` | 0.12 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-06 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.1 | Ready to use (blocker protocol) | Tech Lead | 2026-06-15 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -102,6 +103,7 @@ Draft documents normally begin at `0.1`.
 | 2026-10-05 | adr/014, adr/013, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | 1.0/1.0/0.9/0.10/0.9/0.12 | 1.0/1.0/0.10/0.11/0.10/0.13 | Docs-only fixes to ADR-014 and related text: removed invented Android names (permission/error constants) and restated the background-activity-start restriction as to-be-verified on the SM-G965F with a two-item fallback list; replaced the placeholder composable name; corrected the flow (foreground launch done by the Observer service; trip persisted by `ShareViewModel.onTripCtaTap()` before `STOP_TRIP`, auto-stop routed through `ShareViewModel`); migration numbering (ADR-013 takes MIGRATION_9_10 DB→v10, ADR-010 renumbered 10→11 when it ships); UI-SPEC §3e design-handoff spec added. Docs only; no code. | Claude Code |
 | 2026-10-05 | IMPLEMENTATION-PLAN, ARCHITECTURE, adr/013, DOCUMENT-CONTROL | 0.13/0.11/1.0/0.1 | 0.14/0.12/1.0/0.1 | Code — Gojek order card takeover (ADR-013/014 extension): OrderCardParser + GojekRules table; observer_trip entity/DAO + MIGRATION_9_10 (adds `handled` column + `lastSeenAt` index); OrderTripRecorder in Observer service write path; ShareViewModel auto-stop (one-shot per order); foreground launch + provisional GojekOrderCard on Track screen. IMPLEMENTATION-PLAN: §4 ADR-013 slice updated with implementation status + known risks; §6 new task-log row (code written, unbuilt, design handoff pending) + backfilled Git Revision for ADR-014 wording fix; §1 Change Log entry v0.14 added. ARCHITECTURE: ObserverTripEntity updated with `handled` field; migration sentence updated (includes `handled` column + `lastSeenAt` index mention). adr/013: Storage point updated with `handled` column description. Code written (static, unbuilt); AGENTS.md §5a build/test/device gated. | Claude Code |
 | 2026-10-05 | IMPLEMENTATION-PLAN, UI-SPEC, adr/014 | 0.14/0.10/1.0 | 0.15/0.11/1.0 | Code — fix order-card weaknesses: IMPLEMENTATION-PLAN known risks 1–2 marked FIXED, §6 task-log row added, order-card takeover Git Revision backfilled (`329a02a`); UI-SPEC §3e notes the provisional Dismiss control; adr/014 defaults note dismiss-revert and same-address-new-order rule (wording only). Code unbuilt (AGENTS.md §5a). | Claude Code |
+| 2026-10-06 | adr/015, adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN | —/0.3/0.10/0.12/0.11/0.15 | 1.0/0.4/0.11/0.13/0.12/0.16 | ADR-015 accepted — Gojek Order Lifecycle Drives the Trip (auto-start at Taken, auto-end at Cleared/Cancelled/Dismissed). New ADR-015 file (Context/Decision/Consequences/Alternatives/Vocabulary/Evidence/References). adr/README: ADR-015 row + index count 14→15, v0.3→0.4. PRD: FR-13 amended (Gojek exception note), FR-16 rewritten (auto-start/auto-end instead of auto-stop), v0.10→0.11. ARCHITECTURE: Gojek Order-Card Takeover Flow section rewritten (TRIP START + TRIP END phases), terminal-state detection added, v0.12→0.13. UI-SPEC: §3e updated (auto-start/auto-end, card states Cleared/Cancelled/Dismissed, while-active note), v0.11→0.12. IMPLEMENTATION-PLAN: §4 new Observer — Gojek Order Auto-Start/End Trip slice (7 implementation steps + verification); §1 change log entry 0.16 added; §6 task-log rows added (docs 2026-10-06 Completed, code 2026-10-06 In Progress); Also documented line updated; v0.15→0.16. Code gated (build permission AGENTS.md §5a). | Claude Code |
 
 ---
 

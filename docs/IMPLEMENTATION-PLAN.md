@@ -7,9 +7,9 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.15
+**Version:** 0.16
 **Status:** Active (migrated from implementation-plan.md + progress.md)
-**Last Updated:** 2026-10-05
+**Last Updated:** 2026-10-06
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
 
 > Migrated 2026-06-15 to the create-project schema. The detailed per-phase/slice contract from the legacy `implementation-plan.md` is preserved verbatim in **Appendix A**. The full session/progress audit log from the legacy `progress.md` is preserved verbatim in **Appendix B**. §6 below is a summarized task log over those sessions.
@@ -20,7 +20,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ### Current — Two-ACTIVE-cards fix (single-active-session invariant) device-verified 2026-07-07. Active coding task: resume always-recording on relaunch after force-stop (an open non-stale session was leaving an Inactive card beside an ACTIVE session) — code fix pending (see §6 Task Log, In Progress). (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
 
-### Also documented — Gojek trip extraction (ADR-013) and order-card takeover (ADR-014), docs only, 2026-10-05. Code pending user approval; design handoff pending; build/test needs explicit permission (AGENTS.md §5a).
+### Also documented — Gojek trip extraction (ADR-013), order-card takeover (ADR-014), and order auto-start/end trip (ADR-015), docs only, 2026-10-06. Code pending user approval; design handoff pending; build/test needs explicit permission (AGENTS.md §5a).
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -67,6 +67,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 | 0.13 | 2026-10-05 | Docs-only fixes to ADR-014 wording (invented Android names removed, placeholder composable name, persistence/foreground flow via `ShareViewModel`, migration numbering v10) + UI-SPEC §3e design-handoff spec. |
 | 0.14 | 2026-10-05 | Code — Gojek order card takeover (ADR-013/014): OrderCardParser + GojekRules table; observer_trip entity/DAO/MIGRATION_9_10; OrderTripRecorder in Observer service; ShareViewModel auto-stop; foreground launch + provisional order card on Track screen; §4 ADR-013 slice implementation status + known risks added; §6 task-log row added (code written, unbuilt, design handoff pending). |
 | 0.15 | 2026-10-05 | Code — fix order-card weaknesses (§4 known risks 1–2 marked FIXED): Dismiss control on the provisional order card; same pickup+drop pair after FINISHED/stale starts a new order (new takeover); §6 task-log row added; Git Revision backfilled for the order-card takeover row. |
+| 0.16 | 2026-10-06 | ADR-015 accepted — Gojek Order Lifecycle Drives the Trip (auto-start at Taken, auto-end at Cleared/Cancelled/Dismissed). New ADR-015 file + adr/README update; PRD 0.10→0.11 (FR-13/FR-16 amended); ARCHITECTURE 0.12→0.13 (Gojek flow updated); UI-SPEC 0.11→0.12 (§3e updated); IMPLEMENTATION-PLAN §4 new slice + §6 task-log rows; DOCUMENT-CONTROL updated. Code pending user approval; build/test gated (AGENTS.md §5a). |
 | 0.3 | 2026-07-07 | Added Location Efficiency — Dwell Collapse phase (ADR-006 accepted): §3 phase row + Appendix A two-slice contract; PRD §12 BR-11 recorded. |
 | 0.4 | 2026-07-07 | Added Fuel-Economy Unification phase (ADR-007 accepted): §3 phase row + Appendix A three-slice contract; instant two-cell + unified averaging + destructive v7→v8 column drop. |
 | 0.5 | 2026-07-07 | Added Fuel Cost feature (FR-12): inline `Rp` price entry with multi-step in-memory undo/redo; cost = litres × price on the Session OBD card + Trips active-trip row. No schema change. §3 phase row + Appendix A slice + §6 task-log row. |
@@ -158,6 +159,31 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 - No second foreground jump or auto-stop for the same order; the one-shot signal fires only once per (pickupAddress, dropAddress) key (DB + logcat verification).
 - GPS recording and observer_event capture are unaffected by the order-card flow (no service-isolation degradation; verify foreground launch does not interrupt location updates).
 
+### Observer — Gojek Order Auto-Start/End Trip (ADR-015)
+
+**What it does:** Automatically start a trip when a Gojek order becomes Taken (the order card is fully read: pickup, drop, payment, earnings). If a trip is already running (e.g., started manually), keep it and bind it to the order. Automatically end the trip when the order is Cleared (Gojek home screen), Cancelled by the customer, or Dismissed by the user. The trip is not ended by the 2-hour card-staleness window; it runs until Cleared/Cancelled/Dismissed or manual stop.
+
+**Observable result:** On-device, after accepting a Gojek order (order card appears), the trip timer starts immediately without a manual tap. After the driver completes the order ("Selesai" → home screen or cancel message), the trip automatically stops and is saved to the Trips list. A manually-started trip before the order appears is kept and ends with the order.
+
+**How to Verify:**
+- **Deterministic:** parser recognizes home screen (4 nav texts co-occur) and cancel message (text "Oke, sip" + "nge-cancel"); unit tests not required.
+- **Manual on-device (auto-accept on, SM-G965F, Android 10, adb tunnel):**
+  1. Take an order → card appears; trip timer starts immediately (no manual Start tap). Verify: `isTracking=true`, trip row written to DB on Stop.
+  2. Finish with "Selesai" → trip stops automatically when home screen appears. Verify: trip appears in Trips list with correct distance/duration.
+  3. Cancel order → trip stops automatically when cancel message + home appear (no "Selesai" needed). Verify: trip saved with correct data.
+  4. Dismiss card manually (Dismiss button on the card) → trip stops. Verify: trip saved.
+  5. Manually start trip before order appears → trip kept and ends with the order. Verify: `orderOwnsTrip=true` flag set; trip ends at Cleared/Cancelled, not at manual Stop until the order ends.
+  6. No "Selesai" screen required for detection; cancel alone triggers end.
+
+**Implementation steps (numbered, What/How):**
+1. **Parser: GojekRules recognise terminal states.** Extend `GojekRules` pattern table: home screen = all 4 nav texts present (`Beranda`, `Pendapatan`, `Swadaya`, `Pesan` in snapshot); cancel message = "Oke, sip" + text containing "nge-cancel". Both yield `OrderCard` with `phase=FINISHED`. Code location: `data/observer/gojek/GojekRules.kt`, `OrderCardParser.kt`.
+2. **OrderCardParser: yield FINISHED on terminal states.** When parser matches home or cancel patterns, return `OrderCard(phase=FINISHED, ...)` alongside the existing pickup-phase and drop-only-phase parsing. Code location: `data/observer/gojek/OrderCardParser.kt`.
+3. **OrderTripRecorder: mark latest open row FINISHED.** Existing logic (unchanged): when a `FINISHED` card is parsed, `OrderTripRecorder` marks the latest open `observer_trip` row FINISHED (preserves the handler state, idempotent). Code location: `data/observer/OrderTripRecorder.kt`.
+4. **ShareViewModel: auto-start trip at Taken.** In `ShareViewModel`, observe `unhandledReadyFlow` (the existing one-shot ready signal for complete cards). When the signal fires and no trip is active, send `START_TRIP`. If a trip is active, set in-memory flag `orderOwnsTrip=true`. Mark row handled. Code location: `ui/screen/track/ShareViewModel.kt`.
+5. **ShareViewModel: auto-end trip at FINISHED.** Add a new flow `latestOrderFlow` from the DAO (latest `observer_trip` row by `lastSeenAt`). Observe it; when FINISHED and `orderOwnsTrip=true` and a trip is live, run `stopActiveTrip()` (persist-then-STOP_TRIP). Clear `orderOwnsTrip=false`. Code location: `ui/screen/track/ShareViewModel.kt`.
+6. **Dismiss handler.** The order card's Dismiss button calls `dismiss(id)`, which triggers the same stop logic (calls `stopActiveTrip`). Code location: `ui/component/GojekOrderCard.kt` (or chosen implementation name).
+7. **Build + install on device.** Compile, install on SM-G965F (Android 10), and run manual verification above.
+
 ---
 
 ## 5. Timeline at a Glance
@@ -177,7 +203,9 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-10-05 | Code — fix order-card weaknesses: Dismiss control on the provisional card; same pickup+drop pair after FINISHED/stale starts a new order (new takeover) | Implemented — NOT built/verified | --- | Static review only; no Gradle/test/device run (AGENTS.md §5a). |
+| 2026-10-06 | Docs — ADR-015 (Gojek Order Lifecycle Drives the Trip: auto-start at Taken, auto-end at Cleared/Cancelled/Dismissed) accepted and propagated. New ADR-015 file (Context/Decision/Consequences/Alternatives/References/Vocabulary Table/Evidence); adr/README v0.3→0.4 (ADR-015 row added, count 14→15); PRD v0.10→0.11 (FR-13/FR-16 amended); ARCHITECTURE v0.12→0.13 (Gojek flow section updated, terminal-state detection added); UI-SPEC v0.11→0.12 (§3e updated: auto-start/auto-end, card states); IMPLEMENTATION-PLAN v0.15→0.16 (§4 new slice + §6 task rows + change log); DOCUMENT-CONTROL register updated. Code gated (design handoff §12 + build permission §5a). | Completed | --- | Docs only; no Gradle/device run (AGENTS §5a). |
+| 2026-10-06 | Code — ADR-015 order auto-start/end trip: parser end signals (home screen + cancel message → FINISHED); ShareViewModel auto-start (unhandledReady → START_TRIP or keep+orderOwnsTrip); ShareViewModel auto-end (latestOrder FINISHED → stopActiveTrip); Dismiss handler; build + install on device. | In Progress | --- | Pending user approval + device verification (SM-G965F, Android 10). Manual on-device: (1) take order → trip starts; (2) finish with Selesai → trip stops; (3) cancel → trip stops; (4) dismiss → trip stops; (5) manual start before order → trip kept and ends with order. |
+| 2026-10-05 | Code — fix order-card weaknesses: Dismiss control on the provisional card; same pickup+drop pair after FINISHED/stale starts a new order (new takeover) | Implemented — NOT built/verified | 525406b | Static review only; no Gradle/test/device run (AGENTS.md §5a). |
 | 2026-10-05 | Docs — ADR-013 (Observer Trip Extraction: Gojek pickup/drop extraction into device-local `observer_trip` store, Gojek-only, no FK to trips/sessions, 90d/5k retention) accepted and propagated. New ADR-013 (Context/Decision/Consequences/Alternatives/References); PRD v0.7→0.8 (Feature 3 update, FR-15 new, §8 Included/Out-of-Scope); ARCHITECTURE v0.8→0.9 (ObserverTripEntity + retention note + MIGRATION_10_11 + parser note); UI-SPEC v0.7→0.8 (screen inventory row); IMPLEMENTATION-PLAN v0.10→0.11 (§4 slice + §1 change log + Next Step update); DOCUMENT-CONTROL register + change log; adr/README v0.1→0.2. Code gated (design handoff §12 + build permission §5a). | Completed | `b79c4f2` | Docs only; no Gradle/device run (AGENTS §5a). How to Verify (code task, pending): (1) parser unit tests with fixture tree snapshots (pickup/drop-only/finished/partial phases, no PII); (2) DB migration runs v9→v10, no crash; (3) on-device Gojek order extraction with auto-dedup; (4) 90d/5k retention pruning; (5) design handoff + UI integration. |
 | 2026-10-05 | Docs — fix ADR-014 wording errors (invented Android names, placeholder composable name, wrong persistence/foreground flow, migration numbering v10) + UI-SPEC design-handoff spec | Completed | 0ed3f90 | Docs only; no build/test run. |
 | 2026-10-05 | Code — Gojek order card takeover (ADR-013/014): pure-Kotlin OrderCardParser + per-app GojekRules; observer_trip entity/DAO + MIGRATION_9_10 (DB v10, additive); OrderTripRecorder hooked into the Observer service write path (Gojek-only, 90 d / 5,000 rows retention); ShareViewModel auto-stop (persist-then-STOP_TRIP, once per order via a handled flag); Observer service launches MainActivity on the Track screen when an order first becomes complete; provisional GojekOrderCard replaces TripPanel while an order is active (design handoff pending) | Implemented — NOT built/verified | `329a02a` | Static review only; no Gradle build, tests, emulator or device run (AGENTS.md §5a). Pending: user-permitted build + on-device verification on SM-G965F, incl. whether Android 10 allows the background activity start. |

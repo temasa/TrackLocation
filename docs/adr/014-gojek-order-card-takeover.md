@@ -1,6 +1,7 @@
 # ADR-014: Gojek Order Card Takeover of the Track Screen (auto-stop trip, order card, foreground)
 
 **Status:** Accepted
+**Amended by:** ADR-015 (2026-10-06) — the auto-stop of a live trip is replaced by auto-start at Taken and auto-end at Cleared/Cancelled.
 **Date:** 2026-10-05
 **Decided By:** Project owner + Claude Code
 

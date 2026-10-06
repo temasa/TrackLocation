@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.11
+**Document Version:** 0.12
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-05
+**Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -153,20 +153,20 @@ Screenshots to attach for the handoff: current Track map + `TripPanel`, `MapCont
 
 ---
 
-## 3e. Gojek Order Card (Track screen) — pending design handoff (ADR-014)
+## 3e. Gojek Order Card (Track screen) — pending design handoff (ADR-014, ADR-015)
 
 New Track-screen UI surface to display extracted Gojek order card details when a complete order is ready. Per AGENTS §12 the visuals are **design-handoff-first** — this section records the structure, not final visual specs. Visual design will be produced in a design handoff before implementation.
 
 **Card states:**
 - **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
-- **Finished phase** — Order marked "Selesai"; card is replaced by the normal `TripPanel`.
+- **Cleared/Cancelled/Dismissed** — Card is replaced by the normal `TripPanel`; the trip ends automatically.
 
 **Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; `TripPanel` returns after.
 
-**Related behavior (not visual design):** Automatic trip stop when order card first becomes complete (ADR-014); one-shot foreground launch when card is ready; always-recording remains active.
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared, Cancelled or Dismissed (ADR-014, ADR-015); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces the trip Start/Stop control.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 

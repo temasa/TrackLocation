@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.12
+**Document Version:** 0.13
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-05
+**Last Updated:** 2026-10-06
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -128,25 +128,41 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
 
-### Gojek Order-Card Takeover Flow (ADR-014)
+### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015)
 
 ```
 ObserverAccessibilityService (write path)
    → after observer_event insert & observer_trip upsert
+
+TRIP START (auto-start at Taken):
    → Gojek parser yields complete OrderCard (pickup+drop+payment+earnings)
    → emit "order ready" signal (one-shot per (pickupAddress, dropAddress))
      → the Observer service starts MainActivity (FLAG_ACTIVITY_NEW_TASK + an extra selecting the Track screen)
         → foreground launch from the background: to be verified on Android 10
    → order-ready state is derived from the persisted observer_trip row (survives the activity being created after the signal)
-     → ShareViewModel observes it; when a not-yet-handled complete order appears while a trip is active, it runs the
-       manual-stop sequence once: onTripCtaTap() persists the trip (TrackEntity via insertTrack), then sends STOP_TRIP
-       (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
-     → a "handled" marker prevents repeats
-   → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through Selesai)
-   → after Selesai, TripPanel returns
+     → ShareViewModel observes it
+     → if no trip is live, send START_TRIP
+     → if a trip is live, keep it and set in-memory flag orderOwnsTrip=true
+     → mark row handled
+
+TRIP END (auto-end at Cleared/Cancelled/Dismissed):
+   → Gojek parser recognizes terminal states:
+     (a) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
+     (b) cancel message = "Oke, sip" + text containing "nge-cancel"
+   → both yield OrderCard with phase=FINISHED
+     → OrderTripRecorder marks the latest open row FINISHED
+     → ShareViewModel observes latestOrderFlow
+     → when FINISHED and orderOwnsTrip=true and a trip is live, run stopActiveTrip():
+        persist the trip (TrackEntity via insertTrack), then send STOP_TRIP
+        (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
+     → clear orderOwnsTrip=false
+   → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
+
+   → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
+   → after terminal state, TripPanel returns
 ```
 
-**Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is stopped when the activity is next created. Any new permission required will be documented separately.
+**Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is started when the activity is next created. `orderOwnsTrip` is in-memory; after process death the trip is not auto-ended. Any new permission required will be documented separately.
 
 ---
 
