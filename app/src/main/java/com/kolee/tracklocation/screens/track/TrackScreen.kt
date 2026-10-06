@@ -61,6 +61,9 @@ fun TrackScreen() {
     var performRequestPermission by remember { mutableStateOf(true) }
     var allPermissionsGranted by remember { mutableStateOf(false) }
     var isShowPanel by remember { mutableStateOf(false) }
+    // Map follow mode (UI-SPEC 3f): a user pan stops following; Recenter resumes it.
+    var isFollowing by remember { mutableStateOf(true) }
+    var recenterTick by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
         delay(300)
@@ -106,7 +109,10 @@ fun TrackScreen() {
             plannedRoute = orderRoute.plannedRoute,
             runtimeRoute = orderRoute.runtimeRoute,
             pickup = orderRoute.pickup,
-            drop = orderRoute.drop
+            drop = orderRoute.drop,
+            followLocation = isFollowing,
+            recenterTick = recenterTick,
+            onUserPan = { isFollowing = false }
         )
 
         // ADR-017: ORS + OSM attribution, shown only while a route is on screen.
@@ -125,7 +131,14 @@ fun TrackScreen() {
 
         if (allPermissionsGranted) {
             // Floating map controls (recenter + layers), pinned to bottom-right
-            MapControls(modifier = Modifier.align(Alignment.BottomEnd))
+            MapControls(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                isFollowing = isFollowing,
+                onRecenter = {
+                    isFollowing = true
+                    recenterTick++
+                }
+            )
 
             AnimatedVisibility(
                 visible = isShowPanel,

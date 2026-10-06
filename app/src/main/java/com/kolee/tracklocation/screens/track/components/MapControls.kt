@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,21 +25,32 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.kolee.tracklocation.ui.theme.MapFabBg
 
 private val IconColor = Color(0xFF0A0A0A)
+private val IconColorMuted = Color(0xFF9E9E9E)
 
 @Composable
-fun MapControls(modifier: Modifier = Modifier) {
+fun MapControls(
+    modifier: Modifier = Modifier,
+    isFollowing: Boolean = true,
+    onRecenter: () -> Unit = {}
+) {
     Column(
         modifier = modifier.padding(end = 16.dp, bottom = 240.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.End
     ) {
-        MapControlButton(contentDescription = "Recenter map") { drawRecenterIcon() }
+        val recenterColor = if (isFollowing) IconColor else IconColorMuted
+        MapControlButton(
+            contentDescription = if (isFollowing) "Recenter map" else "Recenter map, map is not following",
+            onClick = onRecenter
+        ) { drawRecenterIcon(recenterColor) }
+        // Layers stays an inert placeholder (no onClick).
         MapControlButton(contentDescription = "Map layers") { drawLayersIcon() }
     }
 }
@@ -46,6 +58,7 @@ fun MapControls(modifier: Modifier = Modifier) {
 @Composable
 private fun MapControlButton(
     contentDescription: String,
+    onClick: (() -> Unit)? = null,
     drawIcon: DrawScope.() -> Unit
 ) {
     Box(
@@ -64,6 +77,10 @@ private fun MapControlButton(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) fabBlurModifier()
                 else Modifier
             )
+            .then(
+                if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick)
+                else Modifier
+            )
             .semantics { this.contentDescription = contentDescription }
     ) {
         Canvas(modifier = Modifier.size(20.dp)) {
@@ -72,7 +89,7 @@ private fun MapControlButton(
     }
 }
 
-private fun DrawScope.drawRecenterIcon() {
+private fun DrawScope.drawRecenterIcon(color: Color) {
     val strokePx = 2.dp.toPx()
     val cx = size.width / 2f
     val cy = size.height / 2f
@@ -80,11 +97,11 @@ private fun DrawScope.drawRecenterIcon() {
     val tickInner = circleR + size.width * 0.09f
     val tickOuter = size.width * 0.50f
 
-    drawCircle(IconColor, radius = circleR, style = Stroke(strokePx, cap = StrokeCap.Round))
-    drawLine(IconColor, Offset(cx, cy - tickOuter), Offset(cx, cy - tickInner), strokePx)
-    drawLine(IconColor, Offset(cx, cy + tickInner), Offset(cx, cy + tickOuter), strokePx)
-    drawLine(IconColor, Offset(cx - tickOuter, cy), Offset(cx - tickInner, cy), strokePx)
-    drawLine(IconColor, Offset(cx + tickInner, cy), Offset(cx + tickOuter, cy), strokePx)
+    drawCircle(color, radius = circleR, style = Stroke(strokePx, cap = StrokeCap.Round))
+    drawLine(color, Offset(cx, cy - tickOuter), Offset(cx, cy - tickInner), strokePx)
+    drawLine(color, Offset(cx, cy + tickInner), Offset(cx, cy + tickOuter), strokePx)
+    drawLine(color, Offset(cx - tickOuter, cy), Offset(cx - tickInner, cy), strokePx)
+    drawLine(color, Offset(cx + tickInner, cy), Offset(cx + tickOuter, cy), strokePx)
 }
 
 private fun DrawScope.drawLayersIcon() {

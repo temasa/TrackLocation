@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -18,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
@@ -38,7 +41,10 @@ fun BoxScope.TrackMap(
     plannedRoute: List<LatLng> = emptyList(),
     runtimeRoute: List<LatLng> = emptyList(),
     pickup: LatLng? = null,
-    drop: LatLng? = null
+    drop: LatLng? = null,
+    followLocation: Boolean = true,
+    recenterTick: Int = 0,
+    onUserPan: () -> Unit = {}
 ) {
     Log.d(TAG, "TrackMap entered")
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -54,12 +60,38 @@ fun BoxScope.TrackMap(
 
     Log.d(TAG, "isMapLoaded: ${isMapLoaded}")
 
-    LaunchedEffect(key1 = currentLocation) {
-        cameraPositionState.animate(
-            CameraUpdateFactory.newCameraPosition(
-                CameraPosition.fromLatLngZoom(currentLocation, MAP_ZOOM)
+    // Follow mode (UI-SPEC 3f): keep the user's zoom once zoomed in; fall back to MAP_ZOOM on first load.
+    fun targetZoom(): Float =
+        if (cameraPositionState.position.zoom >= 12f) cameraPositionState.position.zoom else MAP_ZOOM
+
+    LaunchedEffect(currentLocation, followLocation) {
+        if (followLocation) {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.fromLatLngZoom(currentLocation, targetZoom())
+                )
             )
-        )
+        }
+    }
+
+    // Explicit Recenter taps: tick 0 is the initial composition, so skip it.
+    val latestLocation by rememberUpdatedState(currentLocation)
+    LaunchedEffect(recenterTick) {
+        if (recenterTick > 0) {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.fromLatLngZoom(latestLocation, targetZoom())
+                )
+            )
+        }
+    }
+
+    // User pans are reported via GESTURE; our own animate() calls report DEVELOPER_ANIMATION.
+    val latestOnUserPan by rememberUpdatedState(onUserPan)
+    LaunchedEffect(cameraPositionState) {
+        snapshotFlow { cameraPositionState.cameraMoveStartedReason }.collect {
+            if (it == CameraMoveStartedReason.GESTURE) latestOnUserPan()
+        }
     }
 
     GoogleMap(
