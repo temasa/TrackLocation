@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.12
+**Document Version:** 0.13
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -52,7 +52,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
-| Gojek Order Card (Track screen) | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info (ADR-014); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
+| Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -164,9 +164,40 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 
 **Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
-**Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; `TripPanel` returns after.
+**Trip strip (compact, provisional)**
 
-**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared, Cancelled or Dismissed (ADR-014, ADR-015); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces the trip Start/Stop control.
+A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains three cells:
+- **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
+- **DIST** — trip distance in km with one decimal place (e.g., "12.5 km"); updated live.
+- **AVG/INST km/L** — a single cell labeled "AVG/INST" with the value formatted as "11.8 / 12.3" (trip-average km/L, then instant km/L, each one decimal place); instant shows "—" when not moving or no good GPS fix (same rule as TripPanel). OBD not connected → value "— / —"; average shows "—" until available (distance > 0.01 km and fuel > 0).
+
+The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
+
+**Handoff Instructions (Trip strip)**
+
+*Provisional code until the design returns:* the trip strip ships in a PROVISIONAL style reusing `TripPanel` tokens (no new visual language); it is replaced when the design handoff returns.
+
+**Step-by-step process (Claude Design / Google Stitch):**
+1. Capture the screenshots in the checklist below from the running app (dark and light if available).
+2. Open Claude Design or Google Stitch, attach the screenshots, and paste the prompt below.
+3. Generate the trip strip in the existing dark glass-panel visual language for three OBD states: connected (moving with km/L), connected (idle with — / —), and not connected (— / —). Include a trip-paused state.
+4. Review against the constraints (glass-panel language, mono numerals, no colour-only meaning, ≥48dp touch targets, Compose 1.2-compatible), then export the design and record it per `docs/WORKFLOW.md §3`.
+
+**Screenshot checklist (attach current-app screens):**
+- Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states (shows the glass style).
+- Track screen with the current provisional order card (see what the trip strip sits alongside).
+- Bottom navigation.
+- Top app bar, if any.
+
+**Tool recommendation:** Claude Design primary, Google Stitch alternative (external handoff, see `docs/WORKFLOW.md §3`).
+
+**Copy-paste-ready prompt:**
+
+> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with three cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving (km/L showing); (2) OBD connected, idle or no GPS fix (instant shows "—", average already set); (3) OBD not connected ("— / —"); (4) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all four states in both themes.
+
+**Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed, distance, and AVG/INST km/L); `TripPanel` returns after the order ends.
+
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared, Cancelled or Dismissed (ADR-014, ADR-015); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 

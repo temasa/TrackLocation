@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.13
+**Document Version:** 0.14
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-06
 **Owner:** Tech Lead
@@ -159,7 +159,8 @@ TRIP END (auto-end at Cleared/Cancelled/Dismissed):
    → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
-   → after terminal state, TripPanel returns
+   → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), AVG/INST km/L, fed from TrackPanelState
+   → after terminal state, trip strip and card disappear; TripPanel returns
 ```
 
 **Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is started when the activity is next created. `orderOwnsTrip` is in-memory; after process death the trip is not auto-ended. Any new permission required will be documented separately.
