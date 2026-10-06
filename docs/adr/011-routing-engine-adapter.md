@@ -4,6 +4,8 @@
 **Date:** 2026-07-08
 **Decided By:** Claude Code (planning) + project owner
 
+**Note (2026-10-06):** Provider superseded for the Gojek order route overlay by ADR-016 (Google Directions + Geocoding); this ADR still governs ADR-009 navigation and ADR-010 route store.
+
 ## Context
 
 ADR-009 (dual-mode Track navigation) needs a routing engine to compute road routes for destinations not covered by the ADR-010 local route store. The engine choice was left open. Constraints: a personal, cost-sensitive Indonesia app; ongoing billed Google API use is undesirable; and ADR-010 already serves road-ahead from the user's own traces for free, so the external engine is only called for genuinely-new roads (low volume). The owner chose OpenRouteService (hosted free tier) now, with a firm requirement that a later migration to self-hosted OSM be trivial — achieved via a connector-adapter (ports-and-adapters) design.

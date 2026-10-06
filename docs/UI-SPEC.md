@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.13
+**Document Version:** 0.14
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -220,6 +220,51 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 *(d) Copy-paste-ready prompt:*
 
 > Design the "Gojek Order Card" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It replaces the `TripPanel` at the bottom of the Track screen (above the bottom navigation, over the map) while a Gojek order is active. Fields: a phase chip (Pickup / Drop / Done), pickup name + address, drop name + address, payment method, and earnings in Rp. States: (1) pickup phase shows pickup and drop; (2) drop-only phase shows only drop; (3) finished shows earnings only. Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Do not rely on colour alone to convey phase or state (use text/icon as well). The phase change must be announced through an accessibility live region. Customer name and phone number are never shown. Provide all three states in both themes.
+
+**Route overlay (provisional, ADR-016)**
+
+Two driving routes are drawn on the Track screen's embedded Google Map while a Gojek order is active. Per AGENTS §12 the visuals are **design-handoff-first** — this section records the structure, not final visual specs.
+
+**Visuals (PROVISIONAL styling until handoff):**
+- **Planned route:** thin, muted blue-grey polyline (RGB hex `#B0BEC5` or equivalent theme token); width ~4 dp; connects current location → pickup → drop (pickup as a waypoint); drawn below other map elements (lower zIndex).
+- **Runtime route:** bold orange polyline (RGB hex `#FF9800` or equivalent theme token); width ~6 dp; connects current location → next stop (pickup during PICKUP phase, drop during DROP phase); drawn above the planned route (higher zIndex).
+- **Markers:** Pickup and Drop locations receive map markers with titles "Pickup" / "Drop" shown on tap; use standard Material Design marker coloring (default blue for most markers, or custom colors at the designer's discretion).
+- **Existing map elements untouched:** blue recorded-trace polyline, live car marker (static pin or heading-rotated arrow per the navigation perspective), and Google Maps base layer remain unchanged.
+
+**Behavior:**
+- **Planned route** fetched once when the order becomes Taken; frozen for the life of the order (never re-fetched).
+- **Runtime route** re-fetched on phase change (PICKUP → DROP) or when the driver deviates >~40 m from the polyline; throttled to at most once per 30 s and only after the driver moved ~100 m (prevents jitter).
+- **Markers** displayed at their geocoded LatLng coordinates; refresh on phase change.
+- **Clear on completion:** Both routes, markers, and route state are cleared when the order ends (FINISHED), is dismissed, or no active order remains. The map reverts to showing the recorded trace + live car position.
+- **Failure gracefully:** If the Google Directions or Geocoding API fails (offline, rate limit, invalid address, etc.), no route is drawn; the trip continues recording normally with no other disruption.
+
+**Handoff Instructions (Route overlay)**
+
+*Provisional code until the design returns:* the route visuals ship in PROVISIONAL styling (simple polyline colors + Material markers); they are refined when the design handoff returns.
+
+**Step-by-step process (Claude Design / Google Stitch):**
+1. Capture the screenshots in the checklist below from the running app (dark and light if available), showing the map with the provisional routes.
+2. Open Claude Design or Google Stitch, attach the screenshots, and paste the prompt below.
+3. Refine the planned-route styling (receded visual; could use dashing, opacity, or a different hue to signal "planned vs. runtime").
+4. Refine the runtime-route styling (prominent, current; could use bolder stroke, brighter hue, or an animated dash pattern).
+5. Design the Pickup/Drop markers (use existing Material marker style or a custom marker graphic; must be visually distinct from the car marker).
+6. Include both dark and light theme variants; test readability over the map.
+7. Review against the constraints (no colour-only meaning, ≥48dp tap targets for markers, Compose 1.2-compatible), then export and record per `docs/WORKFLOW.md §3`.
+
+**Screenshot checklist (attach current-app screens):**
+- Track screen with the map, provisional routes (planned + runtime visible simultaneously), and Pickup/Drop markers visible.
+- Track screen with an active Gojek order card (shows the context the routes sit in).
+- Zoom levels: one with the full route visible, one with close-up route detail near the car marker.
+- Bottom navigation, top app bar, MapControls (if present).
+- Light and dark theme variants if available.
+
+**Tool recommendation:** Claude Design primary (route styling refinement, multi-state variants); Google Stitch alternative (external handoff, see `docs/WORKFLOW.md §3`).
+
+**Copy-paste-ready prompt:**
+
+> Design the route overlay for the Google Map on TrackLocation's Track screen, displayed while a Gojek driver order is active. Two routes are shown: (a) **Planned route** — thin, receded-looking polyline from current location → pickup → drop (pickup as waypoint); shown once at order start and frozen; (b) **Runtime route** — bold, prominent polyline from current location → next stop (pickup in PICKUP phase, drop in DROP phase); updated on phase change or when driver deviates from route, throttled to prevent jitter. Map also shows **Pickup and Drop markers** (standard Material Design map pins with titles "Pickup" / "Drop"). When the order ends, both routes and markers disappear. Existing map layers (recorded blue trace, live car marker, base map) remain unchanged. Provide styling for both dark and light themes. Planned route should look distinct and receded (e.g., lighter color, dash pattern, or reduced opacity); runtime route should look prominent and current (e.g., bold stroke, saturated orange, or animated pattern). Markers must be visually distinct from the car marker and readable on the map. Do not rely on color alone for meaning. Compose 1.2-compatible (no EaseInOut, no animation label params, no custom shape composition beyond Compose basics). Include both routes visible simultaneously, route-near-car close-up, and zoom-out overview.
+
+**Related behavior (not visual design):** Automatic route fetches via Google Directions API (provider chosen for superior Indonesian road network and address geocoding capability; overrides ADR-011's ORS for this Gojek feature only); one-shot Geocoding for pickup/drop addresses, cached in-memory per order; throttled runtime re-fetch; fail-soft if API is offline (no route drawn, trip continues). Addresses are sent to Google (Directions + Geocoding); customer name/phone never sent (ADR-013, privacy: extraction/persistence device-only; routing sends addresses for guidance). Planned route may differ slightly from Gojek's own route (best-effort; no promise of 100% alignment). (ADR-016)
 
 ---
 

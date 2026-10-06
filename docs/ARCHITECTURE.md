@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.14
+**Document Version:** 0.15
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-06
 **Owner:** Tech Lead
@@ -128,7 +128,7 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
 
-### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015)
+### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015, extended by ADR-016)
 
 ```
 ObserverAccessibilityService (write path)
@@ -161,6 +161,23 @@ TRIP END (auto-end at Cleared/Cancelled/Dismissed):
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
    → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), AVG/INST km/L, fed from TrackPanelState
    → after terminal state, trip strip and card disappear; TripPanel returns
+
+ROUTE (Planned + Runtime, ADR-016):
+   → OrderRouteController collects activeOrder (from latestOrderFlow) and locationUiState
+   → On order takeover (phase → PICKUP):
+      Geocode pickup and drop addresses via Google Geocoding API (once per order, cached in-memory)
+      Fetch planned route (current → pickup → drop) via Google Directions API
+      Display as thin muted blue-grey polyline on TrackMap
+   → On phase change (PICKUP → DROP) or off-route (>~40 m from polyline):
+      Fetch runtime route (current → next stop: pickup or drop) via Google Directions API
+      Display as bold orange polyline above the planned route
+      Throttled: at most once per 30 s and only after driver moved ~100 m
+   → Pickup and Drop map markers displayed at their geocoded LatLng coordinates
+   → On terminal state (FINISHED) or dismiss:
+      Clear both planned and runtime routes, remove markers, hide route state
+      TrackMap reverts to recorded trace + live car position only
+   → Failure handling: offline or API error → no route drawn, trip continues normally (fail-soft)
+   → External data flow: pickup/drop addresses and current location sent to Google (Directions + Geocoding APIs); customer name/phone never sent (ADR-013)
 ```
 
 **Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is started when the activity is next created. `orderOwnsTrip` is in-memory; after process death the trip is not auto-ended. Any new permission required will be documented separately.
