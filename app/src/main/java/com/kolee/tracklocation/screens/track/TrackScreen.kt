@@ -38,6 +38,7 @@ fun TrackScreen() {
     )
     val locationUiState by viewModel.locationUiState.collectAsState()
     val activeOrder by viewModel.activeOrder.collectAsState()
+    val orderRoute by viewModel.orderRoute.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
 
     var performRequestPermission by remember { mutableStateOf(true) }
@@ -82,7 +83,11 @@ fun TrackScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         TrackMap(
             currentLocation = locationUiState.currentLocation,
-            pathPoints = locationUiState.pathPoints
+            pathPoints = locationUiState.pathPoints,
+            plannedRoute = orderRoute.plannedRoute,
+            runtimeRoute = orderRoute.runtimeRoute,
+            pickup = orderRoute.pickup,
+            drop = orderRoute.drop
         )
 
         if (allPermissionsGranted) {

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -33,7 +34,11 @@ private const val TAG = "TrackMap"
 @Composable
 fun BoxScope.TrackMap(
     currentLocation: LatLng,
-    pathPoints: List<LatLng>
+    pathPoints: List<LatLng>,
+    plannedRoute: List<LatLng> = emptyList(),
+    runtimeRoute: List<LatLng> = emptyList(),
+    pickup: LatLng? = null,
+    drop: LatLng? = null
 ) {
     Log.d(TAG, "TrackMap entered")
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -65,6 +70,37 @@ fun BoxScope.TrackMap(
             Log.d(TAG, "onMapLoaded")
             isMapLoaded = true}
     ) {
+        // PROVISIONAL styling (ADR-016 / UI-SPEC §3e): planned route (thin, muted) under the
+        // runtime route (bold orange); both under the recorded trace and the car marker.
+        if (plannedRoute.size > 1) {
+            Polyline(
+                points = plannedRoute,
+                color = Color(0xFF78909C),
+                width = POLYLINE_WIDTH * 0.6f
+            )
+        }
+        if (runtimeRoute.size > 1) {
+            Polyline(
+                points = runtimeRoute,
+                color = Color(0xFFFF8F00),
+                width = POLYLINE_WIDTH
+            )
+        }
+        if (pickup != null) {
+            Marker(
+                state = rememberMarkerState(key = "pickup-${pickup.latitude},${pickup.longitude}", position = pickup),
+                title = "Pickup",
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
+            )
+        }
+        if (drop != null) {
+            Marker(
+                state = rememberMarkerState(key = "drop-${drop.latitude},${drop.longitude}", position = drop),
+                title = "Drop",
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+            )
+        }
+
         val currentMarkerState = rememberMarkerState()
         currentMarkerState.position = currentLocation
 

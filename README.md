@@ -61,6 +61,7 @@ TrackLocation/
 1. **Read `AGENTS.md`** — responsibilities, source-of-truth priority, git safeguard, build-permission gate, blocker protocol.
 2. **Skim the docs** — PRD → ARCHITECTURE → IMPLEMENTATION-PLAN → UI-SPEC.
 3. **Build** — Android Gradle project; local JDK `C:\Users\rinal\.jdks\jbr-17.0.14`. Heavy Gradle/test/emulator runs require explicit user permission (AGENTS.md §5a).
+4. **Google Maps key** — set `GOOGLE_MAPS_KEY` in `local.properties` (injected as the `google_maps_key` resource). For the Gojek order route overlay (ADR-016) the key must also have the **Directions API** and **Geocoding API** enabled in Google Cloud Console; without them the overlay simply stays empty.
 
 ## Document Maintenance
 
