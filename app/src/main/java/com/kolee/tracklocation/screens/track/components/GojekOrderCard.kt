@@ -21,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
+import com.kolee.tracklocation.screens.track.TrackPanelState
+import com.kolee.tracklocation.screens.track.TripState
 import com.kolee.tracklocation.ui.theme.BrandGreen
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
 import com.kolee.tracklocation.ui.theme.PanelBg
@@ -73,11 +77,29 @@ private val EarningsStyle = TextStyle(
     color = PanelTextPrimary
 )
 
+// PROVISIONAL trip strip (UI-SPEC §3e): private copies of TripPanel's unit-label / metric styles.
+private val StripLabelStyle = TextStyle(
+    fontSize = 10.sp,
+    letterSpacing = 0.4.sp,
+    color = PanelTextSecondary
+)
+
+private val StripValueStyle = TextStyle(
+    fontFamily = MonospaceFontFamily,
+    fontSize = 16.sp,
+    fontWeight = FontWeight.SemiBold,
+    letterSpacing = (-0.3).sp,
+    color = PanelTextPrimary,
+    fontFeatureSettings = "tnum"
+)
+
 @Composable
 fun GojekOrderCard(
     order: OrderCard,
     modifier: Modifier = Modifier,
-    onDismiss: (() -> Unit)? = null
+    onDismiss: (() -> Unit)? = null,
+    // PROVISIONAL: compact trip strip, shown only while a trip is LIVE/PAUSED (null/READY hides it).
+    tripStripState: TrackPanelState? = null
 ) {
     val panelBg = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PanelBg else PanelBgFallback
     val phaseLabel = when (order.phase) {
@@ -174,6 +196,11 @@ fun GojekOrderCard(
                     }
                 }
             }
+
+            if (tripStripState != null && tripStripState.tripState != TripState.READY) {
+                Spacer(Modifier.height(10.dp))
+                TripStrip(tripStripState)
+            }
         }
 
         // Invisible live-region announcing phase changes (mirrors TripPanel).
@@ -184,6 +211,91 @@ fun GojekOrderCard(
                 .alpha(0f)
                 .semantics { liveRegion = LiveRegionMode.Polite }
         )
+    }
+}
+
+// PROVISIONAL: TIME / DIST / AVG-INST km/L, no extra interactivity.
+@Composable
+private fun TripStrip(state: TrackPanelState) {
+    val avgText = if (state.obdConnected) state.tripAvgKmL?.let { "%.1f".format(it) } ?: "—" else "—"
+    val instText = if (state.obdConnected) state.instantKmL?.let { "%.1f".format(it) } ?: "—" else "—"
+    val elapsedDesc = formatSpokenElapsed(state.elapsedMs)
+    val distText = "%.1f".format(state.distanceKm)
+    val fuelDesc = if (avgText == "—" && instText == "—") {
+        "Fuel economy unavailable"
+    } else {
+        "Average fuel economy ${if (avgText == "—") "unavailable" else avgText}, " +
+            "instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
+    }
+
+    // Fuel cell gets the extra width: "11.8 / 12.3" at 16sp mono must not clip on narrow screens.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawLine(
+                    color = PanelBorder,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            .padding(top = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(0.8f)
+                .semantics { contentDescription = "Elapsed $elapsedDesc" },
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(text = "TIME", style = StripLabelStyle)
+            Text(text = formatCompactElapsed(state.elapsedMs), style = StripValueStyle, maxLines = 1)
+        }
+        Column(
+            modifier = Modifier
+                .weight(0.8f)
+                .semantics { contentDescription = "Distance $distText kilometers" },
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "DIST", style = StripLabelStyle)
+            Text(text = "$distText km", style = StripValueStyle, maxLines = 1)
+        }
+        Column(
+            modifier = Modifier
+                .weight(1.4f)
+                .semantics { contentDescription = fuelDesc },
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(text = "AVG/INST km/L", style = StripLabelStyle, maxLines = 1)
+            Text(text = "$avgText / $instText", style = StripValueStyle, maxLines = 1)
+        }
+    }
+}
+
+// 8_020_000 -> "2h13m", 822_000 -> "13m42s", 42_000 -> "42s".
+private fun formatCompactElapsed(ms: Long): String {
+    val totalSeconds = (ms / 1000).coerceAtLeast(0)
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return when {
+        h >= 1 -> "%dh%02dm".format(h, m)
+        m >= 1 -> "%dm%02ds".format(m, s)
+        else -> "${s}s"
+    }
+}
+
+// Spoken form for TalkBack, e.g. "2 hours 13 minutes".
+private fun formatSpokenElapsed(ms: Long): String {
+    val totalSeconds = (ms / 1000).coerceAtLeast(0)
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return when {
+        h >= 1 -> "$h hours $m minutes"
+        m >= 1 -> "$m minutes $s seconds"
+        else -> "$s seconds"
     }
 }
 

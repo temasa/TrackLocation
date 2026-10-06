@@ -102,7 +102,8 @@ fun TrackScreen() {
                         order = order,
                         modifier = Modifier
                             .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
-                        onDismiss = { viewModel.dismissActiveOrder() }
+                        onDismiss = { viewModel.dismissActiveOrder() },
+                        tripStripState = panelState
                     )
                 } else {
                     TripPanel(
