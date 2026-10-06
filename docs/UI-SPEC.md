@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.14
+**Document Version:** 0.15
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -52,7 +52,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Observer Feed | Current (P1) | `Settings → Tools → Observer`; feed, allowlist overlay, snapshot viewer |
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
-| Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
+| Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, COST/NET, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -166,10 +166,13 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 
 **Trip strip (compact, provisional)**
 
-A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains three cells:
+A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains four cells:
 - **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
 - **DIST** — trip distance in km with one decimal place (e.g., "12.5 km"); updated live.
+- **COST / NET** — a single cell labeled "COST / NET" with the value formatted as "Rp8.4k / Rp28k" (estimated fuel cost, then net profit, each in compact Rupiah format). COST = trip litres burned × current fuel price (from FuelPriceController); NET = OrderCard.earningsRp − COST (shown as −Rp… if negative). Compact Rupiah: <1,000 → 'Rp850'; 1,000–999,999 → 'Rp8.4k' (one decimal); ≥1,000,000 → 'Rp1.2jt'. Negative prefixed with '−'. TalkBack content description reads full amounts (e.g. "Cost: Rupiah 8,400; Net profit: Rupiah 28,000" or "Cost: Rupiah 8,400; Net loss: Rupiah 2,000"). Missing data: shows "—" when OBD disconnected, no litres burned yet, or no fuel price set; NET shows "—" whenever COST is "—" or the card has no earnings.
 - **AVG/INST km/L** — a single cell labeled "AVG/INST" with the value formatted as "11.8 / 12.3" (trip-average km/L, then instant km/L, each one decimal place); instant shows "—" when not moving or no good GPS fix (same rule as TripPanel). OBD not connected → value "— / —"; average shows "—" until available (distance > 0.01 km and fuel > 0).
+
+Layout: four cells; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1; the earlier '11.8 / 12.3 must not clip on narrow screens' rule still holds.
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
 
@@ -185,7 +188,8 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 **Screenshot checklist (attach current-app screens):**
 - Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states (shows the glass style).
-- Track screen with the current provisional order card (see what the trip strip sits alongside).
+- Track screen with the current provisional order card and the compact trip strip (LIVE state, OBD connected/moving, fuel price set) showing TIME / DIST / COST / NET / AVG/INST km/L.
+- Track screen with the order card and trip strip (OBD not connected) showing "— / —" for COST/NET and km/L.
 - Bottom navigation.
 - Top app bar, if any.
 
@@ -193,9 +197,9 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 **Copy-paste-ready prompt:**
 
-> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with three cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving (km/L showing); (2) OBD connected, idle or no GPS fix (instant shows "—", average already set); (3) OBD not connected ("— / —"); (4) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all four states in both themes.
+> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with four cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **COST / NET** (label "COST / NET", value "Rp8.4k / Rp28k" = estimated fuel cost then net profit, in compact Rupiah format: <1k 'Rp850', 1k–999k 'Rp8.4k', ≥1M 'Rp1.2jt', negative prefixed with '−'), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving, price set (all values showing: COST/NET calculated); (2) OBD connected, moving, no price ("— / —" for COST/NET); (3) OBD connected, idle or no GPS fix (instant km/L shows "—", COST/NET calculated if price set else "— / —", average already set); (4) OBD not connected ("— / —" for both COST/NET and km/L); (5) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all five states in both themes.
 
-**Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed, distance, and AVG/INST km/L); `TripPanel` returns after the order ends.
+**Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
 **Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared, Cancelled or Dismissed (ADR-014, ADR-015); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 

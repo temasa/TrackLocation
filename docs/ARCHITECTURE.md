@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.15
+**Document Version:** 0.16
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-06
 **Owner:** Tech Lead
@@ -126,7 +126,7 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
    → ObdSampleEntity (Room)            ← written only while recording (TrackingService.isAlwaysRecording; ADR-012 — SESSION_ON/OFF now advisory)
 ```
 
-   `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card and the Trips active-trip row can compute fuel cost = litres × `obd_fuel_price_per_liter`.
+   `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card, the Trips active-trip row, and the Gojek order-card trip strip can compute fuel cost = litres × effective fuel price (from `fuel_price` table, FR-12/ADR-008).
 
 ### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015, extended by ADR-016)
 
@@ -159,7 +159,7 @@ TRIP END (auto-end at Cleared/Cancelled/Dismissed):
    → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
-   → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), AVG/INST km/L, fed from TrackPanelState
+   → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), COST / NET (estimated fuel cost = trip fuel from OBD accumulator × effective price; NET = OrderCard.earningsRp − COST), AVG/INST km/L, fed from TrackPanelState + OBD state + FuelPriceController + OrderCard earnings
    → after terminal state, trip strip and card disappear; TripPanel returns
 
 ROUTE (Planned + Runtime, ADR-016):

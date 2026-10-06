@@ -148,10 +148,18 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 
 ---
 
-## Addendum (2026-10-06): Track screen shows the order card with a compact trip strip
+## Addendum (2026-10-06): Track screen shows the order card with a compact trip strip (3-cell base)
 
 **Context:** With auto-start, the trip begins running immediately when the order becomes Taken. The order card alone hid the running trip (its elapsed time, distance, and efficiency), making the trip invisible to the driver while it was live. Decision: display a compact trip strip below the order card, inside the same glass panel, showing: TIME (elapsed in compact format: 1h15m / 42s / 3m15s), DIST (km, one decimal), AVG/INST km/L (average then instant, each one decimal). The strip is shown only while the trip is live (tripState LIVE or PAUSED); it disappears when the order ends and `TripPanel` returns.
 
 **Change:** The order card now carries the trip strip as a sub-component (fed from the existing `TrackPanelState` — elapsedMs, distanceKm, instantKmL, tripAvgKmL already available). No new calculation, no schema change, no new data model. Provisional UI reuses `TripPanel`'s glass-panel style; final design comes from a design handoff (AGENTS.md §12). This addendum does not change the auto-start/auto-end decision itself — only clarifies the visual composition of the Track screen during active orders.
 
 **Traceability:** Updated PRD FR-16, UI-SPEC §3e (trip strip spec + handoff instructions), ARCHITECTURE Gojek Order-Card Takeover Flow (trip strip display + data feed), IMPLEMENTATION-PLAN §4 ADR-015 slice (step 5 "Order card trip strip" + "How to Verify" extension).
+
+## Addendum (2026-10-06): Trip strip gains COST / NET cell (4-cell extension)
+
+**Context:** The compact trip strip now displays a 4th cell **COST / NET** between DIST and AVG/INST km/L. COST = estimated fuel cost so far = trip fuel (from OBD accumulator) × effective fuel price (FuelPriceController / fuel_price table, FR-12/ADR-008). NET = net profit so far = OrderCard.earningsRp − COST (may be negative, shown as −Rp…). Estimate caveat: fuel price and litres are estimates (real consumption varies by engine/conditions).
+
+**Change:** Extends the trip strip to 4 cells with layout weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4 (no clip on narrow screens). Compact Rupiah format: <1,000 → 'Rp850'; 1,000–999,999 → 'Rp8.4k' (one decimal); ≥1,000,000 → 'Rp1.2jt'. Negative prefixed with '−'. TalkBack content description reads full amounts (like the existing fuelDesc). Missing data: COST shows '—' when OBD disconnected, no litres burned yet, or no fuel price set. NET shows '—' whenever COST is '—' or the card has no earnings (never estimated from earnings alone). Provisional UI (TripPanel-derived style tokens); final design from handoff per AGENTS.md §12. No schema change; no new ADR (UI addition on existing data — fuel cost calculation already exists per ADR-008, trip fuel accumulation per Phase 2, OrderCard earnings read from observer_trip).
+
+**Traceability:** Updated PRD v0.13→0.14 (FR-16 extended with COST/NET definition + FR-12 cross-link), ARCHITECTURE v0.15→0.16 (Gojek flow trip-strip data feed noted), UI-SPEC v0.14→0.15 (§3e trip strip spec updated to 4-cell + compact-Rupiah rules + a11y + missing-data; Handoff Instructions with screenshot checklist + 5-state Claude Design prompt), IMPLEMENTATION-PLAN v0.18→0.19 (§1 change-log 0.19, §4 ADR-015 slice step 6 COST/NET + How to Verify extension, §6 task-log rows Docs+Code), DOCUMENT-CONTROL register + change-log.
