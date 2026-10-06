@@ -14,4 +14,7 @@ data class TrackPanelState(
     val fuelRateLph: Double? = null,
     val tripAvgKmL: Double? = null,
     val fuelSource: String? = null,
+    // FR-16 order-card COST / NET cell: trip fuel litres (null when OBD off) and shared pump price (0 = unset).
+    val tripFuelL: Double? = null,
+    val fuelPricePerL: Double = 0.0,
 )

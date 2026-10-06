@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.screens.track.TrackPanelState
@@ -199,7 +200,7 @@ fun GojekOrderCard(
 
             if (tripStripState != null && tripStripState.tripState != TripState.READY) {
                 Spacer(Modifier.height(10.dp))
-                TripStrip(tripStripState)
+                TripStrip(tripStripState, order.earningsRp)
             }
         }
 
@@ -214,9 +215,25 @@ fun GojekOrderCard(
     }
 }
 
-// PROVISIONAL: TIME / DIST / AVG-INST km/L, no extra interactivity.
+// PROVISIONAL: TIME / DIST / COST-NET / AVG-INST km/L, no extra interactivity.
 @Composable
-private fun TripStrip(state: TrackPanelState) {
+private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
+    // COST / NET (FR-16): cost = trip litres x pump price; NET only when both cost and earnings exist.
+    val tripFuelL = state.tripFuelL
+    val costRp: Long? =
+        if (state.obdConnected && tripFuelL != null && tripFuelL > 0.0 && state.fuelPricePerL > 0.0) {
+            Math.round(tripFuelL * state.fuelPricePerL)
+        } else null
+    val netRp: Long? = if (costRp != null && earningsRp != null) earningsRp - costRp else null
+    val costText = costRp?.let { formatCompactRupiah(it) } ?: "—"
+    val netText = netRp?.let { formatCompactRupiah(it) } ?: "—"
+    val costNetDesc = when {
+        costRp == null -> "Fuel cost unavailable"
+        netRp == null -> "Fuel cost ${formatRupiah(costRp)} rupiah, net profit unavailable"
+        netRp < 0 -> "Fuel cost ${formatRupiah(costRp)} rupiah, net loss ${formatRupiah(-netRp)} rupiah"
+        else -> "Fuel cost ${formatRupiah(costRp)} rupiah, net profit ${formatRupiah(netRp)} rupiah"
+    }
+
     val avgText = if (state.obdConnected) state.tripAvgKmL?.let { "%.1f".format(it) } ?: "—" else "—"
     val instText = if (state.obdConnected) state.instantKmL?.let { "%.1f".format(it) } ?: "—" else "—"
     val elapsedDesc = formatSpokenElapsed(state.elapsedMs)
@@ -228,7 +245,8 @@ private fun TripStrip(state: TrackPanelState) {
             "instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
     }
 
-    // Fuel cell gets the extra width: "11.8 / 12.3" at 16sp mono must not clip on narrow screens.
+    // COST / NET and fuel cells get the extra width: "Rp8.4k / Rp28.0k" and "11.8 / 12.3" at 16sp mono
+    // must not clip on narrow screens.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -245,7 +263,7 @@ private fun TripStrip(state: TrackPanelState) {
     ) {
         Column(
             modifier = Modifier
-                .weight(0.8f)
+                .weight(0.7f)
                 .semantics { contentDescription = "Elapsed $elapsedDesc" },
             horizontalAlignment = Alignment.Start
         ) {
@@ -254,12 +272,21 @@ private fun TripStrip(state: TrackPanelState) {
         }
         Column(
             modifier = Modifier
-                .weight(0.8f)
+                .weight(0.7f)
                 .semantics { contentDescription = "Distance $distText kilometers" },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "DIST", style = StripLabelStyle)
             Text(text = "$distText km", style = StripValueStyle, maxLines = 1)
+        }
+        Column(
+            modifier = Modifier
+                .weight(1.4f)
+                .semantics { contentDescription = costNetDesc },
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "COST / NET", style = StripLabelStyle, maxLines = 1)
+            Text(text = "$costText / $netText", style = StripValueStyle, maxLines = 1)
         }
         Column(
             modifier = Modifier
@@ -271,6 +298,24 @@ private fun TripStrip(state: TrackPanelState) {
             Text(text = "$avgText / $instText", style = StripValueStyle, maxLines = 1)
         }
     }
+}
+
+// 850 -> "Rp850", 8_400 -> "Rp8.4k", 1_200_000 -> "Rp1.2jt"; negatives get a U+2212 prefix.
+// Unit is chosen after rounding so 999_960 reads "Rp1.0jt", never "Rp1000.0k".
+private fun formatCompactRupiah(value: Long): String {
+    val abs = Math.abs(value)
+    val body = when {
+        abs < 1_000L -> "Rp$abs"
+        else -> {
+            val k = String.format(Locale.US, "%.1f", abs / 1000.0)
+            if (abs < 1_000_000L && k != "1000.0") {
+                "Rp${k}k"
+            } else {
+                "Rp${String.format(Locale.US, "%.1f", abs / 1_000_000.0)}jt"
+            }
+        }
+    }
+    return if (value < 0) "\u2212$body" else body
 }
 
 // 8_020_000 -> "2h13m", 822_000 -> "13m42s", 42_000 -> "42s".

@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kolee.tracklocation.TrackApp
+import com.kolee.tracklocation.feature.obd.FuelPriceController
+import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
@@ -40,6 +43,15 @@ fun TrackScreen() {
     val activeOrder by viewModel.activeOrder.collectAsState()
     val orderRoute by viewModel.orderRoute.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
+
+    // Fuel Cost (FR-12/FR-16): attach the shared price controller once; the order card reads its price.
+    LaunchedEffect(Unit) {
+        FuelPriceController.attach(
+            (activity.applicationContext as TrackApp).fuelPriceDao,
+            ObdPreferencesDataStore(activity.applicationContext)
+        )
+    }
+    val priceState by FuelPriceController.state.collectAsState()
 
     var performRequestPermission by remember { mutableStateOf(true) }
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -77,7 +89,9 @@ fun TrackScreen() {
         idleFuelLph = idleFuelLph,
         fuelRateLph = connectedObd?.fuelRateLph,
         tripAvgKmL = tripAvgKmL,
-        fuelSource = connectedObd?.fuelSource
+        fuelSource = connectedObd?.fuelSource,
+        tripFuelL = connectedObd?.tripFuelConsumedL,
+        fuelPricePerL = priceState.currentPrice
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
