@@ -137,11 +137,7 @@ fun TripPanel(
             Spacer(Modifier.height(4.dp))
             TimerCtaRow(state = state, onCtaTap = onCtaTap)
             Spacer(Modifier.height(10.dp))
-            StatsRow(state = state)
-            if (state.obdConnected) {
-                Spacer(Modifier.height(9.dp))
-                ObdRow(state = state)
-            }
+            CombinedMetricsRow(state = state)
         }
 
         // Invisible live-region for state-change announcements
@@ -247,8 +243,10 @@ private fun TripCtaButton(tripState: TripState, onTap: () -> Unit) {
     }
 }
 
+// UI-SPEC §3g: single row merging the old StatsRow (KM, KM/HR) and ObdRow (L/H, AVG/INST km/L).
+// OBD cells only appear when obdConnected; without OBD the row shows two cells as before.
 @Composable
-private fun StatsRow(state: TrackPanelState) {
+private fun CombinedMetricsRow(state: TrackPanelState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -273,12 +271,31 @@ private fun StatsRow(state: TrackPanelState) {
         )
         MetricCell(
             modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = if (state.obdConnected) Alignment.CenterHorizontally else Alignment.End,
             isDistance = false,
             unit = "KM/HR",
             value = "%.1f".format(state.speedKmh),
             accessibilityText = "%.1f kilometers per hour".format(state.speedKmh)
         )
+        if (state.obdConnected) {
+            val lphText = state.fuelRateLph?.takeIf { it > 0.0 }?.let { "%.1f".format(it) } ?: "—"
+            ObdMetricCell(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                label = "L/H",
+                value = lphText,
+                accessibilityText = "Fuel rate $lphText litres per hour"
+            )
+            val avgText = state.tripAvgKmL?.let { "%.1f".format(it) } ?: "—"
+            val instText = state.instantKmL?.let { "%.1f".format(it) } ?: "—"
+            ObdMetricCell(
+                modifier = Modifier.weight(1.4f),
+                horizontalAlignment = Alignment.End,
+                label = "AVG/INST km/L",
+                value = "$avgText/$instText",
+                accessibilityText = "Average ${if (avgText == "—") "unavailable" else avgText}, instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
+            )
+        }
     }
 }
 
@@ -307,51 +324,6 @@ private fun MetricCell(
         }
         Spacer(Modifier.height(2.dp))
         Text(text = value, style = MetricValueStyle)
-    }
-}
-
-// OBD Phase 2 Slice 4 — fuel row: instant km/L (or idle L/h) + live trip-average km/L.
-@Composable
-private fun ObdRow(state: TrackPanelState) {
-    val kmlValue = state.instantKmL?.let { "%.1f km/L".format(it) } ?: "—"
-    val lphValue = state.fuelRateLph?.takeIf { it > 0.0 }?.let { "%.1f L/h".format(it) } ?: "—"
-    val avgValue = state.tripAvgKmL?.let { "%.1f km/L".format(it) } ?: "—"
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .drawBehind {
-                drawLine(
-                    color = PanelBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
-            .padding(top = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        ObdMetricCell(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.Start,
-            label = "FUEL",
-            value = kmlValue,
-            accessibilityText = "Fuel, $kmlValue"
-        )
-        ObdMetricCell(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            label = "L/H",
-            value = lphValue,
-            accessibilityText = "Litres per hour, $lphValue"
-        )
-        ObdMetricCell(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.End,
-            label = "TRIP AVG",
-            value = avgValue,
-            accessibilityText = "Trip average, $avgValue"
-        )
     }
 }
 

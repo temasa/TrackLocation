@@ -3,13 +3,21 @@ package com.kolee.tracklocation.screens.track
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.kolee.tracklocation.ui.theme.BrandGreen
+import com.kolee.tracklocation.ui.theme.BrandGreenDark
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -147,22 +159,32 @@ fun TrackScreen() {
                 exit = fadeOut()
             ) {
                 val order = activeOrder
-                if (order != null) {
-                    // ADR-014 (provisional UI): order card replaces the trip panel while an order is active.
-                    GojekOrderCard(
-                        order = order,
-                        modifier = Modifier
-                            .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
-                        onDismiss = { viewModel.dismissActiveOrder() },
-                        tripStripState = panelState
-                    )
-                } else {
-                    TripPanel(
-                        state = panelState,
-                        onCtaTap = { viewModel.onTripCtaTap() },
-                        modifier = Modifier
-                            .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
-                    )
+                when {
+                    order != null -> {
+                        // ADR-014 (provisional UI): order card replaces the trip panel while an order is active.
+                        GojekOrderCard(
+                            order = order,
+                            modifier = Modifier
+                                .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
+                            onDismiss = { viewModel.dismissActiveOrder() },
+                            tripStripState = panelState
+                        )
+                    }
+                    panelState.tripState != TripState.READY -> {
+                        TripPanel(
+                            state = panelState,
+                            onCtaTap = { viewModel.onTripCtaTap() },
+                            modifier = Modifier
+                                .padding(start = 14.dp, end = 14.dp, bottom = 14.dp)
+                        )
+                    }
+                    else -> {
+                        // UI-SPEC §3g: READY state — show 56dp PlayFab instead of TripPanel.
+                        PlayFab(
+                            onClick = { viewModel.onTripCtaTap() },
+                            modifier = Modifier.padding(bottom = 14.dp)
+                        )
+                    }
                 }
             }
         }
@@ -176,4 +198,39 @@ fun TrackScreen() {
             }
         )
     }
+}
+
+// UI-SPEC §3g: 56dp green FAB shown in the READY state instead of TripPanel.
+@Composable
+private fun PlayFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(56.dp)
+            .shadow(
+                elevation = 10.dp,
+                shape = CircleShape,
+                ambientColor = Color(0x8C22C55E),
+                spotColor = Color(0x8C22C55E)
+            )
+            .clip(CircleShape)
+            .background(BrandGreen)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "Start trip" }
+    ) {
+        Canvas(modifier = Modifier.size(22.dp)) {
+            drawPlayTriangle(BrandGreenDark)
+        }
+    }
+}
+
+private fun DrawScope.drawPlayTriangle(color: Color) {
+    val sx = size.width / 24f; val sy = size.height / 24f
+    val path = Path().apply {
+        moveTo(8f * sx, 5f * sy)
+        lineTo(20f * sx, 12f * sy)
+        lineTo(8f * sx, 19f * sy)
+        close()
+    }
+    drawPath(path, color)
 }

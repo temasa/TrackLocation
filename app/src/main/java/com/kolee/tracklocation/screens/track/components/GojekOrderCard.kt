@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -115,6 +119,12 @@ fun GojekOrderCard(
     }
     val earningsText = order.earningsRp?.let { formatRupiah(it) }
 
+    // UI-SPEC §3e: expand/collapse toggles address visibility; strip-only shows only TripStrip.
+    var isExpanded by remember { mutableStateOf(true) }
+    var isStripOnly by remember { mutableStateOf(false) }
+
+    val showStrip = tripStripState != null && tripStripState.tripState != TripState.READY
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -133,22 +143,34 @@ fun GojekOrderCard(
             .border(1.dp, PanelBorder, RoundedCornerShape(18.dp))
             .padding(vertical = 12.dp, horizontal = 14.dp)
     ) {
-        Column {
-            // Phase chip: text + dot, so the phase is not conveyed by color alone.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
+        if (isStripOnly && showStrip) {
+            // Strip-only mode: tap to exit back to collapsed card.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { isStripOnly = false; isExpanded = false }
+                    )
+                    .semantics { contentDescription = "Tap to expand order card" }
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(color = phaseColor, shape = RoundedCornerShape(50))
-                )
-                Text(text = phaseLabel.uppercase(), style = CardLabelStyle)
-                if (onDismiss != null) {
-                    // PROVISIONAL (design handoff pending): lets a cancelled order (never "Selesai")
-                    // release the card and the trip Start/Stop control.
+                TripStrip(tripStripState!!, order.earningsRp)
+            }
+        } else {
+            Column {
+                // Phase chip + chevron + optional dismiss.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .background(color = phaseColor, shape = RoundedCornerShape(50))
+                    )
+                    Text(text = phaseLabel.uppercase(), style = CardLabelStyle)
+                    // Chevron toggle (expand/collapse address visibility).
                     Row(
                         modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.End
@@ -156,51 +178,83 @@ fun GojekOrderCard(
                         Box(
                             modifier = Modifier
                                 .heightIn(min = 48.dp)
-                                .clickable(role = Role.Button, onClick = onDismiss)
-                                .semantics { contentDescription = "Dismiss order card" }
+                                .clickable(
+                                    role = Role.Button,
+                                    onClick = { isExpanded = !isExpanded }
+                                )
+                                .semantics {
+                                    contentDescription = if (isExpanded) "Collapse order details" else "Expand order details"
+                                }
                                 .padding(horizontal = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "Dismiss", style = CardLabelStyle)
+                            Text(
+                                text = if (isExpanded) "▲" else "▼",
+                                style = CardLabelStyle
+                            )
+                        }
+                        if (onDismiss != null) {
+                            Box(
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .clickable(role = Role.Button, onClick = onDismiss)
+                                    .semantics { contentDescription = "Dismiss order card" }
+                                    .padding(horizontal = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "Dismiss", style = CardLabelStyle)
+                            }
                         }
                     }
                 }
-            }
 
-            if (order.phase != OrderPhase.DROP && order.pickupAddress != null) {
-                Spacer(Modifier.height(8.dp))
-                PlaceBlock(label = "PICKUP", name = order.pickupName, address = order.pickupAddress)
-            }
-            if (order.dropAddress != null) {
-                Spacer(Modifier.height(8.dp))
-                PlaceBlock(label = "DROP", name = order.dropName, address = order.dropAddress)
-            }
+                if (order.phase != OrderPhase.DROP && order.pickupAddress != null) {
+                    Spacer(Modifier.height(8.dp))
+                    PlaceBlock(
+                        label = "PICKUP",
+                        name = order.pickupName,
+                        address = order.pickupAddress,
+                        showAddress = isExpanded,
+                        onTap = if (showStrip) ({ isStripOnly = true }) else null
+                    )
+                }
+                if (order.dropAddress != null) {
+                    Spacer(Modifier.height(8.dp))
+                    PlaceBlock(
+                        label = "DROP",
+                        name = order.dropName,
+                        address = order.dropAddress,
+                        showAddress = isExpanded,
+                        onTap = if (showStrip) ({ isStripOnly = true }) else null
+                    )
+                }
 
-            if (order.payment != null || earningsText != null) {
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(text = "PAYMENT", style = CardLabelStyle)
-                        Text(text = order.payment ?: "—", style = PlaceNameStyle)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "EARNINGS", style = CardLabelStyle)
-                        Text(
-                            text = earningsText ?: "—",
-                            style = EarningsStyle,
-                            color = BrandGreen
-                        )
+                if (order.payment != null || earningsText != null) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(text = "PAYMENT", style = CardLabelStyle)
+                            Text(text = order.payment ?: "—", style = PlaceNameStyle)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(text = "EARNINGS", style = CardLabelStyle)
+                            Text(
+                                text = earningsText ?: "—",
+                                style = EarningsStyle,
+                                color = BrandGreen
+                            )
+                        }
                     }
                 }
-            }
 
-            if (tripStripState != null && tripStripState.tripState != TripState.READY) {
-                Spacer(Modifier.height(10.dp))
-                TripStrip(tripStripState, order.earningsRp)
+                if (showStrip) {
+                    Spacer(Modifier.height(10.dp))
+                    TripStrip(tripStripState!!, order.earningsRp)
+                }
             }
         }
 
@@ -225,8 +279,8 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
             Math.round(tripFuelL * state.fuelPricePerL)
         } else null
     val netRp: Long? = if (costRp != null && earningsRp != null) earningsRp - costRp else null
-    val costText = costRp?.let { formatCompactRupiah(it) } ?: "—"
-    val netText = netRp?.let { formatCompactRupiah(it) } ?: "—"
+    val costText = costRp?.let { formatCompactAmount(it) } ?: "—"
+    val netText = netRp?.let { formatCompactAmount(it) } ?: "—"
     val costNetDesc = when {
         costRp == null -> "Fuel cost unavailable"
         netRp == null -> "Fuel cost ${formatRupiah(costRp)} rupiah, net profit unavailable"
@@ -245,8 +299,6 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
             "instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
     }
 
-    // COST / NET and fuel cells get the extra width: "Rp8.4k / Rp28.0k" and "11.8 / 12.3" at 16sp mono
-    // must not clip on narrow screens.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -265,9 +317,9 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
             modifier = Modifier
                 .weight(0.7f)
                 .semantics { contentDescription = "Elapsed $elapsedDesc" },
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "TIME", style = StripLabelStyle)
+            Text(text = "TIME", style = StripLabelStyle, maxLines = 1)
             Text(text = formatCompactElapsed(state.elapsedMs), style = StripValueStyle, maxLines = 1)
         }
         Column(
@@ -276,8 +328,8 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
                 .semantics { contentDescription = "Distance $distText kilometers" },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "DIST", style = StripLabelStyle)
-            Text(text = "$distText km", style = StripValueStyle, maxLines = 1)
+            Text(text = "DIST (km)", style = StripLabelStyle, maxLines = 1)
+            Text(text = distText, style = StripValueStyle, maxLines = 1)
         }
         Column(
             modifier = Modifier
@@ -285,17 +337,17 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
                 .semantics { contentDescription = costNetDesc },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "COST / NET", style = StripLabelStyle, maxLines = 1)
-            Text(text = "$costText / $netText", style = StripValueStyle, maxLines = 1)
+            Text(text = "COST / NET (Rp.)", style = StripLabelStyle, maxLines = 1)
+            Text(text = "$costText/$netText", style = StripValueStyle, maxLines = 1)
         }
         Column(
             modifier = Modifier
                 .weight(1.4f)
                 .semantics { contentDescription = fuelDesc },
-            horizontalAlignment = Alignment.End
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "AVG/INST km/L", style = StripLabelStyle, maxLines = 1)
-            Text(text = "$avgText / $instText", style = StripValueStyle, maxLines = 1)
+            Text(text = "AVG / INST (km/L)", style = StripLabelStyle, maxLines = 1)
+            Text(text = "$avgText/$instText", style = StripValueStyle, maxLines = 1)
         }
     }
 }
@@ -313,6 +365,21 @@ private fun formatCompactRupiah(value: Long): String {
             } else {
                 "Rp${String.format(Locale.US, "%.1f", abs / 1_000_000.0)}jt"
             }
+        }
+    }
+    return if (value < 0) "\u2212$body" else body
+}
+
+// No-prefix variant for TripStrip where the label already shows "(Rp.)".
+// 850 -> "850", 8_400 -> "8.4k", 1_200_000 -> "1.2jt"; negatives get a U+2212 prefix.
+private fun formatCompactAmount(value: Long): String {
+    val abs = Math.abs(value)
+    val body = when {
+        abs < 1_000L -> "$abs"
+        else -> {
+            val k = String.format(Locale.US, "%.1f", abs / 1000.0)
+            if (abs < 1_000_000L && k != "1000.0") "${k}k"
+            else String.format(Locale.US, "%.1f", abs / 1_000_000.0) + "jt"
         }
     }
     return if (value < 0) "\u2212$body" else body
@@ -345,19 +412,36 @@ private fun formatSpokenElapsed(ms: Long): String {
 }
 
 @Composable
-private fun PlaceBlock(label: String, name: String?, address: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
+private fun PlaceBlock(
+    label: String,
+    name: String?,
+    address: String,
+    showAddress: Boolean = true,
+    onTap: (() -> Unit)? = null
+) {
+    val tapModifier = if (onTap != null) {
+        Modifier
+            .clickable(role = Role.Button, onClick = onTap)
             .semantics {
-                contentDescription = "$label, ${name?.let { "$it, " } ?: ""}$address"
+                contentDescription = if (showAddress) {
+                    "$label, ${name?.let { "$it, " } ?: ""}$address. Tap to collapse"
+                } else {
+                    "$label, ${name ?: ""}. Tap to collapse"
+                }
             }
-    ) {
+    } else {
+        Modifier.semantics {
+            contentDescription = "$label, ${name?.let { "$it, " } ?: ""}$address"
+        }
+    }
+    Column(modifier = Modifier.fillMaxWidth().then(tapModifier)) {
         Text(text = label, style = CardLabelStyle)
         if (name != null) {
             Text(text = name, style = PlaceNameStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(text = address, style = PlaceAddressStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (showAddress) {
+            Text(text = address, style = PlaceAddressStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
