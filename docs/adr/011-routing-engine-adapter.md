@@ -4,7 +4,7 @@
 **Date:** 2026-07-08
 **Decided By:** Claude Code (planning) + project owner
 
-**Note (2026-10-06):** Provider superseded for the Gojek order route overlay by ADR-016 (Google Directions + Geocoding); this ADR still governs ADR-009 navigation and ADR-010 route store.
+**Note (2026-10-06):** Order route overlay provider: ADR-017 re-adopts ORS for the Gojek order overlay (ADR-016 had initially chosen Google Directions + Geocoding; billing unavailable). This ADR still governs ADR-009 navigation and ADR-010 route store.
 
 ## Context
 

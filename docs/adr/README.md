@@ -105,6 +105,7 @@ Links to docs, code, or external resources supporting this decision.
 | [014](014-gojek-order-card-takeover.md) | Gojek Order Card Takeover of the Track Screen | Accepted | 2026-10-05 |
 | [015](015-order-auto-start-trip.md) | Gojek Order Lifecycle Drives the Trip (auto-start/auto-end) | Accepted | 2026-10-06 |
 | [016](016-order-route-overlay.md) | Gojek Order Route Overlay (planned + runtime routes) | Accepted | 2026-10-06 |
+| [017](017-order-route-provider-openrouteservice.md) | Order Route Provider: OpenRouteService (supersedes ADR-016 provider) | Accepted | 2026-10-06 |
 
 ---
 
@@ -124,5 +125,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 0.5
+**Version:** 0.6
 **Last Updated:** 2026-10-06

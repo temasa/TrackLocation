@@ -1,6 +1,6 @@
 # ADR-016: Gojek Order Route Overlay (planned + runtime routes)
 
-**Status:** Accepted
+**Status:** Accepted (provider superseded by ADR-017; behaviour decisions remain in force)
 **Date:** 2026-10-06
 **Decided By:** Project owner + Claude Code
 

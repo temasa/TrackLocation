@@ -1,8 +1,8 @@
 # TrackLocation
 
-**Document Version:** 0.2
+**Document Version:** 0.3
 **Status:** Active development
-**Last Updated:** 2026-06-15
+**Last Updated:** 2026-10-06
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
 ---
@@ -61,7 +61,9 @@ TrackLocation/
 1. **Read `AGENTS.md`** — responsibilities, source-of-truth priority, git safeguard, build-permission gate, blocker protocol.
 2. **Skim the docs** — PRD → ARCHITECTURE → IMPLEMENTATION-PLAN → UI-SPEC.
 3. **Build** — Android Gradle project; local JDK `C:\Users\rinal\.jdks\jbr-17.0.14`. Heavy Gradle/test/emulator runs require explicit user permission (AGENTS.md §5a).
-4. **Google Maps key** — set `GOOGLE_MAPS_KEY` in `local.properties` (injected as the `google_maps_key` resource). For the Gojek order route overlay (ADR-016) the key must also have the **Directions API** and **Geocoding API** enabled in Google Cloud Console; without them the overlay simply stays empty.
+4. **API keys**
+   - **Google Maps SDK key:** set `GOOGLE_MAPS_KEY` in `local.properties` (injected as the `google_maps_key` resource). Used for the map display only.
+   - **OpenRouteService key (for Gojek order route overlay):** set `OPENROUTESERVICE_API_KEY` in `local.properties` (injected as the `ors_api_key` resource). Free tier from [openrouteservice.org](https://openrouteservice.org); no billing card required. Note: Google Geocoding/Directions APIs are not needed (ADR-017).
 
 ## Document Maintenance
 

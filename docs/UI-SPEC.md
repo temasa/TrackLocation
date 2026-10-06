@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.15
+**Document Version:** 0.16
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-06
 **Owner:** Product Manager / UX Designer
@@ -225,7 +225,7 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 > Design the "Gojek Order Card" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It replaces the `TripPanel` at the bottom of the Track screen (above the bottom navigation, over the map) while a Gojek order is active. Fields: a phase chip (Pickup / Drop / Done), pickup name + address, drop name + address, payment method, and earnings in Rp. States: (1) pickup phase shows pickup and drop; (2) drop-only phase shows only drop; (3) finished shows earnings only. Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Do not rely on colour alone to convey phase or state (use text/icon as well). The phase change must be announced through an accessibility live region. Customer name and phone number are never shown. Provide all three states in both themes.
 
-**Route overlay (provisional, ADR-016)**
+**Route overlay (provisional, ADR-016, provider ADR-017 — OpenRouteService)**
 
 Two driving routes are drawn on the Track screen's embedded Google Map while a Gojek order is active. Per AGENTS §12 the visuals are **design-handoff-first** — this section records the structure, not final visual specs.
 
@@ -233,6 +233,7 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **Planned route:** thin, muted blue-grey polyline (RGB hex `#B0BEC5` or equivalent theme token); width ~4 dp; connects current location → pickup → drop (pickup as a waypoint); drawn below other map elements (lower zIndex).
 - **Runtime route:** bold orange polyline (RGB hex `#FF9800` or equivalent theme token); width ~6 dp; connects current location → next stop (pickup during PICKUP phase, drop during DROP phase); drawn above the planned route (higher zIndex).
 - **Markers:** Pickup and Drop locations receive map markers with titles "Pickup" / "Drop" shown on tap; use standard Material Design marker coloring (default blue for most markers, or custom colors at the designer's discretion).
+- **Attribution surface:** While a route is drawn on screen, display '© openrouteservice.org | © OpenStreetMap contributors' as small text. Provisional placement: bottom-start (above the order card) or top-start; final placement from design handoff. Hide attribution when no active route.
 - **Existing map elements untouched:** blue recorded-trace polyline, live car marker (static pin or heading-rotated arrow per the navigation perspective), and Google Maps base layer remain unchanged.
 
 **Behavior:**
@@ -240,7 +241,7 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **Runtime route** re-fetched on phase change (PICKUP → DROP) or when the driver deviates >~40 m from the polyline; throttled to at most once per 30 s and only after the driver moved ~100 m (prevents jitter).
 - **Markers** displayed at their geocoded LatLng coordinates; refresh on phase change.
 - **Clear on completion:** Both routes, markers, and route state are cleared when the order ends (FINISHED), is dismissed, or no active order remains. The map reverts to showing the recorded trace + live car position.
-- **Failure gracefully:** If the Google Directions or Geocoding API fails (offline, rate limit, invalid address, etc.), no route is drawn; the trip continues recording normally with no other disruption.
+- **Failure gracefully:** If the OpenRouteService API fails (offline, rate limit, invalid address, geocoding fallback exhausted, etc.), no route is drawn; the trip continues recording normally with no other disruption.
 
 **Handoff Instructions (Route overlay)**
 
@@ -266,9 +267,9 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 
 **Copy-paste-ready prompt:**
 
-> Design the route overlay for the Google Map on TrackLocation's Track screen, displayed while a Gojek driver order is active. Two routes are shown: (a) **Planned route** — thin, receded-looking polyline from current location → pickup → drop (pickup as waypoint); shown once at order start and frozen; (b) **Runtime route** — bold, prominent polyline from current location → next stop (pickup in PICKUP phase, drop in DROP phase); updated on phase change or when driver deviates from route, throttled to prevent jitter. Map also shows **Pickup and Drop markers** (standard Material Design map pins with titles "Pickup" / "Drop"). When the order ends, both routes and markers disappear. Existing map layers (recorded blue trace, live car marker, base map) remain unchanged. Provide styling for both dark and light themes. Planned route should look distinct and receded (e.g., lighter color, dash pattern, or reduced opacity); runtime route should look prominent and current (e.g., bold stroke, saturated orange, or animated pattern). Markers must be visually distinct from the car marker and readable on the map. Do not rely on color alone for meaning. Compose 1.2-compatible (no EaseInOut, no animation label params, no custom shape composition beyond Compose basics). Include both routes visible simultaneously, route-near-car close-up, and zoom-out overview.
+> Design the route overlay for the Google Map on TrackLocation's Track screen, displayed while a Gojek driver order is active. Two routes are shown: (a) **Planned route** — thin, receded-looking polyline from current location → pickup → drop (pickup as waypoint); shown once at order start and frozen; (b) **Runtime route** — bold, prominent polyline from current location → next stop (pickup in PICKUP phase, drop in DROP phase); updated on phase change or when driver deviates from route, throttled to prevent jitter. Map also shows **Pickup and Drop markers** (standard Material Design map pins with titles "Pickup" / "Drop"). When the order ends, both routes and markers disappear. Existing map layers (recorded blue trace, live car marker, base map) remain unchanged. **Attribution:** '© openrouteservice.org | © OpenStreetMap contributors' must be visible as small text while routes are shown (provisional placement: bottom-start above card or top-start; final placement TBD). Provide styling for both dark and light themes. Planned route should look distinct and receded (e.g., lighter color, dash pattern, or reduced opacity); runtime route should look prominent and current (e.g., bold stroke, saturated orange, or animated pattern). Markers must be visually distinct from the car marker and readable on the map. Do not rely on color alone for meaning. Compose 1.2-compatible (no EaseInOut, no animation label params, no custom shape composition beyond Compose basics). Include both routes visible simultaneously, route-near-car close-up, and zoom-out overview.
 
-**Related behavior (not visual design):** Automatic route fetches via Google Directions API (provider chosen for superior Indonesian road network and address geocoding capability; overrides ADR-011's ORS for this Gojek feature only); one-shot Geocoding for pickup/drop addresses, cached in-memory per order; throttled runtime re-fetch; fail-soft if API is offline (no route drawn, trip continues). Addresses are sent to Google (Directions + Geocoding); customer name/phone never sent (ADR-013, privacy: extraction/persistence device-only; routing sends addresses for guidance). Planned route may differ slightly from Gojek's own route (best-effort; no promise of 100% alignment). (ADR-016)
+**Related behavior (not visual design):** Automatic route fetches via OpenRouteService Directions API + Geocoding (free tier, no billing; ADR-017 re-adopts ORS from ADR-011); one-shot Geocoding with fallback ladder for Indonesian addresses (place name + city hint → full address → street-only with dropped districts; rejects low-confidence city-centre pins), cached in-memory per order; throttled runtime re-fetch; fail-soft if API is offline (no route drawn, trip continues). Addresses are sent to OpenRouteService (Directions + Geocoding); customer name/phone never sent (ADR-013, privacy: extraction/persistence device-only; routing sends addresses for guidance). Planned route may differ slightly from Gojek's own route (best-effort; no promise of 100% alignment). Street-level geocoding can be metres off on long roads (best-effort; user can follow Gojek's route if preferred). (ADR-016, ADR-017)
 
 ---
 
