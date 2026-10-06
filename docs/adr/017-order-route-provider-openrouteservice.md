@@ -26,7 +26,7 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
    - Reject results whose `layer` is `locality`, `localadmin`, `county`, `region`, `macroregion`, or `country` (misleading city-centre pins are worse than none).
    - Reject results with `confidence < 0.8` unless `layer` is `venue` or `street`.
    - Bias all queries with `focus.point.lat=driver_current_lat`, `focus.point.lon=driver_current_lon` (driver's current location).
-   - If all four ladder steps fail: no route/markers are drawn for that order (fail-soft), retry once per 60 s max.
+   - If all four ladder steps fail: no route/markers are drawn for that order (fail-soft), retry once per 60 s max, and at most 3 geocode attempts per order (quota guard: the ladder makes up to 6 requests per address, so an unmatchable address must not retry forever; after 3 failed attempts no route is drawn for that order).
 
 5. **API key storage:** `OPENROUTESERVICE_API_KEY` in `local.properties` (user-provided). Injected as a string resource (e.g., `ors_api_key` resValue in `app/build.gradle`), never hardcoded or logged. The Google Maps key is retained for the map SDK only; Geocoding/Directions are no longer used.
 

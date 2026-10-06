@@ -25,7 +25,7 @@ import com.kolee.tracklocation.data.roomdb.TrackEntity
 import com.kolee.tracklocation.feature.observer.trip.ORDER_ACTIVE_WINDOW_MS
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
-import com.kolee.tracklocation.feature.observer.trip.route.GoogleRouteClient
+import com.kolee.tracklocation.feature.observer.trip.route.OpenRouteServiceClient
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteController
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteState
 import com.kolee.tracklocation.tracking.Actions
@@ -80,7 +80,7 @@ class ShareViewModel(
     // ADR-016 (provisional): planned + runtime route overlay for the active order (display only).
     private val orderRouteController = OrderRouteController(
         scope = viewModelScope,
-        client = GoogleRouteClient(appContext),
+        client = OpenRouteServiceClient(appContext),
         activeOrder = activeOrder,
         location = locationUiState
     )

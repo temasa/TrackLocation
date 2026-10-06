@@ -3,9 +3,14 @@ package com.kolee.tracklocation.screens.track
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -103,6 +108,20 @@ fun TrackScreen() {
             pickup = orderRoute.pickup,
             drop = orderRoute.drop
         )
+
+        // ADR-017: ORS + OSM attribution, shown only while a route is on screen.
+        if (orderRoute.plannedRoute.size > 1 || orderRoute.runtimeRoute.size > 1) {
+            Text(
+                text = "© openrouteservice.org | © OpenStreetMap contributors",
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 8.dp, top = 8.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+            )
+        }
 
         if (allPermissionsGranted) {
             // Floating map controls (recenter + layers), pinned to bottom-right

@@ -27,6 +27,8 @@ android {
         }
         def mapsKey = localProperties.getProperty('GOOGLE_MAPS_KEY', '')
         resValue "string", "google_maps_key", mapsKey
+        def orsKey = localProperties.getProperty('OPENROUTESERVICE_API_KEY', '')
+        resValue "string", "ors_api_key", orsKey
     }
 
     buildTypes {

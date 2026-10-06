@@ -35,7 +35,7 @@ data class OrderRouteState(
  */
 class OrderRouteController(
     scope: CoroutineScope,
-    private val client: GoogleRouteClient,
+    private val client: RouteProvider,
     activeOrder: StateFlow<OrderCard?>,
     private val location: StateFlow<LocationUiState>
 ) {
@@ -46,6 +46,7 @@ class OrderRouteController(
     // semantics guarantee one handler at a time).
     private val geocodeCache = HashMap<String, Pair<LatLng, LatLng>>()
     private val geocodeFailedAt = HashMap<String, Long>()
+    private val geocodeAttempts = HashMap<String, Int>()
     private var activeKey: String? = null
     private var lastPhase: OrderPhase? = null
     private var plannedDone = false
@@ -112,9 +113,11 @@ class OrderRouteController(
         // 1. Geocode (cached per order key; failures retried at most once per 60 s).
         var geo = geocodeCache[key]
         if (geo == null) {
+            if ((geocodeAttempts[key] ?: 0) >= MAX_GEOCODE_ATTEMPTS) return // ADR-017: quota guard
             if (now - (geocodeFailedAt[key] ?: 0L) < RETRY_MIN_MS) return
-            val p = client.geocode(pickupAddr)
-            val d = if (p != null) client.geocode(dropAddr) else null
+            geocodeAttempts[key] = (geocodeAttempts[key] ?: 0) + 1
+            val p = client.geocode(order.pickupName, pickupAddr, loc)
+            val d = if (p != null) client.geocode(order.dropName, dropAddr, loc) else null
             coroutineContext.ensureActive()
             if (p == null || d == null) {
                 geocodeFailedAt[key] = System.currentTimeMillis()
@@ -190,5 +193,6 @@ class OrderRouteController(
         const val RUNTIME_MIN_MOVE_M = 100f
         const val OFF_ROUTE_METERS = 40.0
         const val ARRIVED_METERS = 30f
+        const val MAX_GEOCODE_ATTEMPTS = 3
     }
 }
