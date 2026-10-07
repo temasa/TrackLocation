@@ -29,7 +29,7 @@ The Track screen (`screens/track/TrackScreen.kt`) is today a live location track
 
 **On-screen display.** Remaining distance + ETA shown alongside the existing live trip metrics.
 
-**"Navigation perspective" map view.** A user-selectable **view toggle** (new control in `MapControls`), fully **decoupled** from trip/navigation state — usable any time (idle, tracking, trip, navigating). ON = map rotates **heading-up** (direction of travel points up) and the camera **follows the car**, with **NO tilt** (stays top-down, just rotated). OFF (default) = north-up, top-down as today.
+**"Navigation perspective" map view.** A user-selectable **view toggle** (new control in `MapControls`), with **partial trip-state coupling** (see ADR-020) — usable any time (idle, tracking, trip, navigating). ON = map rotates **heading-up** (direction of travel points up) and the camera **follows the car**, with **NO tilt** (stays top-down, just rotated). OFF (default) = north-up, top-down as today. While a trip is active or an order is live, the view **auto-activates to heading-up** (ADR-020, 2026-10-07); the manual toggle remains independent and can override the auto-activated state.
 
 **Directional car marker.** Replace the static pin with a car/chevron marker that **rotates to the GPS heading**; shown whenever a valid heading exists; holds the last heading below ~3 km/h (GPS bearing is noise at rest). Requires surfacing `bearingDegrees` (already captured at `TrackingService`, persisted on `LocationEntity`) into `LocationUiState`.
 

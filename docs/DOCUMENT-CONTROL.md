@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.16 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-06 |
+| `docs/PRD.md` | 0.17 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-07 |
 | `docs/ARCHITECTURE.md` | 0.18 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-06 |
-| `docs/adr/README.md` | 0.8 | Active (19 ADRs indexed) | Tech Lead | 2026-10-07 |
+| `docs/adr/README.md` | 0.9 | Active (20 ADRs indexed) | Tech Lead | 2026-10-07 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -56,8 +56,9 @@ When any controlled document changes, update both:
 | `docs/adr/017-order-route-provider-openrouteservice.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.24 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
-| `docs/UI-SPEC.md` | 0.19 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
+| `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.25 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
+| `docs/UI-SPEC.md` | 0.20 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.2 | Ready to use (blocker protocol; 1 open issue) | Tech Lead | 2026-10-07 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -87,6 +88,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-07 | PRD, UI-SPEC, IMPLEMENTATION-PLAN, adr/020, adr/009, adr/README, DOCUMENT-CONTROL | 0.16/0.19/0.24/—/1.0/0.8/0.1 | 0.17/0.20/0.25/1.0/1.0/0.9/0.1 | Track navigation camera auto-activates during trip or order (ADR-020). New ADR-020 file (Context/Decision/Consequences/Alternatives/Related ADRs/References). adr/009 wording amended (cross-reference to ADR-020 auto-activation note). adr/README v0.8→0.9 (ADR-020 row added, count 19→20). PRD v0.16→0.17 (FR-19 new: auto-switch to heading-up navigation camera while trip/order active, display-only). UI-SPEC v0.19→0.20 (§3f Recenter FAB updated with cross-reference to §3h, §3h new subsection: 7 behaviour rules + accessibility + no design handoff; navigation camera definition). IMPLEMENTATION-PLAN v0.24→0.25 (§1 change-log entry 0.25, §4 new "Track Map — Navigation Camera (ADR-020)" slice + How to Verify, §6 two task-log rows Docs Completed + Code Planned, Also documented updated, version header). No schema. Code pending user build permission (AGENTS.md §5a). | Claude Code |
 | 2026-10-06 | UI-SPEC, IMPLEMENTATION-PLAN | 0.17/0.21 | 0.18/0.22 | TrackScreen design (remote, `15fea06`/`7737451`): new UI-SPEC §3g (READY hides TripPanel and shows a 56dp PlayFab; TripPanel only in LIVE/PAUSED with inline pause/resume CTA; merged `CombinedMetricsRow`), §3e GojekOrderCard expand/collapse; task-log rows added. Versions shown are the remote branch's own numbering, reconciled on merge below. | Claude Code |
 | 2026-10-07 | UI-SPEC, IMPLEMENTATION-PLAN | 0.18/0.23 | 0.19/0.24 | Merge of `origin/dev` (TrackScreen design, UI-SPEC §3g) into `dev`: both branches had independently reached UI-SPEC 0.18 and IMPLEMENTATION-PLAN 0.22; versions set above the highest on either side. Both sides' task-log rows kept in date order. | Claude Code |
 | 2026-10-07 | adr/019 (new, Rejected), adr/README, IMPLEMENTATION-ISSUES, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/0.7/0.1/0.22/0.1 | 1.0/0.8/0.2/0.23/0.1 | ADR-019 (Start/Stop-only trip control) rejected by the owner in favour of the remote Track design (UI-SPEC §3g); earlier ADR-019 doc/code/design changes reverted in git. ADR-019 kept as a short Rejected record; adr/README adds the row and the Rejected lifecycle state; IMPLEMENTATION-ISSUES logs Issue #2 (LIVE button labelled Pause sends STOP_TRIP; PAUSED unreachable); plan task-log row added. | Claude Code |

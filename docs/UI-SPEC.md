@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.19
+**Document Version:** 0.20
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
@@ -306,7 +306,7 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 
 **Location source (ADR-018):** The blue dot, follow mode camera, and Recenter target all use a **live location fix** from a screen-scoped `LiveLocationSource` that requests high-accuracy location updates (~1 s interval) only while the Track screen is open and the app is in the foreground. Fallback while awaiting the first live fix (typically ~5 s after screen open): the last-known position seed from TrackingService. Live fixes are never stored (display-only; the canonical location log is unchanged). This ensures the Track screen behaves like Google Maps/Waze (position always reflects actual device location) regardless of recording state.
 
-**Interaction with routes:** While a Gojek order is active, the driver can pan away from the current location to inspect the planned or runtime route and the pickup/drop markers. The following state remains independent of the route display; panning turns following off, and tapping Recenter resumes it.
+**Interaction with routes:** While a Gojek order is active, the driver can pan away from the current location to inspect the planned or runtime route and the pickup/drop markers. The following state remains independent of the route display; panning turns following off, and tapping Recenter resumes it. While a trip/order is active Recenter resumes heading-up follow (§3h).
 
 **Handoff Instructions (Recenter FAB visual state — PROVISIONAL, pending design handoff)**
 
@@ -356,6 +356,26 @@ The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) ar
 When OBD is not connected only the first two cells are shown (identical to the previous StatsRow).
 
 **Visual design:** PROVISIONAL — reuses existing glass-panel and metric-cell styles; refined by a future design handoff (AGENTS.md §12).
+
+---
+
+## 3h. Track Map — Navigation Camera (2026-10-07)
+
+**What it does:** While a trip is live or a Gojek order is active, the Track map's camera automatically switches to a navigation-style perspective (heading-up follow with bearing from GPS, zoom 17 on entry, no tilt). When the trip or order ends, the camera animates back to north-up follow and keeps the current zoom. The manual "navigation perspective" toggle of ADR-009 remains independent and can override this auto-activated state.
+
+**Behaviour rules:**
+
+1. **Activation trigger:** `navigationActive = (tripState != READY) || (activeOrder != null)`.
+2. **Entry behavior (navigationActive becomes true):** Follow is re-enabled (clearing any previous pan), camera animates once to zoom 17, then respects user zoom gestures. Bearing = GPS heading (if valid, see rule 4); tilt = 0.
+3. **During active navigation:** Target on the live location fix (ADR-018 `LiveLocationSource`), bearing = GPS heading, tilt = 0.
+4. **Heading validity:** Use the live-fix bearing only when the fix has a bearing AND speed ≥ ~3 km/h. Below ~3 km/h, hold the last valid heading. If no valid heading yet, remain north-up (bearing 0).
+5. **Manual override (pan/pinch):** Any user gesture on the map (pan or pinch) stops following and auto-rotation (same as ADR-018 / §3f). The user's zoom is retained. Recenter FAB resumes follow with heading-up while navigationActive, or north-up otherwise.
+6. **Exit behavior (navigationActive becomes false):** Camera animates bearing back to 0 (north-up), keeps follow on, preserves current zoom.
+7. **Display-only:** No change to recording, canonical location log, trips/sessions, schema, or route overlays (ADR-016/017). No new control/button; manual perspective toggle (ADR-009) stays planned and independent. Turn-by-turn, car-marker rotation, and camera offset remain out of scope.
+
+**Accessibility:** Camera orientation is a display affordance (map only); no new controls or motion-sensitive animations beyond the existing camera animations (smooth bearing interpolation, zoom animation). Screen-reader focus and semantic meaning are unchanged.
+
+**Design handoff:** No new visual surface or controls required. Camera behavior uses only the existing CameraPosition bearing/tilt properties (Compose 1.2 / maps-compose 2.5.3 compatible). No design handoff needed.
 
 ---
 
