@@ -93,10 +93,10 @@ fun BoxScope.TrackMap(
     }
 
     // ADR-020: zoom 17 once on navigation entry (also when opened mid-trip); applied when follow is active.
+    // Entry zoom is retried on each location update until the animation completes successfully.
     LaunchedEffect(currentLocation, followLocation, navigationActive, navigationBearingDeg) {
         if (followLocation) {
             val entering = navigationActive && navEntryPending
-            if (entering) navEntryPending = false
             cameraPositionState.animate(
                 CameraUpdateFactory.newCameraPosition(
                     followPosition(
@@ -107,6 +107,8 @@ fun BoxScope.TrackMap(
                     )
                 )
             )
+            // Only a completed (not cancelled) animation consumes the entry; a cancelled one is retried on the next restart.
+            if (entering) navEntryPending = false
         }
     }
 
