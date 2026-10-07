@@ -107,6 +107,7 @@ Links to docs, code, or external resources supporting this decision.
 | [016](016-order-route-overlay.md) | Gojek Order Route Overlay (planned + runtime routes) | Accepted | 2026-10-06 |
 | [017](017-order-route-provider-openrouteservice.md) | Order Route Provider: OpenRouteService (supersedes ADR-016 provider) | Accepted | 2026-10-06 |
 | [018](018-track-screen-live-location.md) | Track Screen Live Location (display-only, independent of recording) | Accepted | 2026-10-06 |
+| [019](019-trip-control-start-stop.md) | Trip Control — Start ⇄ Stop Only (No Pause/Resume) | Accepted | 2026-10-07 |
 
 ---
 
@@ -126,5 +127,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 0.7
-**Last Updated:** 2026-10-06
+**Version:** 0.8
+**Last Updated:** 2026-10-07

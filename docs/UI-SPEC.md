@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.18
+**Document Version:** 0.19
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-06
+**Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -166,7 +166,7 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 
 **Trip strip (compact, provisional)**
 
-A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains four cells:
+A one-row strip appears below the order card while the trip is live (tripState is LIVE). The strip contains four cells:
 - **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
 - **DIST** — trip distance in km with one decimal place (e.g., "12.5 km"); updated live.
 - **COST / NET** — a single cell labeled "COST / NET" with the value formatted as "Rp8.4k / Rp28k" (estimated fuel cost, then net profit, each in compact Rupiah format). COST = trip litres burned × current fuel price (from FuelPriceController); NET = OrderCard.earningsRp − COST (shown as −Rp… if negative). Compact Rupiah: <1,000 → 'Rp850'; 1,000–999,999 → 'Rp8.4k' (one decimal); ≥1,000,000 → 'Rp1.2jt'. Negative prefixed with '−'. TalkBack content description reads full amounts (e.g. "Cost: Rupiah 8,400; Net profit: Rupiah 28,000" or "Cost: Rupiah 8,400; Net loss: Rupiah 2,000"). Missing data: shows "—" when OBD disconnected, no litres burned yet, or no fuel price set; NET shows "—" whenever COST is "—" or the card has no earnings.
@@ -183,21 +183,23 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 **Step-by-step process (Claude Design / Google Stitch):**
 1. Capture the screenshots in the checklist below from the running app (dark and light if available).
 2. Open Claude Design or Google Stitch, attach the screenshots, and paste the prompt below.
-3. Generate the trip strip in the existing dark glass-panel visual language for three OBD states: connected (moving with km/L), connected (idle with — / —), and not connected (— / —). Include a trip-paused state.
+3. Generate the trip strip in the existing dark glass-panel visual language for three OBD states: connected (moving with km/L), connected (idle with — / —), and not connected (— / —).
 4. Review against the constraints (glass-panel language, mono numerals, no colour-only meaning, ≥48dp touch targets, Compose 1.2-compatible), then export the design and record it per `docs/WORKFLOW.md §3`.
 
 **Screenshot checklist (attach current-app screens):**
-- Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states (shows the glass style).
+- Track screen with the map and `TripPanel` in READY and LIVE states (shows the glass style).
 - Track screen with the current provisional order card and the compact trip strip (LIVE state, OBD connected/moving, fuel price set) showing TIME / DIST / COST / NET / AVG/INST km/L.
 - Track screen with the order card and trip strip (OBD not connected) showing "— / —" for COST/NET and km/L.
 - Bottom navigation.
 - Top app bar, if any.
 
+**Note (2026-10-07, ADR-019):** The pause icon and paused state references in older handoff images are superseded by ADR-019. The stop control uses a filled rounded square glyph (not pause); the PAUSED state no longer exists.
+
 **Tool recommendation:** Claude Design primary, Google Stitch alternative (external handoff, see `docs/WORKFLOW.md §3`).
 
 **Copy-paste-ready prompt:**
 
-> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with four cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **COST / NET** (label "COST / NET", value "Rp8.4k / Rp28k" = estimated fuel cost then net profit, in compact Rupiah format: <1k 'Rp850', 1k–999k 'Rp8.4k', ≥1M 'Rp1.2jt', negative prefixed with '−'), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving, price set (all values showing: COST/NET calculated); (2) OBD connected, moving, no price ("— / —" for COST/NET); (3) OBD connected, idle or no GPS fix (instant km/L shows "—", COST/NET calculated if price set else "— / —", average already set); (4) OBD not connected ("— / —" for both COST/NET and km/L); (5) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all five states in both themes.
+> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with four cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **COST / NET** (label "COST / NET", value "Rp8.4k / Rp28k" = estimated fuel cost then net profit, in compact Rupiah format: <1k 'Rp850', 1k–999k 'Rp8.4k', ≥1M 'Rp1.2jt', negative prefixed with '−'), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving, price set (all values showing: COST/NET calculated); (2) OBD connected, moving, no price ("— / —" for COST/NET); (3) OBD connected, idle or no GPS fix (instant km/L shows "—", COST/NET calculated if price set else "— / —", average already set); (4) OBD not connected ("— / —" for both COST/NET and km/L). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all four states in both themes.
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
@@ -214,7 +216,7 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 4. Review against the constraints (glass-panel language, no colour-only meaning, no customer name/phone), then export the design and record it per `docs/WORKFLOW.md §3`.
 
 *(b) Screenshot checklist (attach current-app screens):*
-- Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states.
+- Track screen with the map and `TripPanel` in READY and LIVE states.
 - Bottom navigation.
 - Top app bar, if any.
 - The Session or List glass/section card, for the card style.

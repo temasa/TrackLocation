@@ -6,7 +6,9 @@
 
 ## Context
 
-The Track screen (`screens/track/TrackScreen.kt`) is today a live location tracker: a full-screen Google map (`TrackMap`) plus a floating `TripPanel` whose CTA drives the trip state machine (READY → LIVE → PAUSED). The project owner wants the same screen to also function as **navigation** when the user inputs a route, without disturbing the locked model (PRD §12: canonical location log is source-of-truth; sessions vs trips separation; the always-recording switch lives on the Session screen; AGENTS §2/§3 forbid the assistant from inventing this scope). Full turn-by-turn is explicitly out of scope. This ADR records the product+behavior decision reached in a grilling session; it is a new product capability and must be recorded before code.
+The Track screen (`screens/track/TrackScreen.kt`) is today a live location tracker: a full-screen Google map (`TrackMap`) plus a floating `TripPanel` whose CTA drives the trip state machine. The project owner wants the same screen to also function as **navigation** when the user inputs a route, without disturbing the locked model (PRD §12: canonical location log is source-of-truth; sessions vs trips separation; the always-recording switch lives on the Session screen; AGENTS §2/§3 forbid the assistant from inventing this scope). Full turn-by-turn is explicitly out of scope. This ADR records the product+behavior decision reached in a grilling session; it is a new product capability and must be recorded before code.
+
+**Note (2026-10-07, ADR-019):** The trip state machine wording "READY → LIVE → PAUSED" in the Context and Alternatives sections is historical. The PAUSED state was removed per ADR-019; the live implementation uses Start/Stop only (READY and LIVE states only).
 
 ## Decision
 

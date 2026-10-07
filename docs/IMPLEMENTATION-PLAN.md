@@ -7,9 +7,9 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.22
+**Version:** 0.23
 **Status:** Active (migrated from implementation-plan.md + progress.md)
-**Last Updated:** 2026-10-06
+**Last Updated:** 2026-10-07
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
 
 > Migrated 2026-06-15 to the create-project schema. The detailed per-phase/slice contract from the legacy `implementation-plan.md` is preserved verbatim in **Appendix A**. The full session/progress audit log from the legacy `progress.md` is preserved verbatim in **Appendix B**. §6 below is a summarized task log over those sessions.
@@ -178,7 +178,7 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
   2. Finish with "Selesai" → trip stops automatically when home screen appears; trip strip disappears and `TripPanel` returns. Verify: trip appears in Trips list with correct distance/duration/km/L/cost.
   3. Cancel order → trip stops automatically when cancel message + home appear (no "Selesai" needed); trip strip disappears. Verify: trip saved with correct data.
   4. Dismiss card manually (Dismiss button on the card) → trip stops; trip strip disappears. Verify: trip saved.
-  5. Manually start trip before order appears → trip kept and ends with the order; trip strip shows throughout. Verify: `orderOwnsTrip=true` flag set; trip ends at Cleared/Cancelled; trip strip frozen when trip is PAUSED.
+  5. Manually start trip before order appears → trip kept and ends with the order; trip strip shows throughout. Verify: `orderOwnsTrip=true` flag set; trip ends at Cleared/Cancelled.
   6. No "Selesai" screen required for detection; cancel alone triggers end.
   7. **Trip strip states (4 cells: TIME, DIST, COST/NET, AVG/INST km/L):**
      - OBD connected, moving, price set → TIME, DIST, "Rp8.4k / Rp28k" COST/NET, "11.8 / 12.3" km/L (all populated).
@@ -187,7 +187,6 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
      - OBD connected, idle/no-fix, no price → TIME, DIST, "— / —" COST/NET, "11.8 / —" km/L.
      - OBD not connected, any earnings → TIME, DIST, "— / —" COST/NET, "— / —" km/L.
      - No earnings on card → TIME, DIST, "— / —" COST/NET (NET never estimated from earnings alone), "— / —" km/L.
-     - Trip paused → all four metrics frozen (no live update).
   8. **Compact Rupiah format verification:** Entries 850 → 'Rp850', 8,400 → 'Rp8.4k', 1,200,000 → 'Rp1.2jt'; negative as '−Rp2.5k' (not '−Rp-2.5k'). Four cells fit on a narrow screen without clipping. TalkBack reads full "Rupiah" amounts (e.g., "Cost: eight thousand four hundred Rupiah").
   9. **Build verification (requires user permission §5a):** compile, install on SM-G965F, run on-device checks 1–8 above.
 
@@ -318,6 +317,32 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ---
 
+### Track Screen — Trip Control: Start ⇄ Stop Only (ADR-019)
+
+**What it does:** Simplify the trip state machine from three states (READY → LIVE → PAUSED) to two states (READY and LIVE only). Remove the unreachable PAUSED state, which was labelled/iconed as "Pause" but actually sent STOP_TRIP, creating confusion. In LIVE, the CTA displays a filled rounded square glyph (stop icon) with label "Stop trip". In READY, the CTA displays the play glyph with label "Start trip" (unchanged). When the trip enters READY (after Stop or on startup), the TripPanel display resets to `00:00:00` (elapsed) and `0.00 km` (distance) instead of showing the previous trip's stale metrics. Speed always shows the live speed (unchanged). The finished trip is already persisted when Stop is tapped; the reset is display-only.
+
+**Observable result:** Start Trip button (play glyph, "Start trip") taps → timer counts on LIVE state, button shows square (stop) glyph with label "Stop trip". Stop tap → panel returns to READY showing `00:00:00 / 0.00 km` with live speed; trip appears in List with the actual duration/distance. No PAUSED state anywhere in the UI; no unreachable states. Trip persists correctly; no data loss.
+
+**How to Verify:**
+1. **TripState enum:** Only READY and LIVE states exist; PAUSED removed.
+2. **READY display reset:** Start a trip, stop it → the panel immediately returns to READY showing `00:00:00` and `0.00 km`, speed still live. Stopped trip's actual duration/distance appear in the List screen. Verify: elapsedMs and distanceKm reset to zero in READY state display logic.
+3. **LIVE CTA icon:** Start a trip → button shows filled rounded square glyph (stop icon); accessibility label reads "Stop trip". Verify: icon is a square (not pause), label is "Stop trip".
+4. **READY CTA icon:** Panel in READY → button shows play glyph; accessibility label reads "Start trip" (unchanged).
+5. **Stop action:** While LIVE, tap the Stop button → trip stops and is saved; panel transitions to READY. Verify: trip appears in the List screen with correct elapsed time and distance.
+6. **No PAUSED anywhere:** Walk through the app (Session, Track, List, Settings) → no PAUSED label, icon, or state appears; no unreachable or frozen trip states. Logcat confirms only START_TRIP and STOP_TRIP actions (no pause-related logs).
+7. **Build verification (requires user permission §5a):** Compile, install on SM-G965F, run checks 1–6 above.
+
+**Implementation steps (numbered, What/How):**
+1. **TripState enum simplification.** In `TripState.kt` (or equivalent enum), remove the `PAUSED` state. Keep `READY` and `LIVE` only. Code location: `screens/track/TripState.kt`.
+
+2. **TrackScreen: Reset READY display.** In `TrackScreen.kt`, add logic to zero out `elapsedMs` and `distanceKm` in the TripPanel state when entering READY. Speed field is NOT zeroed (always displays live speed). The persisted trip already contains the correct elapsed/distance values; this is a display-only UI reset for UX clarity. Code location: `ui/screen/track/TrackScreen.kt` where `TrackPanelState` is built (when tripState is READY set elapsedMs = 0 and distanceKm = 0.0).
+
+3. **TripPanel: Stop icon and label.** In `TripPanel.kt`, update the CTA for LIVE state: replace the pause glyph with a filled rounded square glyph (stop icon); replace the accessibility label from "Pause trip" to "Stop trip" (if any pause wording exists). Keep READY CTA unchanged (play glyph, "Start trip"). Code location: `ui/component/TripPanel.kt` (CTA icon + a11y labels, LIVE state).
+
+**No schema changes. No Room migration.**
+
+---
+
 ## 5. Timeline at a Glance
 
 | Phase | Focus | Deliverable | Status |
@@ -335,6 +360,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-10-07 | Docs — Trip control: Start/Stop only + READY reset (ADR-019): Trip state machine simplified from three states (READY → LIVE → PAUSED) to two states (READY and LIVE only). PAUSED state removed (was unreachable; labelled "Pause" but sent STOP_TRIP). LIVE CTA: filled rounded square glyph (stop icon), label "Stop trip". READY CTA: play glyph (unchanged), label "Start trip" (unchanged). READY display: reset to `00:00:00 / 0.00 km` on entry (was showing previous trip's stale metrics). Speed always shows live speed. No schema change; finished trip persisted before entering READY. New ADR-019 file (Context/Decision/Consequences/Alternatives/Related ADRs/References/Supersedes); adr/README v0.7→0.8 (ADR-019 row added, index count 18→19); ADR-009 Context note added (READY → LIVE → PAUSED wording superseded); ADR-015 addendum note added (trip strip shown LIVE only, PAUSED no longer exists); UI-SPEC v0.18→0.19 (§3e: LIVE only, reset, stop glyph, screenshot checklist note about pause icon superseded); IMPLEMENTATION-PLAN v0.22→0.23 (§1 change-log entry 0.23, §4 new Track Screen — Trip Control slice with 3 steps + 7-point How to Verify, §6 two task-log rows Docs/Code 2026-10-07, version header, verification section PAUSED items removed); DOCUMENT-CONTROL register + change log. No schema. Code pending user build permission (AGENTS.md §5a). | Completed | --- | Docs only; no Gradle/device run (AGENTS §5a). Code implementation pending user approval and build permission. |
+| 2026-10-07 | Code — Trip control: Start/Stop only + READY reset (ADR-019): TripState enum → remove PAUSED state, keep READY and LIVE only. TrackScreen: on entering READY (whenever no trip is active), zero out `elapsedMs` and `distanceKm` display fields; speed shows live speed (not zeroed). TripPanel: LIVE CTA glyph = filled rounded square (stop icon), label = "Stop trip"; READY CTA unchanged (play glyph, "Start trip"). Display-only UI reset; finished trip already persisted at Stop. No schema, no migration. Code location: TripState.kt (enum), TrackScreen.kt (READY display reset), TripPanel.kt (stop icon + label). | Planned | --- | Build/test not run — gated by AGENTS §5a. Pending user approval and build permission for implementation. |
 | 2026-10-06 | Docs — Track screen live location (ADR-018): Display-only live GPS position independent of recording state. New ADR-018 file (Context/Decision/Consequences/Alternatives/Related ADRs/References); PRD v0.15→0.16 (FR-18 new: live location, foreground-only, never stored, fallback to last-known, no new permission, roadmap note on turn-by-turn/Waze features deferred, cross-link ADR-018); ARCHITECTURE v0.17→0.18 (LiveLocationSource component + display-only data-flow diagram separate from TrackingService recording path); UI-SPEC v0.17→0.18 (§3f added live location note: source, fallback, display-only, battery, privacy); IMPLEMENTATION-PLAN v0.21→0.22 (§1 change log entry 0.22, §4 new Track Screen — Live Location slice with 3 steps + 7-point How to Verify, §6 two new task-log rows Docs/Code 2026-10-06, Also documented updated, version header); adr/README v0.6→0.7 (ADR-018 row added, index count 17→18); DOCUMENT-CONTROL register + change log. No schema. Code pending user build permission (AGENTS.md §5a). | Completed | 1d39618 | Docs only; no Gradle/device run (AGENTS §5a). Code implementation pending user approval and build permission. |
 | 2026-10-06 | Code — Track screen live location (ADR-018): New `LiveLocationSource(context: Context, lifecycle: Lifecycle)` class manages FusedLocationProviderClient high-accuracy location requests (~1 s interval, fastest ~500 ms) scoped to Track screen visibility + foreground state (ON_RESUME/ON_STOP lifecycle gates). Exposes `StateFlow<LatLng?>` with the latest fix. `TrackScreen` collects it; passes `displayLocation` to `TrackMap` (blue dot) and `MapControls` (Recenter FAB target), falling back to `TrackingService.currentLocation` seed when no live fix available. Follow mode and Recenter already implemented (29bb443, 09321d9); no new behaviour changes needed. No schema change. Code location: `feature/track/data/LiveLocationSource.kt`, `ui/screen/track/TrackScreen.kt` wiring. | Completed (built, not device-verified) | --- | assembleDebug BUILD SUCCESSFUL (2026-10-06, scratch copy, JDK 17); no compiler errors/warnings in the touched files; LiveLocationSource/LiveFix/rememberLiveFix confirmed in the dex; no debug logs left. NOT installed / not device-verified; pending the §4 slice How to Verify (always-recording OFF and no trip: dot moves as the phone moves; updates stop when leaving the Track screen or backgrounding the app; Recenter goes to the live position; recording/trip/log unchanged; no new permission prompt). Files: tracking/LiveLocationSource.kt (new: LiveFix, LiveLocationSource, rememberLiveFix), screens/track/TrackScreen.kt (displayLocation = live ?: service location). TrackingService/DB untouched. |
 | 2026-10-06 | Docs — Track map Recenter FAB / Follow Mode (2026-10-06): Added UI-SPEC §3f new subsection describing functional follow mode with `isFollowing` state, gesture → off, tap Recenter → on transitions, provisional dark/grey icon colors, a11y text labels, interaction with route overlay. Map Interface legacy note updated (§9) to reflect Recenter now functional and Layers FAB as placeholder. UI-SPEC v0.16→0.17. IMPLEMENTATION-PLAN v0.20→0.21 (§1 change log entry 0.21, §4 new Track Map slice 3 steps + 8-point How to Verify, §6 two new task-log rows, Also documented updated). DOCUMENT-CONTROL register + change log. No schema. Design handoff pending (AGENTS §12 for visual refinement); code pending user approval (AGENTS §5a for build/device). | Completed | e82463e | Docs only; no Gradle/device run (AGENTS §5a). Code implementation pending user approval and build permission. |
