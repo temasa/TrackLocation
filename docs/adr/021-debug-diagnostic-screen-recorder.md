@@ -83,3 +83,13 @@ None. This is a debug-only feature with no domain-model or product impact.
 - ffmpeg: command-line video processing tool; user installs `sudo apt install -y ffmpeg` on dev machine.
 - AGENTS.md §2 (product boundaries — debug feature does not violate scope).
 - AGENTS.md §5a (build/device verification requires explicit user permission; applies to code implementation, not docs).
+
+## Implementation note (2026-10-07)
+
+Built entirely in `app/src/debug/`, with no `app/src/main` edits. Deviations from the text above:
+
+- **Hook:** a debug-manifest `ContentProvider` registers `ActivityLifecycleCallbacks` (no `MainActivity` change). A transparent consent activity is launched once per foreground session; denial is not re-asked until the app has been backgrounded (1.5 s debounce so rotation does not count).
+- **Rollover:** not `setNextOutputFile()` (it triggers on file size, not duration). On `MAX_DURATION_REACHED` a new `MediaRecorder` and MediaStore entry are created, the `VirtualDisplay` is re-pointed with `setSurface()`, then the old segment is stopped and finalized (sub-second gap possible).
+- **"Stop & keep":** finalizes the current segment, stops recording and sets a process-lifetime freeze flag (no deletions until the app process restarts); a separate notification reports the kept state.
+- **API 28:** files go to `Movies/TrackLocation-Diagnostics` via `File` + `MediaScannerConnection`; `WRITE_EXTERNAL_STORAGE` must be granted manually (no runtime request); without it the recorder posts a notification and does not record.
+- Segments left `IS_PENDING` by a process kill are not cleaned up on the next start.
