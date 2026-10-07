@@ -57,7 +57,7 @@ When any controlled document changes, update both:
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.31 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.32 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
 | `docs/UI-SPEC.md` | 0.22 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
@@ -88,6 +88,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-07 | IMPLEMENTATION-PLAN | 0.31 | 0.32 | Recorder frame extraction verified via ffmpeg (ADR-021 check 7); §4 item 7 + §6 row updated; docs only. |
 | 2026-10-07 | IMPLEMENTATION-PLAN | 0.30 | 0.31 | Recorder consent-once device-verified (ADR-021 amendment): on-device checks (1–4, 6, 8 verified on SM-G965F Android 10); §4 How to Verify block updated with ✓/✗ status per item; §6 Task Log row backfilled Git Revision `c9f2fe7` with detailed device-verification summary (consent once verified, 2-min rollover + 5-segment retention verified, MediaStore integration verified; pending: "Stop & keep", ffmpeg frames, extended run, battery, API 28, Android 14+). §1 change log entry 0.31 added. No schema. | Claude Code |
 | 2026-10-07 | IMPLEMENTATION-PLAN, ARCHITECTURE, adr/021 | 0.29/0.19/1.0 | 0.30/0.20/1.0 | Recorder consent once per process (ADR-021 amendment): live session paused on background and resumed on return, no repeated dialog. ADR-021 amendment + earlier consent wording fixed; ARCHITECTURE debug-recorder lifecycle updated; plan slice steps/How to Verify, new task-log row, stale code row marked Completed `7a4326f`. Code compiled (debug+release); on-device not verified. | Claude Code |
 | 2026-10-07 | IMPLEMENTATION-PLAN, adr/021 | 0.28/1.0 | 0.29/1.0 | Code — Debug Diagnostic Screen Recorder (ADR-021) implemented in `app/src/debug/`; slice steps corrected (no MainActivity hook; new-recorder rollover); ADR-021 implementation note added. assembleDebug/assembleRelease compiled; on-device not verified. |
