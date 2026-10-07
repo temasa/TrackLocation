@@ -47,6 +47,7 @@ fun BoxScope.TrackMap(
     recenterTick: Int = 0,
     navigationActive: Boolean = false,
     navigationBearingDeg: Float? = null,
+    markerHeadingDeg: Float = 0f,
     onUserPan: () -> Unit = {}
 ) {
     Log.d(TAG, "TrackMap entered")
@@ -176,15 +177,17 @@ fun BoxScope.TrackMap(
         val currentMarkerState = rememberMarkerState()
         currentMarkerState.position = currentLocation
 
+        // UI-SPEC §3i: car marker from ui-design.pen; flat so it rotates with the map (heading-up camera keeps it pointing up).
+        val context = LocalContext.current
+        val carIcon = remember(context) {
+            bitmapDescriptorFromVector(context = context, vectorResId = R.drawable.ic_car_marker, tint = null, scale = 1.0)
+        }
         Marker(
-            icon = bitmapDescriptorFromVector(
-                context = LocalContext.current,
-                vectorResId = R.drawable.ic_location_pin,
-                tint = Color.Blue.toArgb(),
-                scale = 1.0
-            ),
+            icon = carIcon,
             state = currentMarkerState,
-            anchor = Offset(0.5f, 0.5f)
+            anchor = Offset(0.5f, 0.5f),
+            flat = true,
+            rotation = markerHeadingDeg
         )
 
         if (pathPoints.size > 1) {

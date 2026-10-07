@@ -134,6 +134,13 @@ fun TrackScreen() {
         if (navigationActive) isFollowing = true
     }
 
+    // UI-SPEC §3i: car marker heading — last valid live-fix heading (>= ~3 km/h), held at rest and kept across trips; 0 = up/north until one exists.
+    var markerHeading by remember { mutableStateOf(0f) }
+    LaunchedEffect(liveFix) {
+        val fix = liveFix
+        if (fix != null && fix.speedMps * 3.6f >= 3f && fix.bearingDeg in 0f..360f) markerHeading = fix.bearingDeg
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         TrackMap(
             currentLocation = displayLocation,
@@ -146,6 +153,7 @@ fun TrackScreen() {
             recenterTick = recenterTick,
             navigationActive = navigationActive,
             navigationBearingDeg = if (navigationActive) lastValidHeading else null,
+            markerHeadingDeg = markerHeading,
             onUserPan = { isFollowing = false }
         )
 
