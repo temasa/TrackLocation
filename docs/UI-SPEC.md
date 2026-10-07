@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.20
+**Document Version:** 0.21
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
@@ -145,7 +145,7 @@ New Track-screen UI for follow-a-route navigation. Per AGENTS §12 the visuals a
 - **Start control** — offers "Start trip (track only)" vs "Start trip + navigate"; reuses the existing `TripPanel` CTA language.
 - **Route + read-out** — route polyline to follow; remaining distance + ETA shown alongside existing trip metrics.
 - **Navigation-perspective toggle** — new control in `MapControls` (heading-up + follow, no tilt); decoupled from trip/nav state; default off (north-up).
-- **Directional car marker** — rotates to GPS heading (replaces the static pin); holds last heading at rest.
+- **Directional car marker** — rotates to GPS heading (replaces the static pin); holds last heading at rest. (implemented per §3i)
 - **Road-ahead candidates** — translucent polylines for previously-driven continuations (ADR-010), visually distinct from the solid live path.
 - **Routing attribution** — visible "© openrouteservice.org | © OpenStreetMap contributors" wherever a route is shown (ADR-011 requirement).
 
@@ -241,7 +241,7 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **Runtime route:** bold orange polyline (RGB hex `#FF9800` or equivalent theme token); width ~6 dp; connects current location → next stop (pickup during PICKUP phase, drop during DROP phase); drawn above the planned route (higher zIndex).
 - **Markers:** Pickup and Drop locations receive map markers with titles "Pickup" / "Drop" shown on tap; use standard Material Design marker coloring (default blue for most markers, or custom colors at the designer's discretion).
 - **Attribution surface:** While a route is drawn on screen, display '© openrouteservice.org | © OpenStreetMap contributors' as small text. Provisional placement: bottom-start (above the order card) or top-start; final placement from design handoff. Hide attribution when no active route.
-- **Existing map elements untouched:** blue recorded-trace polyline, live car marker (static pin or heading-rotated arrow per the navigation perspective), and Google Maps base layer remain unchanged.
+- **Existing map elements untouched:** blue recorded-trace polyline, live car marker (heading-rotated per §3i, independent of the navigation perspective), and Google Maps base layer remain unchanged.
 
 **Behavior:**
 - **Planned route** fetched once when the order becomes Taken; frozen for the life of the order (never re-fetched).
@@ -329,6 +329,25 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 **Copy-paste-ready prompt:**
 
 > Design the "Recenter FAB" visual state for the Track map in TrackLocation (Android, Jetpack Compose, Material 3). The FAB has two states: (1) **Following** — dark crosshair icon (`0xFF0A0A0A` provisional) showing the camera is auto-following the current GPS location; tap does nothing. (2) **Panned Away** — muted grey crosshair icon (`~0xFF9E9E9E` provisional) showing the camera is static (user has panned/pinched to inspect the map); tap Recenter animates the camera back to the current location and resumes following. Provide both states in light and dark themes. Confirm the icon is legible at 44dp (below the 48dp Material guideline, existing design). Use simple geometric crosshair (no fill, outline only) or a plus-sign variant suitable for 44dp. Do not rely on color alone to convey state (text TalkBack labels distinguish the states). Provide SVG or vector export suitable for an Android `res/drawable` vector drawable.
+
+---
+
+## 3i. Track Map — Car Marker (2026-10-07)
+
+**What it does:** Replace the current static blue `ic_location_pin` location marker with a directional car marker that rotates to indicate the direction of travel. The marker is sourced from the `ui-design.pen` design file (CarMarker frame, id NtE0e, 28×44 dp, top-down red car, front at top) and converted to an Android `VectorDrawable`. The design's translucent white backing rectangle is omitted. The car rotates flat on the map (anchored centre, `flat = true`, `rotation = heading`) via the heading from the most-recent GPS fix (bearing) when speed ≥ ~3 km/h; below that speed the marker holds the last valid heading; if no valid heading yet, it points up (0°, north). The marker is a **display-only** change; no schema, permission, or data-model changes.
+
+**Rules:**
+1. **Replaces the blue pin:** The Track map's current-location marker (today `ic_location_pin`) is replaced by the car marker on entry to the Track screen, or when a live location fix arrives.
+2. **Flat marker with heading rotation:** The marker is rendered `flat = true` (rotates with the map, not the device), `rotation = headingDegrees`, `anchor = (0.5, 0.5)` (centre). Heading comes from the live-fix bearing when speed ≥ 3 km/h, held constant below 3 km/h, points north (0°) if no valid heading yet.
+3. **Other markers unchanged:** Pickup/Drop markers (for Gojek orders), the recorded trace polyline, route overlays, and the Recenter FAB control remain unchanged.
+4. **Display-only:** No schema change, no permission change, no data model change. The canonical location log and live location fix (ADR-018) are unaffected.
+5. **Visual body:** The visible car body is ~13×25 dp inside the 28×44 dp frame boundary (as designed).
+
+**Implementation location:** Marker bitmap created once, stored in a remember block; reused for every map-state update (no per-update bitmap regeneration). Rendered via `bitmapDescriptorFromVector(context, R.drawable.ic_car_marker, tint = null, scale = 1.0)`, wired to `GoogleMap.addMarker(MarkerOptions().flat(true).rotation(markerHeadingDeg).anchor(0.5f, 0.5f))`.
+
+**Accessibility:** The marker is a decorative map affordance (no interactive controls), so TalkBack treats it as part of the map background. No new accessibility announcement needed.
+
+**Design handoff:** No design handoff needed — design already exists in `ui-design.pen` (CarMarker frame). Implementation converts the frame directly to `ic_car_marker.xml`.
 
 ---
 
