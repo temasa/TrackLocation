@@ -87,12 +87,14 @@ fun TrackScreen() {
     // O(1) trip accumulator (replaces the 2s obd_sample re-query LaunchedEffect loop).
     val tripAvgKmL = connectedObd?.tripAvgKmL
 
-    val tripState = if (locationUiState.isTracking) TripState.LIVE else TripState.READY
-    // ADR-019: READY shows zeros; the finished trip is already persisted on Stop.
     val panelState = TrackPanelState(
-        tripState = tripState,
-        elapsedMs = if (tripState == TripState.READY) 0L else locationUiState.durationTimer,
-        distanceKm = if (tripState == TripState.READY) 0.0 else locationUiState.distanceInMeters / 1000.0,
+        tripState = when {
+            locationUiState.isPaused -> TripState.PAUSED
+            locationUiState.isTracking -> TripState.LIVE
+            else -> TripState.READY
+        },
+        elapsedMs = locationUiState.durationTimer,
+        distanceKm = locationUiState.distanceInMeters / 1000.0,
         speedKmh = locationUiState.speedInKMH.toDouble(),
         obdConnected = connectedObd != null,
         instantKmL = instantKmL,
