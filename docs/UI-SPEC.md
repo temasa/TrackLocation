@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.18
+**Document Version:** 0.19
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-06
+**Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -164,15 +164,22 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 
 **Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
+**Card interactions (expand/collapse + strip-only) — 2026-10-06**
+
+Three interaction states for the card (excluding the Dismiss control):
+- **Expanded** (default): both pickup and drop show name + address; a chevron-up (▲) button in the PhaseRow collapses the card.
+- **Collapsed**: both pickup and drop show name only (no address); chevron-down (▼) in the PhaseRow expands. Payment/earnings and the trip strip remain visible in both states.
+- **Strip-only**: tapping either the PickupBlock or DropBlock enters this mode — the card body is hidden and only the trip strip is shown. Tapping the trip strip exits strip-only and returns to collapsed state. This lets the driver free most of the map for navigation once they know the route.
+
 **Trip strip (compact, provisional)**
 
 A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains four cells:
 - **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
-- **DIST** — trip distance in km with one decimal place (e.g., "12.5 km"); updated live.
-- **COST / NET** — a single cell labeled "COST / NET" with the value formatted as "Rp8.4k / Rp28k" (estimated fuel cost, then net profit, each in compact Rupiah format). COST = trip litres burned × current fuel price (from FuelPriceController); NET = OrderCard.earningsRp − COST (shown as −Rp… if negative). Compact Rupiah: <1,000 → 'Rp850'; 1,000–999,999 → 'Rp8.4k' (one decimal); ≥1,000,000 → 'Rp1.2jt'. Negative prefixed with '−'. TalkBack content description reads full amounts (e.g. "Cost: Rupiah 8,400; Net profit: Rupiah 28,000" or "Cost: Rupiah 8,400; Net loss: Rupiah 2,000"). Missing data: shows "—" when OBD disconnected, no litres burned yet, or no fuel price set; NET shows "—" whenever COST is "—" or the card has no earnings.
-- **AVG/INST km/L** — a single cell labeled "AVG/INST" with the value formatted as "11.8 / 12.3" (trip-average km/L, then instant km/L, each one decimal place); instant shows "—" when not moving or no good GPS fix (same rule as TripPanel). OBD not connected → value "— / —"; average shows "—" until available (distance > 0.01 km and fuel > 0).
+- **DIST (km)** — label "DIST (km)"; value is the distance with one decimal place, no unit in the value (e.g., "12.5"); updated live.
+- **COST / NET (Rp.)** — label "COST / NET (Rp.)"; value formatted as "3.5k/21k" (estimated fuel cost then net profit, compact Rupiah without "Rp" prefix, no spaces around "/"). COST = trip litres burned × current fuel price; NET = OrderCard.earningsRp − COST (negative shown as "−8.4k"). Compact amounts: <1,000 → '850'; 1,000–999,999 → '8.4k'; ≥1,000,000 → '1.2jt'. TalkBack reads full Rupiah amounts. Missing data: "—" when OBD off / no fuel / no price; NET "—" when COST is "—" or no earnings.
+- **AVG / INST (km/L)** — label "AVG / INST (km/L)"; value formatted as "11.8/12.3" (trip-average km/L then instant km/L, each one decimal, no spaces around "/"). Instant "—" when not moving or no GPS fix. OBD not connected → "—/—"; average "—" until distance > 0.01 km and fuel > 0.
 
-Layout: four cells; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1; the earlier '11.8 / 12.3 must not clip on narrow screens' rule still holds.
+Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1.
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
 
@@ -322,6 +329,33 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 **Copy-paste-ready prompt:**
 
 > Design the "Recenter FAB" visual state for the Track map in TrackLocation (Android, Jetpack Compose, Material 3). The FAB has two states: (1) **Following** — dark crosshair icon (`0xFF0A0A0A` provisional) showing the camera is auto-following the current GPS location; tap does nothing. (2) **Panned Away** — muted grey crosshair icon (`~0xFF9E9E9E` provisional) showing the camera is static (user has panned/pinched to inspect the map); tap Recenter animates the camera back to the current location and resumes following. Provide both states in light and dark themes. Confirm the icon is legible at 44dp (below the 48dp Material guideline, existing design). Use simple geometric crosshair (no fill, outline only) or a plus-sign variant suitable for 44dp. Do not rely on color alone to convey state (text TalkBack labels distinguish the states). Provide SVG or vector export suitable for an Android `res/drawable` vector drawable.
+
+---
+
+## 3g. Track screen — TripPanel READY-state FAB + merged metrics row (2026-10-06)
+
+**What changed:** The `TripPanel` component is now hidden when no trip is running. A large green PlayFab replaces it in the READY state so the map is unobstructed and the start action is prominent. In the LIVE and PAUSED states the panel returns as before, with the inline CTA button (pause / resume) inside the panel.
+
+**READY state (no active trip, no active order):**
+- `TripPanel` is hidden (not rendered).
+- A **56 dp green circular FAB** (background `BrandGreen`, play glyph in `BrandGreenDark`) is shown at the bottom-center of the map, with a 14 dp bottom padding (matching the panel padding).
+- Tapping the FAB starts the trip (calls `onTripCtaTap()`). Accessibility content description: "Start trip".
+
+**LIVE / PAUSED states:**
+- `TripPanel` is shown at bottom-center (same position as before, 14 dp padding all sides).
+- The PlayFab is hidden.
+- The existing inline `TripCtaButton` (48 dp) inside `TimerCtaRow` acts as the pause / resume control.
+
+**Merged metrics row (4 cells):**
+The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) are replaced by a single `CombinedMetricsRow` with up to four cells in one row:
+- **KM** — trip distance, left-aligned, existing icon + distance value.
+- **KM/HR** — current speed, center-aligned, existing icon + speed value.
+- **L/H** *(only when OBD connected)* — current fuel rate in L/h; "—" when engine off or no data.
+- **AVG/INST km/L** *(only when OBD connected)* — trip-average km/L then instant km/L, formatted "avg/inst" (e.g. "11.8/12.3"); "—" each when unavailable.
+
+When OBD is not connected only the first two cells are shown (identical to the previous StatsRow).
+
+**Visual design:** PROVISIONAL — reuses existing glass-panel and metric-cell styles; refined by a future design handoff (AGENTS.md §12).
 
 ---
 
