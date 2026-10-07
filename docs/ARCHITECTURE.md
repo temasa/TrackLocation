@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.18
+**Document Version:** 0.19
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-06
+**Last Updated:** 2026-10-07
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -214,6 +214,21 @@ SEPARATE from TrackingService recording path:
 **Battery:** GPS at ~1 Hz only while TrackScreen visible (same cost model as Google Maps/Waze). FusedLocationProviderClient merges requests when both screen and service are active (service already running, so incremental cost small).
 
 **Privacy:** Live fixes never stored or transmitted. Only external call remains OrderRouteController → OpenRouteService (for order routes, ADR-017).
+
+### Debug-only Diagnostic Screen Recorder (ADR-021)
+
+**Purpose:** Automatic on-device video capture for debugging UI anomalies without manual intervention.
+
+**Architecture:**
+- **Debug-only source set:** All code in `app/src/debug/` (never compiled into release builds). Debug manifest overlay declares `mediaProjection` foreground service type and `WRITE_EXTERNAL_STORAGE` permission (debug, maxSdkVersion 28; absent from release manifest via source-set isolation).
+- **Service:** `DiagnosticRecorderService` extends `MediaProjectionCallback`, uses `MediaRecorder` to encode to MP4 video (no audio, no microphone permission).
+- **Lifecycle:** Request `MediaProjection` from `MediaProjectionManager` once per app launch (system consent dialog appears; cannot be bypassed). Recording active during foreground (`ON_RESUME`); stops on background (`ON_PAUSE`); resumes on return (consent re-appears). Foreground service posts persistent notification with "Stop & Keep" action to freeze segment rotation.
+- **Storage:** MediaStore video with `RELATIVE_PATH = "Movies/TrackLocation-Diagnostics/"`. Segments are 2-minute MP4 files; app maintains last 5 (~10 min). On rollover, oldest segment deleted automatically. Files marked `IS_PENDING = false` after close, so clips appear in standard Photos/Gallery album.
+- **On release builds:** No service, no permissions, no recorder classes. Clean APK, zero overhead.
+
+**Review workflow:** Clips pulled from device (`adb pull`) and frames extracted with ffmpeg (`sudo apt install -y ffmpeg` on dev machine), then read as images for pixel-level analysis. No built-in video playback in the app.
+
+**Consequences:** See ADR-021 §8 (cloud backup risk, segment rotation window, battery/CPU impact, post-uninstall orphans). No impact on canonical GPS recording, trips, sessions, or data model.
 
 ---
 

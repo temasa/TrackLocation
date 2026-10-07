@@ -9,7 +9,7 @@ description: Document control register and change log — fully generic, ready t
 
 **Document Version:** 0.1  
 **Status:** Active  
-**Last Updated:** 2026-10-06  
+**Last Updated:** 2026-10-07  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -36,8 +36,8 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.17 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-07 |
-| `docs/ARCHITECTURE.md` | 0.18 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-06 |
-| `docs/adr/README.md` | 0.9 | Active (20 ADRs indexed) | Tech Lead | 2026-10-07 |
+| `docs/ARCHITECTURE.md` | 0.19 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-07 |
+| `docs/adr/README.md` | 1.0 | Active (21 ADRs indexed) | Tech Lead | 2026-10-07 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -57,7 +57,7 @@ When any controlled document changes, update both:
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.27 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.28 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
 | `docs/UI-SPEC.md` | 0.22 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
@@ -88,6 +88,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-07 | ARCHITECTURE, adr/README, adr/021 (new), IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.18/0.9/—/0.27/0.1 | 0.19/1.0/1.0/0.28/0.1 | Debug Diagnostic Screen Recorder (ADR-021): automatic on-device screen capture for debugging UI anomalies. New ADR-021 file (Context/Decision/Consequences/Alternatives/Related ADRs/References); debug-only MediaProjection + MediaRecorder, 2-min MP4 segments, last 5 retained (~10 min), MediaStore.Video storage (Movies/TrackLocation-Diagnostics/), foreground-service notification with "Stop & Keep" action, no permissions in release builds, rolling segments with automatic deletion of oldest. adr/README: v0.9→1.0 (ADR-021 row added to index, count 20→21). ARCHITECTURE: v0.18→0.19 (new subsection "Debug-only Diagnostic Screen Recorder (ADR-021)" in §5 Key Integration Points, describing source-set isolation, service lifecycle, MediaStore storage, no release-build impact, review workflow, consequences). IMPLEMENTATION-PLAN: v0.27→0.28 (§1 change log entry 0.28 added, §4 new slice "Debug Diagnostic Screen Recorder (ADR-021)" with What/Observable/7 How to Verify checks/7 implementation steps, §6 two new task-log rows Docs 2026-10-07 Completed + Code Planned, both marked "---", Also documented + Next Step lines updated). DOCUMENT-CONTROL: register versions updated (ARCHITECTURE 0.18→0.19, adr/README 0.9→1.0, IMPLEMENTATION-PLAN 0.27→0.28), this change log row. No schema, no Room migration, no new permission for release builds (debug-only feature). Code implementation pending user approval (AGENTS.md §5b). | Claude Code (Haiku 4.5) |
 | 2026-10-07 | UI-SPEC, IMPLEMENTATION-ISSUES, adr/019, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.21/0.2/1.0/0.26/0.1 | 0.22/0.3/1.0/0.27/0.1 | Track Panel LIVE button shows Stop icon (UI-SPEC §3g amendment, Issue #2 Resolved). Owner decision: re-icon/relabel LIVE as Stop (filled rounded square) while keeping remote Track design (PlayFab in READY, PAUSED unreachable). No new ADR (partial adoption of rejected ADR-019 option). UI-SPEC v0.21→0.22 (§3g LIVE-PAUSED wording updated, dated note added). IMPLEMENTATION-ISSUES v0.2→0.3 (Issue #2 marked Resolved with decision and traceability). adr/019 addendum added (2026-10-07: partial adoption, Status stays Rejected). IMPLEMENTATION-PLAN v0.26→0.27 (§1 change log entry 0.27, §4 new slice "Track Panel — LIVE button shows Stop", §6 three task-log rows dated 2026-10-07). No schema, no Room migration, no new permission. Code + design-handoff implementation pending user approval and build (AGENTS.md §5a/§5b). | Claude Code (Haiku 4.5) |
 | 2026-10-07 | UI-SPEC, IMPLEMENTATION-PLAN, adr/009, DOCUMENT-CONTROL | 0.20/0.25/1.0/0.1 | 0.21/0.26/1.0/0.1 | Directional car marker from ui-design.pen replaces the blue pin (UI-SPEC §3i, already accepted in ADR-009). UI-SPEC: new §3i subsection (design source, five rules, display-only, implementation, a11y, no design handoff); fixed stale "static pin" and "live car marker" wording with §3i cross-references; version 0.20→0.21. IMPLEMENTATION-PLAN: new §4 slice "Track Map — Car Marker (UI-SPEC §3i)" with What/Observable/How to Verify/3 implementation steps; updated §4 status row "Track Navigation" to mark car marker done; §1 change log entry 0.26 added; §6 two new task-log rows (Docs Completed + Code Planned, both "---"); version 0.25→0.26. adr/009: dated implementation note added (2026-10-07). DOCUMENT-CONTROL: this register + change log row. No schema. Code implementation pending user approval + build (AGENTS.md §5a/§5b). | Claude Code |
 | 2026-10-07 | PRD, UI-SPEC, IMPLEMENTATION-PLAN, adr/020, adr/009, adr/README, DOCUMENT-CONTROL | 0.16/0.19/0.24/—/1.0/0.8/0.1 | 0.17/0.20/0.25/1.0/1.0/0.9/0.1 | Track navigation camera auto-activates during trip or order (ADR-020). New ADR-020 file (Context/Decision/Consequences/Alternatives/Related ADRs/References). adr/009 wording amended (cross-reference to ADR-020 auto-activation note). adr/README v0.8→0.9 (ADR-020 row added, count 19→20). PRD v0.16→0.17 (FR-19 new: auto-switch to heading-up navigation camera while trip/order active, display-only). UI-SPEC v0.19→0.20 (§3f Recenter FAB updated with cross-reference to §3h, §3h new subsection: 7 behaviour rules + accessibility + no design handoff; navigation camera definition). IMPLEMENTATION-PLAN v0.24→0.25 (§1 change-log entry 0.25, §4 new "Track Map — Navigation Camera (ADR-020)" slice + How to Verify, §6 two task-log rows Docs Completed + Code Planned, Also documented updated, version header). No schema. Code pending user build permission (AGENTS.md §5a). | Claude Code |

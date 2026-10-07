@@ -109,6 +109,7 @@ Links to docs, code, or external resources supporting this decision.
 | [018](018-track-screen-live-location.md) | Track Screen Live Location (display-only, independent of recording) | Accepted | 2026-10-06 |
 | [019](019-trip-control-start-stop.md) | Trip Control Is Start/Stop Only (READY panel shows zeros) | Rejected | 2026-10-07 |
 | [020](020-track-navigation-camera.md) | Track Map Navigation Camera Auto-activates During Trip or Order | Accepted | 2026-10-07 |
+| [021](021-debug-diagnostic-screen-recorder.md) | Debug-only Diagnostic Screen Recorder | Accepted | 2026-10-07 |
 
 ---
 
@@ -129,5 +130,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 0.9
+**Version:** 1.0
 **Last Updated:** 2026-10-07
