@@ -9490,25 +9490,14 @@
                   "children": [
                     {
                       "type": "rectangle",
-                      "cornerRadius": 2,
-                      "id": "BidXR",
+                      "id": "d8w1x",
+                      "name": "StopGlyph",
                       "x": 18,
-                      "y": 16,
-                      "name": "PauseBar1",
-                      "fill": "#052E16",
-                      "width": 4,
-                      "height": 16
-                    },
-                    {
-                      "type": "rectangle",
+                      "y": 18,
+                      "width": 12,
+                      "height": 12,
                       "cornerRadius": 2,
-                      "id": "BdupF",
-                      "x": 26,
-                      "y": 16,
-                      "name": "PauseBar2",
-                      "fill": "#052E16",
-                      "width": 4,
-                      "height": 16
+                      "fill": "#052E16"
                     }
                   ]
                 }

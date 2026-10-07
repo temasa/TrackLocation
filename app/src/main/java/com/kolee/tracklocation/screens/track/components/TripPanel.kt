@@ -215,7 +215,7 @@ private fun TimerCtaRow(state: TrackPanelState, onCtaTap: () -> Unit) {
 private fun TripCtaButton(tripState: TripState, onTap: () -> Unit) {
     val desc = when (tripState) {
         TripState.READY -> "Start trip"
-        TripState.LIVE -> "Pause trip"
+        TripState.LIVE -> "Stop trip"
         TripState.PAUSED -> "Resume trip"
     }
     Box(
@@ -236,7 +236,7 @@ private fun TripCtaButton(tripState: TripState, onTap: () -> Unit) {
         val glyphSizeDp = if (tripState == TripState.LIVE) 16.dp else 18.dp
         Canvas(modifier = Modifier.size(glyphSizeDp)) {
             when (tripState) {
-                TripState.LIVE -> drawPauseGlyph(BrandGreenDark)
+                TripState.LIVE -> drawStopGlyph(BrandGreenDark)
                 else -> drawPlayGlyph(BrandGreenDark)
             }
         }
@@ -359,13 +359,11 @@ private fun DrawScope.drawPlayGlyph(color: Color) {
     drawPath(path, color)
 }
 
-// Pause glyph: two rounded rects x=6,w=4.5 and x=13.5,w=4.5 (24×24 viewbox)
-private fun DrawScope.drawPauseGlyph(color: Color) {
+// Stop glyph: filled rounded square (24×24 viewbox)
+private fun DrawScope.drawStopGlyph(color: Color) {
     val sx = size.width / 24f; val sy = size.height / 24f
-    val rx = CornerRadius(1.2f * sx, 1.2f * sy)
     val path = Path().apply {
-        addRoundRect(RoundRect(6f * sx, 5f * sy, 10.5f * sx, 19f * sy, rx))
-        addRoundRect(RoundRect(13.5f * sx, 5f * sy, 18f * sx, 19f * sy, rx))
+        addRoundRect(RoundRect(6f * sx, 6f * sy, 18f * sx, 18f * sy, CornerRadius(2f * sx, 2f * sy)))
     }
     drawPath(path, color)
 }
