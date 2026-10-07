@@ -14,9 +14,9 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 
 1. **Debug-only scope:** All code lives in `app/src/debug/` source set (manifest overlays, service, activity hooks). Release builds (`assembleRelease`, `bundleRelease`) contain no recorder classes, service declarations, or permissions. No product feature, no new UI destination, no impact on PRD/UI-SPEC (respects AGENTS.md §2 product-boundary rule).
 
-2. **Consent and activation:** The system `MediaProjection` consent dialog appears once per app launch in debug builds. On first app launch, the user sees: "TrackLocation wants to record your screen." Tapping "Allow" starts automatic recording; tapping "Deny" skips recording for that session. Recording does not restart after the consent-deny action. The user's choice persists only for this session (dialog re-appears on next app launch).
+2. **Consent and activation:** The system `MediaProjection` consent dialog appears once per app process in debug builds (see Amendment 2026-10-07: not on every foreground return). On first launch, the user sees: "TrackLocation wants to record your screen." Tapping "Allow" starts automatic recording; tapping "Deny" skips recording until the app has been backgrounded and returns. The user's choice persists only for the process lifetime (dialog re-appears after a process restart).
 
-3. **Foreground-only lifecycle:** Recording is active only while TrackLocation is in the foreground (app `ON_RESUME` state). Recording stops when the app moves to background (`ON_PAUSE`); recording resumes with a fresh consent dialog when the app returns to foreground. This prevents runaway recording and respects the spirit of the MediaProjection consent model.
+3. **Foreground-only lifecycle:** Recording is active only while TrackLocation is in the foreground. When the app moves to background the recorder is **paused** (projection and service stay alive); when it returns the recorder **resumes** with no dialog (see Amendment 2026-10-07). This prevents runaway recording while avoiding repeated consent prompts.
 
 4. **Rolling segment storage:** Video is recorded in 2-minute MP4 segments. The app keeps the most recent 5 segments (~10 minutes of video). On segment rollover, the oldest segment is deleted automatically. Segments are stored in the MediaStore under a `Movies/TrackLocation-Diagnostics/` directory. Files are created with `IS_PENDING = true` during write (hidden from the gallery until finalized), then `IS_PENDING = false` when closed (visible). This allows clips to appear in the standard Photos/Gallery app as an album.
 
@@ -56,7 +56,7 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 - **Segment rotation window:** Developer must tap "Stop & Keep" before the 10-minute window closes; otherwise, the clip may be deleted.
 - **Battery/CPU drain:** MediaRecorder continuously encodes; impacts test timing and battery (debug-only, acceptable).
 - **Post-uninstall orphans:** Old clips remain in MediaStore after uninstall; manual cleanup required.
-- **Consent re-prompt per launch:** User sees the system dialog again on the next app launch (this is Android's design; cannot bypass).
+- **Consent re-prompt per process:** User sees the system dialog again only when there is no live session (process restart, system-stopped projection, or "Stop & keep"); this is Android's design and cannot be bypassed.
 
 ## Alternatives Considered
 
@@ -93,3 +93,14 @@ Built entirely in `app/src/debug/`, with no `app/src/main` edits. Deviations fro
 - **"Stop & keep":** finalizes the current segment, stops recording and sets a process-lifetime freeze flag (no deletions until the app process restarts); a separate notification reports the kept state.
 - **API 28:** files go to `Movies/TrackLocation-Diagnostics` via `File` + `MediaScannerConnection`; `WRITE_EXTERNAL_STORAGE` must be granted manually (no runtime request); without it the recorder posts a notification and does not record.
 - Segments left `IS_PENDING` by a process kill are not cleaned up on the next start.
+- Superseded in part by the Amendment below: the controller no longer stops the service on background (it pauses it) and consent is asked once per process, not once per foreground session.
+
+## Amendment (2026-10-07) — consent once per process
+
+**Decision (owner-approved):** The consent dialog must not appear on every return to the foreground. Ask once per app process; keep the `MediaProjection`, `VirtualDisplay` and foreground service alive when the app is backgrounded and **pause** the `MediaRecorder` (`pause()`, API 24+) instead of stopping it; on return **resume** (`resume()`) with no dialog. The dialog appears again only when there is no live session: app process restarted/killed, the system stopped the projection, or the user tapped "Stop & keep". After "Stop & keep", a denial or a system stop, the app does not re-prompt until it has been backgrounded and returns.
+
+**Why:** Android cannot persist MediaProjection consent, and reusing the consent result token is forbidden on API 34+ (one `getMediaProjection` per token). Keeping the one projection alive is the only way to avoid repeated prompts.
+
+**How (debug source set only):** the lifecycle controller (1.5 s background debounce, unchanged) calls the live service instance directly (`pause()` / `resume()`; a backgrounded app may not start services). "Session live" is the service's static instance, set once a projection is held and cleared in `onDestroy`; if no instance exists on return, the consent flow runs. Pause/resume/rollover all run on the main thread and so serialize. `pause()`/`resume()` failures (`IllegalStateException`) fall back to finalizing the segment and opening a new one. Segment length counts recording time only: a handler timer armed for the remaining recording time (stopped while paused) backs up `setMaxDuration`, whose treatment of paused time is undocumented; at worst segments are shorter, never longer than 2 min. A paused segment is resumed momentarily before `stop()` when a session ends, so it is finalized as a normal playable file; empty/failed clips are deleted as before.
+
+**Consequences:** a persistent "Paused - app in background" notification while the app is backgrounded; nothing is recorded while backgrounded; the dialog still appears on process restart, system stop or after "Stop & keep". On-device behavior is unverified at the time of writing.

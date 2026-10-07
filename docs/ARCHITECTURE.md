@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.19
+**Document Version:** 0.20
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-07
 **Owner:** Tech Lead
@@ -222,7 +222,7 @@ SEPARATE from TrackingService recording path:
 **Architecture:**
 - **Debug-only source set:** All code in `app/src/debug/` (never compiled into release builds). Debug manifest overlay declares `mediaProjection` foreground service type and `WRITE_EXTERNAL_STORAGE` permission (debug, maxSdkVersion 28; absent from release manifest via source-set isolation).
 - **Service:** `DiagnosticRecorderService` extends `MediaProjectionCallback`, uses `MediaRecorder` to encode to MP4 video (no audio, no microphone permission).
-- **Lifecycle:** Request `MediaProjection` from `MediaProjectionManager` once per app launch (system consent dialog appears; cannot be bypassed). Recording active during foreground (`ON_RESUME`); stops on background (`ON_PAUSE`); resumes on return (consent re-appears). Foreground service posts persistent notification with "Stop & Keep" action to freeze segment rotation.
+- **Lifecycle:** Request `MediaProjection` once per app process (system consent dialog; cannot be bypassed or persisted). On background the live session is **paused** (`MediaRecorder.pause()`; projection, `VirtualDisplay` and foreground service stay alive, notification "Paused - app in background") and on return **resumed** with no dialog. Consent is asked again only with no live session (process restart, system stop, "Stop & keep"). Segment length counts recording time only (handler timer + `setMaxDuration`). See ADR-021 amendment 2026-10-07. Foreground service posts persistent notification with "Stop & Keep" action to freeze segment rotation.
 - **Storage:** MediaStore video with `RELATIVE_PATH = "Movies/TrackLocation-Diagnostics/"`. Segments are 2-minute MP4 files; app maintains last 5 (~10 min). On rollover, oldest segment deleted automatically. Files marked `IS_PENDING = false` after close, so clips appear in standard Photos/Gallery album.
 - **On release builds:** No service, no permissions, no recorder classes. Clean APK, zero overhead.
 

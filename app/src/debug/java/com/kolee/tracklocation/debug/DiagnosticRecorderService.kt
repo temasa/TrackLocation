@@ -24,6 +24,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
@@ -42,6 +43,13 @@ import java.util.Locale
  * Rollover: MediaRecorder.setMaxDuration(2 min) -> on MAX_DURATION_REACHED a NEW MediaRecorder is
  * prepared, the VirtualDisplay is re-pointed at its surface and it is started, then the old one is
  * stopped and its MediaStore entry finalized (sub-second gap; setNextOutputFile is size-triggered).
+ *
+ * Consent once per process (ADR-021 amendment): when the app goes to background the controller calls
+ * [pause] (MediaRecorder.pause(); projection, VirtualDisplay and the foreground service stay alive)
+ * and on return [resume]. Everything runs on the main thread, so pause/resume/rollover are serialized.
+ * Segment length is bounded by recording time only: a handler timer (armed for the remaining recording
+ * time, stopped while paused) backs up MediaRecorder's own max-duration, whose pause accounting is
+ * not documented. If the native counter fires first, segments are merely shorter; never longer.
  */
 class DiagnosticRecorderService : Service() {
 
@@ -53,6 +61,7 @@ class DiagnosticRecorderService : Service() {
         val width: Int,
         val height: Int,
         val dpi: Int,
+        var paused: Boolean = false,
     )
 
     private val handler = Handler(Looper.getMainLooper())
@@ -61,6 +70,11 @@ class DiagnosticRecorderService : Service() {
     private var seg: Segment? = null
     private var segCount = 0
     private var destroyed = false
+    private var paused = false
+    private var recordedMs = 0L      // recording time already spent in the current segment
+    private var runStartedAt = 0L    // elapsedRealtime when the current recording run began
+
+    private val rollTimer = Runnable { if (!paused && !destroyed) rollOver() }
 
     private val projectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
@@ -108,6 +122,7 @@ class DiagnosticRecorderService : Service() {
             return
         }
         projection = p
+        instance = this
         p.registerCallback(projectionCallback, handler) // must precede createVirtualDisplay
         beginSegment()
     }
@@ -144,6 +159,8 @@ class DiagnosticRecorderService : Service() {
         val old = seg
         seg = next
         old?.let { finish(it) }
+        paused = false
+        armTimer(0L)
         segCount++
         enforceRetention()
         notifyState("Recording screen, segment $segCount (last $KEEP x 2 min)")
@@ -203,8 +220,64 @@ class DiagnosticRecorderService : Service() {
         }
     }
 
+    /** (Re)arms the recording-time timer; [spent] is recording time already used in this segment. */
+    private fun armTimer(spent: Long) {
+        recordedMs = spent
+        runStartedAt = SystemClock.elapsedRealtime()
+        handler.removeCallbacks(rollTimer)
+        handler.postDelayed(rollTimer, maxOf(0L, SEGMENT_MS - spent))
+    }
+
+    /** App went to background: pause the current segment, keep projection + service alive. */
+    fun pause() {
+        if (destroyed || paused) return
+        paused = true
+        handler.removeCallbacks(rollTimer)
+        recordedMs += SystemClock.elapsedRealtime() - runStartedAt
+        val s = seg
+        if (s != null) {
+            try {
+                s.recorder.pause()
+                s.paused = true
+            } catch (t: Throwable) {
+                // Fall back: close the segment as a valid file; resume() will open a new one.
+                Log.w(TAG, "recorder.pause failed; finalizing segment", t)
+                finishCurrent()
+                try { display?.surface = null } catch (_: Throwable) {}
+            }
+        }
+        notifyState("Paused - app in background")
+    }
+
+    /** App back in foreground: resume the paused segment (or open a new one) without any dialog. */
+    fun resume() {
+        if (destroyed || !paused) return
+        try {
+            val s = seg
+            if (s == null) {
+                beginSegment()
+            } else {
+                try {
+                    s.recorder.resume()
+                    s.paused = false
+                    paused = false
+                    armTimer(recordedMs)
+                    notifyState("Recording screen, segment $segCount (last $KEEP x 2 min)")
+                } catch (t: Throwable) {
+                    Log.w(TAG, "recorder.resume failed; starting a new segment", t)
+                    finishCurrent()
+                    beginSegment()
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e(TAG, "resume failed", t)
+            alert("Recording stopped: resume failed (${t.javaClass.simpleName})")
+            stopSelf()
+        }
+    }
+
     private fun rollOver() {
-        if (destroyed) return
+        if (destroyed || paused) return
         try {
             beginSegment()
         } catch (t: Throwable) {
@@ -223,6 +296,8 @@ class DiagnosticRecorderService : Service() {
     /** Stops the recorder and publishes the clip; empty/failed clips are deleted. */
     private fun finish(s: Segment) {
         var ok = true
+        // A paused recorder is resumed first so stop() always runs from the plain recording state.
+        if (s.paused) try { s.recorder.resume() } catch (t: Throwable) { Log.w(TAG, "resume before stop failed", t) }
         try { s.recorder.stop() } catch (t: Throwable) { ok = false; Log.w(TAG, "recorder.stop failed", t) }
         try { s.recorder.release() } catch (_: Throwable) {}
         val empty = try { s.pfd.statSize == 0L } catch (_: Throwable) { false }
@@ -368,6 +443,8 @@ class DiagnosticRecorderService : Service() {
 
     override fun onDestroy() {
         destroyed = true
+        instance = null
+        handler.removeCallbacks(rollTimer)
         try { finishCurrent() } catch (t: Throwable) { Log.w(TAG, "finish on destroy failed", t) }
         try { display?.release() } catch (_: Throwable) {}
         display = null
@@ -395,5 +472,13 @@ class DiagnosticRecorderService : Service() {
 
         /** Set by "Stop & keep"; lives until the process dies. While set, no clip is ever deleted. */
         @Volatile private var frozen = false
+
+        /**
+         * The live service (same process) or null: set once a projection is held, cleared in onDestroy.
+         * This is the "session live" signal; called directly instead of via startService because a
+         * backgrounded app may not start services (API 26+).
+         */
+        @Volatile var instance: DiagnosticRecorderService? = null
+            private set
     }
 }

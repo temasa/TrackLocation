@@ -37,8 +37,9 @@ class DiagnosticsInitProvider : ContentProvider() {
 
 /**
  * Counts started app activities (the consent activity excluded). First one up in a foreground session
- * triggers the consent screen once; when all are stopped (debounced for rotation/relaunch) the
- * recorder service is stopped and the next foreground session asks again.
+ * resumes the live recording session if there is one, otherwise shows the consent screen (once per
+ * foreground session; a denial or "Stop & keep" is not re-asked until the app was backgrounded).
+ * When all activities are stopped (debounced for rotation/relaunch) a live session is paused, not ended.
  */
 internal object DiagnosticsController : Application.ActivityLifecycleCallbacks {
     private val handler = Handler(Looper.getMainLooper())
@@ -49,11 +50,11 @@ internal object DiagnosticsController : Application.ActivityLifecycleCallbacks {
 
     private val onBackground = Runnable {
         if (started > 0 || consentAlive) return@Runnable
-        prompted = false
+        prompted = false // next foreground may ask again if no session is live
         try {
-            app.stopService(Intent(app, DiagnosticRecorderService::class.java))
+            DiagnosticRecorderService.instance?.pause()
         } catch (t: Throwable) {
-            Log.w(TAG, "stopService failed", t)
+            Log.w(TAG, "pause failed", t)
         }
     }
 
@@ -68,6 +69,12 @@ internal object DiagnosticsController : Application.ActivityLifecycleCallbacks {
         handler.removeCallbacks(onBackground)
         if (!prompted && !consentAlive) {
             prompted = true
+            val live = DiagnosticRecorderService.instance
+            if (live != null) {
+                // Session survived the background trip: resume silently, no dialog.
+                try { live.resume() } catch (t: Throwable) { Log.w(TAG, "resume failed", t) }
+                return
+            }
             try {
                 activity.startActivity(Intent(activity, DiagnosticConsentActivity::class.java))
             } catch (t: Throwable) {
