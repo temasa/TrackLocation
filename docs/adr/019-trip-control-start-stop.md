@@ -27,3 +27,11 @@ Make the trip control Start and Stop only (stop glyph, "Stop trip" label), remov
 ## References
 
 The implementation was built and verified on device, then reverted. It is recoverable from history: 168ef8e (docs), 47f9258 (code), 8d68895 (pen frame), 45a32b0 (task log).
+
+---
+
+## Addendum (2026-10-07)
+
+**Partially adopted:** The owner later chose to re-icon the LIVE button as Stop (filled rounded square glyph, label "Stop trip") while keeping the remote design (PlayFab in READY, PAUSED state in code). This adopts only the icon/label relabelling part of this ADR (Option 2, the "relabel as Stop" choice from Issue #2 in IMPLEMENTATION-ISSUES.md). See UI-SPEC §3g and Issue #2 (Resolved) for the decision record.
+
+**Status remains Rejected** for the rest of this ADR (the proposal to remove pause/resume from the design and zero the READY panel).

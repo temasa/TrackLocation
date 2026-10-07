@@ -8,7 +8,7 @@ description: Blocker protocol and live communication channel — fully generic, 
 
 ## TrackLocation - Phase 1
 
-**Version:** 0.2  
+**Version:** 0.3  
 **Status:** Issue log + blocker protocol  
 **Last Updated:** 2026-10-07
 
@@ -161,11 +161,11 @@ The session half of Slice 2 (persisting `recording_session.obdFuelConsumedL`/`ob
 **Decided:** 2026-07-02
 **Deciding:** User (rinaldi.ch@gmail.com)
 
-### Issue #2: Trip panel LIVE button is labelled/iconed Pause but sends STOP_TRIP; PAUSED unreachable
+### Issue #2: Trip panel LIVE button is labelled/iconed Pause but sends STOP_TRIP; PAUSED unreachable [RESOLVED]
 
 **Sprint/Task:** Track screen trip panel (UI-SPEC §3g / §3e)
 **Severity:** Warning
-**Status:** Raised (open; does not halt other work)
+**Status:** Resolved
 
 **Problem:**
 `TripPanel.kt` `TripCtaButton` uses content description "Pause trip" and `drawPauseGlyph` while LIVE, but `ShareViewModel.onTripCtaTap()` calls `stopActiveTrip` when `isTracking && !isPaused`, which sends `STOP_TRIP`. Nothing in the code sets `isPaused = true`, and PAUSED to LIVE needs a `RESUME_TRIP` service action that does not exist (comment in `ShareViewModel` near line 170). UI-SPEC §3g and §3e describe pause/resume and a frozen PAUSED strip that therefore cannot occur.
@@ -177,12 +177,12 @@ Found during on-device verification, 2026-10-07 (SM-G965F). Logcat: 09:13:51 `ST
 1. Implement pause/resume (new `RESUME_TRIP` service action, set `isPaused`) so the UI-SPEC design is true. Pros: matches the owner-chosen design. Cons: new service behaviour and trip-accounting rules to define.
 2. Relabel/re-icon the LIVE control as Stop and drop PAUSED from the design. Pros: small. Cons: contradicts UI-SPEC §3g (this was the rejected ADR-019 proposal).
 
-**Recommendation:** Needs a product decision between options 1 and 2.
+**Decision:**
+Owner chose **Option 2** (2026-10-07): Re-icon and relabel the LIVE button as Stop (filled rounded-square glyph, label "Stop trip"), keeping the PAUSED state in code but unreachable. Pause/resume is deferred as a possible future feature.
 
-**Related:** ADR-019 (Rejected).
-
-**Asked:** 2026-10-07
-**Asking:** Claude Code (Sonnet 5.5)
+**Resolved:** 2026-10-07  
+**Resolution:** Option 2 — relabel/re-icon the LIVE control as Stop; PAUSED unreachable; see UI-SPEC §3g and Issue #2 (Resolved). Code and design-handoff follow-up recorded in IMPLEMENTATION-PLAN §4 and §6.  
+**Related:** ADR-019 (Rejected — contains this option; later partially adopted via this decision).
 
 ---
 

@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.21
+**Document Version:** 0.22
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
@@ -363,7 +363,8 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 **LIVE / PAUSED states:**
 - `TripPanel` is shown at bottom-center (same position as before, 14 dp padding all sides).
 - The PlayFab is hidden.
-- The existing inline `TripCtaButton` (48 dp) inside `TimerCtaRow` acts as the pause / resume control.
+- **LIVE:** The existing inline `TripCtaButton` (48 dp) inside `TimerCtaRow` shows a **stop icon** (filled rounded square glyph, ~12/24 of the glyph box, radius 2 dp, `BrandGreenDark` on the green circle), accessibility label **"Stop trip"**. Tapping finishes and persists the trip (sends `STOP_TRIP`).
+- **PAUSED:** The inline `TripCtaButton` shows a resume/play icon and label "Resume trip" (not currently reachable; pause/resume is a deferred future feature). No pause functionality is implemented.
 
 **Merged metrics row (4 cells):**
 The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) are replaced by a single `CombinedMetricsRow` with up to four cells in one row:
@@ -375,6 +376,8 @@ The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) ar
 When OBD is not connected only the first two cells are shown (identical to the previous StatsRow).
 
 **Visual design:** PROVISIONAL — reuses existing glass-panel and metric-cell styles; refined by a future design handoff (AGENTS.md §12).
+
+**Note (2026-10-07):** The LIVE button now shows a stop icon and label "Stop trip" (replaces the earlier pause/resume design and resolves Issue #2 in IMPLEMENTATION-ISSUES.md). The PAUSED state remains in code but is unreachable. Pause/resume capability is deferred as a possible future feature.
 
 ---
 
