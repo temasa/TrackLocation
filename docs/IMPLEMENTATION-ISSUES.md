@@ -8,9 +8,9 @@ description: Blocker protocol and live communication channel — fully generic, 
 
 ## TrackLocation - Phase 1
 
-**Version:** 0.1  
+**Version:** 0.2  
 **Status:** Issue log + blocker protocol  
-**Last Updated:** 2026-06-15 11:44:58
+**Last Updated:** 2026-10-07
 
 ---
 
@@ -160,6 +160,29 @@ The session half of Slice 2 (persisting `recording_session.obdFuelConsumedL`/`ob
 
 **Decided:** 2026-07-02
 **Deciding:** User (rinaldi.ch@gmail.com)
+
+### Issue #2: Trip panel LIVE button is labelled/iconed Pause but sends STOP_TRIP; PAUSED unreachable
+
+**Sprint/Task:** Track screen trip panel (UI-SPEC §3g / §3e)
+**Severity:** Warning
+**Status:** Raised (open; does not halt other work)
+
+**Problem:**
+`TripPanel.kt` `TripCtaButton` uses content description "Pause trip" and `drawPauseGlyph` while LIVE, but `ShareViewModel.onTripCtaTap()` calls `stopActiveTrip` when `isTracking && !isPaused`, which sends `STOP_TRIP`. Nothing in the code sets `isPaused = true`, and PAUSED to LIVE needs a `RESUME_TRIP` service action that does not exist (comment in `ShareViewModel` near line 170). UI-SPEC §3g and §3e describe pause/resume and a frozen PAUSED strip that therefore cannot occur.
+
+**Context:**
+Found during on-device verification, 2026-10-07 (SM-G965F). Logcat: 09:13:51 `START_TRIP`, then 09:14:34 `STOP_TRIP` after a single tap on the "Pause" button.
+
+**Options:**
+1. Implement pause/resume (new `RESUME_TRIP` service action, set `isPaused`) so the UI-SPEC design is true. Pros: matches the owner-chosen design. Cons: new service behaviour and trip-accounting rules to define.
+2. Relabel/re-icon the LIVE control as Stop and drop PAUSED from the design. Pros: small. Cons: contradicts UI-SPEC §3g (this was the rejected ADR-019 proposal).
+
+**Recommendation:** Needs a product decision between options 1 and 2.
+
+**Related:** ADR-019 (Rejected).
+
+**Asked:** 2026-10-07
+**Asking:** Claude Code (Sonnet 5.5)
 
 ---
 

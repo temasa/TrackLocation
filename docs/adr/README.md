@@ -37,7 +37,7 @@ Each ADR follows this template:
 ```markdown
 # ADR-NNN: [Title of Decision]
 
-**Status:** Proposed | Accepted | Superseded  
+**Status:** Proposed | Accepted | Rejected | Superseded  
 **Date:** YYYY-MM-DD  
 **Decided By:** [Name]
 
@@ -107,6 +107,7 @@ Links to docs, code, or external resources supporting this decision.
 | [016](016-order-route-overlay.md) | Gojek Order Route Overlay (planned + runtime routes) | Accepted | 2026-10-06 |
 | [017](017-order-route-provider-openrouteservice.md) | Order Route Provider: OpenRouteService (supersedes ADR-016 provider) | Accepted | 2026-10-06 |
 | [018](018-track-screen-live-location.md) | Track Screen Live Location (display-only, independent of recording) | Accepted | 2026-10-06 |
+| [019](019-trip-control-start-stop.md) | Trip Control Is Start/Stop Only (READY panel shows zeros) | Rejected | 2026-10-07 |
 
 ---
 
@@ -114,6 +115,7 @@ Links to docs, code, or external resources supporting this decision.
 
 - **Proposed:** New ADR, not yet accepted
 - **Accepted:** Decision made and approved; impacts architecture going forward
+- **Rejected:** Proposed but not adopted by the owner; kept as a short record of what was considered
 - **Superseded:** Decision was made but later replaced (link to new ADR); keep for historical context
 
 ---
@@ -126,5 +128,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 0.7
-**Last Updated:** 2026-10-06
+**Version:** 0.8
+**Last Updated:** 2026-10-07
