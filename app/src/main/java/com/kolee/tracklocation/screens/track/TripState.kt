@@ -1,6 +1,6 @@
 package com.kolee.tracklocation.screens.track
 
-enum class TripState { READY, LIVE, PAUSED }
+enum class TripState { READY, LIVE }
 
 data class TrackPanelState(
     val tripState: TripState,
