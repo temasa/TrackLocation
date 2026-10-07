@@ -118,6 +118,22 @@ fun TrackScreen() {
         fuelPricePerL = priceState.currentPrice
     )
 
+    // ADR-020: heading-up camera while a trip is live/paused or an order is active (display-only).
+    val navigationActive = panelState.tripState != TripState.READY || activeOrder != null
+    var lastValidHeading by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(liveFix, navigationActive) {
+        val fix = liveFix
+        if (!navigationActive) {
+            lastValidHeading = null
+        } else if (fix != null && fix.speedMps * 3.6f >= 3f && fix.bearingDeg in 0f..360f) {
+            lastValidHeading = fix.bearingDeg
+        }
+    }
+    // ADR-020: entering navigation re-enables follow (clears any earlier pan).
+    LaunchedEffect(navigationActive) {
+        if (navigationActive) isFollowing = true
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         TrackMap(
             currentLocation = displayLocation,
@@ -128,6 +144,8 @@ fun TrackScreen() {
             drop = orderRoute.drop,
             followLocation = isFollowing,
             recenterTick = recenterTick,
+            navigationActive = navigationActive,
+            navigationBearingDeg = if (navigationActive) lastValidHeading else null,
             onUserPan = { isFollowing = false }
         )
 

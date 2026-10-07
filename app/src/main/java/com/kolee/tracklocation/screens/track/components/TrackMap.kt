@@ -33,6 +33,7 @@ import com.kolee.tracklocation.utils.bitmapDescriptorFromVector
 import com.kolee.tracklocation.R
 
 private const val TAG = "TrackMap"
+private const val NAVIGATION_ENTRY_ZOOM = 17f // ADR-020
 
 @Composable
 fun BoxScope.TrackMap(
@@ -44,6 +45,8 @@ fun BoxScope.TrackMap(
     drop: LatLng? = null,
     followLocation: Boolean = true,
     recenterTick: Int = 0,
+    navigationActive: Boolean = false,
+    navigationBearingDeg: Float? = null,
     onUserPan: () -> Unit = {}
 ) {
     Log.d(TAG, "TrackMap entered")
@@ -64,11 +67,44 @@ fun BoxScope.TrackMap(
     fun targetZoom(): Float =
         if (cameraPositionState.position.zoom >= 12f) cameraPositionState.position.zoom else MAP_ZOOM
 
-    LaunchedEffect(currentLocation, followLocation) {
-        if (followLocation) {
+    // ADR-020: heading-up while navigating (bearing = last valid heading, else north), north-up otherwise; tilt always 0.
+    fun followPosition(target: LatLng, zoom: Float, navigating: Boolean, headingDeg: Float?): CameraPosition =
+        CameraPosition.Builder()
+            .target(target)
+            .zoom(zoom)
+            .bearing(if (navigating) (headingDeg ?: 0f) else 0f)
+            .tilt(0f)
+            .build()
+
+    // ADR-020: navigation transitions are tracked independently of follow so a user pan cannot leave stale state.
+    var wasNavigating by remember { mutableStateOf(false) }
+    var navEntryPending by remember { mutableStateOf(false) }
+    LaunchedEffect(navigationActive) {
+        if (navigationActive && !wasNavigating) navEntryPending = true
+        if (!navigationActive && wasNavigating) {
+            // Exit: back to north-up, keeping the current target and zoom (works even if the user had panned away).
             cameraPositionState.animate(
                 CameraUpdateFactory.newCameraPosition(
-                    CameraPosition.fromLatLngZoom(currentLocation, targetZoom())
+                    CameraPosition.Builder(cameraPositionState.position).bearing(0f).tilt(0f).build()
+                )
+            )
+        }
+        wasNavigating = navigationActive
+    }
+
+    // ADR-020: zoom 17 once on navigation entry (also when opened mid-trip); applied when follow is active.
+    LaunchedEffect(currentLocation, followLocation, navigationActive, navigationBearingDeg) {
+        if (followLocation) {
+            val entering = navigationActive && navEntryPending
+            if (entering) navEntryPending = false
+            cameraPositionState.animate(
+                CameraUpdateFactory.newCameraPosition(
+                    followPosition(
+                        currentLocation,
+                        if (entering) NAVIGATION_ENTRY_ZOOM else targetZoom(),
+                        navigationActive,
+                        navigationBearingDeg
+                    )
                 )
             )
         }
@@ -76,11 +112,13 @@ fun BoxScope.TrackMap(
 
     // Explicit Recenter taps: tick 0 is the initial composition, so skip it.
     val latestLocation by rememberUpdatedState(currentLocation)
+    val latestNavigationActive by rememberUpdatedState(navigationActive)
+    val latestNavigationBearing by rememberUpdatedState(navigationBearingDeg)
     LaunchedEffect(recenterTick) {
         if (recenterTick > 0) {
             cameraPositionState.animate(
                 CameraUpdateFactory.newCameraPosition(
-                    CameraPosition.fromLatLngZoom(latestLocation, targetZoom())
+                    followPosition(latestLocation, targetZoom(), latestNavigationActive, latestNavigationBearing)
                 )
             )
         }
