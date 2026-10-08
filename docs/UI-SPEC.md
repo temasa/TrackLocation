@@ -134,7 +134,7 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 **Display in TrackItemRow (completed trip, order-linked):**
 
 **Three-line header card (ADR-023):** Appears as the row title/subtitle area, replacing the one-line label from ADR-022. The header shows three lines:
-- **Line 1 (ACCEPTED):** Place name from reverse-geocoding the trip start GPS fix (e.g., "Senayan", "Jalan Cipete Raya"). One-time reverse-geocoding at trip end (fail-soft if offline). Names only (no full address shown). **Hidden if reverse-geocoding failed or no fix available** — the card then shows two lines (PICKUP and DROP only).
+- **Line 1 (ACCEPTED):** Place name from reverse-geocoding the trip start GPS fix (e.g., "Senayan", "Jalan Cipete Raya"). One-time reverse-geocoding at trip end (fail-soft if offline). Names only (no full address shown). **Hidden if reverse-geocoding failed or no fix available** — the card then shows two lines (PICKUP and DROP only). For old migrated trips (v11→v12 database migration) that lack a name but have coordinates, the ACCEPTED line initially hidden; a one-time background backfill after app launch will eventually reverse-geocode the name, and the ACCEPTED line will appear on the next Trips list render (ADR-023 Amendment 2026-10-08).
 - **Line 2 (PICKUP):** Pickup name from the Gojek order card (e.g., "Mall Pondok Indah").
 - **Line 3 (DROP):** Drop name from the Gojek order card (e.g., "Blok S").
 

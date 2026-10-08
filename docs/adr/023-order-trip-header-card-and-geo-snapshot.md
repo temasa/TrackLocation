@@ -151,3 +151,43 @@ All three fields are persisted on the trip row as name + full address + latitude
 **Amends:** ADR-022 (presentation section: note the three-line header supersedes the one-line label in the row display; label and earnings still apply), ADR-017 (privacy: driver coordinates sent to ORS reverse-geocode for accepted location).
 
 **Supersedes:** None.
+
+---
+
+## Amendment 2026-10-08: One-time Accepted-Place Backfill for Migrated Order Trips
+
+**Context:** Device check post-v12 migration showed that migrated order trips (v11→v12) have `acceptedLat`/`acceptedLng` coordinates (6 of 7 test trips; one trip lacks `startLocationId`) but `acceptedName` and `acceptedAddress` remain `NULL`. The ACCEPTED header line is therefore hidden for them, showing only PICKUP and DROP (two-line header). This amendment defines a one-time background backfill process to reverse-geocode the accepted location for these old trips once the app is online, so the ACCEPTED line eventually appears for backfilled rows.
+
+**Decision:**
+
+1. **Backfill process (run from ShareViewModel init):** When `ShareViewModel` is created for the first time in the app process (singleton instance), a one-time background backfill coroutine is launched. It scans the `track` table for candidates and processes them with no UI blocking.
+
+2. **Candidate selection:** `track` rows matching all of:
+   - `orderLabel NOT NULL` (order-linked trip)
+   - `acceptedName IS NULL AND acceptedAddress IS NULL` (not yet reverse-geocoded)
+   
+   Candidates are ordered newest-first (by `id` descending). Maximum 20 trips processed per backfill run (per app launch).
+
+3. **Point resolution:** For each candidate, the accepted location point is:
+   - `(acceptedLat, acceptedLng)` when both are present
+   - Fallback: the first point from the trip's stored `pathPoints` string (parse, extract lat/lng, and persist those as `acceptedLat`/`acceptedLng`)
+   - If no point available, skip the row (leave `acceptedName`/`acceptedAddress` `NULL`)
+
+4. **Reverse-geocoding:** Call OpenRouteService reverse-geocode API on the point (same ORS client/key as new trips). Timeout: 8 seconds. Retry: one automatic retry on failure. Success: write `acceptedName` and `acceptedAddress` to the `track` row. Failure: leave both `NULL`; the row is retried on the next app launch. Never block trip data or UI.
+
+5. **Throttling:** Sequential processing with ~1.2 second delays between API calls (gentle rate-limiting to avoid ORS quota strain).
+
+6. **Privacy:** The backfill sends the start coordinates of PAST order trips (user-approved GPS data already in the local log) to OpenRouteService once each. No customer data. Same privacy treatment as new trips (FR-20/ADR-017 reverse-geocoding refinement).
+
+7. **Schema:** No new migration; the `acceptedLat`/`acceptedLng`/`acceptedName`/`acceptedAddress` columns already exist from ADR-023 main decision.
+
+8. **Display impact:** As rows are backfilled on the server side (after each API success), the Trips list re-renders; the ACCEPTED line appears for those rows on subsequent view refreshes. Rows with no backfill candidate remain two-line (PICKUP/DROP only).
+
+9. **Correction to ADR-023 main decision:** The statement in ADR-023 §6 "Do not backfill" for `acceptedName`/`acceptedAddress` is amended: old trips do not get backfilled in the migration itself (v11→v12), but they do get a separate one-time background backfill after launch, making the statement "Leave `NULL` for all v11→v12 rows" accurate for the migration but now followed by "Backfill is deferred to a post-launch background process" (this amendment).
+
+**Consequences:**
+
+- **Positive:** Old order trips gradually gain the ACCEPTED location name over time (after the app resumes online); the three-line header appears for backfilled rows, enriching the Trips list display retrospectively.
+- **Negative/Accepted:** (a) Backfill is async and can take several app launches to complete all rows (acceptable; retry on next launch). (b) If ORS is persistently offline, rows remain with `NULL` accepted names (acceptable; fail-soft, trip data unaffected). (c) No new schema or migration (acceptable; uses existing v12 columns).
+
+---

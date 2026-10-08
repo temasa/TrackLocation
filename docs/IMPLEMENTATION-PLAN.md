@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.37
+**Version:** 0.38
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-08
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -60,6 +60,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.38 | 2026-10-08 | One-time accepted-place backfill for migrated order trips (ADR-023 Amendment 2026-10-08, docs only): background reverse-geocoding of trip start location for v11→v12 migrated order trips with coordinates but no place names. New §4 slice "One-time Accepted-Place Backfill for Migrated Order Trips (ADR-023 Amendment)" with What/Observable/How to Verify (8 checks) + 7 implementation steps (ShareViewModel init backfill, coroutine logic, point resolution, ORS call, throttling, error handling, privacy). ADR-023 amended with new "Amendment 2026-10-08" section (context, decision 9 points, consequences); ADR-017 amended with backfill note in Privacy Refinement section; PRD v0.19 FR-20 extended with backfill mention; UI-SPEC v0.25 §3b-order updated with backfill note; ARCHITECTURE v0.22 post-migration backfill section added. IMPLEMENTATION-PLAN version 0.37→0.38, §1 change log entry added, §6 new Task Log row (Docs, 2026-10-08, In Progress, Git Revision '---'), Next Step section updated with backfill context. DOCUMENT-CONTROL register + change log updated. No code changes in this docs-only entry; code implementation pending user approval (AGENTS.md §5b). |
 | 0.37 | 2026-10-08 | Order trip header card and geo snapshot (ADR-023, docs only): order-linked trip rows display three-line header (ACCEPTED / PICKUP / DROP) + 12 persisted geo columns. New ADR-023 file created; adr/README v1.1→1.2 (ADR-023 row added, count 22→23); ADR-022 and ADR-017 amended with supersession/privacy refinement notes; PRD v0.18→0.19 (FR-20 extended with three-line header + geo snapshot details, FR-17 privacy refinement for reverse-geocoding driver coordinates); ARCHITECTURE v0.21→0.22 (MIGRATION_11_12 DB v11→v12 documented with twelve new columns + backfill logic); UI-SPEC v0.24→0.25 (§3b-order rewritten: three-line header card description + missing-data rules); IMPLEMENTATION-PLAN §4 new "Order Trip Header Card and Geo Snapshot (ADR-023)" slice with full "How to Verify" block (migration v11→v12 on device, new order trip shows 3-line header, reverse-geocode failure/offline behavior, backfilled v11 rows, non-order trips unchanged, build/device verification permitted by user 2026-10-08) + 7 numbered implementation steps (What/How), §6 new Task Log row (status In Progress, Git Revision '---'), and updated Next Step section; §1 change log entry 0.37 added, version 0.36→0.37. DOCUMENT-CONTROL register + change log row updated. No code changes in this docs-only entry; code implemented afterwards (see §6). |
 | 0.36 | 2026-10-08 | Order trip label in Trips list (ADR-022, docs only): trip rows for order-linked trips now display pickup/drop label and price/net cell. New ADR-022 file created; adr/README v1.0→1.1 (ADR-022 row added, count 21→22); PRD v0.17→0.18 (FR-20 new, cross-refs to FR-15/FR-16, keyword "snapshot"), ARCHITECTURE v0.20→0.21 (MIGRATION_10_11 DB v10→v11 documented), UI-SPEC v0.23→0.24 (§3b-order new subsection describing order-trip row label + price/net display), IMPLEMENTATION-PLAN §4 new "Order Trip Label in Trips List (ADR-022)" slice + updated Next Step section + §1 change log entry 0.36 added, version 0.35→0.36. DOCUMENT-CONTROL register + change log row updated. No schema changes or Room migration in this docs-only entry (MIGRATION_10_11 definition only). Code implementation pending user approval (AGENTS.md §5b). |
 | 0.35 | 2026-10-08 | Backfilled revisions: ADR-015 vocabulary docs row (ad8c56c) + car-marker color docs row (ad8c56c) + car-marker color code row completed (9d4d672, verification text updated). Car-marker code task marked Completed; drawable-only fill changes (`ic_car_marker.xml` body `#FA0211`→`#000000`, windows `#1D252C`→`#FFFFFF`). Revision backfill per AGENTS.md §8. §6 new top row added (docs-only backfill task). Docs only; no schema, no build/test run. |
@@ -337,6 +338,68 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ---
 
+### One-time Accepted-Place Backfill for Migrated Order Trips (ADR-023 Amendment)
+
+**What it does:** Background reverse-geocoding of the trip start location (accepted place) for migrated order trips (v11→v12 database migration) that have coordinates (`acceptedLat`/`acceptedLng`) but no place names (`acceptedName`/`acceptedAddress` are `NULL`). The backfill runs once per app process after `ShareViewModel` is first created, processing up to 20 trips per run, newest first, with no UI blocking.
+
+**Observable result:** Install over a v12 database with migrated order trips lacking `acceptedName` → launch the app (on network) → after a moment, in the background, the app reverse-geocodes the trip start locations via OpenRouteService. On subsequent views of the Trips list, backfilled rows gradually show the three-line header with the ACCEPTED line appearing as the geocoding completes (rows are re-rendered as the DB updates). Rows with no network or ORS failure remain two-line (PICKUP/DROP only) and are retried on the next app launch. Offline operation (no network) → rows unchanged, no crash.
+
+**How to Verify:**
+
+1. **DB setup:** Start with a v12 database containing migrated order trips (from v11→v12 migration) with `acceptedLat`/`acceptedLng` but NULL `acceptedName`/`acceptedAddress` (typical post-migration state).
+
+2. **Backfill runs in background:** Launch the app (on network); no user action needed. Check logcat for reverse-geocoding API calls (one per trip, ~1.2 s apart). Verify no UI freeze, no dialog, no ANR during backfill (short timeout: 8 s per call; fail-soft on error).
+
+3. **Rows gain ACCEPTED line:** After backfill completes (or each time the app views the Trips list after a successful geocode), order-trip rows show the three-line header: "ACCEPTED <placeName>", "PICKUP <name>", "DROP <name>". Verify names match approximate trip start location.
+
+4. **Failed rows remain two-line:** Simulate ORS failure (e.g., disable network, ORS quota limit, timeout). Backfill attempts are made; failed rows remain with NULL `acceptedName` → two-line header (PICKUP/DROP only, no ACCEPTED). Close and relaunch app → backfill retries; once online, names are eventually backfilled.
+
+5. **Offline → no crash:** Disable network and launch the app → backfill attempts (timeouts or errors); rows remain unchanged, app does not crash. Re-enable network → backfill continues on next launch.
+
+6. **Non-order trips untouched:** Manual (non-order) trips with NULL `orderLabel` are skipped; their 12 geo columns remain `NULL`; no regression.
+
+7. **Candidate limits honored:** Database with 50+ order trips lacking names → backfill processes max 20 per run → verify at most 20 reverse-geocode calls per app launch (others retried on next launch).
+
+8. **No anomalies:** Verify no crashes, no ANR, no disk/memory issues, no leaked coroutines or HTTP connections after multiple backfill runs.
+
+**Implementation steps (numbered, What/How):**
+
+1. **ShareViewModel.init() backfill launch:** When `ShareViewModel` is first instantiated (singleton pattern per existing code), launch a one-time background backfill coroutine. Pseudocode:
+   ```
+   private val backfillStarted = AtomicBoolean(false)
+   init {
+       if (backfillStarted.compareAndSet(false, true)) {
+           viewModelScope.launch(Dispatchers.IO) {
+               performAcceptedPlaceBackfill()
+           }
+       }
+   }
+   ```
+   Uses an `AtomicBoolean` to ensure exactly one backfill per process (not per `ShareViewModel` re-creation).
+
+2. **Backfill coroutine logic (`performAcceptedPlaceBackfill()`):**
+   - Query `track` table: select rows where `orderLabel NOT NULL AND acceptedName IS NULL AND acceptedAddress IS NULL`, ordered by `id DESC` (newest first), limit 20.
+   - For each row: (a) resolve the accepted location point (acceptedLat/acceptedLng if both present; else fallback to first point from `pathPoints` string; else skip); (b) call ORS reverse-geocode (8 s timeout, one retry on failure); (c) on success, update the row with `acceptedName` and `acceptedAddress`; on failure, skip (retry on next app launch); (d) delay ~1.2 s between API calls (throttle).
+   - Never block trip data or UI; use `Dispatchers.IO` for network calls.
+
+3. **Point resolution from pathPoints:** If `acceptedLat` or `acceptedLng` is NULL, attempt to parse the trip's `pathPoints` string (existing encoded polyline format). Extract the first point's lat/lng and use that as the accepted location. If parsing fails or no first point exists, skip the row.
+
+4. **ORS reverse-geocode call:** Same as ADR-023 trip-stop logic (step 2): call `/geocode/reverse?lat=<lat>&lon=<lon>&size=1`, reuse existing ORS client/key, extract `name` from result. Timeout: 8 s. Retry: one automatic retry on failure (timeout, rate limit, invalid input). On success: write `acceptedName` and `acceptedAddress` to the DB row. On failure: leave both NULL.
+
+5. **Rate limiting and throttling:** Insert a `delay(1200L)` (1.2 s) between consecutive API calls to avoid overwhelming ORS's free tier. Process at most 20 trips per backfill run; remaining candidates are retried on the next app launch.
+
+6. **Error handling and resilience:** Wrap the backfill coroutine in try-catch. Log errors (backfill failure) but never crash or show the user a dialog. If a single row's geocode fails, continue to the next row. If the entire backfill coroutine fails, the app remains functional; the backfill retries on next launch.
+
+7. **No schema change:** Backfill uses existing `acceptedName`/`acceptedAddress` columns (added by MIGRATION_11_12, ADR-023 main decision). No new columns, no new migration, no Room version bump.
+
+**Privacy:** Same as ADR-023 main decision and ADR-017 refinement: driver coordinates for PAST order trips sent to ORS once each, fail-soft, never persisted remotely. No customer data.
+
+**How to Verify (after implementation):** See steps 1–8 above; build and device test per AGENTS.md §5a. Manual on-device steps: (a) install over v12 DB with migrated order trips; launch on network → verify backfill runs in background (logcat API calls), Trips list shows ACCEPTED names after geocoding completes; (b) test offline scenario (no network) → backfill skipped, rows unchanged; (c) test with network re-enabled → backfill runs on next launch, names appear.
+
+**No new permission. No database migration. No schema change.**
+
+---
+
 ### Observer — Gojek Trip Extraction (ADR-013)
 
 **What it does:** Automatically extract pickup and drop locations (plus payment and earnings) from captured Gojek driver app order-card tree snapshots into a device-local `observer_trip` store. Parse is post-snapshot-write, Gojek-only (`com.gojek.partner`), with no link to the canonical location log or trip/session lifecycle.
@@ -603,7 +666,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-10-08 | Docs — Order trip header card and geo snapshot (ADR-023): three-line header (ACCEPTED / PICKUP / DROP) + 12 persisted geo columns (acceptedName/Address/Lat/Lng + pickupName/Address/Lat/Lng + dropName/Address/Lat/Lng). New ADR-023 file + adr/README v1.1→1.2 (ADR-023 row added, count 22→23). ADR-022 amended (presentation supersession note); ADR-017 amended (privacy refinement for reverse-geocoding driver coordinates). PRD v0.18→0.19 (FR-20 extended to three-line header, FR-17 privacy refinement); ARCHITECTURE v0.21→0.22 (MIGRATION_11_12 DB v11→v12 documented with twelve columns + backfill logic); UI-SPEC v0.24→0.25 (§3b-order rewritten to describe three-line header card). IMPLEMENTATION-PLAN §4 new "Order Trip Header Card and Geo Snapshot (ADR-023)" slice (What/Observable/How to Verify with 7 checks + 7 numbered implementation steps), §6 this task row, and updated Next Step section; §1 change log entry 0.37 added; version 0.36→0.37. DOCUMENT-CONTROL register + change log row updated. No source code changes; all documentation. | Completed | e83bea5 | Built (`./gradlew assembleDebug` BUILD SUCCESSFUL) and installed over the existing app on SM-G965F (user-authorized, 2026-10-08); logcat shows `DB version upgrading from 11 to 12` with no crash/Room validation error. NOT yet verified (adb tunnel dropped mid-check): migration backfill contents, Trips list three-line header on screen, live capture + ORS reverse geocode for a new Gojek order trip (incl. `boundary.circle.radius` behavior), offline fail-soft. No tests run. |
+| 2026-10-08 | Docs — One-time accepted-place backfill for migrated order trips (ADR-023 Amendment 2026-10-08): background reverse-geocoding of trip start location for v11→v12 migrated order trips with coordinates but no place names. New §4 slice "One-time Accepted-Place Backfill for Migrated Order Trips (ADR-023 Amendment)" with What/Observable/How to Verify (8 checks) + 7 implementation steps. ADR-023 amended with "Amendment 2026-10-08" section (context, decision 9 points, consequences); ADR-017 amended with backfill note in Privacy Refinement; PRD v0.19 FR-20 extended with backfill mention; UI-SPEC v0.25 §3b-order updated with backfill note; ARCHITECTURE v0.22 post-migration backfill section added. IMPLEMENTATION-PLAN version 0.37→0.38, §1 change log entry 0.38 added, §4 new slice (What/Observable/7 steps), §6 this task row, Next Step section updated with backfill context. DOCUMENT-CONTROL register + change log updated. No source code changes; all documentation. | In Progress | --- | Docs only; no code or schema changes. Code implementation pending user approval (AGENTS.md §5b). |
 | 2026-10-08 | Docs — backfilled revisions ad8c56c / 9d4d672 and marked car-marker code task Completed | Completed | ebf7430 | Docs only; hashes checked against `git log`. |
 | 2026-10-08 | Docs — ADR-015 vocabulary aligned with code: trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table (Finished row → AUTO-END at Selesai; Cleared row → Backstop AUTO-END), Decision #2 title includes Selesai, terminal-state list added Selesai first, Positive consequences amended to include Selesai. ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); "both yield" → "all yield". DOCUMENT-CONTROL register + change log + IMPLEMENTATION-PLAN v0.33→0.34 updated. Docs only; no schema, no build/test run. | Completed | ad8c56c | Cross-checked against ShareViewModel.kt end collector and OrderCardParser.kt; vocabulary/decision/consequences/alternatives wording alignment verified. |
 | 2026-10-07 | Docs — Track car-marker color update (UI-SPEC §3i): black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent backing remains omitted. UI-SPEC v0.22→0.23; IMPLEMENTATION-PLAN v0.32→0.33 (§1 change log, current/also-documented summary, §4 slice What/Observable/How to Verify/implementation instructions, §6 task rows); DOCUMENT-CONTROL register + change log updated. No source or schema changes. | Completed | ad8c56c | Documentation consistency checked; no build or test run. |

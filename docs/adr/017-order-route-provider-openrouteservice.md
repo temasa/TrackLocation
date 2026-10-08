@@ -107,6 +107,8 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 
 **ADR-023 (Order Trip Header Card)** extends OpenRouteService usage to reverse-geocoding: when a trip ends, the driver's location at trip start (the trip start GPS fix lat/lng) is sent to ORS `/geocode/reverse` to resolve the place name. This occurs once per trip, only for order-linked trips. **Coordinate privacy impact:** the driver's coordinates are now sent to OpenRouteService for the first time in this app (previously only addresses were sent to ORS for pickup/drop forward-geocoding). This refines the FR-17 statement "routing sends addresses externally" to include "reverse-geocoding sends driver coordinates externally for order trips." Mitigation: the trip is saved with or without the reverse-geocode result (fail-soft), and the coordinates are persisted in a user-deletable `track` row (not auto-pruned).
 
+**Amendment 2026-10-08 (ADR-023 Amendment):** ADR-023 also defines a one-time background backfill process that reverse-geocodes the accepted location for old migrated order trips (v11→v12 database migration) that lack `acceptedName`/`acceptedAddress` but have `acceptedLat`/`acceptedLng` coordinates. This backfill runs once per app process after launch, in the background, sending the trip start coordinates of up to 20 old order trips to ORS for reverse-geocoding. Same privacy treatment as forward-geocoding for new trips: addresses sent, no customer data. The backfill is one-time per trip and respects ORS rate limits (throttled ~1.2 s between calls). See ADR-023 Amendment 2026-10-08 for full details.
+
 ---
 
 **Amends:** ADR-016 (provider change from Google to ORS; behavior decisions in ADR-016 remain in force).

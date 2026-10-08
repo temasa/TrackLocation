@@ -288,6 +288,12 @@ Room database (`TrackDatabase`), at version **v12** (current; ADR-023 extends to
 - Leave `acceptedName`/`acceptedAddress` as `NULL` (no network call in migration; reverse-geocoding is captured on-demand for new trips).
 - Post-migration, new order trips capture all twelve fields when the trip is persisted at stop; accepted location is reverse-geocoded once (fail-soft if offline) via OpenRouteService.
 
+**Post-migration background backfill (ADR-023 Amendment 2026-10-08):**
+- A one-time background backfill runs from `ShareViewModel` init (once per app process), processing up to 20 order-linked trips with `NULL` accepted names but present `acceptedLat`/`acceptedLng` coordinates (newest first).
+- Each candidate is reverse-geocoded via OpenRouteService (8 s timeout, one retry); success writes `acceptedName`/`acceptedAddress`; failure leaves `NULL` (retried on next app launch).
+- Processing is sequential with ~1.2 s delays, never blocking trip data or UI.
+- No schema change (uses existing v12 columns); privacy treatment same as new trips (FR-20/ADR-017).
+
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 
 `obd_sample` table:
