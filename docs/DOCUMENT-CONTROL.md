@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.17 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-07 |
+| `docs/PRD.md` | 0.18 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-08 |
 | `docs/ARCHITECTURE.md` | 0.21 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-08 |
-| `docs/adr/README.md` | 1.0 | Active (21 ADRs indexed) | Tech Lead | 2026-10-07 |
+| `docs/adr/README.md` | 1.1 | Active (22 ADRs indexed) | Tech Lead | 2026-10-08 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -57,8 +57,10 @@ When any controlled document changes, update both:
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.35 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
-| `docs/UI-SPEC.md` | 0.23 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
+| `docs/adr/021-debug-diagnostic-screen-recorder.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
+| `docs/adr/022-order-trip-label-in-trips-list.md` | 1.0 | Accepted | Project owner | 2026-10-08 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.36 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
+| `docs/UI-SPEC.md` | 0.24 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-08 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -88,6 +90,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-08 | adr/022 (new), adr/README, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/1.0/0.17/0.23/0.20/0.35/0.1 | 1.0/1.1/0.18/0.24/0.21/0.36/0.1 | Order trip label in Trips list (ADR-022): order-linked trip rows show pickup/drop label ("Gojek: <names> → <names>") + price/net cell ("Rp.. / Rp.." format) in the Trips list. New ADR-022 file (Context/Decision/Consequences/Alternatives/Related ADRs/References). adr/README v1.0→1.1 (ADR-022 row added, count 21→22). PRD v0.17→0.18 (FR-20 new with compact Rupiah price/net format; cross-refs to FR-15/FR-16; "snapshot" keyword clarified). UI-SPEC v0.23→0.24 (new §3b-order subsection describing order-trip row label + price/net display format + missing-data rules; "no design handoff needed" note per user exemption). ARCHITECTURE v0.20→0.21 (MIGRATION_10_11 documented: DB v10→v11, `ALTER TABLE track ADD COLUMN orderLabel TEXT` + `ALTER TABLE track ADD COLUMN orderEarningsRp INTEGER`). IMPLEMENTATION-PLAN v0.35→0.36 (§4 new "Order Trip Label in Trips List (ADR-022)" slice with What/Observable/How to Verify + 7 implementation steps; §1 change log entry 0.36 added; Next Step section updated with ADR-022 context). DOCUMENT-CONTROL: register + this change log row. Docs only; no schema/migration implementation yet. Code implementation pending user approval (AGENTS.md §5b). | Claude Haiku 4.5 |
 | 2026-10-08 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.34/0.1 | 0.35/0.1 | Backfilled revisions: ADR-015 vocabulary docs row (ad8c56c) + car-marker color docs row (ad8c56c) + car-marker color code row (9d4d672, marked Completed, verification text updated). §6 new top row added for backfill task. §1 change log entry 0.35 added. DOCUMENT-CONTROL register + this row. Docs only; hashes verified against `git log`. | Claude Haiku 4.5 |
 | 2026-10-08 | adr/015, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/0.20/0.33/0.1 | 1.1/0.21/0.34/0.1 | ADR-015 vocabulary aligned with code — trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table (Finished row → AUTO-END by Selesai screen; Cleared row → Backstop AUTO-END), Decision #2 title includes Selesai, terminal-state list added Selesai first + "both" → "all". ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); "both yield" → "all yield". IMPLEMENTATION-PLAN §6 new task-log row. Docs only; no schema, no build/test run. | Claude Haiku 4.5 |
 | 2026-10-07 | UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.22/0.32/0.1 | 0.23/0.33/0.1 | Track car-marker color update: black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent white backing remains omitted. UI-SPEC §3i and IMPLEMENTATION-PLAN §1/§4/§6 updated; code task planned for only the existing vector drawable fills. No source change, schema, or Room migration; no build or test run. | GitHub Copilot (delegated Auto) |

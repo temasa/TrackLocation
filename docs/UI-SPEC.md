@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.23
+**Document Version:** 0.24
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-07
+**Last Updated:** 2026-10-08
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -124,6 +124,33 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 **Data:** No schema change for §3b's efficiency stat; the cost stat (ADR-008) reads the new `fuel_price` table (migration v8→v9).
 
 **Design handoff:** Reuses the established Sessions/`TrackItemRow` visual language (no new visual design), so no external Claude Design round-trip is required. If externalised: attach the current Trips screen + Sessions screen as reference.
+
+---
+
+## 3b-order. Trips List — Order-Trip Rows (ADR-022)
+
+**What it does:** When a trip is tied to a Gojek order (auto-started by ADR-015, labeled/tracked by ADR-022), the completed trip row in the Trips list displays the order label and a compact price/net cell, allowing the driver to quickly identify order-linked work at a glance.
+
+**Display in TrackItemRow (completed trip, order-linked):**
+
+**Label:** Appears as part of the row title or subtitle (implementation detail TBD in code; placement might be below "Track #N" or replacing the generic title): "Gojek: <pickupName> → <dropName>" (e.g., "Gojek: Senayan → Blok S"). Names are extracted location names only (no full addresses; no customer name/phone). If a name exceeds ~25 characters, truncate in the UI row with an ellipsis (e.g., "Gojek: PT Multi-Pratama M… → …"). The label is a snapshot captured at trip save time; it survives `observer_trip` row pruning (90d/5k retention, ADR-013).
+
+**Price / Net cell:** Appears in the row's second metric row (where completed trips show avg km/L / cost, §3b #7) or as a dedicated cell. Shows two values separated by " / ":
+- First: `price = orderEarningsRp` (earnings from the order at completion).
+- Second: `net = price − fuelCost` where `fuelCost = trip.obdFuelConsumedL × effectiveFuelPrice(trip.startedAt)` (priced at trip start per ADR-008).
+
+**Compact Rupiah format** (same as FR-16 order-card trip strip):
+- < 1,000 → 'Rp850'
+- 1,000–999,999 → 'Rp8.4k' (one decimal)
+- ≥1,000,000 → 'Rp1.2jt'
+- Negative prefixed with '−' (e.g., '−Rp8.4k' if net is negative)
+- Example: "Rp28k / Rp19.6k" or "Rp850 / Rp−1.2k"
+
+**Missing data:** Shows '— / —' when `trip.obdFuelConsumedL = 0` or no fuel price was in effect at trip start.
+
+**Manual (non-order) trips:** Rows without an order label (manual trips, or order trips that failed to capture a label) remain unchanged — no label or price/net cell is shown. The row displays the standard metrics: distance / duration / avg speed / avg km/L / cost (§3b).
+
+**Design note:** No new visual language is introduced — the label is plain text (reuses existing title/label typography), and the price/net cell reuses the existing compact-Rupiah format and cell styling from the active-trip row (FR-12 integration). No external design handoff needed; user explicitly exempted from AGENTS.md §12 for this change (ADR-022).
 
 ---
 

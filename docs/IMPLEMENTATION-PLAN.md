@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.35
+**Version:** 0.36
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-08
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -18,9 +18,9 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — Two-ACTIVE-cards fix (single-active-session invariant) device-verified 2026-07-07. Active coding task: resume always-recording on relaunch after force-stop (an open non-stale session was leaving an Inactive card beside an ACTIVE session) — code fix pending (see §6 Task Log, In Progress). Approved Track car-marker color update is documented; its narrow drawable-only code task is planned in §6. (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
+### Current — Order trip label in Trips list (ADR-022) documented 2026-10-08: order-linked trip rows display pickup/drop label and price/net summary in the Trips list. All related docs (PRD FR-20, UI-SPEC §3b-order, ARCHITECTURE v11 migration, ADR-022) updated. Code implementation pending user approval (AGENTS.md §5b). Remaining: Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015) code builds + device verification; order route overlay (ADR-016) + provider (ADR-017) code + design handoff + device verification; Track car-marker color update code planned; Track Recenter + navigation camera + live location code + device verification; Debug recorder code pending user approval. (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
 
-### Also documented — Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015), order route overlay (ADR-016) with provider switch to OpenRouteService (ADR-017), Track map Recenter/follow mode (2026-10-06), Track screen live location (ADR-018, docs only), Track navigation camera (ADR-020, docs only), and Track car-marker colors (black body, white windows; code change planned). Debug diagnostic screen recorder documented (ADR-021, docs only; code implementation awaits user approval). Code for order features + route provider implemented, unbuilt for order route overlay (static review only); design handoff pending; build/test needs explicit permission (AGENTS.md §5a). Track map Recenter code pending user approval (no build permission yet). Track screen live location and Track navigation camera code pending user approval (AGENTS.md §5b). Debug recorder code implementation pending user approval (AGENTS.md §5b).
+### Also documented — Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015), order route overlay (ADR-016) with provider switch to OpenRouteService (ADR-017), order trip label in Trips list (ADR-022, docs only), Track map Recenter/follow mode (2026-10-06), Track screen live location (ADR-018, docs only), Track navigation camera (ADR-020, docs only), Track car-marker colors (black body, white windows; code change planned), and Debug diagnostic screen recorder (ADR-021, docs only). Code for order features + route provider implemented, unbuilt for order route overlay (static review only); design handoff pending; build/test needs explicit permission (AGENTS.md §5a). Track map Recenter code pending user approval (no build permission yet). Track screen live location and Track navigation camera code pending user approval (AGENTS.md §5b). Debug recorder code implementation pending user approval (AGENTS.md §5b). Order trip label in Trips list code implementation pending user approval (AGENTS.md §5b).
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -60,6 +60,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.36 | 2026-10-08 | Order trip label in Trips list (ADR-022, docs only): trip rows for order-linked trips now display pickup/drop label and price/net cell. New ADR-022 file created; adr/README v1.0→1.1 (ADR-022 row added, count 21→22); PRD v0.17→0.18 (FR-20 new, cross-refs to FR-15/FR-16, keyword "snapshot"), ARCHITECTURE v0.20→0.21 (MIGRATION_10_11 DB v10→v11 documented), UI-SPEC v0.23→0.24 (§3b-order new subsection describing order-trip row label + price/net display), IMPLEMENTATION-PLAN §4 new "Order Trip Label in Trips List (ADR-022)" slice + updated Next Step section + §1 change log entry 0.36 added, version 0.35→0.36. DOCUMENT-CONTROL register + change log row updated. No schema changes or Room migration in this docs-only entry (MIGRATION_10_11 definition only). Code implementation pending user approval (AGENTS.md §5b). |
 | 0.35 | 2026-10-08 | Backfilled revisions: ADR-015 vocabulary docs row (ad8c56c) + car-marker color docs row (ad8c56c) + car-marker color code row completed (9d4d672, verification text updated). Car-marker code task marked Completed; drawable-only fill changes (`ic_car_marker.xml` body `#FA0211`→`#000000`, windows `#1D252C`→`#FFFFFF`). Revision backfill per AGENTS.md §8. §6 new top row added (docs-only backfill task). Docs only; no schema, no build/test run. |
 | 0.34 | 2026-10-08 | ADR-015 vocabulary aligned with code: trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table updated (Finished row → AUTO-END at Selesai; Cleared row → Backstop AUTO-END), Decision #2 title amended to include Selesai, terminal-state list in Decision + Alternatives updated, Positive consequences amended to include Selesai. ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); adjusted "both yield" → "all yield". DOCUMENT-CONTROL register + change log updated. §6 new task-log row added. Docs only; no schema, no build/test run. |
 | 0.33 | 2026-10-07 | Track car-marker color update: black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent backing remains omitted. UI-SPEC §3i, §4 car-marker slice, §6 task rows, current/also-documented summary, and DOCUMENT-CONTROL updated. Code task is planned and limited to the existing marker drawable fills; no schema or migration. No build or test run. |
@@ -205,6 +206,54 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 7. **No release-build inclusion:** Ensure `app/src/debug/` is never compiled into release builds. Gradle source-set defaults handle this (debug source set applies only to debug variants). Verify via `./gradlew build --build-cache` (requires permission §5a); release APK must not contain debug classes.
 
 **No schema. No Room migration. No new permission for release builds (debug only).**
+
+---
+
+### Order Trip Label in Trips List (ADR-022)
+
+**What it does:** When a trip is tied to a Gojek order (auto-started by ADR-015), the completed trip row in the Trips list displays a persistent order label ("Gojek: <pickupName> → <dropName>") and a compact price/net summary cell (e.g., "Rp28k / Rp19.6k"), allowing the driver to quickly review order-linked work without opening each trip detail. The label and earnings are snapshots captured when the trip is persisted at stop; they survive `observer_trip` row pruning (90d/5k retention per ADR-013). Net profit is computed at display time: `net = earnings − (trip fuel litres × effective fuel price at trip start)` (per ADR-008).
+
+**Observable result:** On the Trips list (List screen, TrackItemRow for completed trips), order-linked trips show: (1) a label "Gojek: Senayan → Blok S" (names only, no addresses, truncated with ellipsis if needed); (2) a two-value price/net cell "Rp28k / Rp19.6k" or "— / —" if fuel/price missing. Manual (non-order) trips show no label or price/net cell (row unchanged). Trips remain clickable to open detail; no new interactions.
+
+**How to Verify (documentation+migration only; no app changes yet):**
+1. **Migration opens on existing DB at v10:** Run `MIGRATION_10_11` on a device DB copy (v10). Verify schema: `ALTER TABLE track ADD COLUMN orderLabel TEXT` + `ALTER TABLE track ADD COLUMN orderEarningsRp INTEGER`. No crash, columns nullable, no data loss on existing rows.
+2. **New Gojek order → trip row shows label + price/net:** Start a Gojek order on the Track screen → order card appears → trip auto-starts (ADR-015) → end the order at "Selesai" → trip auto-stops and is persisted with label "Gojek: <names>" and earnings snapshot. Navigate to Trips list → completed trip row displays label and "Rp.. / Rp.." cell (requires build/device test per AGENTS.md §5a).
+3. **Non-order trips unchanged:** Manually start a trip (no Gojek order) → no label or price/net cell in the Trips list row; row shows standard metrics only (distance, duration, avg speed, avg km/L, cost).
+4. **Backfilled old order trips labeled where match exists:** Apply MIGRATION_10_11 + one-time backfill step on a device DB with pre-migration order trips → old trip rows matched by timing to `observer_trip` entries get orderLabel and orderEarningsRp copied (best-effort; window: firstSeenAt−2min to lastSeenAt+5min). Rows with ambiguous matches or pruned orders stay unlabeled.
+
+**Implementation steps (numbered, What/How):**
+
+1. **Schema + MIGRATION_10_11:** Add two nullable columns to the `track` table:
+   ```sql
+   ALTER TABLE track ADD COLUMN orderLabel TEXT
+   ALTER TABLE track ADD COLUMN orderEarningsRp INTEGER
+   ```
+   Inline in `TrackDatabase.kt`, between versions v10 and v11. No default values; both columns nullable (no data impact on existing rows).
+
+2. **Capture timing — at trip stop:** When `ShareViewModel.onTripCtaTap()` persists a trip (via `insertTrack`), check if `orderOwnsTrip` flag is set (ADR-015). If true, query the latest `observer_trip` row where `phase == FINISHED`. If found, copy `orderLabel` ("Gojek: {pickupName} → {dropName}", truncate names if needed in code) and `orderEarningsRp` (integer) into the new `track` row columns before writing. If no order row exists or match is ambiguous, write the trip with `orderLabel = NULL` and `orderEarningsRp = NULL` (manual trip behavior).
+
+3. **Label format:** "Gojek: <pickupName> → <dropName>" (extract names from `observer_trip.pickupName` / `observer_trip.dropName`). No addresses, no customer name/phone (ADR-013 privacy rule). Names are stored as-is in the DB; UI truncation with ellipsis is handled at display time.
+
+4. **Price and net computation (display time):** In `TrackItemRow` for completed trips, if `track.orderLabel != NULL`, display a price/net cell:
+   - `price = orderEarningsRp` (from the stored snapshot).
+   - `cost = track.obdFuelConsumedL × effective_fuel_price_at(track.timestamp)` (query `fuel_price` table for the row with max `effectiveFromMs ≤ track.timestamp`; same logic as FR-12/ADR-008 completed-trip costing).
+   - `net = price − cost` (may be negative, shown as "−Rp…").
+   - Compact Rupiah format: <1k → 'Rp850'; 1k–999k → 'Rp8.4k' (one decimal); ≥1M → 'Rp1.2jt'; negative '−' prefix.
+   - Shows "— / —" when `cost == "—"` (fuel is 0 or no price in effect).
+
+5. **Backfill (optional, best-effort):** As part of MIGRATION_10_11 or a one-time post-migration step, backfill existing unlabeled trips from pre-ADR-022 eras:
+   - For each `track` row where `startedAt` is known, find `observer_trip` rows where the trip start falls within a window: `firstSeenAt − 2 min` to `lastSeenAt + 5 min` (exact window TBD at implementation).
+   - If exactly one unambiguous match exists, copy `orderLabel` and `orderEarningsRp` to the `track` row.
+   - If multiple matches or order row pruned (90d/5k retention expired), leave the row unlabeled (no false linking).
+   - This backfill is best-effort; trips without a match are normal (manual trips, or orders that were pruned).
+
+6. **Privacy:** Driver has explicitly accepted storing pickup/drop location **names** and **earnings** on the `track` table (user-deletable trips), even though `observer_trip` is auto-pruned and non-deletable. Customer name and phone remain never stored (ADR-013 rule preserved).
+
+7. **UI — no design handoff (explicit exemption):** The order label is plain text (reuses existing title/label typography); the price/net cell reuses the compact-Rupiah format and cell styling from existing active-trip rows (§3b #7). No new visual language introduced. User explicitly exempted from AGENTS.md §12 design-first rule (ADR-022 decision).
+
+**How to Verify (after implementation):** See step 2–4 above; build and device test per AGENTS.md §5a. Manual on-device steps: (a) accept a Gojek order, complete the trip, verify Trips list row shows label and price/net; (b) verify backfilled old order trips (if migration runs on device DB with pre-existing orders).
+
+**No new permission. No breaking changes to existing code paths.**
 
 ---
 
