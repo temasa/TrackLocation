@@ -15,6 +15,9 @@ interface ObserverTripDao {
     @Update
     suspend fun update(trip: ObserverTripEntity)
 
+    @Query("SELECT * FROM observer_trip WHERE id = :id LIMIT 1")
+    suspend fun findById(id: Long): ObserverTripEntity?
+
     @Query("SELECT * FROM observer_trip WHERE pickupAddress = :pickupAddress AND dropAddress = :dropAddress ORDER BY lastSeenAt DESC LIMIT 1")
     suspend fun findByAddresses(pickupAddress: String, dropAddress: String): ObserverTripEntity?
 

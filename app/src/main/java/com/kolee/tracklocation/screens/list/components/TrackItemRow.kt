@@ -21,9 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.data.roomdb.TrackEntity
@@ -34,6 +37,7 @@ import com.kolee.tracklocation.ui.theme.TripInk
 import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
 import com.kolee.tracklocation.utils.TimeUtilFormatter
+import com.kolee.tracklocation.utils.formatCompactRupiah
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -45,7 +49,9 @@ fun TrackItemRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onCostClick: () -> Unit = {},
-    costColor: Color = TripInk
+    costColor: Color = TripInk,
+    // ADR-022: price-per-litre in effect at trip start (0.0 = none); used for the order net.
+    pricePerLiter: Double = 0.0
 ) {
     val distanceText = "${String.format("%.2f", item.distance / 1000f)} km"
     val timeText = TimeUtilFormatter.getTime(item.duration)
@@ -61,6 +67,19 @@ fun TrackItemRow(
     } else {
         "—"
     }
+    // ADR-022: order trips show "price / net" (net = earnings - litres x price at trip start).
+    val orderLabel = item.orderLabel
+    val orderPriceNetText = if (orderLabel != null) {
+        val earnings = item.orderEarningsRp
+        if (earnings == null) {
+            "— / —"
+        } else {
+            val cost = if (item.obdFuelConsumedL > 0.0 && pricePerLiter > 0.0) {
+                Math.round(item.obdFuelConsumedL * pricePerLiter)
+            } else null
+            "${formatCompactRupiah(earnings)} / ${cost?.let { formatCompactRupiah(earnings - it) } ?: "—"}"
+        }
+    } else null
 
     Column(
         modifier = Modifier
@@ -83,10 +102,12 @@ fun TrackItemRow(
                     .padding(start = 14.dp)
             ) {
                 Text(
-                    text = "Track #${item.idx}",
+                    text = orderLabel ?: "Track #${item.idx}",
                     color = TripInk,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "",
@@ -100,7 +121,9 @@ fun TrackItemRow(
                 text = SimpleDateFormat("EEE, HH:mm", Locale.ENGLISH).format(item.timestamp),
                 color = TripMuted,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                modifier = Modifier.padding(start = 8.dp)
             )
         }
         Box(
@@ -132,7 +155,8 @@ fun TrackItemRow(
                 modifier = Modifier.weight(1f)
             )
         }
-        // Fuel row — km/L / cost. Empty third cell keeps columns aligned with the base row.
+        // Fuel row — km/L / cost / (order trips) price / net; the third cell is otherwise empty to
+        // keep columns aligned with the base row.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -151,7 +175,19 @@ fun TrackItemRow(
                     .clickable(onClick = onCostClick),
                 valueColor = costColor
             )
-            Spacer(modifier = Modifier.weight(1f))
+            if (orderPriceNetText != null) {
+                TrackStat(
+                    value = orderPriceNetText,
+                    label = "price / net",
+                    // Wider + smaller than its neighbours: "Rp28k / Rp19.6k" does not fit a 1/3 cell.
+                    modifier = Modifier
+                        .weight(1.5f)
+                        .semantics { contentDescription = "Order price and net profit, $orderPriceNetText" },
+                    valueFontSize = 12.sp
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 }
@@ -187,13 +223,14 @@ private fun TrackStat(
     value: String,
     label: String,
     modifier: Modifier = Modifier,
-    valueColor: Color = TripInk
+    valueColor: Color = TripInk,
+    valueFontSize: TextUnit = 14.sp
 ) {
     Column(modifier = modifier) {
         Text(
             text = value,
             color = valueColor,
-            fontSize = 14.sp,
+            fontSize = valueFontSize,
             fontWeight = FontWeight.Medium,
             fontFamily = MonospaceFontFamily,
             letterSpacing = (-0.3).sp,

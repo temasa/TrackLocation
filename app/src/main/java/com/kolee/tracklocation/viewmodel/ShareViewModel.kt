@@ -64,6 +64,8 @@ class ShareViewModel(
 
     // ADR-015: true while the running trip was started or adopted by an order. In-memory only.
     private var orderOwnsTrip = false
+    // ADR-022: id of the observer_trip row that owns the running trip, read at stop for the label.
+    private var orderOwnedId: Long? = null
 
     // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
     // while its latest row is not FINISHED and was seen within ORDER_ACTIVE_WINDOW_MS. The ticker
@@ -133,6 +135,7 @@ class ShareViewModel(
                     val current = locationUiState.value
                     if (!current.isTracking) sendServiceCommand(Actions.START_TRIP)
                     orderOwnsTrip = true
+                    orderOwnedId = row.id
                 }
                 observerTripDao.markHandled(row.id)
             }
@@ -147,6 +150,7 @@ class ShareViewModel(
                         stopActiveTrip(current)
                     }
                     orderOwnsTrip = false
+                    orderOwnedId = null
                 }
             }
         }
@@ -190,6 +194,12 @@ class ShareViewModel(
         val tripFuelConsumedL = integrateFuelLiters(
             obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
         )
+        // ADR-022: snapshot the owning order's label + earnings BEFORE ownership is released.
+        val ownedId = orderOwnedId
+        val orderRow = if (orderOwnsTrip && ownedId != null) observerTripDao.findById(ownedId) else null
+        val orderLabel = orderRow?.let {
+            "Gojek: ${it.pickupName ?: it.pickupAddress ?: "?"} → ${it.dropName ?: it.dropAddress ?: "?"}"
+        }
         insertTrack(
             TrackEntity(
                 timestamp = current.tripStartedAt,
@@ -198,11 +208,14 @@ class ShareViewModel(
                 pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
                 startLocationId = if (hasValidRange) startId else null,
                 endLocationId = if (hasValidRange) endId else null,
-                obdFuelConsumedL = tripFuelConsumedL
+                obdFuelConsumedL = tripFuelConsumedL,
+                orderLabel = orderLabel,
+                orderEarningsRp = orderRow?.earningsRp
             )
         )
         sendServiceCommand(Actions.STOP_TRIP)
         orderOwnsTrip = false
+        orderOwnedId = null
     }
 
     private fun sendServiceCommand(action: Actions) {

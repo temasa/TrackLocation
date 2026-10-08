@@ -235,7 +235,8 @@ private fun TrackSuccessState(
                     onCostClick = {
                         showTripFuelPriceToast(context, item.idx, tripPrices[item.idx] ?: 0.0)
                     },
-                    costColor = if (tripCostColorFlags[item.idx] == true) TripGreen else TripInk
+                    costColor = if (tripCostColorFlags[item.idx] == true) TripGreen else TripInk,
+                    pricePerLiter = tripPrices[item.idx] ?: 0.0
                 )
 
                 if (showDialogForDeletion) {

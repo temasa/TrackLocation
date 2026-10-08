@@ -19,7 +19,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FuelPriceEntity::class,
         ObserverTripEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -153,6 +153,28 @@ abstract class TrackDatabase: RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_observer_trip_lastSeenAt` ON `observer_trip` (`lastSeenAt`)")
+            }
+        }
+
+        // ADR-022: order label + earnings snapshot on `track` (nullable, no defaults — must match the
+        // entity exactly). Best-effort backfill: a track gets a label only when exactly ONE
+        // observer_trip row's [firstSeenAt - 2 min, lastSeenAt + 5 min] window contains its start
+        // timestamp; ambiguous (0 or >1) matches are left unlabeled.
+        private val MIGRATION_10_11 = object: Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `track` ADD COLUMN `orderLabel` TEXT")
+                db.execSQL("ALTER TABLE `track` ADD COLUMN `orderEarningsRp` INTEGER")
+
+                val match = "o.`firstSeenAt` - 120000 <= `track`.`timestamp` AND `track`.`timestamp` <= o.`lastSeenAt` + 300000"
+                val unique = "(SELECT COUNT(*) FROM `observer_trip` o WHERE $match) = 1"
+                db.execSQL(
+                    "UPDATE `track` SET `orderLabel` = (SELECT 'Gojek: ' || COALESCE(o.`pickupName`, o.`pickupAddress`, '?') || ' → ' || COALESCE(o.`dropName`, o.`dropAddress`, '?') FROM `observer_trip` o WHERE $match) " +
+                        "WHERE `orderLabel` IS NULL AND $unique"
+                )
+                db.execSQL(
+                    "UPDATE `track` SET `orderEarningsRp` = (SELECT o.`earningsRp` FROM `observer_trip` o WHERE $match) " +
+                        "WHERE `orderLabel` IS NOT NULL AND `orderEarningsRp` IS NULL AND $unique"
+                )
             }
         }
 
@@ -324,7 +346,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                     .build()
                 INSTANCE = instance
                 return instance
