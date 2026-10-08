@@ -145,11 +145,12 @@ TRIP START (auto-start at Taken):
      → if a trip is live, keep it and set in-memory flag orderOwnsTrip=true
      → mark row handled
 
-TRIP END (auto-end at Cleared/Cancelled/Dismissed):
+TRIP END (auto-end at Selesai/Cleared/Cancelled/Dismissed):
    → Gojek parser recognizes terminal states:
-     (a) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
-     (b) cancel message = "Oke, sip" + text containing "nge-cancel"
-   → both yield OrderCard with phase=FINISHED
+     (a) Selesai screen = "Selesai" with earnings/summary (normal completion)
+     (b) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
+     (c) cancel message = "Oke, sip" + text containing "nge-cancel"
+   → all yield OrderCard with phase=FINISHED
      → OrderTripRecorder marks the latest open row FINISHED
      → ShareViewModel observes latestOrderFlow
      → when FINISHED and orderOwnsTrip=true and a trip is live, run stopActiveTrip():

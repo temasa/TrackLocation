@@ -36,7 +36,7 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.17 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-07 |
-| `docs/ARCHITECTURE.md` | 0.20 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-07 |
+| `docs/ARCHITECTURE.md` | 0.21 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-08 |
 | `docs/adr/README.md` | 1.0 | Active (21 ADRs indexed) | Tech Lead | 2026-10-07 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -51,14 +51,14 @@ When any controlled document changes, update both:
 | `docs/adr/012-obd-accumulation-recording-state.md` | 1.0 | Accepted | Project owner | 2026-07-10 |
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
 | `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted (amended by ADR-015) | Project owner | 2026-10-05 |
-| `docs/adr/015-order-auto-start-trip.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
+| `docs/adr/015-order-auto-start-trip.md` | 1.1 | Accepted (vocabulary aligned with code) | Project owner | 2026-10-08 |
 | `docs/adr/016-order-route-overlay.md` | 1.0 | Accepted (provider superseded by ADR-017) | Project owner | 2026-10-06 |
 | `docs/adr/017-order-route-provider-openrouteservice.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.32 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-07 |
-| `docs/UI-SPEC.md` | 0.22 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.34 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
+| `docs/UI-SPEC.md` | 0.23 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
 | `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
@@ -88,6 +88,8 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-08 | adr/015, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/0.20/0.33/0.1 | 1.1/0.21/0.34/0.1 | ADR-015 vocabulary aligned with code — trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table (Finished row → AUTO-END by Selesai screen; Cleared row → Backstop AUTO-END), Decision #2 title includes Selesai, terminal-state list added Selesai first + "both" → "all". ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); "both yield" → "all yield". IMPLEMENTATION-PLAN §6 new task-log row. Docs only; no schema, no build/test run. | Claude Haiku 4.5 |
+| 2026-10-07 | UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.22/0.32/0.1 | 0.23/0.33/0.1 | Track car-marker color update: black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent white backing remains omitted. UI-SPEC §3i and IMPLEMENTATION-PLAN §1/§4/§6 updated; code task planned for only the existing vector drawable fills. No source change, schema, or Room migration; no build or test run. | GitHub Copilot (delegated Auto) |
 | 2026-10-07 | IMPLEMENTATION-PLAN | 0.31 | 0.32 | Recorder frame extraction verified via ffmpeg (ADR-021 check 7); §4 item 7 + §6 row updated; docs only. |
 | 2026-10-07 | IMPLEMENTATION-PLAN | 0.30 | 0.31 | Recorder consent-once device-verified (ADR-021 amendment): on-device checks (1–4, 6, 8 verified on SM-G965F Android 10); §4 How to Verify block updated with ✓/✗ status per item; §6 Task Log row backfilled Git Revision `c9f2fe7` with detailed device-verification summary (consent once verified, 2-min rollover + 5-segment retention verified, MediaStore integration verified; pending: "Stop & keep", ffmpeg frames, extended run, battery, API 28, Android 14+). §1 change log entry 0.31 added. No schema. | Claude Code |
 | 2026-10-07 | IMPLEMENTATION-PLAN, ARCHITECTURE, adr/021 | 0.29/0.19/1.0 | 0.30/0.20/1.0 | Recorder consent once per process (ADR-021 amendment): live session paused on background and resumed on return, no repeated dialog. ADR-021 amendment + earlier consent wording fixed; ARCHITECTURE debug-recorder lifecycle updated; plan slice steps/How to Verify, new task-log row, stale code row marked Completed `7a4326f`. Code compiled (debug+release); on-device not verified. | Claude Code |

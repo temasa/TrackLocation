@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.22
+**Document Version:** 0.23
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-07
 **Owner:** Product Manager / UX Designer
@@ -334,14 +334,14 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 
 ## 3i. Track Map — Car Marker (2026-10-07)
 
-**What it does:** Replace the current static blue `ic_location_pin` location marker with a directional car marker that rotates to indicate the direction of travel. The marker is sourced from the `ui-design.pen` design file (CarMarker frame, id NtE0e, 28×44 dp, top-down red car, front at top) and converted to an Android `VectorDrawable`. The design's translucent white backing rectangle is omitted. The car rotates flat on the map (anchored centre, `flat = true`, `rotation = heading`) via the heading from the most-recent GPS fix (bearing) when speed ≥ ~3 km/h; below that speed the marker holds the last valid heading; if no valid heading yet, it points up (0°, north). The marker is a **display-only** change; no schema, permission, or data-model changes.
+**What it does:** Replace the current static blue `ic_location_pin` location marker with a directional car marker that rotates to indicate the direction of travel. The marker is sourced from the `ui-design.pen` design file (CarMarker frame, id NtE0e, 28×44 dp, top-down car, front at top) and converted to an Android `VectorDrawable`. The body is black (`#000000`) and both window panels are white (`#FFFFFF`); preserve the existing accent details and dark wheels/trim. The design's translucent white backing rectangle is omitted. The car rotates flat on the map (anchored centre, `flat = true`, `rotation = heading`) via the heading from the most-recent GPS fix (bearing) when speed ≥ ~3 km/h; below that speed the marker holds the last valid heading; if no valid heading yet, it points up (0°, north). The marker is a **display-only** change; no schema, permission, or data-model changes.
 
 **Rules:**
 1. **Replaces the blue pin:** The Track map's current-location marker (today `ic_location_pin`) is replaced by the car marker on entry to the Track screen, or when a live location fix arrives.
 2. **Flat marker with heading rotation:** The marker is rendered `flat = true` (rotates with the map, not the device), `rotation = headingDegrees`, `anchor = (0.5, 0.5)` (centre). Heading comes from the live-fix bearing when speed ≥ 3 km/h, held constant below 3 km/h, points north (0°) if no valid heading yet.
 3. **Other markers unchanged:** Pickup/Drop markers (for Gojek orders), the recorded trace polyline, route overlays, and the Recenter FAB control remain unchanged.
 4. **Display-only:** No schema change, no permission change, no data model change. The canonical location log and live location fix (ADR-018) are unaffected.
-5. **Visual body:** The visible car body is ~13×25 dp inside the 28×44 dp frame boundary (as designed).
+5. **Visual body:** The visible car body is ~13×25 dp inside the 28×44 dp frame boundary (as designed), with black body fill (`#000000`) and white window panels (`#FFFFFF`); preserve the existing accent details and dark wheels/trim.
 
 **Implementation location:** Marker bitmap created once, stored in a remember block; reused for every map-state update (no per-update bitmap regeneration). Rendered via `bitmapDescriptorFromVector(context, R.drawable.ic_car_marker, tint = null, scale = 1.0)`, wired to `GoogleMap.addMarker(MarkerOptions().flat(true).rotation(markerHeadingDeg).anchor(0.5f, 0.5f))`.
 

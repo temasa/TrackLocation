@@ -4,6 +4,8 @@
 **Date:** 2026-10-06
 **Decided By:** Project owner + Claude Code
 
+**Amended 2026-10-08:** vocabulary table and wording aligned with code - the trip ends when the order row reaches FINISHED, including at the Selesai screen.
+
 ## Context
 
 ADR-014 established automatic stopping of an active trip when a Gojek order card first becomes complete (pickup + drop + payment + earnings). However, this decision creates a semantic gap: the trip auto-stops at order acceptance, but does not auto-start when an order is taken. The driver's actual workflow is: order offered → order taken (driver driving to customer) → pickup → carrying → drop off → finished. The trip should capture the entire engagement lifecycle, starting when the driver commits to the order (Taken phase).
@@ -18,11 +20,12 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 
 1. **Auto-start the trip at Taken:** When the Gojek parser (ADR-013) first detects a complete order card (pickup, drop, payment, earnings), run the "order ready" signal once per order. If no trip is currently active, `ShareViewModel` sends `START_TRIP`. If a trip is already active (e.g., the driver manually started a trip before viewing the order), the existing trip is kept and tied to the order by setting an in-memory flag `orderOwnsTrip=true`. This preserves manual trip starts while automating the common case. The always-recording session remains ON and unaffected.
 
-2. **Auto-end the trip at Cleared, Cancelled, or Dismissed:** The Gojek parser also recognizes two terminal states:
-   - **(a) Gojek home screen (Cleared):** All four bottom-nav texts present (`Beranda`, `Pendapatan`, `Swadaya`, `Pesan`); co-occurrence with an order button is impossible (verified: 0 overlaps across 1,001 snapshots).
-   - **(b) Cancel message (Cancelled):** Text "Oke, sip" together with a message containing "nge-cancel" (customer cancellation).
+2. **Auto-end the trip at Selesai, Cleared, Cancelled, or Dismissed (whichever FINISHED signal arrives first):** The Gojek parser also recognizes terminal states that produce FINISHED:
+   - **(a) Selesai screen:** The "Selesai" screen with earnings/summary; represents the normal completion of an order.
+   - **(b) Gojek home screen (Cleared):** All four bottom-nav texts present (`Beranda`, `Pendapatan`, `Swadaya`, `Pesan`); co-occurrence with an order button is impossible (verified: 0 overlaps across 1,001 snapshots).
+   - **(c) Cancel message (Cancelled):** Text "Oke, sip" together with a message containing "nge-cancel" (customer cancellation).
    
-   Both produce a `FINISHED` order row in `observer_trip`. `OrderTripRecorder` marks the latest open row `FINISHED` (existing idempotent logic). `ShareViewModel` observes `latestOrderFlow`; when a `FINISHED` row appears and the trip is order-owned (`orderOwnsTrip=true`) and active, it runs the persist-then-stop sequence (`stopActiveTrip`: persist the trip via `ShareViewModel.insertTrack`, then `STOP_TRIP`). Dismiss (user taps the Dismiss button on the provisional order card) also calls `dismiss(id)`, triggering the same stop logic.
+   All produce a `FINISHED` order row in `observer_trip`. `OrderTripRecorder` marks the latest open row `FINISHED` (existing idempotent logic). `ShareViewModel` observes `latestOrderFlow`; when a `FINISHED` row appears and the trip is order-owned (`orderOwnsTrip=true`) and active, it runs the persist-then-stop sequence (`stopActiveTrip`: persist the trip via `ShareViewModel.insertTrack`, then `STOP_TRIP`). Dismiss (user taps the Dismiss button on the provisional order card) also calls `dismiss(id)`, triggering the same stop logic.
 
 3. **Trip is not ended by the 2-hour card-staleness window:** The trip runs until `FINISHED` or manual stop—the 2-hour staleness is for card deduplication only.
 
@@ -35,7 +38,7 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 ## Consequences
 
 ### Positive
-- Trip lifecycle now aligns with the driver's actual Gojek order engagement: starts at Taken (commitment), ends at Cleared/Cancelled/Dismissed (disengagement).
+- Trip lifecycle now aligns with the driver's actual Gojek order engagement: starts at Taken (commitment), ends at Selesai/Cleared/Cancelled/Dismissed (disengagement).
 - The driver has automatic trip bookending without losing manual control: a pre-started trip is preserved; post-start trips are bound to the order.
 - Terminal-state detection is deterministic: home-nav texts and cancel-message text are stable anchors, not dependent on timing or screen-read order.
 - The trip always ends if the order ends, preventing orphaned trips.
@@ -58,7 +61,7 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 
 1. **Auto-end only; keep manual start:** End the trip when the order is Cleared/Cancelled, but require manual start. **Rejected:** Leaves an asymmetry and increases friction; auto-start is the common case and aligns with the order lifecycle.
 
-2. **Trip ends at "Selesai" screen only, not Cleared/Cancelled:** Continue the existing ADR-014 behavior and detect only the explicit "Selesai" button press. **Rejected:** Does not handle cancellation (trip would run indefinitely or until staleness timeout); cancelled orders never reach "Selesai", leaving orphaned trips.
+2. **Trip ends at "Selesai" screen only, not Cleared/Cancelled:** Detect only the "Selesai" button press and skip Cleared/Cancelled signals. **Rejected:** Selesai is kept as the normal end signal, but is not sufficient alone: cancelled orders never reach "Selesai", so cancel and home signals are also necessary to end the trip without leaving orphaned trips.
 
 3. **Out-of-process flag (persist `orderOwnsTrip` to DB):** Survive process death and auto-end the trip on relaunch. **Rejected (deferred):** Adds a new column to a trip or session row, introduces consistency risk (what if the order row is pruned before the trip is ended?), and complicates the schema. In-memory is simpler for now.
 
@@ -73,9 +76,11 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 | Pickup | Driver taps "Udah di titik jemput" button; transition only | — | (no screen change) |
 | Carrying | Card without pickup; button "Sampai tujuan"; customer on board | `OrderPhase.DROP` | Trip continues |
 | Drop off | Driver taps "Sampai tujuan"; toll dialog then "Trip selesai" summary + "Selesai" button | — | (transition sequence) |
-| Finished | "Selesai" screen with earnings/summary; then gone | `OrderPhase.FINISHED` | (no auto-action yet; waits for Cleared) |
-| Cleared | Gojek home screen: 4 nav texts present (`Beranda`, `Pendapatan`, `Swadaya`, `Pesan`) | `OrderPhase.FINISHED` (re-written) | **AUTO-END** (if `orderOwnsTrip=true`) |
+| Finished | "Selesai" screen with earnings/summary; then gone | `OrderPhase.FINISHED` | **AUTO-END** (if orderOwnsTrip=true): the Selesai screen writes FINISHED, which stops the trip; this is the normal end path |
+| Cleared | Gojek home screen: 4 nav texts present (`Beranda`, `Pendapatan`, `Swadaya`, `Pesan`) | `OrderPhase.FINISHED` (re-written) | Backstop AUTO-END (if orderOwnsTrip=true): normally a no-op because the Selesai screen already ended the trip and cleared ownership; ends the trip only if Selesai was never observed |
 | Cancelled | Cancel message + "Oke, sip" button; text contains "nge-cancel" | `OrderPhase.FINISHED` (written once) | **AUTO-END** (if `orderOwnsTrip=true`) |
+
+*Implementation note: the end trigger is the row reaching FINISHED (ShareViewModel end collector). The Selesai screen, the cancel message and the home screen all produce FINISHED, so whichever is observed first ends the trip.*
 
 ---
 
