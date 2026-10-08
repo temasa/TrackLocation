@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.22
+**Document Version:** 0.24
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-08
 **Owner:** Tech Lead
@@ -223,8 +223,8 @@ SEPARATE from TrackingService recording path:
 **Architecture:**
 - **Debug-only source set:** All code in `app/src/debug/` (never compiled into release builds). Debug manifest overlay declares `mediaProjection` foreground service type and `WRITE_EXTERNAL_STORAGE` permission (debug, maxSdkVersion 28; absent from release manifest via source-set isolation).
 - **Service:** `DiagnosticRecorderService` extends `MediaProjectionCallback`, uses `MediaRecorder` to encode to MP4 video (no audio, no microphone permission).
-- **Lifecycle:** Request `MediaProjection` once per app process (system consent dialog; cannot be bypassed or persisted). On background the live session is **paused** (`MediaRecorder.pause()`; projection, `VirtualDisplay` and foreground service stay alive, notification "Paused - app in background") and on return **resumed** with no dialog. Consent is asked again only with no live session (process restart, system stop, "Stop & keep"). Segment length counts recording time only (handler timer + `setMaxDuration`). See ADR-021 amendment 2026-10-07. Foreground service posts persistent notification with "Stop & Keep" action to freeze segment rotation.
-- **Storage:** MediaStore video with `RELATIVE_PATH = "Movies/TrackLocation-Diagnostics/"`. Segments are 2-minute MP4 files; app maintains last 5 (~10 min). On rollover, oldest segment deleted automatically. Files marked `IS_PENDING = false` after close, so clips appear in standard Photos/Gallery album.
+- **Lifecycle:** Request `MediaProjection` once per app process (system consent dialog; cannot be bypassed or persisted). On background the live session is **paused** (`MediaRecorder.pause()`; projection, `VirtualDisplay` and foreground service stay alive, notification "Paused - app in background") and on return **resumed** with no dialog. Consent is asked again only with no live session (process restart, system stop, "Stop & keep"). Segment length counts recording time only (handler timer + `setMaxDuration`). See ADR-021 amendment 2026-10-07. **Opt-in background capture** (debug-only, default **OFF**, persisted in debug SharedPreferences): a second notification action "Background: OFF/ON" toggles it. When ON, the recorder is **not** paused on background and keeps capturing the app in front; when OFF, the pause/resume behaviour above applies. See ADR-021 amendment 2026-10-08. Foreground service posts persistent notification with "Stop & Keep" action to freeze segment rotation.
+- **Storage:** MediaStore video with `RELATIVE_PATH = "Movies/TrackLocation-Diagnostics/"`. Segments are 10-minute MP4 files; app maintains last 6 (~60 min) (ADR-021 amendment 2026-10-08; previously 2-minute segments, last 5, ~10 min). On rollover, oldest segment deleted automatically. Files marked `IS_PENDING = false` after close, so clips appear in standard Photos/Gallery album.
 - **On release builds:** No service, no permissions, no recorder classes. Clean APK, zero overhead.
 
 **Review workflow:** Clips pulled from device (`adb pull`) and frames extracted with ffmpeg (`sudo apt install -y ffmpeg` on dev machine), then read as images for pixel-level analysis. No built-in video playback in the app.

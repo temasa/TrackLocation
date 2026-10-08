@@ -16,9 +16,9 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 
 2. **Consent and activation:** The system `MediaProjection` consent dialog appears once per app process in debug builds (see Amendment 2026-10-07: not on every foreground return). On first launch, the user sees: "TrackLocation wants to record your screen." Tapping "Allow" starts automatic recording; tapping "Deny" skips recording until the app has been backgrounded and returns. The user's choice persists only for the process lifetime (dialog re-appears after a process restart).
 
-3. **Foreground-only lifecycle:** Recording is active only while TrackLocation is in the foreground. When the app moves to background the recorder is **paused** (projection and service stay alive); when it returns the recorder **resumes** with no dialog (see Amendment 2026-10-07). This prevents runaway recording while avoiding repeated consent prompts.
+3. **Foreground-only lifecycle:** Recording is active only while TrackLocation is in the foreground. When the app moves to background the recorder is **paused** (projection and service stay alive); when it returns the recorder **resumes** with no dialog (see Amendment 2026-10-07). This prevents runaway recording while avoiding repeated consent prompts. *(Superseded in part — see Amendment 2026-10-08: opt-in background capture, OFF by default.)*
 
-4. **Rolling segment storage:** Video is recorded in 2-minute MP4 segments. The app keeps the most recent 5 segments (~10 minutes of video). On segment rollover, the oldest segment is deleted automatically. Segments are stored in the MediaStore under a `Movies/TrackLocation-Diagnostics/` directory. Files are created with `IS_PENDING = true` during write (hidden from the gallery until finalized), then `IS_PENDING = false` when closed (visible). This allows clips to appear in the standard Photos/Gallery app as an album.
+4. **Rolling segment storage:** Video is recorded in 2-minute MP4 segments. The app keeps the most recent 5 segments (~10 minutes of video). On segment rollover, the oldest segment is deleted automatically. Segments are stored in the MediaStore under a `Movies/TrackLocation-Diagnostics/` directory. Files are created with `IS_PENDING = true` during write (hidden from the gallery until finalized), then `IS_PENDING = false` when closed (visible). This allows clips to appear in the standard Photos/Gallery app as an album. *(Superseded in part — see Amendment 2026-10-08: segments are 10 minutes and the most recent 6 are kept.)*
 
 5. **Foreground service:** A MediaProjection foreground service (debug manifest only) posts a persistent notification with a "Stop & Keep" action. Tapping this action freezes the current segment set (stops rotation and deletion), allowing the developer to safely examine clips without them disappearing. The notification is required by Android 12+ for foreground services; the "Stop & Keep" action is a convenience feature.
 
@@ -32,7 +32,7 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 
 8. **Consequences and risks:**
    - **(a) Cloud backup:** Google Photos, Dropbox, or other backup services may automatically upload clips from the TrackLocation-Diagnostics album, leaking location data, trip details, and cost/earnings information. Mitigation: the developer should **disable cloud backup for the album**. The app cannot prevent the backup; it is a user-device setting.
-   - **(b) Segment stale windows:** If the developer forgets to tap "Stop & Keep" and the bug appears near the 10-minute boundary, the clip may rotate out before analysis. Mitigation: the notification offers the action; the developer should tap it when a bug is spotted.
+   - **(b) Segment stale windows:** If the developer forgets to tap "Stop & Keep" and the bug appears near the 10-minute boundary, the clip may rotate out before analysis. Mitigation: the notification offers the action; the developer should tap it when a bug is spotted. *(Superseded in part — see Amendment 2026-10-08: the window is 60 minutes, not 10.)*
    - **(c) Battery and CPU cost:** Continuous MediaRecorder codec activity drains battery and uses CPU, which may alter timing and jank behavior under test. This is acceptable for debug-only local verification; the penalty does not apply to release builds.
    - **(d) Post-uninstall orphans:** After uninstall and reinstall, old clips in MediaStore are no longer owned by the app (URI authority changes if the app is reinstalled with a different build ID or on a different device). The old files are not rotated or deleted; manual deletion via Photos/Gallery is required.
 
@@ -47,13 +47,13 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 ### Positive
 - **Automatic capture:** No manual button tap or adb command needed; recording is tied to the app's foreground lifecycle.
 - **Standard Gallery integration:** Clips appear in the Photos/Gallery app as a TrackLocation-Diagnostics album; no need for a file manager.
-- **Segment rollover:** 5 segments (10 min) auto-rotate; developer can "Stop & Keep" to freeze when needed.
+- **Segment rollover:** 5 segments (10 min) auto-rotate; developer can "Stop & Keep" to freeze when needed. *(Superseded in part — see Amendment 2026-10-08: 6 segments of 10 min, ~60 min.)*
 - **Zero-permission release builds:** Release builds contain no recorder code or permissions (clean APK, no security surface).
 - **Video + frame extraction workflow:** ffmpeg + image reading on the dev machine allows pixel-level analysis without in-app playback.
 
 ### Negative / Accepted Risks
 - **Cloud backup leakage:** User must manually disable backup for the album to prevent data exfiltration (no in-app control).
-- **Segment rotation window:** Developer must tap "Stop & Keep" before the 10-minute window closes; otherwise, the clip may be deleted.
+- **Segment rotation window:** Developer must tap "Stop & Keep" before the 10-minute window closes; otherwise, the clip may be deleted. *(Superseded in part — see Amendment 2026-10-08: the window is 60 minutes.)*
 - **Battery/CPU drain:** MediaRecorder continuously encodes; impacts test timing and battery (debug-only, acceptable).
 - **Post-uninstall orphans:** Old clips remain in MediaStore after uninstall; manual cleanup required.
 - **Consent re-prompt per process:** User sees the system dialog again only when there is no live session (process restart, system-stopped projection, or "Stop & keep"); this is Android's design and cannot be bypassed.
@@ -68,7 +68,7 @@ The challenge: Android app screen recording requires `MediaProjection` (the syst
 
 4. **App-private `Android/data/` storage:** Clips stored in `app-specific external files directory` are not visible in the Gallery. Rejected: defeats the purpose (developer wants quick Gallery access to inspect clips).
 
-5. **Persistent recording (no lifecycle ties):** Recording continues even when the app is backgrounded. Rejected: wastes battery, may not be legal without persistent notification (already added for MediaProjection service), increases risk of unintended data capture.
+5. **Persistent recording (no lifecycle ties):** Recording continues even when the app is backgrounded. Rejected: wastes battery, may not be legal without persistent notification (already added for MediaProjection service), increases risk of unintended data capture. *(Superseded in part for an opt-in mode — see Amendment 2026-10-08: background capture is OFF by default and is a debug-only toggle.)*
 
 ## Related ADRs
 
@@ -104,3 +104,29 @@ Built entirely in `app/src/debug/`, with no `app/src/main` edits. Deviations fro
 **How (debug source set only):** the lifecycle controller (1.5 s background debounce, unchanged) calls the live service instance directly (`pause()` / `resume()`; a backgrounded app may not start services). "Session live" is the service's static instance, set once a projection is held and cleared in `onDestroy`; if no instance exists on return, the consent flow runs. Pause/resume/rollover all run on the main thread and so serialize. `pause()`/`resume()` failures (`IllegalStateException`) fall back to finalizing the segment and opening a new one. Segment length counts recording time only: a handler timer armed for the remaining recording time (stopped while paused) backs up `setMaxDuration`, whose treatment of paused time is undocumented; at worst segments are shorter, never longer than 2 min. A paused segment is resumed momentarily before `stop()` when a session ends, so it is finalized as a normal playable file; empty/failed clips are deleted as before.
 
 **Consequences:** a persistent "Paused - app in background" notification while the app is backgrounded; nothing is recorded while backgrounded; the dialog still appears on process restart, system stop or after "Stop & keep". On-device behavior is unverified at the time of writing.
+
+## Amendment 2026-10-08 — opt-in background capture and 6 x 10-minute retention
+
+**Status:** Accepted (debug-only). **Decided by:** Project owner. No PRD, UI-SPEC or product impact: the change stays in `app/src/debug/`, and release builds still contain no recorder code. Code is not yet implemented; device verification is pending (AGENTS.md §5a/§5b).
+
+**Context:** The recorder must capture the Gojek Partner / GoSend order screens so their Accessibility events can be identified. Under the foreground-only lifecycle (§3 and the 2026-10-07 amendment), the recorder pauses as soon as TrackLocation is backgrounded, so it cannot see those screens. Retaining only ~10 minutes of video also leaves too short a window to stop the recording after a bug is spotted.
+
+**Decision:**
+
+1. **Opt-in background capture (supersedes §3 and the rejected alternative #5, for this opt-in mode only):** Add a background-capture mode that is **OFF by default**. The setting is persisted in the debug SharedPreferences and toggled by a second action on the recorder's persistent notification, labelled "Background: OFF/ON".
+   - **ON:** the recorder does **not** pause when TrackLocation goes to background. It keeps capturing whatever app is in front.
+   - **OFF:** behaviour is unchanged from the 2026-10-07 amendment (pause on background, resume on return with no dialog).
+   - MediaProjection consent is still requested once per app process, and the persistent notification still offers "Stop & Keep".
+2. **Retention (supersedes §4):** Segments are **10 minutes** (was 2) and the most recent **6** are kept (was 5), giving about **60 minutes** of rolling video (was about 10).
+3. The other mechanics (MediaStore layout, `IS_PENDING` handling, "Stop & Keep" freeze behaviour) are unchanged.
+
+**Consequences:**
+
+- **Positive:** The developer can capture other apps' screens, such as Gojek Partner order screens, and can review about an hour of history after a bug.
+- **Negative / Accepted Risks (new):**
+  - **(a) Privacy:** Clips in background-capture mode may contain passenger names, addresses and chat messages from other apps. The cloud-backup warning in §8(a) applies more strongly. The developer must **disable cloud backup for the `Movies/TrackLocation-Diagnostics` album**; the app cannot enforce this.
+  - **(b) Secure windows:** Apps that set `FLAG_SECURE` render as black frames in the clip. This is **unverified for Gojek Partner**; the capture may be blank for that app.
+  - **(c) Process kill:** A process kill loses the in-progress segment (up to 10 minutes). It is left `IS_PENDING` and is not cleaned up on the next start (consistent with the 2026-10-07 implementation note).
+  - **(d) Storage and battery:** Sixty minutes of video uses more storage and more battery and CPU than about ten minutes. This is accepted for debug-only use.
+  - **(e) Stale window:** "Stop & Keep" must now be tapped within **60 minutes** (was 10) of the moment to be analysed.
+- **Unchanged:** Consent is asked once per process; release builds have no recorder classes or permissions; no schema or Room migration; no change to GPS tracking, sessions or trips.
