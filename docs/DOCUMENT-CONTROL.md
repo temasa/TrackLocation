@@ -57,7 +57,7 @@ When any controlled document changes, update both:
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.34 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.35 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
 | `docs/UI-SPEC.md` | 0.23 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-07 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
@@ -88,6 +88,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-08 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.34/0.1 | 0.35/0.1 | Backfilled revisions: ADR-015 vocabulary docs row (ad8c56c) + car-marker color docs row (ad8c56c) + car-marker color code row (9d4d672, marked Completed, verification text updated). §6 new top row added for backfill task. §1 change log entry 0.35 added. DOCUMENT-CONTROL register + this row. Docs only; hashes verified against `git log`. | Claude Haiku 4.5 |
 | 2026-10-08 | adr/015, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/0.20/0.33/0.1 | 1.1/0.21/0.34/0.1 | ADR-015 vocabulary aligned with code — trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table (Finished row → AUTO-END by Selesai screen; Cleared row → Backstop AUTO-END), Decision #2 title includes Selesai, terminal-state list added Selesai first + "both" → "all". ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); "both yield" → "all yield". IMPLEMENTATION-PLAN §6 new task-log row. Docs only; no schema, no build/test run. | Claude Haiku 4.5 |
 | 2026-10-07 | UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.22/0.32/0.1 | 0.23/0.33/0.1 | Track car-marker color update: black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent white backing remains omitted. UI-SPEC §3i and IMPLEMENTATION-PLAN §1/§4/§6 updated; code task planned for only the existing vector drawable fills. No source change, schema, or Room migration; no build or test run. | GitHub Copilot (delegated Auto) |
 | 2026-10-07 | IMPLEMENTATION-PLAN | 0.31 | 0.32 | Recorder frame extraction verified via ffmpeg (ADR-021 check 7); §4 item 7 + §6 row updated; docs only. |
