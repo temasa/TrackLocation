@@ -38,6 +38,26 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         return null
     }
 
+    /** ADR-023: Pelias reverse geocode of one point (size=1); null on any failure/no result. */
+    override suspend fun reverseGeocode(lat: Double, lng: Double): ReverseGeocodeResult? {
+        if (apiKey.isBlank()) return null
+        val url = "$REVERSE_URL?point.lon=$lng&point.lat=$lat&size=1&boundary.circle.radius=$REVERSE_RADIUS_KM"
+        val json = request(url, null, "reverse") ?: return null
+        return try {
+            val features = json.optJSONArray("features") ?: return null
+            if (features.length() == 0) return null
+            val props = features.getJSONObject(0).optJSONObject("properties") ?: return null
+            val label = props.optString("label").takeIf { it.isNotBlank() }
+            val name = props.optString("name").takeIf { it.isNotBlank() }
+                ?: props.optString("street").takeIf { it.isNotBlank() }
+                ?: label
+            if (name == null && label == null) null else ReverseGeocodeResult(name, label)
+        } catch (e: Exception) {
+            Log.w(TAG, "reverse parse failed: ${e.javaClass.simpleName}")
+            null
+        }
+    }
+
     /** Driving route polyline origin -> [waypoint]? -> destination, or null. */
     override suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng?): List<LatLng>? {
         if (apiKey.isBlank()) return null
@@ -176,6 +196,8 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         const val MAX_QUERIES = 6
         const val MIN_CONFIDENCE = 0.8
         const val GEOCODE_URL = "https://api.openrouteservice.org/geocode/search"
+        const val REVERSE_URL = "https://api.openrouteservice.org/geocode/reverse"
+        const val REVERSE_RADIUS_KM = 1 // nearest hit within 1 km is plenty for "where was I"
         const val DIRECTIONS_URL = "https://api.openrouteservice.org/v2/directions/driving-car"
 
         // Coarse (city/region-level) pins are worse than none.

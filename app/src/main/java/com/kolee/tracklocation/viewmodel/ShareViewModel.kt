@@ -28,6 +28,7 @@ import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.feature.observer.trip.route.OpenRouteServiceClient
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteController
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteState
+import com.kolee.tracklocation.feature.observer.trip.route.ReverseGeocodeResult
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.LocationUiState
 import com.kolee.tracklocation.tracking.TrackingService
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class ShareViewModel(
     private val appContext: Context,
@@ -79,10 +81,12 @@ class ShareViewModel(
         }?.toOrderCard()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val routeProvider = OpenRouteServiceClient(appContext)
+
     // ADR-016 (provisional): planned + runtime route overlay for the active order (display only).
     private val orderRouteController = OrderRouteController(
         scope = viewModelScope,
-        client = OpenRouteServiceClient(appContext),
+        client = routeProvider,
         activeOrder = activeOrder,
         location = locationUiState
     )
@@ -200,7 +204,16 @@ class ShareViewModel(
         val orderLabel = orderRow?.let {
             "Gojek: ${it.pickupName ?: it.pickupAddress ?: "?"} → ${it.dropName ?: it.dropAddress ?: "?"}"
         }
-        insertTrack(
+        // ADR-023: pickup/drop coordinates from the route controller's cache (no new geocode call);
+        // accepted point = the trip's start fix (location row, else first recorded path point).
+        val cachedGeo = orderRow?.let { orderRouteController.cachedGeo(it.toOrderCard()) }
+        val acceptedPoint = if (orderRow != null) {
+            val startFix = if (hasValidRange && startId != null) {
+                locationDao.getLocationByIdOnce(startId)?.let { LatLng(it.latitude, it.longitude) }
+            } else null
+            startFix ?: current.pathPoints.firstOrNull()
+        } else null
+        val tripIdx = databaseDao.insertTrack(
             TrackEntity(
                 timestamp = current.tripStartedAt,
                 distance = current.distanceInMeters,
@@ -210,12 +223,40 @@ class ShareViewModel(
                 endLocationId = if (hasValidRange) endId else null,
                 obdFuelConsumedL = tripFuelConsumedL,
                 orderLabel = orderLabel,
-                orderEarningsRp = orderRow?.earningsRp
+                orderEarningsRp = orderRow?.earningsRp,
+                acceptedLat = acceptedPoint?.latitude,
+                acceptedLng = acceptedPoint?.longitude,
+                pickupName = orderRow?.pickupName,
+                pickupAddress = orderRow?.pickupAddress,
+                pickupLat = cachedGeo?.first?.latitude,
+                pickupLng = cachedGeo?.first?.longitude,
+                dropName = orderRow?.dropName,
+                dropAddress = orderRow?.dropAddress,
+                dropLat = cachedGeo?.second?.latitude,
+                dropLng = cachedGeo?.second?.longitude
             )
         )
         sendServiceCommand(Actions.STOP_TRIP)
         orderOwnsTrip = false
         orderOwnedId = null
+        // ADR-023: the trip is already saved and STOP_TRIP sent; the accepted place is resolved
+        // afterwards (off this flow, so the order collector is never blocked) and late-filled.
+        if (acceptedPoint != null) {
+            viewModelScope.launch { resolveAcceptedPlace(tripIdx.toInt(), acceptedPoint) }
+        }
+    }
+
+    /** ADR-023: one reverse geocode (+ one retry), each bounded by a timeout; failure leaves NULLs. */
+    private suspend fun resolveAcceptedPlace(tripIdx: Int, point: LatLng) {
+        var result: ReverseGeocodeResult? = null
+        for (attempt in 1..2) {
+            result = withTimeoutOrNull(REVERSE_GEOCODE_TIMEOUT_MS) {
+                routeProvider.reverseGeocode(point.latitude, point.longitude)
+            }
+            if (result != null) break
+        }
+        val place = result ?: return
+        databaseDao.updateAcceptedPlace(tripIdx, place.name, place.address)
     }
 
     private fun sendServiceCommand(action: Actions) {
@@ -264,6 +305,7 @@ class ShareViewModel(
 
     companion object {
         private const val ORDER_STALENESS_TICK_MS = 60_000L
+        private const val REVERSE_GEOCODE_TIMEOUT_MS = 8_000L
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

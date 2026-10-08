@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -81,10 +83,14 @@ fun TrackItemRow(
         }
     } else null
 
+    // ADR-023: order rows with snapshotted names get a 2-3 line header (ACCEPTED/PICKUP/DROP) and
+    // grow to fit; v11 rows without a match keep the one-line label and the fixed height.
+    val showOrderHeader = orderLabel != null && (item.pickupName != null || item.dropName != null)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(156.dp)
+            .then(if (showOrderHeader) Modifier.heightIn(min = 156.dp) else Modifier.height(156.dp))
             .clip(RoundedCornerShape(18.dp))
             .background(TripSurface)
             .border(1.dp, TripBorder, RoundedCornerShape(18.dp))
@@ -94,28 +100,34 @@ fun TrackItemRow(
             )
             .padding(horizontal = 18.dp, vertical = 18.dp)
     ) {
-        Row(modifier = Modifier.weight(1f)) {
+        Row(modifier = if (showOrderHeader) Modifier.padding(bottom = 12.dp) else Modifier.weight(1f)) {
             RouteIndicator()
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 14.dp)
             ) {
-                Text(
-                    text = orderLabel ?: "Track #${item.idx}",
-                    color = TripInk,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "",
-                    color = TripInk,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 28.dp)
-                )
+                if (showOrderHeader) {
+                    item.acceptedName?.let { OrderHeaderLine("ACCEPTED", it) }
+                    OrderHeaderLine("PICKUP", item.pickupName ?: "—")
+                    OrderHeaderLine("DROP", item.dropName ?: "—")
+                } else {
+                    Text(
+                        text = orderLabel ?: "Track #${item.idx}",
+                        color = TripInk,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "",
+                        color = TripInk,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 28.dp)
+                    )
+                }
             }
             Text(
                 text = SimpleDateFormat("EEE, HH:mm", Locale.ENGLISH).format(item.timestamp),
@@ -189,6 +201,33 @@ fun TrackItemRow(
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
+    }
+}
+
+/** ADR-023: one header line — small muted tag + single-line ellipsized name. */
+@Composable
+private fun OrderHeaderLine(tag: String, name: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(bottom = 4.dp)
+    ) {
+        Text(
+            text = tag,
+            color = TripMuted,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            modifier = Modifier.width(60.dp)
+        )
+        Text(
+            text = name,
+            color = TripInk,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

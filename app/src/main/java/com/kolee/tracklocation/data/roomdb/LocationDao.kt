@@ -18,6 +18,9 @@ interface LocationDao {
     @Query("SELECT * FROM location_log ORDER BY id DESC LIMIT 1")
     suspend fun getLatestLocation(): LocationEntity?
 
+    @Query("SELECT * FROM location_log WHERE id = :id")
+    suspend fun getLocationByIdOnce(id: Long): LocationEntity?
+
     @Query("SELECT * FROM location_log WHERE id BETWEEN :startId AND :endId ORDER BY id ASC")
     fun getLocationsByRange(startId: Long, endId: Long): Flow<List<LocationEntity>>
 

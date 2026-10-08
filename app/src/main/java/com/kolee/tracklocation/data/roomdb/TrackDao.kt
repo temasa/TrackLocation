@@ -14,7 +14,11 @@ interface TrackDao {
     fun getAllTracks(): Flow<List<TrackEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTrack(item: TrackEntity)
+    suspend fun insertTrack(item: TrackEntity): Long
+
+    /** ADR-023: late-fill the reverse-geocoded accepted place once the (already saved) trip resolves it. */
+    @Query("UPDATE track SET acceptedName = :name, acceptedAddress = :address WHERE idx = :idx")
+    suspend fun updateAcceptedPlace(idx: Int, name: String?, address: String?)
 
     @Query("SELECT * FROM track WHERE idx=:idx")
     fun getTrackById(idx: Int): Flow<TrackEntity>

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 /** ADR-016 (provisional): display-only route overlay state for the active Gojek order. */
@@ -44,7 +45,7 @@ class OrderRouteController(
 
     // Per-order bookkeeping. Only touched from the single collectLatest block (cancelAndJoin
     // semantics guarantee one handler at a time).
-    private val geocodeCache = HashMap<String, Pair<LatLng, LatLng>>()
+    private val geocodeCache = ConcurrentHashMap<String, Pair<LatLng, LatLng>>() // read by ShareViewModel at trip stop (ADR-023)
     private val geocodeFailedAt = HashMap<String, Long>()
     private val geocodeAttempts = HashMap<String, Int>()
     private var activeKey: String? = null
@@ -75,6 +76,15 @@ class OrderRouteController(
         }
     }
 
+    /** ADR-023: the cached (pickup, drop) geocode of [order], or null if never resolved. No new calls. */
+    fun cachedGeo(order: OrderCard): Pair<LatLng, LatLng>? {
+        val pickupAddr = order.pickupAddress ?: return null
+        val dropAddr = order.dropAddress ?: return null
+        return geocodeCache[cacheKey(pickupAddr, dropAddr)]
+    }
+
+    private fun cacheKey(pickupAddr: String, dropAddr: String) = pickupAddr + "\u0000" + dropAddr
+
     private fun reset(key: String?) {
         _state.value = OrderRouteState()
         activeKey = key
@@ -89,7 +99,7 @@ class OrderRouteController(
     private suspend fun handle(order: OrderCard) {
         val pickupAddr = order.pickupAddress ?: return
         val dropAddr = order.dropAddress ?: return
-        val key = pickupAddr + "\u0000" + dropAddr
+        val key = cacheKey(pickupAddr, dropAddr)
         if (key != activeKey) {
             reset(key)
         } else if (order.phase != lastPhase) {

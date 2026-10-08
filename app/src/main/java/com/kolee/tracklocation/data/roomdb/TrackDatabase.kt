@@ -19,7 +19,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FuelPriceEntity::class,
         ObserverTripEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -174,6 +174,35 @@ abstract class TrackDatabase: RoomDatabase() {
                 db.execSQL(
                     "UPDATE `track` SET `orderEarningsRp` = (SELECT o.`earningsRp` FROM `observer_trip` o WHERE $match) " +
                         "WHERE `orderLabel` IS NOT NULL AND `orderEarningsRp` IS NULL AND $unique"
+                )
+            }
+        }
+
+        // ADR-023: order geo snapshot on `track` (12 nullable columns, no defaults — must match the
+        // entity exactly). Synchronous, network-free backfill: pickup/drop names + addresses are copied
+        // from the uniquely matching observer_trip (same window rule as 10->11); accepted lat/lng come
+        // from the track's start fix in location_log. acceptedName/acceptedAddress stay NULL.
+        private val MIGRATION_11_12 = object: Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                for (col in listOf("acceptedName", "acceptedAddress", "pickupName", "pickupAddress", "dropName", "dropAddress")) {
+                    db.execSQL("ALTER TABLE `track` ADD COLUMN `$col` TEXT")
+                }
+                for (col in listOf("acceptedLat", "acceptedLng", "pickupLat", "pickupLng", "dropLat", "dropLng")) {
+                    db.execSQL("ALTER TABLE `track` ADD COLUMN `$col` REAL")
+                }
+
+                val match = "o.`firstSeenAt` - 120000 <= `track`.`timestamp` AND `track`.`timestamp` <= o.`lastSeenAt` + 300000"
+                val unique = "(SELECT COUNT(*) FROM `observer_trip` o WHERE $match) = 1"
+                for (col in listOf("pickupName", "pickupAddress", "dropName", "dropAddress")) {
+                    db.execSQL(
+                        "UPDATE `track` SET `$col` = (SELECT o.`$col` FROM `observer_trip` o WHERE $match) " +
+                            "WHERE `orderLabel` IS NOT NULL AND $unique"
+                    )
+                }
+                db.execSQL(
+                    "UPDATE `track` SET `acceptedLat` = (SELECT l.`latitude` FROM `location_log` l WHERE l.`id` = `track`.`startLocationId`), " +
+                        "`acceptedLng` = (SELECT l.`longitude` FROM `location_log` l WHERE l.`id` = `track`.`startLocationId`) " +
+                        "WHERE `orderLabel` IS NOT NULL AND `startLocationId` IS NOT NULL"
                 )
             }
         }
@@ -346,7 +375,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .build()
                 INSTANCE = instance
                 return instance

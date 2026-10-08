@@ -11,6 +11,12 @@ interface RouteProvider {
     /** Best accepted point for a place [name] (optional) / [address], biased to [focus], or null. */
     suspend fun geocode(name: String?, address: String, focus: LatLng?): LatLng?
 
+    /** Place name + full address label nearest ([lat], [lng]), or null (also when offline). */
+    suspend fun reverseGeocode(lat: Double, lng: Double): ReverseGeocodeResult?
+
     /** Driving route polyline origin -> [waypoint]? -> destination, or null. */
     suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng? = null): List<LatLng>?
 }
+
+/** ADR-023: reverse-geocode hit; [name] is the short place name, [address] the full label. */
+data class ReverseGeocodeResult(val name: String?, val address: String?)
