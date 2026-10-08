@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.21
+**Document Version:** 0.22
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-08
 **Owner:** Tech Lead
@@ -253,7 +253,40 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v10** (current; ADR-013 observer_trip shipped 2026-10-05). ADR-022 extends to **v11** via **MIGRATION_10_11** (DB→v11, ADR-022): `ALTER TABLE track ADD COLUMN orderLabel TEXT` + `ALTER TABLE track ADD COLUMN orderEarningsRp INTEGER`. Migrations (all inline in `TrackDatabase.kt`): `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries), `MIGRATION_2_3` (observer_event + allowlist_rule), `MIGRATION_3_4` (obd_sample), `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table). ADR-008 adds **MIGRATION_8_9** (DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`. **ADR-010 adds a migration for `known_segment` (originally planned as MIGRATION_9_10, DB→v10; renumbered 10→11 if ADR-013 ships first — this occurred: ADR-013 shipped as MIGRATION_9_10, so ADR-010's `known_segment` migration will be numbered 10→11 when it ships, and ADR-022 will then be 11→12).** **ADR-013 adds MIGRATION_9_10 (DB→v10):** `CREATE TABLE observer_trip (id INTEGER PK AUTOINCREMENT, pickupName TEXT, pickupAddress TEXT, dropName TEXT, dropAddress TEXT, payment TEXT, earningsRp INTEGER, phase TEXT NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL, handled INTEGER NOT NULL DEFAULT 0)` with an `@Index` on `lastSeenAt`. Numbering follows ship order; numbering will shift if ADR-010 ships before ADR-022.
+Room database (`TrackDatabase`), at version **v12** (current; ADR-023 extends to v12 2026-10-08). 
+
+**Current migrations (all inline in `TrackDatabase.kt`):**
+- `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
+- `MIGRATION_2_3` (observer_event + allowlist_rule)
+- `MIGRATION_3_4` (obd_sample)
+- `MIGRATION_4_5` (OBD accumulator columns — `ALTER TABLE recording_session` + `ALTER TABLE track`; the domain "trip" is the physical `track` table)
+- `MIGRATION_8_9` (ADR-008, DB→**v9**): `CREATE TABLE fuel_price (id INTEGER PK AUTOINCREMENT, pricePerLiter REAL NOT NULL, effectiveFromMs INTEGER NOT NULL)`, plus an `@Index` on `effectiveFromMs`
+- `MIGRATION_9_10` (ADR-013, DB→v10): `CREATE TABLE observer_trip (id INTEGER PK AUTOINCREMENT, pickupName TEXT, pickupAddress TEXT, dropName TEXT, dropAddress TEXT, payment TEXT, earningsRp INTEGER, phase TEXT NOT NULL, firstSeenAt INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL, handled INTEGER NOT NULL DEFAULT 0)` with an `@Index` on `lastSeenAt`
+- `MIGRATION_10_11` (ADR-022, DB→v11): `ALTER TABLE track ADD COLUMN orderLabel TEXT` + `ALTER TABLE track ADD COLUMN orderEarningsRp INTEGER`
+- `MIGRATION_11_12` (ADR-023, DB→**v12**): Twelve nullable columns added to `track` for order-trip geo snapshot:
+  ```sql
+  ALTER TABLE track ADD COLUMN acceptedName TEXT
+  ALTER TABLE track ADD COLUMN acceptedAddress TEXT
+  ALTER TABLE track ADD COLUMN acceptedLat REAL
+  ALTER TABLE track ADD COLUMN acceptedLng REAL
+  ALTER TABLE track ADD COLUMN pickupName TEXT
+  ALTER TABLE track ADD COLUMN pickupAddress TEXT
+  ALTER TABLE track ADD COLUMN pickupLat REAL
+  ALTER TABLE track ADD COLUMN pickupLng REAL
+  ALTER TABLE track ADD COLUMN dropName TEXT
+  ALTER TABLE track ADD COLUMN dropAddress TEXT
+  ALTER TABLE track ADD COLUMN dropLat REAL
+  ALTER TABLE track ADD COLUMN dropLng REAL
+  ```
+  No default values; all columns nullable.
+
+**Backfill logic for MIGRATION_11_12 (v11→v12):**
+- For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.
+  - If exactly one match exists: copy pickup/drop names and addresses from the `observer_trip` row into `pickupName`, `pickupAddress`, `dropName`, `dropAddress`.
+  - If multiple matches, no match, or the order row was pruned: leave pickup/drop fields `NULL` (no false linking).
+- Backfill `acceptedLat`/`acceptedLng` from the `location_log` row referenced by `track.startLocationId` when available; leave `NULL` if `startLocationId` is `NULL` or the location row is missing.
+- Leave `acceptedName`/`acceptedAddress` as `NULL` (no network call in migration; reverse-geocoding is captured on-demand for new trips).
+- Post-migration, new order trips capture all twelve fields when the trip is persisted at stop; accepted location is reverse-geocoded once (fail-soft if offline) via OpenRouteService.
 
 `location_log` columns (per ADR-006 dwell collapse): `id` (PK), `timestamp` (last confirmed-still fix / departure), `dwellStartTimestamp` (arrival; set once at insert, never bumped), `collapsedCount` (fixes folded into the anchor, default 1), `latitude`, `longitude`, `accuracyMeters?`, `speedMetersPerSecond?`, `bearingDegrees?`, `altitudeMeters?`. `MIGRATION_5_6` (ADR-005) added the `observer_event_fts` FTS4 index; `MIGRATION_6_7` (ADR-006) adds `dwellStartTimestamp`/`collapsedCount` and backfills `dwellStartTimestamp = timestamp`. DB version → 7.
 

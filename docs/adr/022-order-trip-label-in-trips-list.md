@@ -99,7 +99,20 @@ This decision adds a persistent order label and earnings summary to each order-l
 
 ---
 
+---
+
+## Presentation Supersession (2026-10-08)
+
+**ADR-023 (Order Trip Header Card)** supersedes the one-line row header presentation of this ADR. The label "Gojek: <pickupName> → <dropName>" is replaced by a three-line header:
+- **ACCEPTED** — place name from reverse-geocoding the trip start GPS fix
+- **PICKUP** — Gojek pickup name
+- **DROP** — Gojek drop name
+
+The **orderLabel** and **orderEarningsRp** columns (this ADR's decision) remain stored and used for backfilling; the three-line display (ADR-023) supersedes their one-line presentation in the Trips list row. The price/net cell from ADR-022 is retained unchanged.
+
+---
+
 **Amends:** None (new decision).
 
-**Supersedes:** None.
+**Supersedes:** None (presentation superseded by ADR-023 for row header display; data columns remain).
 

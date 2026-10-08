@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.24
+**Document Version:** 0.25
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-08
 **Owner:** Product Manager / UX Designer
@@ -127,13 +127,18 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 
 ---
 
-## 3b-order. Trips List — Order-Trip Rows (ADR-022)
+## 3b-order. Trips List — Order-Trip Rows (ADR-022, ADR-023)
 
-**What it does:** When a trip is tied to a Gojek order (auto-started by ADR-015, labeled/tracked by ADR-022), the completed trip row in the Trips list displays the order label and a compact price/net cell, allowing the driver to quickly identify order-linked work at a glance.
+**What it does:** When a trip is tied to a Gojek order (auto-started by ADR-015, geo-snapshot tracked by ADR-023), the completed trip row in the Trips list displays a three-line header card and a compact price/net cell, allowing the driver to quickly identify order-linked work and see three distinct locations at a glance.
 
 **Display in TrackItemRow (completed trip, order-linked):**
 
-**Label:** Appears as part of the row title or subtitle (implementation detail TBD in code; placement might be below "Track #N" or replacing the generic title): "Gojek: <pickupName> → <dropName>" (e.g., "Gojek: Senayan → Blok S"). Names are extracted location names only (no full addresses; no customer name/phone). If a name exceeds ~25 characters, truncate in the UI row with an ellipsis (e.g., "Gojek: PT Multi-Pratama M… → …"). The label is a snapshot captured at trip save time; it survives `observer_trip` row pruning (90d/5k retention, ADR-013).
+**Three-line header card (ADR-023):** Appears as the row title/subtitle area, replacing the one-line label from ADR-022. The header shows three lines:
+- **Line 1 (ACCEPTED):** Place name from reverse-geocoding the trip start GPS fix (e.g., "Senayan", "Jalan Cipete Raya"). One-time reverse-geocoding at trip end (fail-soft if offline). Names only (no full address shown). **Hidden if reverse-geocoding failed or no fix available** — the card then shows two lines (PICKUP and DROP only).
+- **Line 2 (PICKUP):** Pickup name from the Gojek order card (e.g., "Mall Pondok Indah").
+- **Line 3 (DROP):** Drop name from the Gojek order card (e.g., "Blok S").
+
+Names are extracted location names only (no customer name/phone; full addresses persist but are not displayed). If a name exceeds ~25 characters, truncate in the UI row with an ellipsis (e.g., "PT Multi-Pratama M…"). All three names and addresses are snapshots captured at trip save time; they survive `observer_trip` row pruning (90d/5k retention, ADR-013).
 
 **Price / Net cell:** Appears in the row's second metric row (where completed trips show avg km/L / cost, §3b #7) or as a dedicated cell. Shows two values separated by " / ":
 - First: `price = orderEarningsRp` (earnings from the order at completion).
@@ -148,9 +153,9 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 
 **Missing data:** Shows '— / —' when `trip.obdFuelConsumedL = 0` or no fuel price was in effect at trip start.
 
-**Manual (non-order) trips:** Rows without an order label (manual trips, or order trips that failed to capture a label) remain unchanged — no label or price/net cell is shown. The row displays the standard metrics: distance / duration / avg speed / avg km/L / cost (§3b).
+**Manual (non-order) trips:** Rows without an order header (manual trips, or order trips that failed to capture PICKUP/DROP names) remain unchanged — no header or price/net cell is shown. The row displays the standard metrics: distance / duration / avg speed / avg km/L / cost (§3b).
 
-**Design note:** No new visual language is introduced — the label is plain text (reuses existing title/label typography), and the price/net cell reuses the existing compact-Rupiah format and cell styling from the active-trip row (FR-12 integration). No external design handoff needed; user explicitly exempted from AGENTS.md §12 for this change (ADR-022).
+**Design note:** No new visual language is introduced — the header is plain text (reuses existing title/label typography), the three-line structure is simple typography stacking, and the price/net cell reuses the existing compact-Rupiah format and cell styling from the active-trip row (FR-12 integration). No external design handoff needed; user explicitly exempted from AGENTS.md §12 for this change (ADR-022, ADR-023).
 
 ---
 

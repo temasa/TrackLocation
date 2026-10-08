@@ -111,6 +111,7 @@ Links to docs, code, or external resources supporting this decision.
 | [020](020-track-navigation-camera.md) | Track Map Navigation Camera Auto-activates During Trip or Order | Accepted | 2026-10-07 |
 | [021](021-debug-diagnostic-screen-recorder.md) | Debug-only Diagnostic Screen Recorder | Accepted | 2026-10-07 |
 | [022](022-order-trip-label-in-trips-list.md) | Order Trip Label in the Trips List (pickup → drop + price/net) | Accepted | 2026-10-08 |
+| [023](023-order-trip-header-card-and-geo-snapshot.md) | Order Trip Header Card (accepted/pickup/drop + saved geo details) | Accepted | 2026-10-08 |
 
 ---
 
@@ -131,5 +132,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2026-10-08

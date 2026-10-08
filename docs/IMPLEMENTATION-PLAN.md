@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.36
+**Version:** 0.37
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-08
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -18,9 +18,9 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 ## ▶ Next Step — Start Here
 
-### Current — Order trip label in Trips list (ADR-022) documented 2026-10-08: order-linked trip rows display pickup/drop label and price/net summary in the Trips list. All related docs (PRD FR-20, UI-SPEC §3b-order, ARCHITECTURE v11 migration, ADR-022) updated. Code implementation pending user approval (AGENTS.md §5b). Remaining: Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015) code builds + device verification; order route overlay (ADR-016) + provider (ADR-017) code + design handoff + device verification; Track car-marker color update code planned; Track Recenter + navigation camera + live location code + device verification; Debug recorder code pending user approval. (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
+### Current — Order trip header card with accepted/pickup/drop + geo snapshot (ADR-023) documented 2026-10-08: order-linked trip rows in the Trips list display a three-line header (ACCEPTED = reverse-geocoded trip start location, PICKUP = Gojek pickup name, DROP = Gojek drop name) and persist 12 geo columns (name + address + lat/lng for each location). All related docs (PRD FR-20/FR-17, UI-SPEC §3b-order, ARCHITECTURE v12 migration, ADR-023, ADR-022 amended, ADR-017 amended) updated. Code implementation pending user approval (AGENTS.md §5b). Remaining: Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015) code builds + device verification; order route overlay (ADR-016) + provider (ADR-017) code + design handoff + device verification; Track car-marker color update code planned; Track Recenter + navigation camera + live location code + device verification; Debug recorder code pending user approval. (OBD Phase 2 built + installed; manual drive-test still pending — user. Observer P3 complete (Filtering + Settings); Observer P4+ are out of current scope per PRD §8.)
 
-### Also documented — Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015), order route overlay (ADR-016) with provider switch to OpenRouteService (ADR-017), order trip label in Trips list (ADR-022, docs only), Track map Recenter/follow mode (2026-10-06), Track screen live location (ADR-018, docs only), Track navigation camera (ADR-020, docs only), Track car-marker colors (black body, white windows; code change planned), and Debug diagnostic screen recorder (ADR-021, docs only). Code for order features + route provider implemented, unbuilt for order route overlay (static review only); design handoff pending; build/test needs explicit permission (AGENTS.md §5a). Track map Recenter code pending user approval (no build permission yet). Track screen live location and Track navigation camera code pending user approval (AGENTS.md §5b). Debug recorder code implementation pending user approval (AGENTS.md §5b). Order trip label in Trips list code implementation pending user approval (AGENTS.md §5b).
+### Also documented — Gojek trip extraction (ADR-013), order-card takeover (ADR-014), order auto-start/end trip (ADR-015), order route overlay (ADR-016) with provider switch to OpenRouteService (ADR-017), order trip label in Trips list (ADR-022, docs only), order trip header card with geo snapshot (ADR-023, docs only), Track map Recenter/follow mode (2026-10-06), Track screen live location (ADR-018, docs only), Track navigation camera (ADR-020, docs only), Track car-marker colors (black body, white windows; code change planned), and Debug diagnostic screen recorder (ADR-021, docs only). Code for order features + route provider implemented, unbuilt for order route overlay (static review only); design handoff pending; build/test needs explicit permission (AGENTS.md §5a). Track map Recenter code pending user approval (no build permission yet). Track screen live location and Track navigation camera code pending user approval (AGENTS.md §5b). Debug recorder code implementation pending user approval (AGENTS.md §5b). Order trip label in Trips list code implementation pending user approval (AGENTS.md §5b). Order trip header card and geo snapshot code implementation pending user approval (AGENTS.md §5b).
 
 **OBD Phase 2: Fuel Consumption Enhancement** — idle L/h display, session-average km/L, trip-average km/L, Trip screen fuel metrics.
 
@@ -60,6 +60,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.37 | 2026-10-08 | Order trip header card and geo snapshot (ADR-023, docs only): order-linked trip rows display three-line header (ACCEPTED / PICKUP / DROP) + 12 persisted geo columns. New ADR-023 file created; adr/README v1.1→1.2 (ADR-023 row added, count 22→23); ADR-022 and ADR-017 amended with supersession/privacy refinement notes; PRD v0.18→0.19 (FR-20 extended with three-line header + geo snapshot details, FR-17 privacy refinement for reverse-geocoding driver coordinates); ARCHITECTURE v0.21→0.22 (MIGRATION_11_12 DB v11→v12 documented with twelve new columns + backfill logic); UI-SPEC v0.24→0.25 (§3b-order rewritten: three-line header card description + missing-data rules); IMPLEMENTATION-PLAN §4 new "Order Trip Header Card and Geo Snapshot (ADR-023)" slice with full "How to Verify" block (migration v11→v12 on device, new order trip shows 3-line header, reverse-geocode failure/offline behavior, backfilled v11 rows, non-order trips unchanged, build/device verification permitted by user 2026-10-08) + 7 numbered implementation steps (What/How), §6 new Task Log row (status In Progress, Git Revision '---'), and updated Next Step section; §1 change log entry 0.37 added, version 0.36→0.37. DOCUMENT-CONTROL register + change log row updated. No code changes in this docs-only entry. Code implementation pending user approval (AGENTS.md §5b). |
 | 0.36 | 2026-10-08 | Order trip label in Trips list (ADR-022, docs only): trip rows for order-linked trips now display pickup/drop label and price/net cell. New ADR-022 file created; adr/README v1.0→1.1 (ADR-022 row added, count 21→22); PRD v0.17→0.18 (FR-20 new, cross-refs to FR-15/FR-16, keyword "snapshot"), ARCHITECTURE v0.20→0.21 (MIGRATION_10_11 DB v10→v11 documented), UI-SPEC v0.23→0.24 (§3b-order new subsection describing order-trip row label + price/net display), IMPLEMENTATION-PLAN §4 new "Order Trip Label in Trips List (ADR-022)" slice + updated Next Step section + §1 change log entry 0.36 added, version 0.35→0.36. DOCUMENT-CONTROL register + change log row updated. No schema changes or Room migration in this docs-only entry (MIGRATION_10_11 definition only). Code implementation pending user approval (AGENTS.md §5b). |
 | 0.35 | 2026-10-08 | Backfilled revisions: ADR-015 vocabulary docs row (ad8c56c) + car-marker color docs row (ad8c56c) + car-marker color code row completed (9d4d672, verification text updated). Car-marker code task marked Completed; drawable-only fill changes (`ic_car_marker.xml` body `#FA0211`→`#000000`, windows `#1D252C`→`#FFFFFF`). Revision backfill per AGENTS.md §8. §6 new top row added (docs-only backfill task). Docs only; no schema, no build/test run. |
 | 0.34 | 2026-10-08 | ADR-015 vocabulary aligned with code: trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table updated (Finished row → AUTO-END at Selesai; Cleared row → Backstop AUTO-END), Decision #2 title amended to include Selesai, terminal-state list in Decision + Alternatives updated, Positive consequences amended to include Selesai. ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); adjusted "both yield" → "all yield". DOCUMENT-CONTROL register + change log updated. §6 new task-log row added. Docs only; no schema, no build/test run. |
@@ -252,6 +253,85 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 7. **UI — no design handoff (explicit exemption):** The order label is plain text (reuses existing title/label typography); the price/net cell reuses the compact-Rupiah format and cell styling from existing active-trip rows (§3b #7). No new visual language introduced. User explicitly exempted from AGENTS.md §12 design-first rule (ADR-022 decision).
 
 **How to Verify (after implementation):** See step 2–4 above; build and device test per AGENTS.md §5a. Manual on-device steps: (a) accept a Gojek order, complete the trip, verify Trips list row shows label and price/net; (b) verify backfilled old order trips (if migration runs on device DB with pre-existing orders).
+
+**No new permission. No breaking changes to existing code paths.**
+
+---
+
+### Order Trip Header Card and Geo Snapshot (ADR-023)
+
+**What it does:** Extend order-trip rows in the Trips list with a three-line header card (ACCEPTED = reverse-geocoded trip start location, PICKUP = Gojek pickup name, DROP = Gojek drop name) and persist 12 nullable geo columns (name, address, lat/lng for each location). The driver's coordinates are sent to OpenRouteService reverse-geocoding once per trip at stop (fail-soft if offline) to resolve the place name where the order was accepted. Pickup/drop names and coordinates come from the Gojek order card and OrderRouteController's cached geocoding results (no additional geocode calls).
+
+**Observable result:** Complete a Gojek order trip → navigate to Trips list → order-linked trip row shows three-line header ("ACCEPTED <name>", "PICKUP <name>", "DROP <name>") plus the price/net cell from ADR-022. If reverse-geocoding the accepted location fails, the header shows two lines (PICKUP and DROP only). Non-order trips remain unchanged. Backfilled v11 rows show PICKUP/DROP names + coordinates; accepted location (ACCEPTED name/address/lat/lng) is `NULL` for pre-migration rows (no network call in migration).
+
+**How to Verify:**
+
+1. **Migration v11→v12 applies:** Run MIGRATION_11_12 on a device DB copy (v11). Verify schema: 12 new nullable columns added to `track` table (acceptedName, acceptedAddress, acceptedLat, acceptedLng, pickupName, pickupAddress, pickupLat, pickupLng, dropName, dropAddress, dropLat, dropLng). No crash, no data loss on existing rows.
+
+2. **New order trip shows 3-line header + persisted geo columns:** Accept a Gojek order on the Track screen (PICKUP phase) → order card appears with pickup/drop details → complete the order at Selesai → trip auto-stops and is persisted. Navigate to Trips list → completed order-trip row displays:
+   - Three-line header: "ACCEPTED <placeName>" (reverse-geocoded from trip start GPS fix), "PICKUP <pickupName>", "DROP <dropName>" (from order card).
+   - Price/net cell "Rp.. / Rp.." (ADR-022 integration).
+   - Query the DB: verify all 12 columns populated (acceptedName, acceptedAddress, acceptedLat, acceptedLng from reverse-geocode + trip start fix; pickupName, pickupAddress, pickupLat, pickupLng from order card + OrderRouteController cache; dropName, dropAddress, dropLat, dropLng from order card + cache).
+
+3. **Reverse-geocoding fails or offline → accepted line hidden:** Simulate reverse-geocoding failure (e.g., flight-mode on, ORS API error, timeout). Complete an order trip → persist trip. In Trips list, row shows two-line header (PICKUP, DROP only; no ACCEPTED line). DB query: acceptedName, acceptedAddress, acceptedLat, acceptedLng are `NULL`; pickup/drop columns are populated (retry once on failure is attempted, then fail-soft).
+
+4. **Backfilled v11 rows (migration):** Run MIGRATION_11_12 on a device DB with pre-migration order trips (v11 rows with orderLabel != NULL). Query the backfilled rows: pickupName/pickupAddress/dropName/dropAddress are copied from matched `observer_trip` rows (window: firstSeenAt−2min to lastSeenAt+5min, exactly one match); acceptedLat/acceptedLng are backfilled from `location_log` via startLocationId (if present); acceptedName/acceptedAddress are `NULL` (no network in migration). Verify no false matches (ambiguous match windows stay `NULL`).
+
+5. **Non-order trips unchanged:** Manually start a trip (no Gojek order) → no header or special cells in the Trips list row; row displays standard metrics (distance, duration, avg speed, avg km/L, cost). Query the DB: all 12 new columns are `NULL`.
+
+6. **Reverse-geocode accuracy + fail-soft:** Accept orders during a drive and verify reverse-geocoded place name matches approximate location (e.g., "Jalan Cipete Raya" for a location on that street). Street-level pins may be metres off (same as ADR-017 pickup/drop caveats). If reverse-geocode fails, trip still saves with no delay or user prompt (fail-soft); the 3-line header adapts to show two lines.
+
+7. **No crash or data loss:** Run through multiple order trips; verify no ANR, no crash, no loss of trip distance/duration/fuel data when reverse-geocoding times out or fails.
+
+**Implementation steps (numbered, What/How):**
+
+1. **Schema + MIGRATION_11_12:** Add twelve nullable columns to the `track` table:
+   ```sql
+   ALTER TABLE track ADD COLUMN acceptedName TEXT
+   ALTER TABLE track ADD COLUMN acceptedAddress TEXT
+   ALTER TABLE track ADD COLUMN acceptedLat REAL
+   ALTER TABLE track ADD COLUMN acceptedLng REAL
+   ALTER TABLE track ADD COLUMN pickupName TEXT
+   ALTER TABLE track ADD COLUMN pickupAddress TEXT
+   ALTER TABLE track ADD COLUMN pickupLat REAL
+   ALTER TABLE track ADD COLUMN pickupLng REAL
+   ALTER TABLE track ADD COLUMN dropName TEXT
+   ALTER TABLE track ADD COLUMN dropAddress TEXT
+   ALTER TABLE track ADD COLUMN dropLat REAL
+   ALTER TABLE track ADD COLUMN dropLng REAL
+   ```
+   Inline in `TrackDatabase.kt`, between versions v11 and v12. No default values; all columns nullable (no data impact on existing rows).
+
+2. **Reverse-geocode accepted location at trip stop:** When `ShareViewModel.onTripCtaTap()` persists a trip (via `insertTrack`), after checking `orderOwnsTrip` and capturing pickup/drop data (ADR-022 logic), call OpenRouteService reverse-geocoding once:
+   - Source: `track.startLocationId` GPS fix (latitude, longitude) from the `location_log` row.
+   - API: `GET https://api.openrouteservice.org/geocode/reverse?lat=<lat>&lon=<lon>&size=1&focus.point.lat=<lat>&focus.point.lon=<lon>` (reuse existing ORS client per ADR-017).
+   - Retry once on failure; capture `name` from the geocoding result's top candidate.
+   - Fail-soft: if reverse-geocode fails, times out, or no fix available, set `acceptedName/acceptedAddress` to `NULL` and write the trip immediately (no wait, no user prompt).
+   - Write the trip (insert into `track`) with all geo columns captured or `NULL` as applicable.
+
+3. **Pickup/drop geo columns from OrderRouteController cache:** At trip stop, read `OrderRouteController.orderRouteState.pickupLatLng` and `dropLatLng` (cached from the order's geocoding phase per ADR-017). Store these lat/lng in the trip's `pickupLat/pickupLng` and `dropLat/dropLng` columns. Pickup/drop names and addresses come from the `observer_trip` row (ADR-022 existing logic); if OrderRouteController geocoding failed (`pickupLatLng == null`), store `NULL` in the lat/lng columns (no additional geocode calls).
+
+4. **Backfill logic for MIGRATION_11_12 (v11→v12):** Post-migration (or as part of it), run a backfill job (async on IO dispatcher, non-blocking):
+   - For each `track` row where `orderLabel != NULL` (existing order-linked trips from v10→v11 migration):
+     - Match against `observer_trip` rows: window = `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.
+     - If exactly one match: copy `pickupName`, `pickupAddress`, `dropName`, `dropAddress` into the `track` row.
+     - Backfill `acceptedLat`/`acceptedLng` from `location_log` via `track.startLocationId` (if present).
+     - Leave `acceptedName`/`acceptedAddress` as `NULL` (no network call in migration).
+     - If multiple matches, no match, or order row pruned: leave all geo columns `NULL` (no false linking).
+   - Non-blocking: backfill runs on IO dispatcher and does not block app launch or trip operations.
+
+5. **Display logic (TrackItemRow for order trips):** When rendering a completed trip row with `orderLabel != NULL`:
+   - If `acceptedName != NULL`: display "ACCEPTED <acceptedName>" (line 1).
+   - Always display "PICKUP <pickupName>" (line 2).
+   - Always display "DROP <dropName>" (line 3).
+   - If `acceptedName == NULL` (reverse-geocode failed, v11→v12 backfilled, or no fix): show two-line header (PICKUP and DROP only; no ACCEPTED line).
+   - Three-line or two-line header replaces the one-line label from ADR-022; the price/net cell remains unchanged.
+
+6. **No design handoff (explicit exemption):** The three-line header is plain text (reuses existing title/label typography); no new visual language. The price/net cell reuses existing styles (ADR-022 integration). User explicitly exempted from AGENTS.md §12 design-first rule (ADR-023 decision).
+
+7. **Privacy & access controls:** The driver's trip start coordinates are sent to OpenRouteService for reverse-geocoding (one-time per trip, fail-soft, no wait on network). All geo data is persisted in user-deletable `track` rows (no auto-pruning; consistent with the canonical trip record). Customer name and phone remain never stored (ADR-013 rule preserved).
+
+**How to Verify (after implementation):** See steps 1–7 above; build and device test per AGENTS.md §5a. Manual on-device steps: (a) accept a Gojek order, complete the trip, verify Trips list row shows 3-line header + price/net cell, all 12 geo columns in DB; (b) test reverse-geocode failure (flight-mode on), verify accepted line is hidden, trip still saves; (c) verify backfilled v11 rows (if migration runs on device DB with pre-existing orders) show PICKUP/DROP details, no ACCEPTED name; (d) verify non-order trips remain unchanged.
 
 **No new permission. No breaking changes to existing code paths.**
 
@@ -523,7 +603,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
-| 2026-10-08 | Code — Order trip label in Trips list (ADR-022): `TrackEntity` + `orderLabel TEXT?` / `orderEarningsRp INTEGER?`; Room v10→v11 `MIGRATION_10_11` (two nullable ADD COLUMNs + best-effort backfill from `observer_trip`, unique-match window firstSeenAt−2min..lastSeenAt+5min); `ObserverTripDao.findById`; `ShareViewModel` tracks `orderOwnedId` and snapshots label/earnings in `stopActiveTrip` before ownership is released; `TrackItemRow`/`ListContent` show the label in the title slot and a compact `price / net` cell (new `utils/CompactRupiah.kt`). | Completed | 1391d67 | Built (`./gradlew assembleDebug` BUILD SUCCESSFUL, incl. Room kapt) and installed over the existing app on SM-G965F (user-permitted, 2026-10-08). Migration verified on device: DB upgraded v10→v11 without crash; pulled `track_db` shows user_version 11, `orderLabel`/`orderEarningsRp` columns present, 7 of 22 existing trips backfilled (unambiguous matches only). Not yet verified: live label capture for a new Gojek order trip, Trips list row visuals on screen, and backfill correctness for trips whose pickup/drop names are identical (#16, #19) or are street addresses. No tests run. |
+| 2026-10-08 | Docs — Order trip header card and geo snapshot (ADR-023): three-line header (ACCEPTED / PICKUP / DROP) + 12 persisted geo columns (acceptedName/Address/Lat/Lng + pickupName/Address/Lat/Lng + dropName/Address/Lat/Lng). New ADR-023 file + adr/README v1.1→1.2 (ADR-023 row added, count 22→23). ADR-022 amended (presentation supersession note); ADR-017 amended (privacy refinement for reverse-geocoding driver coordinates). PRD v0.18→0.19 (FR-20 extended to three-line header, FR-17 privacy refinement); ARCHITECTURE v0.21→0.22 (MIGRATION_11_12 DB v11→v12 documented with twelve columns + backfill logic); UI-SPEC v0.24→0.25 (§3b-order rewritten to describe three-line header card). IMPLEMENTATION-PLAN §4 new "Order Trip Header Card and Geo Snapshot (ADR-023)" slice (What/Observable/How to Verify with 7 checks + 7 numbered implementation steps), §6 this task row, and updated Next Step section; §1 change log entry 0.37 added; version 0.36→0.37. DOCUMENT-CONTROL register + change log row updated. No source code changes; all documentation. | In Progress | --- | Docs only; content coverage: new ADR-023 file (context, decision, consequences, alternatives, related ADRs, references per ADR template); adr/README updated with ADR-023 row; ADR-022 supersession note; ADR-017 privacy refinement note; PRD FR-20/FR-17 updated; ARCHITECTURE migration v11→v12 documented with backfill logic; UI-SPEC §3b-order rewritten; IMPLEMENTATION-PLAN §4 slice + §6 task row + Next Step updated; DOCUMENT-CONTROL register/change log updated. Version numbers: adr/README 1.1→1.2, PRD 0.18→0.19, ARCHITECTURE 0.21→0.22, UI-SPEC 0.24→0.25, IMPLEMENTATION-PLAN 0.36→0.37. Pending (code implementation): (1) build MIGRATION_11_12 and verify migration v11→v12 on device without crash; (2) new Gojek order trip shows three-line header with all 12 geo columns populated; (3) reverse-geocode failure/offline → accepted line hidden, trip still saved; (4) backfilled v11 rows show PICKUP/DROP details, no ACCEPTED name; (5) non-order trips remain unchanged; (6) no crash or ANR on multiple order trips with geocoding timeouts. |
 | 2026-10-08 | Docs — backfilled revisions ad8c56c / 9d4d672 and marked car-marker code task Completed | Completed | ebf7430 | Docs only; hashes checked against `git log`. |
 | 2026-10-08 | Docs — ADR-015 vocabulary aligned with code: trip ends when order row reaches FINISHED, including at Selesai screen. Amended 2026-10-08: vocabulary table (Finished row → AUTO-END at Selesai; Cleared row → Backstop AUTO-END), Decision #2 title includes Selesai, terminal-state list added Selesai first, Positive consequences amended to include Selesai. ARCHITECTURE heading updated to include Selesai; terminal states reordered (Selesai a, home b, cancel c); "both yield" → "all yield". DOCUMENT-CONTROL register + change log + IMPLEMENTATION-PLAN v0.33→0.34 updated. Docs only; no schema, no build/test run. | Completed | ad8c56c | Cross-checked against ShareViewModel.kt end collector and OrderCardParser.kt; vocabulary/decision/consequences/alternatives wording alignment verified. |
 | 2026-10-07 | Docs — Track car-marker color update (UI-SPEC §3i): black body (`#000000`), white window panels (`#FFFFFF`), existing accent details and dark wheels/trim preserved; translucent backing remains omitted. UI-SPEC v0.22→0.23; IMPLEMENTATION-PLAN v0.32→0.33 (§1 change log, current/also-documented summary, §4 slice What/Observable/How to Verify/implementation instructions, §6 task rows); DOCUMENT-CONTROL register + change log updated. No source or schema changes. | Completed | ad8c56c | Documentation consistency checked; no build or test run. |
