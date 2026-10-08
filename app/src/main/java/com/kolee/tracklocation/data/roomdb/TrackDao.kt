@@ -20,6 +20,17 @@ interface TrackDao {
     @Query("UPDATE track SET acceptedName = :name, acceptedAddress = :address WHERE idx = :idx")
     suspend fun updateAcceptedPlace(idx: Int, name: String?, address: String?)
 
+    /** ADR-023 amendment: persist the accepted point (backfill fallback from the stored path). */
+    @Query("UPDATE track SET acceptedLat = :lat, acceptedLng = :lng WHERE idx = :idx")
+    suspend fun updateAcceptedPoint(idx: Int, lat: Double, lng: Double)
+
+    /** ADR-023 amendment: order trips whose accepted place was never resolved, newest first. */
+    @Query(
+        "SELECT * FROM track WHERE orderLabel IS NOT NULL AND acceptedName IS NULL " +
+            "AND acceptedAddress IS NULL ORDER BY idx DESC LIMIT :limit"
+    )
+    suspend fun getOrderTripsMissingAcceptedPlace(limit: Int): List<TrackEntity>
+
     @Query("SELECT * FROM track WHERE idx=:idx")
     fun getTrackById(idx: Int): Flow<TrackEntity>
 

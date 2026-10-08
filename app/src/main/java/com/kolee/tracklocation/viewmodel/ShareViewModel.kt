@@ -33,6 +33,8 @@ import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.LocationUiState
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.utils.LocationUtils
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -118,6 +120,10 @@ class ShareViewModel(
         com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(samples)
 
     init {
+        // ADR-023 amendment: one-time accepted-place backfill (once per process, never concurrent).
+        if (backfillStarted.compareAndSet(false, true)) {
+            viewModelScope.launch { backfillAcceptedPlaces() }
+        }
         viewModelScope.launch {
             databaseDao.getAllTracks().distinctUntilChanged().collect { allTracks ->
                 responseState = Response.Success(data = allTracks)
@@ -247,7 +253,7 @@ class ShareViewModel(
     }
 
     /** ADR-023: one reverse geocode (+ one retry), each bounded by a timeout; failure leaves NULLs. */
-    private suspend fun resolveAcceptedPlace(tripIdx: Int, point: LatLng) {
+    private suspend fun resolveAcceptedPlace(tripIdx: Int, point: LatLng): Boolean {
         var result: ReverseGeocodeResult? = null
         for (attempt in 1..2) {
             result = withTimeoutOrNull(REVERSE_GEOCODE_TIMEOUT_MS) {
@@ -255,8 +261,45 @@ class ShareViewModel(
             }
             if (result != null) break
         }
-        val place = result ?: return
+        val place = result ?: return false
         databaseDao.updateAcceptedPlace(tripIdx, place.name, place.address)
+        return true
+    }
+
+    /**
+     * ADR-023 amendment: one-time (per process) background backfill of the accepted place for
+     * migrated order trips. Sequential, newest first, throttled; failures leave NULL (retried on
+     * the next app start). The Trips list observes the DB flow, so filled names appear live.
+     */
+    private suspend fun backfillAcceptedPlaces() {
+        val candidates = try {
+            databaseDao.getOrderTripsMissingAcceptedPlace(BACKFILL_MAX_TRIPS)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
+        var first = true
+        for (track in candidates) {
+            try {
+                var lat = track.acceptedLat
+                var lng = track.acceptedLng
+                if (lat == null || lng == null) {
+                    val start = LocationUtils.stringToPathPoints(track.pathPoints).firstOrNull()
+                        ?: continue
+                    lat = start.latitude
+                    lng = start.longitude
+                    databaseDao.updateAcceptedPoint(track.idx, lat, lng)
+                }
+                if (!first) delay(BACKFILL_DELAY_MS)
+                first = false
+                resolveAcceptedPlace(track.idx, LatLng(lat, lng))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Fail-soft: leave this row NULL and move on.
+            }
+        }
     }
 
     private fun sendServiceCommand(action: Actions) {
@@ -306,6 +349,9 @@ class ShareViewModel(
     companion object {
         private const val ORDER_STALENESS_TICK_MS = 60_000L
         private const val REVERSE_GEOCODE_TIMEOUT_MS = 8_000L
+        private const val BACKFILL_MAX_TRIPS = 20
+        private const val BACKFILL_DELAY_MS = 1_200L
+        private val backfillStarted = AtomicBoolean(false)
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
