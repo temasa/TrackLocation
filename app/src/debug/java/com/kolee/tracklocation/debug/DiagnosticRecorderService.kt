@@ -37,10 +37,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Debug-only rolling screen recorder (ADR-021). Video only, 2-minute MP4 segments in
+ * Debug-only rolling screen recorder (ADR-021). Video only, 10-minute MP4 segments in
  * Movies/TrackLocation-Diagnostics, last [KEEP] kept.
  *
- * Rollover: MediaRecorder.setMaxDuration(2 min) -> on MAX_DURATION_REACHED a NEW MediaRecorder is
+ * Rollover: MediaRecorder.setMaxDuration(10 min) -> on MAX_DURATION_REACHED a NEW MediaRecorder is
  * prepared, the VirtualDisplay is re-pointed at its surface and it is started, then the old one is
  * stopped and its MediaStore entry finalized (sub-second gap; setNextOutputFile is size-triggered).
  *
@@ -50,6 +50,9 @@ import java.util.Locale
  * Segment length is bounded by recording time only: a handler timer (armed for the remaining recording
  * time, stopped while paused) backs up MediaRecorder's own max-duration, whose pause accounting is
  * not documented. If the native counter fires first, segments are merely shorter; never longer.
+ *
+ * Opt-in background capture (ADR-021 Amendment 2026-10-08, OFF by default, toggled from a notification
+ * action): when ON the controller does not pause on background and recording simply continues.
  */
 class DiagnosticRecorderService : Service() {
 
@@ -92,6 +95,9 @@ class DiagnosticRecorderService : Service() {
             when (intent?.action) {
                 ACTION_START -> start(intent)
                 ACTION_KEEP -> keep()
+                ACTION_TOGGLE_BG -> {
+                    if (projection == null) stopSelf() else toggleBackground()
+                }
                 else -> stopSelf()
             }
         } catch (t: Throwable) {
@@ -103,7 +109,8 @@ class DiagnosticRecorderService : Service() {
     }
 
     private fun start(intent: Intent) {
-        startInForeground(notification("Recording screen (last $KEEP x 2 min)", withAction = true))
+        loadBackgroundCapture(this)
+        startInForeground(notification(recordingText(), withAction = true))
         if (projection != null) return // already recording
         val data = intent.getParcelableExtra<Intent>(EXTRA_DATA)
         if (data == null) {
@@ -125,6 +132,24 @@ class DiagnosticRecorderService : Service() {
         instance = this
         p.registerCallback(projectionCallback, handler) // must precede createVirtualDisplay
         beginSegment()
+    }
+
+    /** Flips the background-capture flag and reconciles pause/resume with the app's current state. */
+    private fun toggleBackground() {
+        val on = !backgroundCapture
+        setBackgroundCapture(this, on)
+        if (on && paused) {
+            resume()
+        } else if (!on && !paused && DiagnosticsController.inBackground) {
+            pause()
+        }
+        notifyState(if (paused) "Paused - app in background" else recordingText())
+    }
+
+    private fun recordingText(): String {
+        val seg = if (segCount > 0) ", segment $segCount" else ""
+        val bg = if (backgroundCapture) ", background ON" else ""
+        return "Recording screen$seg (last $KEEP x 10 min$bg)"
     }
 
     /** "Stop & keep": freeze retention, finalize the current segment and stop; all clips stay. */
@@ -163,7 +188,7 @@ class DiagnosticRecorderService : Service() {
         armTimer(0L)
         segCount++
         enforceRetention()
-        notifyState("Recording screen, segment $segCount (last $KEEP x 2 min)")
+        notifyState(recordingText())
     }
 
     private fun openSegment(): Segment {
@@ -262,7 +287,7 @@ class DiagnosticRecorderService : Service() {
                     s.paused = false
                     paused = false
                     armTimer(recordedMs)
-                    notifyState("Recording screen, segment $segCount (last $KEEP x 2 min)")
+                    notifyState(recordingText())
                 } catch (t: Throwable) {
                     Log.w(TAG, "recorder.resume failed; starting a new segment", t)
                     finishCurrent()
@@ -409,6 +434,12 @@ class DiagnosticRecorderService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             b.addAction(0, "Stop & keep", pi)
+            val bgPi = PendingIntent.getService(
+                this, 1,
+                Intent(this, DiagnosticRecorderService::class.java).setAction(ACTION_TOGGLE_BG),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            b.addAction(0, if (backgroundCapture) "Background: ON" else "Background: OFF", bgPi)
         }
         return b.build()
     }
@@ -459,16 +490,40 @@ class DiagnosticRecorderService : Service() {
     companion object {
         const val ACTION_START = "com.kolee.tracklocation.debug.START"
         const val ACTION_KEEP = "com.kolee.tracklocation.debug.KEEP"
+        const val ACTION_TOGGLE_BG = "com.kolee.tracklocation.debug.TOGGLE_BG"
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
 
         private const val DIR_NAME = "TrackLocation-Diagnostics"
         private const val REL_PATH = "Movies/$DIR_NAME/"
-        private const val SEGMENT_MS = 120_000
-        private const val KEEP = 5
+        private const val SEGMENT_MS = 600_000
+        private const val KEEP = 6
         private const val CHANNEL = "diag_recorder"
         private const val NOTIF_ID = 9021
         private const val NOTIF_ALERT_ID = 9022
+        private const val PREFS = "diag_prefs"
+        private const val KEY_BG = "bg_capture"
+
+        /** Opt-in background capture (default OFF); cached copy of the persisted preference. */
+        @Volatile var backgroundCapture: Boolean = false
+            private set
+
+        fun loadBackgroundCapture(context: Context) {
+            backgroundCapture = try {
+                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_BG, false)
+            } catch (t: Throwable) {
+                false
+            }
+        }
+
+        fun setBackgroundCapture(context: Context, on: Boolean) {
+            backgroundCapture = on
+            try {
+                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_BG, on).apply()
+            } catch (t: Throwable) {
+                Log.w(TAG, "persist background flag failed", t)
+            }
+        }
 
         /** Set by "Stop & keep"; lives until the process dies. While set, no clip is ever deleted. */
         @Volatile private var frozen = false

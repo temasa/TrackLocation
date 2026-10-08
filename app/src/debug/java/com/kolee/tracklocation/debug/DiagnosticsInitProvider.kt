@@ -48,9 +48,13 @@ internal object DiagnosticsController : Application.ActivityLifecycleCallbacks {
     private var prompted = false      // consent already requested in this foreground session
     private var consentAlive = false  // consent activity currently exists
 
+    /** True while no app activity is started and no consent screen is up (used by the recorder service). */
+    val inBackground: Boolean get() = started == 0 && !consentAlive
+
     private val onBackground = Runnable {
         if (started > 0 || consentAlive) return@Runnable
         prompted = false // next foreground may ask again if no session is live
+        if (DiagnosticRecorderService.backgroundCapture) return@Runnable // opt-in: keep recording
         try {
             DiagnosticRecorderService.instance?.pause()
         } catch (t: Throwable) {
@@ -60,6 +64,7 @@ internal object DiagnosticsController : Application.ActivityLifecycleCallbacks {
 
     fun install(application: Application) {
         app = application
+        DiagnosticRecorderService.loadBackgroundCapture(application)
         application.registerActivityLifecycleCallbacks(this)
     }
 
