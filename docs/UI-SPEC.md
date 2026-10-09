@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.27
+**Document Version:** 0.28
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-09
 **Owner:** Product Manager / UX Designer
@@ -208,10 +208,10 @@ Three interaction states for the card (excluding the Dismiss control):
 A one-row strip appears below the order card while the trip is live (tripState is LIVE or PAUSED). The strip contains four cells:
 - **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
 - **DIST (km)** — label "DIST (km)"; value is the distance with one decimal place, no unit in the value (e.g., "12.5"); updated live.
-- **COST / NET (Rp.)** — label "COST / NET (Rp.)"; value formatted as "3.5k/21k" (estimated fuel cost then net profit, compact Rupiah without "Rp" prefix, no spaces around "/"). COST = trip litres burned × current fuel price; NET = OrderCard.earningsRp − COST (negative shown as "−8.4k"). Compact amounts: <1,000 → '850'; 1,000–999,999 → '8.4k'; ≥1,000,000 → '1.2jt'. TalkBack reads full Rupiah amounts. Missing data: "—" when OBD off / no fuel / no price; NET "—" when COST is "—" or no earnings.
-- **AVG / INST (km/L)** — label "AVG / INST (km/L)"; value formatted as "11.8/12.3" (trip-average km/L then instant km/L, each one decimal, no spaces around "/"). Instant "—" when not moving or no GPS fix. OBD not connected → "—/—"; average "—" until covered distance > 0 and fuel > 0.01 L (ADR-024).
+- **COST/NET (Rp.)** — label "COST/NET (Rp.)"; value formatted as "3.5k/21k" (estimated fuel cost then net profit, compact Rupiah without "Rp" prefix, no spaces around "/"). COST = trip litres burned × current fuel price; NET = OrderCard.earningsRp − COST (negative shown as "−8.4k"). Compact amounts: <1,000 → '850'; 1,000–999,999 → '8.4k'; ≥1,000,000 → '1.2jt'. TalkBack reads full Rupiah amounts. Missing data: "—" when OBD off / no fuel / no price; NET "—" when COST is "—" or no earnings.
+- **AVG/INST (km/L)** — label "AVG/INST (km/L)"; value formatted as "11.8/12.3" (trip-average km/L then instant km/L, each one decimal, no spaces around "/"). Instant "—" when not moving or no GPS fix. OBD not connected → "—/—"; average "—" until covered distance > 0 and fuel > 0.01 L (ADR-024).
 
-Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1.
+Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1. Display format (label, value, row styling) follows §5a.
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
 
@@ -227,7 +227,7 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 **Screenshot checklist (attach current-app screens):**
 - Track screen with the map and `TripPanel` in READY, LIVE and PAUSED states (shows the glass style).
-- Track screen with the current provisional order card and the compact trip strip (LIVE state, OBD connected/moving, fuel price set) showing TIME / DIST / COST / NET / AVG/INST km/L.
+- Track screen with the current provisional order card and the compact trip strip (LIVE state, OBD connected/moving, fuel price set) showing TIME / DIST / COST/NET / AVG/INST km/L.
 - Track screen with the order card and trip strip (OBD not connected) showing "— / —" for COST/NET and km/L.
 - Bottom navigation.
 - Top app bar, if any.
@@ -236,7 +236,7 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 **Copy-paste-ready prompt:**
 
-> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with four cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **COST / NET** (label "COST / NET", value "Rp8.4k / Rp28k" = estimated fuel cost then net profit, in compact Rupiah format: <1k 'Rp850', 1k–999k 'Rp8.4k', ≥1M 'Rp1.2jt', negative prefixed with '−'), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving, price set (all values showing: COST/NET calculated); (2) OBD connected, moving, no price ("— / —" for COST/NET); (3) OBD connected, idle or no GPS fix (instant km/L shows "—", COST/NET calculated if price set else "— / —", average already set); (4) OBD not connected ("— / —" for both COST/NET and km/L); (5) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all five states in both themes.
+> Design the "Trip Strip" for an Android (Jetpack Compose, Material 3) driver app called TrackLocation. It sits below the Gojek Order Card on the Track screen, inside the same glass panel, displaying live trip metrics while the order is active. Layout: one row with four cells: **TIME** (elapsed, compact format like "2h13m" / "42s" / "3m15s"), **DIST** (km, one decimal), **COST/NET** (label "COST/NET", value "Rp8.4k / Rp28k" = estimated fuel cost then net profit, in compact Rupiah format: <1k 'Rp850', 1k–999k 'Rp8.4k', ≥1M 'Rp1.2jt', negative prefixed with '−'), **AVG/INST km/L** (label "AVG/INST", value "11.8 / 12.3" = trip average then instant, each one decimal). States: (1) OBD connected, moving, price set (all values showing: COST/NET calculated); (2) OBD connected, moving, no price ("— / —" for COST/NET); (3) OBD connected, idle or no GPS fix (instant km/L shows "—", COST/NET calculated if price set else "— / —", average already set); (4) OBD not connected ("— / —" for both COST/NET and km/L); (5) trip paused (all values frozen). Do not show the Stop button in the strip (the card keeps any controls). Keep the existing glass-panel visual language (see attached screenshots), usable in dark and light themes. Use mono numerals for the time/distance/fuel values. Touch targets for any controls ≥48dp. Do not rely on colour alone for state. Compose 1.2-compatible (no EaseInOut, no animation label params, no ModalBottomSheet). Provide all five states in both themes.
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
@@ -399,15 +399,15 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **PAUSED:** The inline `TripCtaButton` shows a resume/play icon and label "Resume trip" (not currently reachable; pause/resume is a deferred future feature). No pause functionality is implemented.
 
 **Merged metrics row (4 cells):**
-The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) are replaced by a single `CombinedMetricsRow` with up to four cells in one row:
-- **KM** — trip distance, left-aligned, existing icon + distance value.
-- **KM/HR** — current speed, center-aligned, existing icon + speed value.
-- **L/H** *(only when OBD connected)* — current fuel rate in L/h; "—" when engine off or no data.
-- **AVG/INST km/L** *(only when OBD connected)* — trip-average km/L then instant km/L, formatted "avg/inst" (e.g. "11.8/12.3"); "—" each when unavailable.
+The old separate `StatsRow` (KM / KM/HR) and `ObdRow` (FUEL / L/H / TRIP AVG) are replaced by a single `CombinedMetricsRow` (a `MetricStrip`, §5a) with up to four cells in one row, all center-aligned, no icons:
+- **DIST (km)** — trip distance (`Metric/Distance`).
+- **SPEED (km/h)** — current speed (`Metric/Speed`).
+- **FLOW (L/h)** *(only when OBD connected)* — current fuel rate; `—` when engine off or no data (`Metric/FuelFlow`).
+- **AVG/INST (km/L)** *(only when OBD connected)* — trip-average km/L then instant km/L, e.g. `11.8/12.3`; `—` each when unavailable (`Metric/AvgInst`).
 
-When OBD is not connected only the first two cells are shown (identical to the previous StatsRow).
+When OBD is not connected only the first two cells are shown.
 
-**Visual design:** PROVISIONAL — reuses existing glass-panel and metric-cell styles; refined by a future design handoff (AGENTS.md §12).
+**Visual design:** the panel keeps the glass-panel surface; the metric cells and row follow §5a (design in `ui-design.pen`, `TripPanel` frame).
 
 **Note (2026-10-07):** The LIVE button now shows a stop icon and label "Stop trip" (replaces the earlier pause/resume design and resolves Issue #2 in IMPLEMENTATION-ISSUES.md). The PAUSED state remains in code but is unreachable. Pause/resume capability is deferred as a possible future feature.
 
@@ -445,7 +445,7 @@ Instant fuel economy is shown as **two always-on cells** (no unit toggling), on 
 - **km/L** — shown only when moving (speed > ~3 km/h, good fix); shows `—` at rest.
 - **L/h** — always shown when OBD is connected (current fuel rate); `—` when OBD disconnected / engine off (RPM = 0).
 
-Averages remain a **single km/L** per surface (SESSION AVG on the Session card, TRIP AVG on the Trip panel):
+Averages remain a **single km/L** per surface (SESSION AVG on the Session card; on the Trip panel, the average half of AVG/INST (km/L), §5a):
 - `avg km/L = covered distance ÷ fuel`, both over the same fuel-covered poll intervals (unified session/trip derivation — ADR-024, superseding the displacement-distance definition of ADR-007). SESSION AVG = `session.obdCoveredDistanceKm ÷ obdFuelConsumedL`; live TRIP AVG = `tripCoveredKm ÷ tripFuelL`; completed-trip rows use `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` (legacy `distance ÷ fuel` for pre-v13 trips).
 - Shows `—` when covered distance = 0 or fuel ≤ 0.01 L; otherwise the value. Pre-v13 sessions show `—`.
 - While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
@@ -471,6 +471,43 @@ Summarized here; the full machine-readable token export (colors, typography, rou
 - **Spacing:** 20px (1.25rem) global horizontal safe-zone; 16px card gaps; min 72px settings rows; bottom-anchored floating Track card.
 - **Elevation:** tonal layers over shadows; hero status card uses dark forest background to pop.
 - **Components:** Status Card (hero), SettingsRows (icon + title/support + trailing value/chevron), Session list items (left route-line), minimalist map with floating circular controls, white bottom nav with green active pill.
+
+---
+
+## 5a. Metric Display Standard (2026-10-09)
+
+**Source of truth:** the `TrackScreen — Order Active` trip strip (ADR-014/015) in `ui-design.pen`. Reusable components live in the `Metric Components` frame of that file.
+
+**Cell**
+- Vertical, centered, 2 px gap between label and value.
+- **Label:** Inter 10, regular weight, UPPERCASE, letter-spacing 0.4, `#FFFFFFC7`. Format `NAME (unit)` with the unit lowercase, e.g. `DIST (km)`. No icons in labels. No unit inside the value.
+- **Value:** Roboto Mono 600, 16, letter-spacing -0.3, `#FFFFFF`, `maxLines=1`.
+
+**Row (`MetricStrip`)**
+- 1 px `#FFFFFF1F` top separator, 9 px top padding, 6 px gap between cells, all cells center-aligned.
+- Cell widths follow the Order Active strip (58 / 58 / 100 / 100); a pair cell is at least 100 wide.
+
+**Value formats**
+- Distance, speed, fuel economy and fuel flow: one decimal place.
+- Elapsed time: compact (`2h13m`, `42s`, `3m15s`).
+- Money: compact (`850`, `8.4k`, `1.2jt`), no `Rp` prefix. Exception: Earnings is `Rp24.500`, green `#22C55E`, right-aligned.
+- Pairs are written `a/b` with no spaces around `/`. Missing data is `—`; a pair with both parts missing is `—/—`.
+
+**Components (one per metric type; the label and unit are fixed, an instance may override only the value and the width)**
+
+| Kind | Component | Label | Example value |
+|---|---|---|---|
+| Standalone | `Metric/Time` | `TIME` | `42m35s` |
+| Standalone | `Metric/Distance` | `DIST (km)` | `6.1` |
+| Standalone | `Metric/Speed` | `SPEED (km/h)` | `47.2` |
+| Standalone | `Metric/FuelFlow` | `FLOW (L/h)` | `4.2` |
+| Standalone | `Metric/Earnings` | `EARNINGS` | `Rp24.500` |
+| Pair | `Metric/CostNet` | `COST/NET (Rp.)` | `3.5k/21k` |
+| Pair | `Metric/AvgInst` | `AVG/INST (km/L)` | `8.5/6.2` (average first, then instant) |
+
+All components nest a shared `Metric/Base`, so a base style change propagates to every type.
+
+**Scope:** Track-screen surfaces (Order Active trip strip, `TripPanel`). Adoption by the List (`TrackItemRow`, §3b) and Sessions rows is an open product decision and is not changed by this section.
 
 ---
 
