@@ -201,9 +201,10 @@ class ShareViewModel(
         // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
         // during the trip window (there is no live trip row/id to accumulate into —
         // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
-        val tripFuelConsumedL = integrateFuelLiters(
-            obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
-        )
+        val tripSamples = obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+        val tripFuelConsumedL = integrateFuelLiters(tripSamples)
+        // ADR-024: GPS distance over the same fuel-covered intervals.
+        val tripCoveredKm = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateCoveredDistanceKm(tripSamples)
         // ADR-022: snapshot the owning order's label + earnings BEFORE ownership is released.
         val ownedId = orderOwnedId
         val orderRow = if (orderOwnsTrip && ownedId != null) observerTripDao.findById(ownedId) else null
@@ -228,6 +229,7 @@ class ShareViewModel(
                 startLocationId = if (hasValidRange) startId else null,
                 endLocationId = if (hasValidRange) endId else null,
                 obdFuelConsumedL = tripFuelConsumedL,
+                obdCoveredDistanceKm = tripCoveredKm,
                 orderLabel = orderLabel,
                 orderEarningsRp = orderRow?.earningsRp,
                 acceptedLat = acceptedPoint?.latitude,

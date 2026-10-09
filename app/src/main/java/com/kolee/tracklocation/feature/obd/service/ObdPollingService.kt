@@ -59,6 +59,8 @@ class ObdPollingService : Service() {
     private var emaKmL: Double? = null
     // ADR-007 Slice 2: in-memory O(1) trip fuel accumulator (replaces the 2s obd_sample re-query).
     private var tripFuelLiters = 0.0
+    // ADR-024: GPS km over the same fuel-covered intervals as tripFuelLiters.
+    private var tripCoveredKm = 0.0
     private var tripAccumStartedAt = 0L
     private var lastPollTimeMs = 0L
     // After this many consecutive cycles with no fuel PID answer, stop probing fuel so the
@@ -407,17 +409,20 @@ class ObdPollingService : Service() {
                         // Guard against a huge increment after a long stall/gap (e.g. adapter
                         // reconnect, backgrounding): only integrate plausible poll intervals.
                         val dtGuardOk = dtSeconds > 0 && dtSeconds < 60.0
-                        val fuelIncrementL = if (fuelRateLph != null && dtGuardOk) {
+                        // ADR-024: a "fuel-covered" interval has a valid rate (0.1..100 L/h) and a
+                        // plausible dt. Fuel and covered distance are accumulated over exactly the
+                        // same intervals (matches ObdFuelMath), so the average cannot be inflated.
+                        val rateValid = fuelRateLph != null && fuelRateLph in 0.1..100.0
+                        val covered = rateValid && dtGuardOk
+                        val fuelIncrementL = if (covered && fuelRateLph != null) {
                             fuelRateLph * dtSeconds / 3600.0
                         } else 0.0
+                        val coveredIncrementKm = if (covered) gpsSpeedKmh.toDouble() * dtSeconds / 3600.0 else 0.0
                         val distIncrementKm = if (dtGuardOk) gpsSpeedKmh * dtSeconds / 3600.0 else 0.0
 
-                        if (fuelRateLph != null && fuelIncrementL > 0.0) {
-                            val boundsOk = fuelRateLph in 0.1..100.0
-                            if (!boundsOk) {
-                                Log.w(TAG, "fuel_accumulation_bounds_warning: rate=${String.format("%.2f", fuelRateLph)}L/h " +
-                                    "increment=${String.format("%.4f", fuelIncrementL)}L source=$fuelSource (outside 0.1-100 range)")
-                            }
+                        if (fuelRateLph != null && !rateValid && dtGuardOk) {
+                            Log.w(TAG, "fuel_accumulation_bounds_warning: rate=${String.format("%.2f", fuelRateLph)}L/h " +
+                                "source=$fuelSource (outside 0.1-100 range, interval excluded)")
                         }
 
                         sessionFuelLiters += fuelIncrementL
@@ -429,18 +434,23 @@ class ObdPollingService : Service() {
                         if (gpsState.isTracking && gpsTripStartedAt > 0L) {
                             if (gpsTripStartedAt != tripAccumStartedAt) {
                                 val obdDao = (applicationContext as com.kolee.tracklocation.TrackApp).obdSampleDao
+                                val seedSamples = obdDao.samplesBetweenOnce(gpsTripStartedAt, now)
                                 tripFuelLiters = com.kolee.tracklocation.feature.obd.ObdFuelMath
-                                    .integrateFuelLiters(obdDao.samplesBetweenOnce(gpsTripStartedAt, now))
+                                    .integrateFuelLiters(seedSamples)
+                                tripCoveredKm = com.kolee.tracklocation.feature.obd.ObdFuelMath
+                                    .integrateCoveredDistanceKm(seedSamples)
                                 tripAccumStartedAt = gpsTripStartedAt
                             } else {
                                 tripFuelLiters += fuelIncrementL
+                                tripCoveredKm += coveredIncrementKm
                             }
-                            val tripDistKm = gpsState.distanceInMeters / 1000.0
-                            if (tripFuelLiters > 0.01 && tripDistKm > 0.01) {
-                                tripAvgKmL = tripDistKm / tripFuelLiters
+                            // ADR-024: trip average = covered distance / fuel over the same intervals.
+                            if (tripFuelLiters > 0.01 && tripCoveredKm > 0.01) {
+                                tripAvgKmL = tripCoveredKm / tripFuelLiters
                             }
                         } else {
                             tripFuelLiters = 0.0
+                            tripCoveredKm = 0.0
                             tripAccumStartedAt = 0L
                         }
 
@@ -449,15 +459,17 @@ class ObdPollingService : Service() {
                         val sessionDao = (applicationContext as com.kolee.tracklocation.TrackApp).sessionDao
                         val activeSession = sessionDao.getActiveSession()
                         val sid = activeSession?.id
-                        if (sid != null && fuelIncrementL > 0.0) {
-                            sessionDao.addObdAccumulator(sid, fuelIncrementL)
+                        if (sid != null && (fuelIncrementL > 0.0 || coveredIncrementKm > 0.0)) {
+                            sessionDao.addObdAccumulator(sid, fuelIncrementL, coveredIncrementKm)
                         }
                         // Reflect the just-written increment locally so avgKmL stays accurate with
                         // one query (the persisted row read above predates this cycle's increment).
                         val persistedFuelL = (activeSession?.obdFuelConsumedL ?: 0.0) + (if (sid != null) fuelIncrementL else 0.0)
-                        val persistedDistKm = (activeSession?.distanceMeters ?: 0.0) / 1000.0
-                        if (persistedFuelL > 0.01 && persistedDistKm > 0.01) {
-                            avgKmL = persistedDistKm / persistedFuelL
+                        // ADR-024: session average uses covered distance (same intervals as fuel),
+                        // not the whole-session GPS distance.
+                        val persistedCoveredKm = (activeSession?.obdCoveredDistanceKm ?: 0.0) + (if (sid != null) coveredIncrementKm else 0.0)
+                        if (persistedFuelL > 0.01 && persistedCoveredKm > 0.01) {
+                            avgKmL = persistedCoveredKm / persistedFuelL
                         }
                         sessionFuelConsumedL = persistedFuelL.takeIf { it > 0.0 }
                     }
@@ -482,7 +494,8 @@ class ObdPollingService : Service() {
                             fuelRateLph = fuelRateLph,
                             mafGramsPerSecond = mafGramsPerSec,
                             fuelRateSource = fuelSource,
-                            adapterElapsedMs = (now - lastPollTimeMs).coerceAtLeast(0L)
+                            adapterElapsedMs = (now - lastPollTimeMs).coerceAtLeast(0L),
+                            gpsSpeedKmh = gpsSpeedKmh.toDouble()
                         )
                         val obdDao = (applicationContext as com.kolee.tracklocation.TrackApp).obdSampleDao
                         obdDao.insert(sample)

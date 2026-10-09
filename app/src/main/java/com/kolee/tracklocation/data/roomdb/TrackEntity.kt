@@ -14,6 +14,8 @@ data class TrackEntity(
     val startLocationId: Long? = null,
     val endLocationId: Long? = null,
     val obdFuelConsumedL: Double = 0.0,
+    // ADR-024: GPS distance (km) over the same fuel-covered intervals as obdFuelConsumedL.
+    val obdCoveredDistanceKm: Double = 0.0,
     // ADR-022: snapshot of the owning Gojek order (null for manual trips). No FK to observer_trip.
     val orderLabel: String? = null,
     val orderEarningsRp: Long? = null,

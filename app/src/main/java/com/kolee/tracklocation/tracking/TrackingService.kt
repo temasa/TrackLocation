@@ -215,16 +215,18 @@ class TrackingService: Service() {
                 // accumulator, so any missed/duplicated increments are corrected. Note: retention
                 // pruning of obd_sample could under-count sessions older than the retention
                 // window; irrelevant for normal same-day session closes.
-                val reintegratedFuelL = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(
-                    database.obdSampleDao.samplesBetweenOnce(sessionToClose.startedAt, endedAt)
-                )
+                val closeSamples = database.obdSampleDao.samplesBetweenOnce(sessionToClose.startedAt, endedAt)
+                val reintegratedFuelL = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(closeSamples)
+                // ADR-024: covered distance over the same fuel-covered intervals.
+                val reintegratedCoveredKm = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateCoveredDistanceKm(closeSamples)
                 database.sessionDao.insertSession(
                     sessionToClose.copy(
                         endedAt = endedAt,
                         endLocationId = sessionToClose.endLocationId,
                         durationMillis = endedAt - sessionToClose.startedAt,
                         isActive = false,
-                        obdFuelConsumedL = reintegratedFuelL
+                        obdFuelConsumedL = reintegratedFuelL,
+                        obdCoveredDistanceKm = reintegratedCoveredKm
                     )
                 )
             }

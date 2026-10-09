@@ -21,4 +21,21 @@ object ObdFuelMath {
         }
         return liters
     }
+
+    /**
+     * ADR-024: GPS distance (km) over the SAME fuel-covered intervals as [integrateFuelLiters]
+     * (valid rate 0.1..100 L/h and 0 < dt < 60 s). Samples with null gpsSpeedKmh contribute 0.
+     */
+    fun integrateCoveredDistanceKm(samples: List<ObdSampleEntity>): Double {
+        var km = 0.0
+        for (i in 1 until samples.size) {
+            val rate = samples[i].fuelRateLph ?: continue
+            if (rate !in 0.1..100.0) continue
+            val dtSeconds = (samples[i].timestampMs - samples[i - 1].timestampMs) / 1000.0
+            if (dtSeconds > 0 && dtSeconds < 60.0) {
+                km += (samples[i].gpsSpeedKmh ?: continue) * dtSeconds / 3600.0
+            }
+        }
+        return km
+    }
 }

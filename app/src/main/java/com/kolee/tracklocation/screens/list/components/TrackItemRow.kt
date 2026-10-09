@@ -64,7 +64,10 @@ fun TrackItemRow(
     } else {
         ""
     }
-    val efficiencyText = if (item.obdFuelConsumedL > 0.0) {
+    // ADR-024: covered distance / fuel when available; legacy distance / fuel for pre-v13 trips.
+    val efficiencyText = if (item.obdFuelConsumedL > 0.0 && item.obdCoveredDistanceKm > 0.0) {
+        String.format(Locale.ENGLISH, "%.1f", item.obdCoveredDistanceKm / item.obdFuelConsumedL)
+    } else if (item.obdFuelConsumedL > 0.0) {
         String.format(Locale.ENGLISH, "%.1f", (item.distance / 1000f) / item.obdFuelConsumedL)
     } else {
         "—"

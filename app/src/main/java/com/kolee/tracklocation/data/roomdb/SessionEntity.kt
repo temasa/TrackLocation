@@ -15,5 +15,7 @@ data class SessionEntity(
     val durationMillis: Long = 0L,
     val pointCount: Int = 0,
     val isActive: Boolean = false,
-    val obdFuelConsumedL: Double = 0.0
+    val obdFuelConsumedL: Double = 0.0,
+    // ADR-024: GPS distance (km) over the same fuel-covered poll intervals as obdFuelConsumedL.
+    val obdCoveredDistanceKm: Double = 0.0
 )
