@@ -2853,6 +2853,30 @@ Scope decision:
    - Root cause: no re-entrancy guard. Two concurrent callers (Stop button via `onTripCtaTap()`, or the order-end collector in `init`) both pass the `isTracking` check on the same snapshot and insert the same trip twice.
    - Option 2 (unique index on `track.timestamp` + Room migration + cleanup of existing duplicates) is deferred and not in scope.
 
+- **Git Revision:** `f08ab60`
+
+### Fix: duplicate order-trip cards — single-instance MainActivity + process-wide stop guard (root cause)
+
+**Root cause:** Several `MainActivity` instances were alive at once, each with its own `ShareViewModel` and therefore its own order-end collector. When a Gojek order finished, every collector saved the same order trip, producing 3–5 identical cards (manual trips never duplicated, since only the order path runs the collector). `ObserverAccessibilityService.launchTrackTakeover()` starts `MainActivity` with `NEW_TASK | REORDER_TO_FRONT | SINGLE_TOP`, but `SINGLE_TOP` reuses the instance only when it is already the top activity of the task. In debug builds `DiagnosticConsentActivity` (ADR-021, `app/src/debug`) and the system MediaProjection consent dialog sit above `MainActivity`, so Android starts a new `MainActivity` and the stale ones stay alive. Reproduced with `am start -f 0x30020000` (heap dumps: `ShareViewModel` count 1 → 2). The previous entry's per-instance mutex could not cover this, because each instance had its own mutex.
+
+**What it does:** (1) `MainActivity` becomes single-instance (`singleTask`), so the Observer takeover always reuses the one activity and its single `ShareViewModel`. (2) The stop-trip guard becomes process-wide (companion-level `Mutex` plus the last-persisted trip-start timestamp), superseding the per-instance mutex from the previous entry, so it holds even if more than one `ShareViewModel` ever exists.
+
+**Observable result:** Exactly one card per order trip, regardless of how many `MainActivity` instances were previously alive.
+
+**How to verify (manual; build gated per AGENTS.md §5a, NOT yet run):**
+- With a Gojek order in progress and the debug MediaProjection consent dialog pending, finish the order and confirm exactly one new card on the Trips list.
+- After a takeover launch, `adb shell dumpsys activity activities | grep 'Hist #' | grep kolee` shows one `MainActivity` record. Trigger the takeover with `am start -n com.kolee.tracklocation/.MainActivity -f 0x30020000 --ez open_track true`.
+- Static: re-read `ShareViewModel.stopActiveTrip` and confirm the companion-level `stopTripMutex`, the `lastPersistedTripStart` early return, and `finally { unlock() }`.
+- Verification NOT run yet (build gated).
+
+**Implementation steps (What/How):**
+1. **Edit** `app/src/main/AndroidManifest.xml` — add `android:launchMode="singleTask"` to the `.MainActivity` `<activity>` element.
+   - Root cause: `SINGLE_TOP` does not guarantee a single instance; `singleTask` does.
+   - Known side effect: in debug builds, a pending `DiagnosticConsentActivity` / MediaProjection consent dialog above `MainActivity` is closed on takeover. Debug-only and acceptable.
+2. **Edit** `viewmodel/ShareViewModel.kt` — move the `Mutex` into the `companion object` (process-wide); add `@Volatile private var lastPersistedTripStart = 0L` in the companion; inside the lock, after the fresh-state re-check, return early if `current.tripStartedAt > 0L && current.tripStartedAt == lastPersistedTripStart`; set `lastPersistedTripStart = current.tripStartedAt` immediately after the successful `insertTrack`.
+   - Root cause: the previous per-instance mutex guarded only one `ShareViewModel`; several instances each had their own lock.
+   - Known remaining: existing duplicate rows (idx 30, 31, 33–35, 37–40) are not cleaned up by this fix.
+
 - **Git Revision:** `---`
 
 ## Local Build Note
