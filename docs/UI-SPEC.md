@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.32
+**Document Version:** 0.34
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-09
 **Owner:** Product Manager / UX Designer
@@ -449,6 +449,7 @@ Averages remain a **single km/L** per surface (SESSION AVG on the Session card; 
 - `avg km/L = covered distance ÷ fuel`, both over the same fuel-covered poll intervals (unified session/trip derivation — ADR-024, superseding the displacement-distance definition of ADR-007). SESSION AVG = `session.obdCoveredDistanceKm ÷ obdFuelConsumedL`; live TRIP AVG = `tripCoveredKm ÷ tripFuelL`; completed-trip rows use `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` (legacy `distance ÷ fuel` for pre-v13 trips).
 - Shows `—` when covered distance = 0 or fuel ≤ 0.01 L; otherwise the value. Pre-v13 sessions show `—`.
 - While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
+- **Session card group (Sessions screen, 2026-10-09):** each recorded-session card shows the session's average km/L (`session.obdCoveredDistanceKm ÷ obdFuelConsumedL`, as SESSION AVG above) and its total fuel consumed (`session.obdFuelConsumedL`, litres, one decimal) as ONE pair cell, `AVG/TOTAL (km/L/L)` (§5a), e.g. `10.4/0.5`. Compose code pending. The same card also shows the session average speed, `AVG SPEED (km/h)` (`session distance ÷ session elapsed hours`, one decimal), right after DIST in the canonical order.
 
 #### Fuel cost (Rp) — Session OBD card + Trips active-trip row + completed trips
 
@@ -495,7 +496,7 @@ Summarized here; the full machine-readable token export (colors, typography, rou
 - Money: compact (`850`, `8.4k`, `1.2jt`), no `Rp` prefix. Exception: Earnings is `Rp24.500`, green `#22C55E`, right-aligned.
 - Pairs are written `a/b` with no spaces around `/`. Missing data is `—`; a pair with both parts missing is `—/—`.
 
-**Order (canonical, mandatory on every surface):** TIME → DIST → SPEED → COST/NET (or COST) → FLOW → AVG/INST (or AVG FUEL) → POINTS. A surface that does not show a metric keeps the relative order of the rest. Earnings is not part of a strip; it sits in the order card's pay row.
+**Order (canonical, mandatory on every surface):** TIME → DIST → SPEED → COST/NET (or COST) → FLOW → AVG/INST (or AVG FUEL, or AVG/TOTAL on Sessions cards) → POINTS. A surface that does not show a metric keeps the relative order of the rest. Earnings is not part of a strip; it sits in the order card's pay row.
 
 **Components (one per metric type; the label and unit are fixed, an instance may override only the value and the width)**
 
@@ -512,14 +513,15 @@ Summarized here; the full machine-readable token export (colors, typography, rou
 | Standalone | `Metric/Points` | `POINTS` | `1,284` |
 | Pair | `Metric/CostNet` | `COST/NET (Rp.)` | `3.5k/21k` |
 | Pair | `Metric/AvgInst` | `AVG/INST (km/L)` | `8.5/6.2` (average first, then instant) |
+| Pair | `Metric/FuelAvgTotal` | `AVG/TOTAL (km/L/L)` | `10.4/0.5` (average km/L first, then total fuel in L; `—/—` when no OBD fuel) |
 
-**Label vocabulary (one name per quantity):** `TIME` is used for every elapsed time — live trip, finished trip and session — and `DURATION` is not used. `SPEED (km/h)` is the current speed and `AVG SPEED (km/h)` the average. `AVG/INST (km/L)` is the live pair; a finished trip, which only has the average, shows `AVG FUEL (km/L)`. `FLOW (L/h)` is fuel rate. `COST (Rp.)` is cost alone and `COST/NET (Rp.)` the cost/net pair.
+**Label vocabulary (one name per quantity):** `TIME` is used for every elapsed time — live trip, finished trip and session — and `DURATION` is not used. `SPEED (km/h)` is the current speed and `AVG SPEED (km/h)` the average. `AVG/INST (km/L)` is the live pair; a finished trip, which only has the average, shows `AVG FUEL (km/L)`. `FLOW (L/h)` is fuel rate. `COST (Rp.)` is cost alone and `COST/NET (Rp.)` the cost/net pair. On a Sessions card the pair `AVG/TOTAL (km/L/L)` shows the session average fuel economy (km/L) first, then the total fuel consumed (L, one decimal): the average is `—` when covered distance = 0 or fuel ≤ 0.01 L, the total is `—` when no OBD fuel was recorded (§4).
 
 All components nest a shared `Metric/Base`, so a base style change propagates to every type.
 
 **Light surface:** the label, value and separator colours are themed variables (`metric-label`, `metric-value`, `metric-sep`; theme axis `surface`, default `dark`). Light surfaces (List, Sessions) set `theme: {surface: "light"}` on the strip instance: label `#737373`, value `#0A0A0A`, separator `#0000001F`. Inside cards the strip's separator and top padding are turned off.
 
-**Scope:** Track-screen surfaces (Order Active, Expanded and Strip Only trip strips; LIVE and READY `TripPanel`; Alt A), the List recent-trip rows (§3b) and the Sessions cards (Time / Distance / Points). Alt B (Dashboard Panel, an exploration) uses the same strip for its stats row: DIST (km) / SPEED (km/h) / AVG/INST (km/L), the pair showing `—/—` until OBD data arrives. **Documented exceptions:** (1) in the Strip Only card the strip uses a 2 px cell gap and a 90 px AVG/INST cell so it clears the expand chevron; (2) the completed-trip cost value keeps the alternating `TripInk`/`TripGreen` colour of §3b #10 as a value-colour override; (3) for the List rows the design uses the §5a value size (Roboto Mono 600, 16) and label-above-value, centred cells, superseding the 14sp Medium value styling of §3b #7 — the Compose code is still on the previous layout and has to be updated in a separate code task; (4) the List rows show five cells in one row with a smaller type size (label 8, value 12, below the usual 10 label size) so the row fits the card width — revisit if on-device legibility is poor.
+**Scope:** Track-screen surfaces (Order Active, Expanded and Strip Only trip strips; LIVE and READY `TripPanel`; Alt A), the List recent-trip rows (§3b) and the Sessions cards (Time / Distance / Avg speed / AVG/TOTAL fuel / Points). Alt B (Dashboard Panel, an exploration) uses the same strip for its stats row: DIST (km) / SPEED (km/h) / AVG/INST (km/L), the pair showing `—/—` until OBD data arrives. **Documented exceptions:** (1) in the Strip Only card the strip uses a 2 px cell gap and a 90 px AVG/INST cell so it clears the expand chevron; (2) the completed-trip cost value keeps the alternating `TripInk`/`TripGreen` colour of §3b #10 as a value-colour override; (3) for the List rows the design uses the §5a value size (Roboto Mono 600, 16) and label-above-value, centred cells, superseding the 14sp Medium value styling of §3b #7 — the Compose code is still on the previous layout and has to be updated in a separate code task; (4) the List rows and the Sessions cards show five cells in one row with a smaller type size (label 8, value 12, below the usual 10 label size; Sessions cell widths 52 / 46 / 82 / 90 / 48 with a 2 px gap) so the row fits the card width — revisit if on-device legibility is poor.
 
 ---
 

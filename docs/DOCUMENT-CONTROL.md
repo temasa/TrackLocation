@@ -62,7 +62,7 @@ When any controlled document changes, update both:
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/IMPLEMENTATION-PLAN.md` | 0.40 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-09 |
-| `docs/UI-SPEC.md` | 0.32 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-09 |
+| `docs/UI-SPEC.md` | 0.34 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-09 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
 | `docs/ERRORS-LOG.md` | 0.2 | Active (persistent) | Project Team | 2026-10-09 |
@@ -92,6 +92,8 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-09 | UI-SPEC | 0.33 | 0.34 | Sessions cards also show AVG SPEED (km/h): five cells in one row (Time / Distance / Avg speed / AVG/TOTAL / Points) at the compact type size; §5a scope + exception (4) and §4 Session card group bullet updated. Code pending. | Claude Code |
+| 2026-10-09 | UI-SPEC | 0.32 | 0.33 | Sessions cards: new pair cell AVG/TOTAL (km/L/L) — session average fuel economy and total fuel consumed grouped in one cell (§5a component Metric/FuelAvgTotal, order, vocabulary, scope; §4 Phase 2 bullet). Code pending. | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.31 | 0.32 | List trip cards: all five stats in one row (design); §3b item 7 single-row update and §5a exception (4) for the smaller type size. Code pending. | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.30 | 0.31 | §5a scope now includes Alt B (Dashboard Panel) stats row: DIST / SPEED / AVG/INST strip using the typed metric components. | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.29 | 0.30 | §5a label vocabulary: `TIME` replaces `DURATION` for every elapsed time (Metric/Duration component retired), `AVG FUEL (km/L)` for the finished-trip average fuel economy; scope/order text aligned. | Claude Code |
