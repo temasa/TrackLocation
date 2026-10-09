@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeoutOrNull
 
 class ShareViewModel(
@@ -185,72 +186,85 @@ class ShareViewModel(
         }
     }
 
+    // Serialises stopActiveTrip (CTA tap and order-end auto-stop) so a trip is persisted once.
+    private val stopTripMutex = Mutex()
+
     /**
      * Persists the active trip, then asks the service to stop it. Shared by the CTA and the
      * ADR-015 order-end collector. Any stop (manual or order-driven) releases order ownership.
      */
     private suspend fun stopActiveTrip(current: LocationUiState) {
-        val startId = current.activeTripStartLocationId
-        val endId = current.activeTripEndLocationId
-        // A trip's start/end location IDs are only set once the first GPS fix arrives
-        // (up to LOCATION_UPDATE_INTERVAL later). Persist the trip regardless so a short
-        // trip started+stopped before any fix (or with no signal) still shows in the list —
-        // keep the IDs only when the range is valid, else null so getPathPointsForTrack
-        // falls back to the stored pathPoints string.
-        val hasValidRange = startId != null && endId != null && endId >= startId
-        // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
-        // during the trip window (there is no live trip row/id to accumulate into —
-        // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
-        val tripSamples = obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
-        val tripFuelConsumedL = integrateFuelLiters(tripSamples)
-        // ADR-024: GPS distance over the same fuel-covered intervals.
-        val tripCoveredKm = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateCoveredDistanceKm(tripSamples)
-        // ADR-022: snapshot the owning order's label + earnings BEFORE ownership is released.
-        val ownedId = orderOwnedId
-        val orderRow = if (orderOwnsTrip && ownedId != null) observerTripDao.findById(ownedId) else null
-        val orderLabel = orderRow?.let {
-            "Gojek: ${it.pickupName ?: it.pickupAddress ?: "?"} → ${it.dropName ?: it.dropAddress ?: "?"}"
-        }
-        // ADR-023: pickup/drop coordinates from the route controller's cache (no new geocode call);
-        // accepted point = the trip's start fix (location row, else first recorded path point).
-        val cachedGeo = orderRow?.let { orderRouteController.cachedGeo(it.toOrderCard()) }
-        val acceptedPoint = if (orderRow != null) {
-            val startFix = if (hasValidRange && startId != null) {
-                locationDao.getLocationByIdOnce(startId)?.let { LatLng(it.latitude, it.longitude) }
+        // Re-entrancy guard: the CTA and the order-end collector can both reach here on the same
+        // snapshot; a second concurrent stop must not insert the same trip again.
+        if (!stopTripMutex.tryLock()) return
+        try {
+            // Re-check the freshest state inside the lock; the snapshot may be stale by now.
+            val live = locationUiState.value
+            if (!live.isTracking || live.isPaused) return
+            val startId = current.activeTripStartLocationId
+            val endId = current.activeTripEndLocationId
+            // A trip's start/end location IDs are only set once the first GPS fix arrives
+            // (up to LOCATION_UPDATE_INTERVAL later). Persist the trip regardless so a short
+            // trip started+stopped before any fix (or with no signal) still shows in the list —
+            // keep the IDs only when the range is valid, else null so getPathPointsForTrack
+            // falls back to the stored pathPoints string.
+            val hasValidRange = startId != null && endId != null && endId >= startId
+            // OBD Phase 2: derive the trip's fuel total from the obd_sample rows recorded
+            // during the trip window (there is no live trip row/id to accumulate into —
+            // see IMPLEMENTATION-ISSUES #1). 0.0 when OBD was not connected (no samples).
+            val tripSamples = obdSampleDao.samplesBetweenOnce(current.tripStartedAt, System.currentTimeMillis())
+            val tripFuelConsumedL = integrateFuelLiters(tripSamples)
+            // ADR-024: GPS distance over the same fuel-covered intervals.
+            val tripCoveredKm = com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateCoveredDistanceKm(tripSamples)
+            // ADR-022: snapshot the owning order's label + earnings BEFORE ownership is released.
+            val ownedId = orderOwnedId
+            val orderRow = if (orderOwnsTrip && ownedId != null) observerTripDao.findById(ownedId) else null
+            val orderLabel = orderRow?.let {
+                "Gojek: ${it.pickupName ?: it.pickupAddress ?: "?"} → ${it.dropName ?: it.dropAddress ?: "?"}"
+            }
+            // ADR-023: pickup/drop coordinates from the route controller's cache (no new geocode call);
+            // accepted point = the trip's start fix (location row, else first recorded path point).
+            val cachedGeo = orderRow?.let { orderRouteController.cachedGeo(it.toOrderCard()) }
+            val acceptedPoint = if (orderRow != null) {
+                val startFix = if (hasValidRange && startId != null) {
+                    locationDao.getLocationByIdOnce(startId)?.let { LatLng(it.latitude, it.longitude) }
+                } else null
+                startFix ?: current.pathPoints.firstOrNull()
             } else null
-            startFix ?: current.pathPoints.firstOrNull()
-        } else null
-        val tripIdx = databaseDao.insertTrack(
-            TrackEntity(
-                timestamp = current.tripStartedAt,
-                distance = current.distanceInMeters,
-                duration = current.durationTimer,
-                pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
-                startLocationId = if (hasValidRange) startId else null,
-                endLocationId = if (hasValidRange) endId else null,
-                obdFuelConsumedL = tripFuelConsumedL,
-                obdCoveredDistanceKm = tripCoveredKm,
-                orderLabel = orderLabel,
-                orderEarningsRp = orderRow?.earningsRp,
-                acceptedLat = acceptedPoint?.latitude,
-                acceptedLng = acceptedPoint?.longitude,
-                pickupName = orderRow?.pickupName,
-                pickupAddress = orderRow?.pickupAddress,
-                pickupLat = cachedGeo?.first?.latitude,
-                pickupLng = cachedGeo?.first?.longitude,
-                dropName = orderRow?.dropName,
-                dropAddress = orderRow?.dropAddress,
-                dropLat = cachedGeo?.second?.latitude,
-                dropLng = cachedGeo?.second?.longitude
+            val tripIdx = databaseDao.insertTrack(
+                TrackEntity(
+                    timestamp = current.tripStartedAt,
+                    distance = current.distanceInMeters,
+                    duration = current.durationTimer,
+                    pathPoints = LocationUtils.pathPointsToString(current.pathPoints),
+                    startLocationId = if (hasValidRange) startId else null,
+                    endLocationId = if (hasValidRange) endId else null,
+                    obdFuelConsumedL = tripFuelConsumedL,
+                    obdCoveredDistanceKm = tripCoveredKm,
+                    orderLabel = orderLabel,
+                    orderEarningsRp = orderRow?.earningsRp,
+                    acceptedLat = acceptedPoint?.latitude,
+                    acceptedLng = acceptedPoint?.longitude,
+                    pickupName = orderRow?.pickupName,
+                    pickupAddress = orderRow?.pickupAddress,
+                    pickupLat = cachedGeo?.first?.latitude,
+                    pickupLng = cachedGeo?.first?.longitude,
+                    dropName = orderRow?.dropName,
+                    dropAddress = orderRow?.dropAddress,
+                    dropLat = cachedGeo?.second?.latitude,
+                    dropLng = cachedGeo?.second?.longitude
+                )
             )
-        )
-        sendServiceCommand(Actions.STOP_TRIP)
-        orderOwnsTrip = false
-        orderOwnedId = null
-        // ADR-023: the trip is already saved and STOP_TRIP sent; the accepted place is resolved
-        // afterwards (off this flow, so the order collector is never blocked) and late-filled.
-        if (acceptedPoint != null) {
-            viewModelScope.launch { resolveAcceptedPlace(tripIdx.toInt(), acceptedPoint) }
+            sendServiceCommand(Actions.STOP_TRIP)
+            orderOwnsTrip = false
+            orderOwnedId = null
+            // ADR-023: the trip is already saved and STOP_TRIP sent; the accepted place is resolved
+            // afterwards (off this flow, so the order collector is never blocked) and late-filled.
+            if (acceptedPoint != null) {
+                viewModelScope.launch { resolveAcceptedPlace(tripIdx.toInt(), acceptedPoint) }
+            }
+        } finally {
+            stopTripMutex.unlock()
         }
     }
 
