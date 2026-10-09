@@ -186,21 +186,21 @@ class ShareViewModel(
         }
     }
 
-    // Serialises stopActiveTrip (CTA tap and order-end auto-stop) so a trip is persisted once.
-    private val stopTripMutex = Mutex()
-
     /**
      * Persists the active trip, then asks the service to stop it. Shared by the CTA and the
      * ADR-015 order-end collector. Any stop (manual or order-driven) releases order ownership.
      */
     private suspend fun stopActiveTrip(current: LocationUiState) {
-        // Re-entrancy guard: the CTA and the order-end collector can both reach here on the same
-        // snapshot; a second concurrent stop must not insert the same trip again.
+        // Process-wide re-entrancy guard (companion stopTripMutex): the CTA and the order-end
+        // collector can both reach here on the same snapshot, and several ShareViewModel instances
+        // can exist at once. A second concurrent stop must not insert the same trip again.
         if (!stopTripMutex.tryLock()) return
         try {
             // Re-check the freshest state inside the lock; the snapshot may be stale by now.
             val live = locationUiState.value
             if (!live.isTracking || live.isPaused) return
+            // Process-wide duplicate check: this trip was already persisted by another instance.
+            if (current.tripStartedAt > 0L && current.tripStartedAt == lastPersistedTripStart) return
             val startId = current.activeTripStartLocationId
             val endId = current.activeTripEndLocationId
             // A trip's start/end location IDs are only set once the first GPS fix arrives
@@ -255,6 +255,7 @@ class ShareViewModel(
                     dropLng = cachedGeo?.second?.longitude
                 )
             )
+            lastPersistedTripStart = current.tripStartedAt
             sendServiceCommand(Actions.STOP_TRIP)
             orderOwnsTrip = false
             orderOwnedId = null
@@ -363,6 +364,12 @@ class ShareViewModel(
     )
 
     companion object {
+        // Process-wide (not per instance): several ShareViewModel instances can be alive at once
+        // (multiple MainActivity instances), each with its own order-end collector.
+        private val stopTripMutex = Mutex()
+        // tripStartedAt of the last trip persisted by stopActiveTrip in this process.
+        @Volatile private var lastPersistedTripStart = 0L
+
         private const val ORDER_STALENESS_TICK_MS = 60_000L
         private const val REVERSE_GEOCODE_TIMEOUT_MS = 8_000L
         private const val BACKFILL_MAX_TRIPS = 20
