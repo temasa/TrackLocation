@@ -1016,7 +1016,6 @@
               "id": "qkvdf",
               "name": "Track #3",
               "width": "fill_container",
-              "height": 156,
               "fill": "#F1F4F0",
               "cornerRadius": 18,
               "stroke": "#E5E7EB",
@@ -1128,10 +1127,10 @@
                   "height": 1
                 },
                 {
-                  "id": "Yu6B6",
+                  "id": "uiqn3",
                   "type": "ref",
                   "ref": "p4BII4",
-                  "name": "Stats1",
+                  "name": "Stats",
                   "width": "fill_container",
                   "padding": 0,
                   "strokeWidth": 0,
@@ -1141,100 +1140,95 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "p2W44",
+                      "id": "ae7Hn",
                       "name": "Cells",
                       "width": "fill_container",
-                      "gap": 6,
+                      "gap": 2,
                       "children": [
                         {
-                          "id": "vTpSM",
+                          "id": "A93LjW",
                           "type": "ref",
                           "ref": "a1w9b",
                           "name": "TimeCell",
-                          "width": "fill_container",
+                          "width": 48,
                           "descendants": {
+                            "PPaaQ/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "PPaaQ/QIi9H": {
-                              "content": "22m15s"
+                              "content": "22m15s",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "jwWRC",
+                          "id": "DRLL5",
                           "type": "ref",
                           "ref": "zH8dD",
                           "name": "DistCell",
-                          "width": "fill_container",
+                          "width": 44,
                           "descendants": {
+                            "Sj4M1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "Sj4M1/QIi9H": {
-                              "content": "12.4"
+                              "content": "12.4",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "PFcdm",
+                          "id": "ZVJVg",
                           "type": "ref",
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
-                          "width": "fill_container",
+                          "width": 82,
                           "descendants": {
+                            "ZLh0b/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "ZLh0b/QIi9H": {
-                              "content": "33.5"
+                              "content": "33.5",
+                              "fontSize": 12
                             }
                           }
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "id": "n4EZO",
-                  "type": "ref",
-                  "ref": "p4BII4",
-                  "name": "Stats2",
-                  "width": "fill_container",
-                  "padding": 0,
-                  "strokeWidth": 0,
-                  "theme": {
-                    "surface": "light"
-                  },
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "e0ZIM",
-                      "name": "Cells",
-                      "width": "fill_container",
-                      "gap": 6,
-                      "children": [
+                        },
                         {
-                          "id": "W6vd9",
+                          "id": "p6VLz2",
                           "type": "ref",
                           "ref": "hMBXP",
                           "name": "CostCell",
-                          "width": "fill_container",
+                          "width": 52,
                           "descendants": {
+                            "TekIj/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "TekIj/QIi9H": {
-                              "content": "—"
+                              "content": "—",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "WQogc",
+                          "id": "a6EnYf",
                           "type": "ref",
                           "ref": "p4fbw",
-                          "name": "FuelCell",
-                          "width": "fill_container",
+                          "name": "AvgFuelCell",
+                          "width": 76,
                           "descendants": {
+                            "isyU1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "isyU1/QIi9H": {
-                              "content": "—"
+                              "content": "—",
+                              "fontSize": 12
                             }
                           }
-                        },
-                        {
-                          "type": "frame",
-                          "id": "UpwcD",
-                          "name": "Spacer",
-                          "width": "fill_container",
-                          "height": 1
                         }
                       ]
                     }
@@ -1247,7 +1241,6 @@
               "id": "u9qm6I",
               "name": "Track #2",
               "width": "fill_container",
-              "height": 156,
               "fill": "#F1F4F0",
               "cornerRadius": 18,
               "stroke": "#E5E7EB",
@@ -1359,10 +1352,10 @@
                   "height": 1
                 },
                 {
-                  "id": "zGFbd",
+                  "id": "jYE9Z",
                   "type": "ref",
                   "ref": "p4BII4",
-                  "name": "Stats1",
+                  "name": "Stats",
                   "width": "fill_container",
                   "padding": 0,
                   "strokeWidth": 0,
@@ -1372,100 +1365,95 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "DXB7i",
+                      "id": "sqj88",
                       "name": "Cells",
                       "width": "fill_container",
-                      "gap": 6,
+                      "gap": 2,
                       "children": [
                         {
-                          "id": "t12jh",
+                          "id": "KxpWi",
                           "type": "ref",
                           "ref": "a1w9b",
                           "name": "TimeCell",
-                          "width": "fill_container",
+                          "width": 48,
                           "descendants": {
+                            "PPaaQ/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "PPaaQ/QIi9H": {
-                              "content": "18m42s"
+                              "content": "18m42s",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "u9WmUr",
+                          "id": "d0xo7",
                           "type": "ref",
                           "ref": "zH8dD",
                           "name": "DistCell",
-                          "width": "fill_container",
+                          "width": 44,
                           "descendants": {
+                            "Sj4M1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "Sj4M1/QIi9H": {
-                              "content": "8.8"
+                              "content": "8.8",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "b7YbeE",
+                          "id": "ok5lA",
                           "type": "ref",
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
-                          "width": "fill_container",
+                          "width": 82,
                           "descendants": {
+                            "ZLh0b/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "ZLh0b/QIi9H": {
-                              "content": "28.1"
+                              "content": "28.1",
+                              "fontSize": 12
                             }
                           }
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "id": "Bcd3z",
-                  "type": "ref",
-                  "ref": "p4BII4",
-                  "name": "Stats2",
-                  "width": "fill_container",
-                  "padding": 0,
-                  "strokeWidth": 0,
-                  "theme": {
-                    "surface": "light"
-                  },
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "lXkVQ",
-                      "name": "Cells",
-                      "width": "fill_container",
-                      "gap": 6,
-                      "children": [
+                        },
                         {
-                          "id": "xGlnm",
+                          "id": "vhlQ5",
                           "type": "ref",
                           "ref": "hMBXP",
                           "name": "CostCell",
-                          "width": "fill_container",
+                          "width": 52,
                           "descendants": {
+                            "TekIj/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "TekIj/QIi9H": {
-                              "content": "8.2k"
+                              "content": "8.2k",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "MLLcA",
+                          "id": "V261o",
                           "type": "ref",
                           "ref": "p4fbw",
-                          "name": "FuelCell",
-                          "width": "fill_container",
+                          "name": "AvgFuelCell",
+                          "width": 76,
                           "descendants": {
+                            "isyU1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "isyU1/QIi9H": {
-                              "content": "14.2"
+                              "content": "14.2",
+                              "fontSize": 12
                             }
                           }
-                        },
-                        {
-                          "type": "frame",
-                          "id": "FzuqH",
-                          "name": "Spacer",
-                          "width": "fill_container",
-                          "height": 1
                         }
                       ]
                     }
@@ -1478,7 +1466,6 @@
               "id": "ac7sf",
               "name": "Track #1",
               "width": "fill_container",
-              "height": 156,
               "fill": "#F1F4F0",
               "cornerRadius": 18,
               "stroke": "#E5E7EB",
@@ -1590,10 +1577,10 @@
                   "height": 1
                 },
                 {
-                  "id": "o0pLk",
+                  "id": "Z6b5s",
                   "type": "ref",
                   "ref": "p4BII4",
-                  "name": "Stats1",
+                  "name": "Stats",
                   "width": "fill_container",
                   "padding": 0,
                   "strokeWidth": 0,
@@ -1603,100 +1590,95 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "r8iolc",
+                      "id": "l2dsNE",
                       "name": "Cells",
                       "width": "fill_container",
-                      "gap": 6,
+                      "gap": 2,
                       "children": [
                         {
-                          "id": "WZqIC",
+                          "id": "iXPEu",
                           "type": "ref",
                           "ref": "a1w9b",
                           "name": "TimeCell",
-                          "width": "fill_container",
+                          "width": 48,
                           "descendants": {
+                            "PPaaQ/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "PPaaQ/QIi9H": {
-                              "content": "11m05s"
+                              "content": "11m05s",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "t1oeqo",
+                          "id": "ZsPEY",
                           "type": "ref",
                           "ref": "zH8dD",
                           "name": "DistCell",
-                          "width": "fill_container",
+                          "width": 44,
                           "descendants": {
+                            "Sj4M1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "Sj4M1/QIi9H": {
-                              "content": "5.2"
+                              "content": "5.2",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "Y9w7f",
+                          "id": "ADPMa",
                           "type": "ref",
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
-                          "width": "fill_container",
+                          "width": 82,
                           "descendants": {
+                            "ZLh0b/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "ZLh0b/QIi9H": {
-                              "content": "28.1"
+                              "content": "28.1",
+                              "fontSize": 12
                             }
                           }
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "id": "ncybn",
-                  "type": "ref",
-                  "ref": "p4BII4",
-                  "name": "Stats2",
-                  "width": "fill_container",
-                  "padding": 0,
-                  "strokeWidth": 0,
-                  "theme": {
-                    "surface": "light"
-                  },
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "DAnG9",
-                      "name": "Cells",
-                      "width": "fill_container",
-                      "gap": 6,
-                      "children": [
+                        },
                         {
-                          "id": "oj85O",
+                          "id": "kQV4X",
                           "type": "ref",
                           "ref": "hMBXP",
                           "name": "CostCell",
-                          "width": "fill_container",
+                          "width": 52,
                           "descendants": {
+                            "TekIj/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "TekIj/QIi9H": {
-                              "content": "—"
+                              "content": "—",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "LBL58",
+                          "id": "DpOoT",
                           "type": "ref",
                           "ref": "p4fbw",
-                          "name": "FuelCell",
-                          "width": "fill_container",
+                          "name": "AvgFuelCell",
+                          "width": 76,
                           "descendants": {
+                            "isyU1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "isyU1/QIi9H": {
-                              "content": "—"
+                              "content": "—",
+                              "fontSize": 12
                             }
                           }
-                        },
-                        {
-                          "type": "frame",
-                          "id": "L3cqNi",
-                          "name": "Spacer",
-                          "width": "fill_container",
-                          "height": 1
                         }
                       ]
                     }
