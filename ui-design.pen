@@ -1128,192 +1128,115 @@
                   "height": 1
                 },
                 {
-                  "type": "frame",
-                  "id": "dvWGj",
+                  "id": "Yu6B6",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats1",
                   "width": "fill_container",
-                  "padding": [
-                    12,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "WQPjp",
-                      "name": "Stat km",
+                      "id": "p2W44",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "fBB63",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "12.40 km",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "QpswR",
+                          "type": "ref",
+                          "ref": "txz2G",
+                          "name": "DurationCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wxv5r/QIi9H": {
+                              "content": "22m15s"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "Aa7N8",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "ERkDr",
-                      "name": "Stat duration",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "z6v9jn",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "00:22:15",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "jwWRC",
+                          "type": "ref",
+                          "ref": "zH8dD",
+                          "name": "DistCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Sj4M1/QIi9H": {
+                              "content": "12.4"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "zJThI",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "duration",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "a0XBM",
-                      "name": "Stat avg speed",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "TH7zz",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "33.5",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
-                        },
-                        {
-                          "type": "text",
-                          "id": "WfVeI",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "KM/H",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "id": "PFcdm",
+                          "type": "ref",
+                          "ref": "YI2fu",
+                          "name": "AvgSpeedCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "ZLh0b/QIi9H": {
+                              "content": "33.5"
+                            }
+                          }
                         }
                       ]
                     }
                   ]
                 },
                 {
-                  "type": "frame",
-                  "id": "WZOxB",
+                  "id": "n4EZO",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats2",
                   "width": "fill_container",
-                  "padding": [
-                    8,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "nYQfM",
-                      "name": "Stat2 km/L",
+                      "id": "e0ZIM",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "ggKYC",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "—",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "W6vd9",
+                          "type": "ref",
+                          "ref": "hMBXP",
+                          "name": "CostCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "TekIj/QIi9H": {
+                              "content": "—"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "dg11x",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km/L",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "H1oun",
-                      "name": "Stat2 cost",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "rkP7O",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "—",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "WQogc",
+                          "type": "ref",
+                          "ref": "p4fbw",
+                          "name": "FuelCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "isyU1/QIi9H": {
+                              "content": "—"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "uhkB7",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "cost",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "type": "frame",
+                          "id": "UpwcD",
+                          "name": "Spacer",
+                          "width": "fill_container",
+                          "height": 1
                         }
                       ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "Eaxtz",
-                      "name": "Spacer",
-                      "width": "fill_container",
-                      "height": 1
                     }
                   ]
                 }
@@ -1436,192 +1359,115 @@
                   "height": 1
                 },
                 {
-                  "type": "frame",
-                  "id": "DoiTq",
+                  "id": "zGFbd",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats1",
                   "width": "fill_container",
-                  "padding": [
-                    12,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "OoYdh",
-                      "name": "Stat km",
+                      "id": "DXB7i",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "Sd02L",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "8.75 km",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "l2fIHC",
+                          "type": "ref",
+                          "ref": "txz2G",
+                          "name": "DurationCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wxv5r/QIi9H": {
+                              "content": "18m42s"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "jsvTn",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "vGOjk",
-                      "name": "Stat duration",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "aYU1N",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "00:18:42",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "u9WmUr",
+                          "type": "ref",
+                          "ref": "zH8dD",
+                          "name": "DistCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Sj4M1/QIi9H": {
+                              "content": "8.8"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "jE8th",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "duration",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "VGlok",
-                      "name": "Stat avg speed",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "X7Sfk5",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "28.1",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
-                        },
-                        {
-                          "type": "text",
-                          "id": "lQJSy",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "KM/H",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "id": "b7YbeE",
+                          "type": "ref",
+                          "ref": "YI2fu",
+                          "name": "AvgSpeedCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "ZLh0b/QIi9H": {
+                              "content": "28.1"
+                            }
+                          }
                         }
                       ]
                     }
                   ]
                 },
                 {
-                  "type": "frame",
-                  "id": "Neq97",
+                  "id": "Bcd3z",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats2",
                   "width": "fill_container",
-                  "padding": [
-                    8,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "K4KoOM",
-                      "name": "Stat2 km/L",
+                      "id": "lXkVQ",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "jE95u",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "14.2",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "xGlnm",
+                          "type": "ref",
+                          "ref": "hMBXP",
+                          "name": "CostCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "TekIj/QIi9H": {
+                              "content": "8.2k"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "Tzu1R",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km/L",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "XEnBM",
-                      "name": "Stat2 cost",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "D0MVU",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "Rp 8.200",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "MLLcA",
+                          "type": "ref",
+                          "ref": "p4fbw",
+                          "name": "FuelCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "isyU1/QIi9H": {
+                              "content": "14.2"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "jC0Uw",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "cost",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "type": "frame",
+                          "id": "FzuqH",
+                          "name": "Spacer",
+                          "width": "fill_container",
+                          "height": 1
                         }
                       ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "qwAPG",
-                      "name": "Spacer",
-                      "width": "fill_container",
-                      "height": 1
                     }
                   ]
                 }
@@ -1744,192 +1590,115 @@
                   "height": 1
                 },
                 {
-                  "type": "frame",
-                  "id": "Bril3",
+                  "id": "o0pLk",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats1",
                   "width": "fill_container",
-                  "padding": [
-                    12,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "yfdps",
-                      "name": "Stat km",
+                      "id": "r8iolc",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "ZH0qs",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "5.20 km",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "NEBck",
+                          "type": "ref",
+                          "ref": "txz2G",
+                          "name": "DurationCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wxv5r/QIi9H": {
+                              "content": "11m05s"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "W2rA4v",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "ZpcQN",
-                      "name": "Stat duration",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "imvVI",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "00:11:05",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "t1oeqo",
+                          "type": "ref",
+                          "ref": "zH8dD",
+                          "name": "DistCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Sj4M1/QIi9H": {
+                              "content": "5.2"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "X3OrB9",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "duration",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "g7Z5sd",
-                      "name": "Stat avg speed",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "xT4jT",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "28.1",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
-                        },
-                        {
-                          "type": "text",
-                          "id": "kmr8v",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "KM/H",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "id": "Y9w7f",
+                          "type": "ref",
+                          "ref": "YI2fu",
+                          "name": "AvgSpeedCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "ZLh0b/QIi9H": {
+                              "content": "28.1"
+                            }
+                          }
                         }
                       ]
                     }
                   ]
                 },
                 {
-                  "type": "frame",
-                  "id": "iElI9",
+                  "id": "ncybn",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "Stats2",
                   "width": "fill_container",
-                  "padding": [
-                    8,
-                    0,
-                    0,
-                    0
-                  ],
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "JSvHU",
-                      "name": "Stat2 km/L",
+                      "id": "DAnG9",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "LguD2",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "—",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "oj85O",
+                          "type": "ref",
+                          "ref": "hMBXP",
+                          "name": "CostCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "TekIj/QIi9H": {
+                              "content": "—"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "K4bex",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "km/L",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "G0XKCw",
-                      "name": "Stat2 cost",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "IGMVI",
-                          "name": "Val",
-                          "fill": "#0A0A0A",
-                          "content": "—",
-                          "fontFamily": "Roboto Mono",
-                          "fontSize": 14,
-                          "fontWeight": "500",
-                          "letterSpacing": -0.3
+                          "id": "LBL58",
+                          "type": "ref",
+                          "ref": "p4fbw",
+                          "name": "FuelCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "isyU1/QIi9H": {
+                              "content": "—"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "TLtM3",
-                          "name": "Lbl",
-                          "fill": "#737373",
-                          "content": "cost",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal"
+                          "type": "frame",
+                          "id": "L3cqNi",
+                          "name": "Spacer",
+                          "width": "fill_container",
+                          "height": 1
                         }
                       ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "esybn",
-                      "name": "Spacer",
-                      "width": "fill_container",
-                      "height": 1
                     }
                   ]
                 }
@@ -2893,100 +2662,59 @@
                   "height": 1
                 },
                 {
-                  "type": "frame",
-                  "id": "pcgeU",
+                  "id": "ssEdv",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "SM",
                   "width": "fill_container",
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "Me2ij",
-                      "name": "Duration",
+                      "id": "Z4ysuf",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "j7jw5",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "0:45:12",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
+                          "id": "yUWMu",
+                          "type": "ref",
+                          "ref": "txz2G",
+                          "name": "DurationCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wxv5r/QIi9H": {
+                              "content": "45m12s"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "tBqJP",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Duration",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "w30Rk",
-                      "name": "Distance",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "gxLAV",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "5.2 km",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
+                          "id": "kFB84",
+                          "type": "ref",
+                          "ref": "zH8dD",
+                          "name": "DistCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Sj4M1/QIi9H": {
+                              "content": "5.2"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "y6dhA",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Distance",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "YZtmL",
-                      "name": "Points",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "alignItems": "end",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "E9qP3t",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "1,284",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "text",
-                          "id": "rjvcA",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Points",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
+                          "id": "LYT8K",
+                          "type": "ref",
+                          "ref": "I7ACc",
+                          "name": "PointsCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "o9eeik/QIi9H": {
+                              "content": "1,284"
+                            }
+                          }
                         }
                       ]
                     }
@@ -3055,100 +2783,59 @@
                   "height": 1
                 },
                 {
-                  "type": "frame",
-                  "id": "kPysV",
+                  "id": "zlMoi",
+                  "type": "ref",
+                  "ref": "p4BII4",
                   "name": "SM",
                   "width": "fill_container",
+                  "padding": 0,
+                  "strokeWidth": 0,
+                  "theme": {
+                    "surface": "light"
+                  },
                   "children": [
                     {
                       "type": "frame",
-                      "id": "w735Cu",
-                      "name": "Duration",
+                      "id": "poGYV",
+                      "name": "Cells",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
+                      "gap": 6,
                       "children": [
                         {
-                          "type": "text",
-                          "id": "u6bxy",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "0:32:05",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
+                          "id": "Dsj0k",
+                          "type": "ref",
+                          "ref": "txz2G",
+                          "name": "DurationCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "wxv5r/QIi9H": {
+                              "content": "32m05s"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "k2uOF",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Duration",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "S3Xqu",
-                      "name": "Distance",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "ev7RT",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "3.8 km",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
+                          "id": "k6BfMB",
+                          "type": "ref",
+                          "ref": "zH8dD",
+                          "name": "DistCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "Sj4M1/QIi9H": {
+                              "content": "3.8"
+                            }
+                          }
                         },
                         {
-                          "type": "text",
-                          "id": "u3FmkH",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Distance",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "Mrjpi",
-                      "name": "Points",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 2,
-                      "alignItems": "end",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "ot3Pe",
-                          "name": "V",
-                          "fill": "$trip-ink",
-                          "content": "932",
-                          "fontFamily": "Inter",
-                          "fontSize": 16,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "text",
-                          "id": "PVdr4",
-                          "name": "L",
-                          "fill": "$trip-muted",
-                          "content": "Points",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
+                          "id": "EMHbZ",
+                          "type": "ref",
+                          "ref": "I7ACc",
+                          "name": "PointsCell",
+                          "width": "fill_container",
+                          "descendants": {
+                            "o9eeik/QIi9H": {
+                              "content": "932"
+                            }
+                          }
                         }
                       ]
                     }
@@ -9153,196 +8840,66 @@
               "height": 10
             },
             {
-              "type": "frame",
-              "id": "uL0IT",
+              "id": "cbyuf",
+              "type": "ref",
+              "ref": "p4BII4",
               "name": "StatsRow",
               "width": "fill_container",
-              "stroke": "#00000000",
-              "strokeWidth": 1,
-              "padding": [
-                9,
-                0,
-                0,
-                0
-              ],
               "children": [
                 {
                   "type": "frame",
-                  "id": "RVzjY",
-                  "name": "KmCell",
+                  "id": "n8jHAX",
+                  "name": "Cells",
                   "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 2,
+                  "gap": 6,
                   "children": [
                     {
-                      "type": "frame",
-                      "id": "z8F3i",
-                      "name": "KmLabel",
-                      "gap": 5,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon",
-                          "id": "GmUAF",
-                          "name": "PinIcon",
-                          "width": 12,
-                          "height": 12,
-                          "icon": "map-pin",
-                          "library": "lucide",
-                          "fill": "#FFFFFFC7"
-                        },
-                        {
-                          "type": "text",
-                          "id": "Wo3oq",
-                          "name": "KmUnit",
-                          "fill": "#FFFFFFC7",
-                          "content": "KM",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal",
-                          "letterSpacing": 0.4
+                      "id": "ONQLJ",
+                      "type": "ref",
+                      "ref": "zH8dD",
+                      "name": "DistCell",
+                      "width": 70,
+                      "descendants": {
+                        "Sj4M1/QIi9H": {
+                          "content": "3.2"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "MLJdp",
-                      "name": "KmValue",
-                      "fill": "#FFFFFF",
-                      "content": "3.21",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "vOyjm",
-                  "name": "SpeedCell",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "end",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "G1Il5R",
-                      "name": "SpdLabel",
-                      "gap": 5,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon",
-                          "id": "jDguR",
-                          "name": "BoltIcon",
-                          "width": 12,
-                          "height": 12,
-                          "icon": "zap",
-                          "library": "lucide",
-                          "fill": "#FFFFFFC7"
-                        },
-                        {
-                          "type": "text",
-                          "id": "vFOd4",
-                          "name": "SpdUnit",
-                          "fill": "#FFFFFFC7",
-                          "content": "KM/H",
-                          "fontFamily": "Inter",
-                          "fontSize": 10,
-                          "fontWeight": "normal",
-                          "letterSpacing": 0.4
+                      "id": "PqRLW",
+                      "type": "ref",
+                      "ref": "nxUAX",
+                      "name": "SpeedCell",
+                      "width": 76,
+                      "descendants": {
+                        "taNYQ/QIi9H": {
+                          "content": "24.5"
                         }
-                      ]
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "NYVcM",
-                      "name": "SpdValue",
-                      "fill": "#FFFFFF",
-                      "content": "24.5",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "BfuSh",
-                  "name": "LphCell",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "dEX0u",
-                      "name": "LphLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "L/H",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "id": "D78c4m",
+                      "type": "ref",
+                      "ref": "pFWsx",
+                      "name": "FlowCell",
+                      "width": 70,
+                      "descendants": {
+                        "kpjIG/QIi9H": {
+                          "content": "4.2"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "ZGp7Y",
-                      "name": "LphValue",
-                      "fill": "#FFFFFF",
-                      "content": "4.2",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "rectangle",
-                  "id": "u3QIsc",
-                  "layoutPosition": "absolute",
-                  "x": 0,
-                  "y": 0,
-                  "name": "TopSep",
-                  "fill": "#FFFFFF1F",
-                  "width": 334,
-                  "height": 1
-                },
-                {
-                  "type": "frame",
-                  "id": "ZzQZN",
-                  "name": "FuelCell",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "end",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "ucoa2",
-                      "name": "FuelLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "AVG / INST km/L",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
-                    },
-                    {
-                      "type": "text",
-                      "id": "Y90ELn",
-                      "name": "FuelValue",
-                      "fill": "#FFFFFF",
-                      "content": "6.1 / 5.2",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
+                      "id": "o4Sxp",
+                      "type": "ref",
+                      "ref": "d8Ftga",
+                      "name": "AvgInstCell",
+                      "width": "fill_container",
+                      "descendants": {
+                        "IurY3/QIi9H": {
+                          "content": "6.1/5.2"
+                        }
+                      }
                     }
                   ]
                 }
@@ -10119,35 +9676,16 @@
                   ]
                 },
                 {
-                  "type": "frame",
-                  "id": "g6PElk",
+                  "id": "CAvrd",
+                  "type": "ref",
+                  "ref": "BAm7O",
                   "name": "EarRight",
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "end",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "uAdTc",
-                      "name": "EarLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "EARNINGS",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
-                    },
-                    {
-                      "type": "text",
-                      "id": "HV7D1",
-                      "name": "EarVal",
-                      "fill": "#22C55E",
-                      "content": "Rp24.500",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600"
+                  "width": 100,
+                  "descendants": {
+                    "RRZZR/QIi9H": {
+                      "content": "Rp24.500"
                     }
-                  ]
+                  }
                 }
               ]
             },
@@ -10159,180 +9697,66 @@
               "height": 10
             },
             {
-              "type": "frame",
-              "id": "yovAw",
+              "id": "buzMc",
+              "type": "ref",
+              "ref": "p4BII4",
               "name": "TripStrip",
               "width": "fill_container",
-              "gap": 6,
-              "padding": [
-                9,
-                0,
-                0,
-                0
-              ],
               "children": [
                 {
-                  "type": "rectangle",
-                  "id": "vfGdM",
-                  "layoutPosition": "absolute",
-                  "x": 0,
-                  "y": 0,
-                  "name": "StripTopSep",
-                  "fill": "#FFFFFF1F",
-                  "width": 334,
-                  "height": 1
-                },
-                {
                   "type": "frame",
-                  "id": "cPPBA",
-                  "name": "TimeCell",
-                  "width": 58,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
+                  "id": "T7iAQP",
+                  "name": "Cells",
+                  "width": "fill_container",
+                  "gap": 6,
                   "children": [
                     {
-                      "type": "text",
-                      "id": "FqVvr",
-                      "name": "TimeLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "TIME",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
-                    },
-                    {
-                      "type": "text",
-                      "id": "nuvGn",
-                      "name": "TimeVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "ZN2Ab",
+                      "type": "ref",
+                      "ref": "a1w9b",
+                      "name": "TimeCell",
                       "width": 58,
-                      "height": 22,
-                      "content": "42m35s",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "JTWr8",
-                  "name": "DistCell",
-                  "width": 58,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "rLz11",
-                      "name": "DistLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "DIST (km)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "PPaaQ/QIi9H": {
+                          "content": "42m35s"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "zlEw3",
-                      "name": "DistVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "gJh4T",
+                      "type": "ref",
+                      "ref": "zH8dD",
+                      "name": "DistCell",
                       "width": 58,
-                      "height": 22,
-                      "content": "6.1",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "Y2ljT",
-                  "name": "CostNetCell",
-                  "clip": true,
-                  "width": 100,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "MoF8u",
-                      "name": "CostNetLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "COST / NET (Rp.)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "Sj4M1/QIi9H": {
+                          "content": "6.1"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "fiWJA",
-                      "name": "CostNetVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "giKwS",
+                      "type": "ref",
+                      "ref": "FH6PA",
+                      "name": "CostNetCell",
                       "width": 100,
-                      "height": 22,
-                      "content": "3.5k/21k",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "gVe1q",
-                  "name": "FuelCell",
-                  "clip": true,
-                  "width": 100,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "bY3Wh",
-                      "name": "FuelLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "AVG / INST (km/L)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "rU5Fc/QIi9H": {
+                          "content": "3.5k/21k"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "U0ZYF",
-                      "name": "FuelVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "j6Qp8v",
+                      "type": "ref",
+                      "ref": "d8Ftga",
+                      "name": "AvgInstCell",
                       "width": 100,
-                      "height": 22,
-                      "content": "8.5/6.2",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
+                      "descendants": {
+                        "IurY3/QIi9H": {
+                          "content": "8.5/6.2"
+                        }
+                      }
                     }
                   ]
                 }
@@ -11069,35 +10493,16 @@
                   ]
                 },
                 {
-                  "type": "frame",
-                  "id": "HuP89",
+                  "id": "bjBww",
+                  "type": "ref",
+                  "ref": "BAm7O",
                   "name": "EarRight",
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "end",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "Sm7jr",
-                      "name": "EarLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "EARNINGS",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
-                    },
-                    {
-                      "type": "text",
-                      "id": "P5xh6Y",
-                      "name": "EarVal",
-                      "fill": "#22C55E",
-                      "content": "Rp24.500",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600"
+                  "width": 100,
+                  "descendants": {
+                    "RRZZR/QIi9H": {
+                      "content": "Rp24.500"
                     }
-                  ]
+                  }
                 }
               ]
             },
@@ -11112,175 +10517,66 @@
               "height": 10
             },
             {
-              "type": "frame",
-              "id": "CKupx",
+              "id": "ob6Nq",
+              "type": "ref",
+              "ref": "p4BII4",
               "name": "TripStrip",
               "width": "fill_container",
-              "gap": 6,
               "children": [
                 {
-                  "type": "rectangle",
-                  "id": "GHdjm",
-                  "layoutPosition": "absolute",
-                  "x": 0,
-                  "y": 0,
-                  "name": "StripTopSep",
-                  "enabled": false,
-                  "fill": "#FFFFFF1F",
-                  "width": 334,
-                  "height": 1
-                },
-                {
                   "type": "frame",
-                  "id": "ACyIT",
-                  "name": "TimeCell",
-                  "width": 58,
-                  "layout": "vertical",
+                  "id": "tq0el",
+                  "name": "Cells",
+                  "width": "fill_container",
                   "gap": 2,
-                  "alignItems": "center",
                   "children": [
                     {
-                      "type": "text",
-                      "id": "S79xdp",
-                      "name": "TimeLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "TIME",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
-                    },
-                    {
-                      "type": "text",
-                      "id": "qAKYY",
-                      "name": "TimeVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "Ut3eG",
+                      "type": "ref",
+                      "ref": "a1w9b",
+                      "name": "TimeCell",
                       "width": 58,
-                      "height": 22,
-                      "content": "42m35s",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "nSe96",
-                  "name": "DistCell",
-                  "width": 58,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "q1eTx3",
-                      "name": "DistLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "DIST (km)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "PPaaQ/QIi9H": {
+                          "content": "42m35s"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "m4JPiG",
-                      "name": "DistVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "xfNzG",
+                      "type": "ref",
+                      "ref": "zH8dD",
+                      "name": "DistCell",
                       "width": 58,
-                      "height": 22,
-                      "content": "6.1",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "k0nrrk",
-                  "name": "CostNetCell",
-                  "clip": true,
-                  "width": 100,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "L8c2R",
-                      "name": "CostNetLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "COST/NET (Rp.)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "Sj4M1/QIi9H": {
+                          "content": "6.1"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "HZ69b",
-                      "name": "CostNetVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
+                      "id": "y0PpiF",
+                      "type": "ref",
+                      "ref": "FH6PA",
+                      "name": "CostNetCell",
                       "width": 100,
-                      "height": 22,
-                      "content": "3.5k/21k",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "ffCWZ",
-                  "name": "FuelCell",
-                  "clip": true,
-                  "width": 80,
-                  "layout": "vertical",
-                  "gap": 2,
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "SjFkz",
-                      "name": "FuelLabel",
-                      "fill": "#FFFFFFC7",
-                      "content": "AVG/INST (km/L)",
-                      "textAlign": "center",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal",
-                      "letterSpacing": 0.4
+                      "descendants": {
+                        "rU5Fc/QIi9H": {
+                          "content": "3.5k/21k"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "xjG0w",
-                      "name": "FuelVal",
-                      "fill": "#FFFFFF",
-                      "textGrowth": "fixed-width-height",
-                      "width": 80,
-                      "height": 22,
-                      "content": "8.5/6.2",
-                      "textAlign": "center",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 16,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.3
+                      "id": "SkEwh",
+                      "type": "ref",
+                      "ref": "d8Ftga",
+                      "name": "AvgInstCell",
+                      "width": 90,
+                      "descendants": {
+                        "IurY3/QIi9H": {
+                          "content": "8.5/6.2"
+                        }
+                      }
                     }
                   ]
                 }
@@ -11555,7 +10851,7 @@
                       "type": "text",
                       "id": "y0RW9Y",
                       "name": "Label",
-                      "fill": "#FFFFFFC7",
+                      "fill": "$metric-label",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "LABEL (unit)",
@@ -11569,7 +10865,7 @@
                       "type": "text",
                       "id": "QIi9H",
                       "name": "Value",
-                      "fill": "#FFFFFF",
+                      "fill": "$metric-value",
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "0.0",
@@ -11587,7 +10883,7 @@
                   "name": "MetricStrip",
                   "reusable": true,
                   "width": 334,
-                  "stroke": "#FFFFFF1F",
+                  "stroke": "$metric-sep",
                   "strokeWidth": {
                     "top": 1
                   },
@@ -11769,6 +11065,136 @@
                       }
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "txz2G",
+                  "name": "Metric/Duration",
+                  "reusable": true,
+                  "width": 80,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "wxv5r",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "DURATION"
+                        },
+                        "QIi9H": {
+                          "content": "22m15s"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YI2fu",
+                  "name": "Metric/AvgSpeed",
+                  "reusable": true,
+                  "width": 100,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "ZLh0b",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "AVG SPEED (km/h)"
+                        },
+                        "QIi9H": {
+                          "content": "33.5"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "p4fbw",
+                  "name": "Metric/FuelEconomy",
+                  "reusable": true,
+                  "width": 80,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "isyU1",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "FUEL (km/L)"
+                        },
+                        "QIi9H": {
+                          "content": "8.5"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hMBXP",
+                  "name": "Metric/Cost",
+                  "reusable": true,
+                  "width": 80,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "TekIj",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "COST (Rp.)"
+                        },
+                        "QIi9H": {
+                          "content": "8.2k"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "I7ACc",
+                  "name": "Metric/Points",
+                  "reusable": true,
+                  "width": 80,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "o9eeik",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "POINTS"
+                        },
+                        "QIi9H": {
+                          "content": "1,284"
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             }
@@ -11857,6 +11283,12 @@
       ]
     }
   ],
+  "themes": {
+    "surface": [
+      "dark",
+      "light"
+    ]
+  },
   "variables": {
     "trip-bg": {
       "type": "color",
@@ -11909,6 +11341,57 @@
     "observer-amber": {
       "type": "color",
       "value": "#D97706"
+    },
+    "metric-label": {
+      "type": "color",
+      "value": [
+        {
+          "value": "#FFFFFFC7",
+          "theme": {
+            "surface": "dark"
+          }
+        },
+        {
+          "value": "#737373",
+          "theme": {
+            "surface": "light"
+          }
+        }
+      ]
+    },
+    "metric-value": {
+      "type": "color",
+      "value": [
+        {
+          "value": "#FFFFFF",
+          "theme": {
+            "surface": "dark"
+          }
+        },
+        {
+          "value": "#0A0A0A",
+          "theme": {
+            "surface": "light"
+          }
+        }
+      ]
+    },
+    "metric-sep": {
+      "type": "color",
+      "value": [
+        {
+          "value": "#FFFFFF1F",
+          "theme": {
+            "surface": "dark"
+          }
+        },
+        {
+          "value": "#0000001F",
+          "theme": {
+            "surface": "light"
+          }
+        }
+      ]
     }
   },
   "fileToken": "c04c2f96-e081-4c57-a565-788c104821bb"
