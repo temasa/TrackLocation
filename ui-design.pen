@@ -2660,41 +2660,90 @@
                       "id": "Z4ysuf",
                       "name": "Cells",
                       "width": "fill_container",
-                      "gap": 6,
+                      "gap": 2,
                       "children": [
                         {
-                          "id": "poY14",
+                          "id": "yy9WP",
                           "type": "ref",
                           "ref": "a1w9b",
                           "name": "TimeCell",
-                          "width": "fill_container",
+                          "width": 52,
                           "descendants": {
+                            "PPaaQ/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "PPaaQ/QIi9H": {
-                              "content": "45m12s"
+                              "content": "45m12s",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "kFB84",
+                          "id": "Epv3E",
                           "type": "ref",
                           "ref": "zH8dD",
                           "name": "DistCell",
-                          "width": "fill_container",
+                          "width": 46,
                           "descendants": {
+                            "Sj4M1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "Sj4M1/QIi9H": {
-                              "content": "5.2"
+                              "content": "5.2",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "LYT8K",
+                          "id": "ZaJlO",
+                          "type": "ref",
+                          "ref": "YI2fu",
+                          "name": "AvgSpeedCell",
+                          "width": 82,
+                          "descendants": {
+                            "ZLh0b/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
+                            "ZLh0b/QIi9H": {
+                              "content": "6.9",
+                              "fontSize": 12
+                            }
+                          }
+                        },
+                        {
+                          "id": "o49FPV",
+                          "type": "ref",
+                          "ref": "wGdYg",
+                          "name": "AvgTotalCell",
+                          "width": 90,
+                          "descendants": {
+                            "BWnDn/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
+                            "BWnDn/QIi9H": {
+                              "content": "10.4/0.5",
+                              "fontSize": 12
+                            }
+                          }
+                        },
+                        {
+                          "id": "P2UjQv",
                           "type": "ref",
                           "ref": "I7ACc",
                           "name": "PointsCell",
-                          "width": "fill_container",
+                          "width": 48,
                           "descendants": {
+                            "o9eeik/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "o9eeik/QIi9H": {
-                              "content": "1,284"
+                              "content": "1,284",
+                              "fontSize": 12
                             }
                           }
                         }
@@ -2781,41 +2830,90 @@
                       "id": "poGYV",
                       "name": "Cells",
                       "width": "fill_container",
-                      "gap": 6,
+                      "gap": 2,
                       "children": [
                         {
-                          "id": "K0om2J",
+                          "id": "N5FtUA",
                           "type": "ref",
                           "ref": "a1w9b",
                           "name": "TimeCell",
-                          "width": "fill_container",
+                          "width": 52,
                           "descendants": {
+                            "PPaaQ/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "PPaaQ/QIi9H": {
-                              "content": "32m05s"
+                              "content": "32m05s",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "k6BfMB",
+                          "id": "fAouM",
                           "type": "ref",
                           "ref": "zH8dD",
                           "name": "DistCell",
-                          "width": "fill_container",
+                          "width": 46,
                           "descendants": {
+                            "Sj4M1/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "Sj4M1/QIi9H": {
-                              "content": "3.8"
+                              "content": "3.8",
+                              "fontSize": 12
                             }
                           }
                         },
                         {
-                          "id": "EMHbZ",
+                          "id": "Gr2Bs",
+                          "type": "ref",
+                          "ref": "YI2fu",
+                          "name": "AvgSpeedCell",
+                          "width": 82,
+                          "descendants": {
+                            "ZLh0b/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
+                            "ZLh0b/QIi9H": {
+                              "content": "7.1",
+                              "fontSize": 12
+                            }
+                          }
+                        },
+                        {
+                          "id": "yvmNG",
+                          "type": "ref",
+                          "ref": "wGdYg",
+                          "name": "AvgTotalCell",
+                          "width": 90,
+                          "descendants": {
+                            "BWnDn/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
+                            "BWnDn/QIi9H": {
+                              "content": "9.5/0.4",
+                              "fontSize": 12
+                            }
+                          }
+                        },
+                        {
+                          "id": "XB1wB",
                           "type": "ref",
                           "ref": "I7ACc",
                           "name": "PointsCell",
-                          "width": "fill_container",
+                          "width": 48,
                           "descendants": {
+                            "o9eeik/y0RW9Y": {
+                              "fontSize": 8,
+                              "letterSpacing": 0
+                            },
                             "o9eeik/QIi9H": {
-                              "content": "932"
+                              "content": "932",
+                              "fontSize": 12
                             }
                           }
                         }
@@ -10975,7 +11073,7 @@
                   "id": "p4fbw",
                   "name": "Metric/FuelEconomy",
                   "reusable": true,
-                  "width": 80,
+                  "width": 100,
                   "layout": "vertical",
                   "alignItems": "center",
                   "children": [
@@ -11123,6 +11221,32 @@
                         },
                         "QIi9H": {
                           "content": "8.5/6.2"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wGdYg",
+                  "name": "Metric/FuelAvgTotal",
+                  "reusable": true,
+                  "width": 120,
+                  "layout": "vertical",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "BWnDn",
+                      "type": "ref",
+                      "ref": "K3VIx",
+                      "name": "Base",
+                      "width": "fill_container",
+                      "descendants": {
+                        "y0RW9Y": {
+                          "content": "AVG/TOTAL (km/L/L)"
+                        },
+                        "QIi9H": {
+                          "content": "10.4/0.5"
                         }
                       }
                     }
