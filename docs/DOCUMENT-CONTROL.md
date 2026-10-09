@@ -62,7 +62,7 @@ When any controlled document changes, update both:
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/IMPLEMENTATION-PLAN.md` | 0.40 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-09 |
-| `docs/UI-SPEC.md` | 0.30 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-09 |
+| `docs/UI-SPEC.md` | 0.31 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-09 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
 | `docs/ERRORS-LOG.md` | 0.2 | Active (persistent) | Project Team | 2026-10-09 |
@@ -92,6 +92,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-09 | UI-SPEC | 0.30 | 0.31 | §5a scope now includes Alt B (Dashboard Panel) stats row: DIST / SPEED / AVG/INST strip using the typed metric components. | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.29 | 0.30 | §5a label vocabulary: `TIME` replaces `DURATION` for every elapsed time (Metric/Duration component retired), `AVG FUEL (km/L)` for the finished-trip average fuel economy; scope/order text aligned. | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.28 | 0.29 | §5a extended: canonical metric order (TIME/DURATION → DIST → SPEED → COST/NET → FLOW → AVG/INST → POINTS), duration/count formats, five new components (Duration, AvgSpeed, FuelEconomy, Cost, Points), light-surface theme, scope now includes List rows and Sessions cards with documented exceptions. §3a/§3b/§3b-order stat order aligned to the canonical order; List design supersedes 14sp value styling (code pending). | Claude Code |
 | 2026-10-09 | UI-SPEC | 0.27 | 0.28 | New §5a Metric Display Standard (label/value/row format, one component per standalone metric and per pair, source: Order Active trip strip in ui-design.pen). §3e labels now `COST/NET` / `AVG/INST` (no spaces); §3g merged metrics row relabelled DIST (km) / SPEED (km/h) / FLOW (L/h) / AVG/INST (km/L), icons dropped, cells centered; §4 TRIP AVG reference updated. List/Sessions adoption left as an open decision. | Claude Code |
