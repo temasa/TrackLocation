@@ -2837,6 +2837,24 @@ Scope decision:
 
 - **Git Revision:** `45dc7dc`
 
+### Fix: duplicate trip card on Trips list (stop-trip re-entrancy guard)
+
+**What it does:** Serialises `stopActiveTrip` in `ShareViewModel` so a trip is persisted at most once per stop. A non-suspending mutex guard rejects a second concurrent stop, and the live state is re-checked inside the lock before any insert.
+
+**Observable result:** Tapping Stop (including a double-tap), or Stop racing the order-FINISHED auto-stop, yields exactly one card on the Trips list.
+
+**How to verify (static + manual; build gated per AGENTS.md §5a):**
+- Static: re-read `ShareViewModel.stopActiveTrip` and confirm the `tryLock` / `finally { unlock() }` pairing and the fresh-state re-check.
+- Manual (only with explicit user permission): start a trip, double-tap Stop quickly, confirm exactly one card in Trips; also stop at the moment a Gojek order finishes, confirm exactly one card.
+- Verification NOT run yet (build gated).
+
+**Implementation steps (What/How):**
+1. **Edit** `viewmodel/ShareViewModel.kt` — add `private val stopTripMutex = kotlinx.coroutines.sync.Mutex()`; make `stopActiveTrip` return early if `!stopTripMutex.tryLock()` (a stop is already in progress); wrap the body in `try { ... } finally { stopTripMutex.unlock() }`; inside the lock, re-check the freshest state (`val live = locationUiState.value; if (!live.isTracking || live.isPaused) return`) before persisting.
+   - Root cause: no re-entrancy guard. Two concurrent callers (Stop button via `onTripCtaTap()`, or the order-end collector in `init`) both pass the `isTracking` check on the same snapshot and insert the same trip twice.
+   - Option 2 (unique index on `track.timestamp` + Room migration + cleanup of existing duplicates) is deferred and not in scope.
+
+- **Git Revision:** `---`
+
 ## Local Build Note
 
 Preferred local JDK path from earlier progress:
