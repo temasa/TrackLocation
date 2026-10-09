@@ -7138,158 +7138,54 @@
               "fontWeight": "300"
             },
             {
-              "type": "frame",
-              "id": "vYzWo",
+              "id": "U9ID1U",
+              "type": "ref",
+              "ref": "p4BII4",
               "name": "StatsRow",
               "width": "fill_container",
-              "padding": [
-                14,
-                0,
-                0,
-                0
-              ],
               "children": [
                 {
                   "type": "frame",
-                  "id": "dho91",
-                  "name": "Cell0",
+                  "id": "nnpAX",
+                  "name": "Cells",
                   "width": "fill_container",
-                  "stroke": "#00000000",
-                  "layout": "vertical",
-                  "gap": 2,
+                  "gap": 6,
                   "children": [
                     {
-                      "type": "text",
-                      "id": "JcFVk",
-                      "name": "DISTANCE_lbl",
-                      "fill": "#FFFFFF60",
-                      "content": "DISTANCE",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "700",
-                      "letterSpacing": 1
+                      "id": "VpOVC",
+                      "type": "ref",
+                      "ref": "zH8dD",
+                      "name": "DistCell",
+                      "width": "fill_container",
+                      "descendants": {
+                        "Sj4M1/QIi9H": {
+                          "content": "0.0"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "H15MpB",
-                      "name": "DISTANCE_val",
-                      "fill": "#FFFFFF",
-                      "content": "0.00",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 22,
-                      "fontWeight": "500"
+                      "id": "xy2K6",
+                      "type": "ref",
+                      "ref": "nxUAX",
+                      "name": "SpeedCell",
+                      "width": "fill_container",
+                      "descendants": {
+                        "taNYQ/QIi9H": {
+                          "content": "0.0"
+                        }
+                      }
                     },
                     {
-                      "type": "text",
-                      "id": "FzpaV",
-                      "name": "DISTANCE_unit",
-                      "fill": "#FFFFFF60",
-                      "content": "km",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "uHCJo",
-                  "name": "Cell1",
-                  "width": "fill_container",
-                  "stroke": "#FFFFFF1A",
-                  "strokeWidth": {
-                    "left": 1
-                  },
-                  "layout": "vertical",
-                  "gap": 2,
-                  "padding": [
-                    0,
-                    0,
-                    0,
-                    16
-                  ],
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "Z2B2O",
-                      "name": "SPEED_lbl",
-                      "fill": "#FFFFFF60",
-                      "content": "SPEED",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "700",
-                      "letterSpacing": 1
-                    },
-                    {
-                      "type": "text",
-                      "id": "hHNtS",
-                      "name": "SPEED_val",
-                      "fill": "#FFFFFF",
-                      "content": "0.0",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 22,
-                      "fontWeight": "500"
-                    },
-                    {
-                      "type": "text",
-                      "id": "u8NMH",
-                      "name": "SPEED_unit",
-                      "fill": "#FFFFFF60",
-                      "content": "KM/H",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "kaYzJ",
-                  "name": "Cell2",
-                  "width": "fill_container",
-                  "stroke": "#FFFFFF1A",
-                  "strokeWidth": {
-                    "left": 1
-                  },
-                  "layout": "vertical",
-                  "gap": 2,
-                  "padding": [
-                    0,
-                    0,
-                    0,
-                    16
-                  ],
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "RPE04",
-                      "name": "EFFIC._lbl",
-                      "fill": "#FFFFFF60",
-                      "content": "EFFIC.",
-                      "fontFamily": "Inter",
-                      "fontSize": 9,
-                      "fontWeight": "700",
-                      "letterSpacing": 1
-                    },
-                    {
-                      "type": "text",
-                      "id": "R8FI6R",
-                      "name": "EFFIC._val",
-                      "fill": "#FFFFFF",
-                      "content": "—",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 22,
-                      "fontWeight": "500"
-                    },
-                    {
-                      "type": "text",
-                      "id": "hA3OC",
-                      "name": "EFFIC._unit",
-                      "fill": "#FFFFFF60",
-                      "content": "km/L",
-                      "fontFamily": "Inter",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
+                      "id": "ysiKa",
+                      "type": "ref",
+                      "ref": "d8Ftga",
+                      "name": "AvgInstCell",
+                      "width": "fill_container",
+                      "descendants": {
+                        "IurY3/QIi9H": {
+                          "content": "—/—"
+                        }
+                      }
                     }
                   ]
                 }
