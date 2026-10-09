@@ -1147,13 +1147,13 @@
                       "gap": 6,
                       "children": [
                         {
-                          "id": "QpswR",
+                          "id": "vTpSM",
                           "type": "ref",
-                          "ref": "txz2G",
-                          "name": "DurationCell",
+                          "ref": "a1w9b",
+                          "name": "TimeCell",
                           "width": "fill_container",
                           "descendants": {
-                            "wxv5r/QIi9H": {
+                            "PPaaQ/QIi9H": {
                               "content": "22m15s"
                             }
                           }
@@ -1378,13 +1378,13 @@
                       "gap": 6,
                       "children": [
                         {
-                          "id": "l2fIHC",
+                          "id": "t12jh",
                           "type": "ref",
-                          "ref": "txz2G",
-                          "name": "DurationCell",
+                          "ref": "a1w9b",
+                          "name": "TimeCell",
                           "width": "fill_container",
                           "descendants": {
-                            "wxv5r/QIi9H": {
+                            "PPaaQ/QIi9H": {
                               "content": "18m42s"
                             }
                           }
@@ -1609,13 +1609,13 @@
                       "gap": 6,
                       "children": [
                         {
-                          "id": "NEBck",
+                          "id": "WZqIC",
                           "type": "ref",
-                          "ref": "txz2G",
-                          "name": "DurationCell",
+                          "ref": "a1w9b",
+                          "name": "TimeCell",
                           "width": "fill_container",
                           "descendants": {
-                            "wxv5r/QIi9H": {
+                            "PPaaQ/QIi9H": {
                               "content": "11m05s"
                             }
                           }
@@ -2681,13 +2681,13 @@
                       "gap": 6,
                       "children": [
                         {
-                          "id": "yUWMu",
+                          "id": "poY14",
                           "type": "ref",
-                          "ref": "txz2G",
-                          "name": "DurationCell",
+                          "ref": "a1w9b",
+                          "name": "TimeCell",
                           "width": "fill_container",
                           "descendants": {
-                            "wxv5r/QIi9H": {
+                            "PPaaQ/QIi9H": {
                               "content": "45m12s"
                             }
                           }
@@ -2802,13 +2802,13 @@
                       "gap": 6,
                       "children": [
                         {
-                          "id": "Dsj0k",
+                          "id": "K0om2J",
                           "type": "ref",
-                          "ref": "txz2G",
-                          "name": "DurationCell",
+                          "ref": "a1w9b",
+                          "name": "TimeCell",
                           "width": "fill_container",
                           "descendants": {
-                            "wxv5r/QIi9H": {
+                            "PPaaQ/QIi9H": {
                               "content": "32m05s"
                             }
                           }
@@ -11068,32 +11068,6 @@
                 },
                 {
                   "type": "frame",
-                  "id": "txz2G",
-                  "name": "Metric/Duration",
-                  "reusable": true,
-                  "width": 80,
-                  "layout": "vertical",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "id": "wxv5r",
-                      "type": "ref",
-                      "ref": "K3VIx",
-                      "name": "Base",
-                      "width": "fill_container",
-                      "descendants": {
-                        "y0RW9Y": {
-                          "content": "DURATION"
-                        },
-                        "QIi9H": {
-                          "content": "22m15s"
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
                   "id": "YI2fu",
                   "name": "Metric/AvgSpeed",
                   "reusable": true,
@@ -11135,7 +11109,7 @@
                       "width": "fill_container",
                       "descendants": {
                         "y0RW9Y": {
-                          "content": "FUEL (km/L)"
+                          "content": "AVG FUEL (km/L)"
                         },
                         "QIi9H": {
                           "content": "8.5"
