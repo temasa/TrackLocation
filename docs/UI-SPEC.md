@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.28
+**Document Version:** 0.29
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-09
 **Owner:** Product Manager / UX Designer
@@ -95,7 +95,7 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 - Card: `TripSurface`, rounded 18dp, **green border `TripGreen` ~1.5dp** (active accent); same 4-stat footer as a finished row.
 - Title: `Trip in progress` (instead of `Track #N`).
 - Trailing: **ACTIVE badge** — pulsing green dot + `ACTIVE` label (same treatment as the Sessions `ActiveBadge`).
-- **Two stat rows** (OBD-connected): a **base row** — `distance (km)` from `distanceInMeters`, `duration` from `now - tripStartedAt`, `avg speed` = km ÷ elapsed-hours — and an **OBD row** — `instant km/L` (from `ObdUiState.Connected.instantKmL`; `—` at rest / poor fix, gated like the Session card), `L/h` (`fuelRateLph`), `trip avg km/L` (`tripAvgKmL`), and `cost` (`Rp`, tap to edit — see §4). Non-connected: OBD-row values render `—`. The card grows taller to fit the second row. This mirrors the Session OBD card's instant/average separation for a seamless cross-tab experience.
+- **Two stat rows** (OBD-connected): a **base row** — `duration` from `now - tripStartedAt`, `distance (km)` from `distanceInMeters`, `avg speed` = km ÷ elapsed-hours — and an **OBD row** — `cost` (`Rp`, tap to edit — see §4), `L/h` (`fuelRateLph`), `instant km/L` (from `ObdUiState.Connected.instantKmL`; `—` at rest / poor fix, gated like the Session card), and `trip avg km/L` (`tripAvgKmL`). Non-connected: OBD-row values render `—`. The card grows taller to fit the second row. This mirrors the Session OBD card's instant/average separation for a seamless cross-tab experience. Order follows §5a (canonical order); the instant + trip-average km/L may later be combined into one `AVG/INST` pair cell.
 - Not clickable; no long-press delete (not a saved trip yet).
 - Reduced-motion: badge pulse uses the same infinite-transition pattern already present on this screen.
 
@@ -115,8 +115,8 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 3. **Remove** the metrics row (Trips / Distance / Hours) and the empty search bar. *(Both were code-only, never spec'd; removed for parity with Sessions' header → card → list structure.)*
 4. **"Recent trips / Newest first"** list header — align typography to Sessions' "Recorded sessions" header.
 5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` km/L (ADR-024) when `obdCoveredDistanceKm > 0`, else the legacy `distance(km) ÷ obdFuelConsumedL` for pre-v13 trips; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
-6. **Recent-trip rows — cost stat (ADR-008):** add a 5th stat, **cost** (`Rp`) = `obdFuelConsumedL × price effective at the trip's start` (from the `fuel_price` effective-dated log); shows `—` when `obdFuelConsumedL = 0` or no price was in effect at the trip's start. Final completed-row stats: km / duration / avg speed / average km/L / cost.
-7. **Recent-trip rows — two-row metric grid (2026-07-08 fix):** the five stats no longer share a single row. Packing five equal-width columns clipped the values on-device (cost showed only `Rp`, avg speed lost its `h`, duration lost its last digit). `TrackItemRow` now mirrors `ActiveTripRow`'s two-row grid (card height 124→156dp): **base row** = km / duration / avg speed; **fuel row** = average km/L / cost (an empty third cell keeps the columns aligned with the base row). Stat **values** use `MonospaceFontFamily` (tabular digits, ideal for tight numeric columns) at 14sp / Medium — smaller and lighter than the previous 15sp / Bold — with `-0.3sp` tracking and `Ellipsis` overflow; **labels** at 10sp. Data was always persisted correctly; this was a purely visual fix.
+6. **Recent-trip rows — cost stat (ADR-008):** add a 5th stat, **cost** (`Rp`) = `obdFuelConsumedL × price effective at the trip's start` (from the `fuel_price` effective-dated log); shows `—` when `obdFuelConsumedL = 0` or no price was in effect at the trip's start. Final completed-row stats, in canonical order (§5a): duration / km / avg speed / cost / average km/L.
+7. **Recent-trip rows — two-row metric grid (2026-07-08 fix):** the five stats no longer share a single row. Packing five equal-width columns clipped the values on-device (cost showed only `Rp`, avg speed lost its `h`, duration lost its last digit). `TrackItemRow` now mirrors `ActiveTripRow`'s two-row grid (card height 124→156dp): **base row** = duration / km / avg speed; **fuel row** = cost / average km/L (an empty third cell keeps the columns aligned with the base row). Stat **values** use `MonospaceFontFamily` (tabular digits, ideal for tight numeric columns) at 14sp / Medium — smaller and lighter than the previous 15sp / Bold — with `-0.3sp` tracking and `Ellipsis` overflow; **labels** at 10sp. Data was always persisted correctly; this was a purely visual fix. **Design update (2026-10-09):** the grid renders as §5a metric cells — label above value, unit in the label (`DURATION`, `DIST (km)`, `AVG SPEED (km/h)`, `COST (Rp.)`, `FUEL (km/L)`), centred, light surface, e.g. `22m15s` / `12.4` / `33.5` / `8.2k` / `8.5`. The value styling above (14sp Medium) is superseded in the design; code pending.
 8. **Header fuel-price affordance (2026-07-08):** the `ListHeader` "Trips" row gains a trailing tappable **fuel-pump icon** (right-aligned, same row as the 40sp label). Tapping opens the existing `FuelCostEditorDialog` (§4). This is the **only persistent entry point** to set/edit the fuel price on the Trips screen — previously the editor was reachable only via the active-trip row's COST cell, which is absent when no trip is running. Icon-only (no price text); rendered from a new `res/drawable` vector (no Compose-1.2 extended-icons dependency).
 9. **Completed-trip cost read-out (2026-07-08):** tapping the **cost** cell on a completed `TrackItemRow` shows a **Toast** with the historic fuel price applied to that trip — the `fuel_price` row effective at the trip's **start** (`priceEffectiveAt(timestamp)`), price-per-litre only (e.g. "Track #12 fuel price: Rp 12.500 / litre"). **Read-only per ADR-008** — never opens the editable `FuelCostEditorDialog`, so finished trips are never re-costed. When no price was in effect at the trip's start (cost `—`), the Toast reads "No fuel price recorded for this trip." The cost cell's tap is independent of the row's tap-to-open-detail / long-press-to-delete.
 10. **Completed-trip cost color alternation (2026-07-08, cosmetic):** on the completed `TrackItemRow` list, the **cost value** alternates between two theme colors — `TripInk` (#0A0A0A) and `TripGreen` (#16A34A) — toggling each time a row's cost differs from the row **above** it. Equal-cost runs (including consecutive `—`) share one color; the color flips at each change boundary, as a visual cue that the applied cost changed between adjacent trips. Purely cosmetic — no data or ordering change; only the cost value's text color is affected (labels and every other stat unchanged).
@@ -153,7 +153,7 @@ Names are extracted location names only (no customer name/phone; full addresses 
 
 **Missing data:** Shows '— / —' when `trip.obdFuelConsumedL = 0` or no fuel price was in effect at trip start.
 
-**Manual (non-order) trips:** Rows without an order header (manual trips, or order trips that failed to capture PICKUP/DROP names) remain unchanged — no header or price/net cell is shown. The row displays the standard metrics: distance / duration / avg speed / avg km/L / cost (§3b).
+**Manual (non-order) trips:** Rows without an order header (manual trips, or order trips that failed to capture PICKUP/DROP names) remain unchanged — no header or price/net cell is shown. The row displays the standard metrics: duration / distance / avg speed / cost / avg km/L (§3b, canonical order §5a).
 
 **Design note:** No new visual language is introduced — the header is plain text (reuses existing title/label typography), the three-line structure is simple typography stacking, and the price/net cell reuses the existing compact-Rupiah format and cell styling from the active-trip row (FR-12 integration). No external design handoff needed; user explicitly exempted from AGENTS.md §12 for this change (ADR-022, ADR-023).
 
@@ -490,8 +490,12 @@ Summarized here; the full machine-readable token export (colors, typography, rou
 **Value formats**
 - Distance, speed, fuel economy and fuel flow: one decimal place.
 - Elapsed time: compact (`2h13m`, `42s`, `3m15s`).
+- Finished-trip / session duration: `XmYYs` with zero-padded seconds when minutes are shown (`45m12s`, `11m05s`), `42s` under a minute, `2h13m` from one hour.
+- Counts (e.g. Points) use a thousands comma: `1,284`.
 - Money: compact (`850`, `8.4k`, `1.2jt`), no `Rp` prefix. Exception: Earnings is `Rp24.500`, green `#22C55E`, right-aligned.
 - Pairs are written `a/b` with no spaces around `/`. Missing data is `—`; a pair with both parts missing is `—/—`.
+
+**Order (canonical, mandatory on every surface):** TIME/DURATION → DIST → SPEED → COST/NET (or COST) → FLOW → AVG/INST (or FUEL) → POINTS. A surface that does not show a metric keeps the relative order of the rest. Earnings is not part of a strip; it sits in the order card's pay row.
 
 **Components (one per metric type; the label and unit are fixed, an instance may override only the value and the width)**
 
@@ -502,12 +506,19 @@ Summarized here; the full machine-readable token export (colors, typography, rou
 | Standalone | `Metric/Speed` | `SPEED (km/h)` | `47.2` |
 | Standalone | `Metric/FuelFlow` | `FLOW (L/h)` | `4.2` |
 | Standalone | `Metric/Earnings` | `EARNINGS` | `Rp24.500` |
+| Standalone | `Metric/Duration` | `DURATION` | `22m15s` |
+| Standalone | `Metric/AvgSpeed` | `AVG SPEED (km/h)` | `33.5` |
+| Standalone | `Metric/FuelEconomy` | `FUEL (km/L)` | `8.5` (`—` when no OBD fuel) |
+| Standalone | `Metric/Cost` | `COST (Rp.)` | `8.2k` (`—` when no price) |
+| Standalone | `Metric/Points` | `POINTS` | `1,284` |
 | Pair | `Metric/CostNet` | `COST/NET (Rp.)` | `3.5k/21k` |
 | Pair | `Metric/AvgInst` | `AVG/INST (km/L)` | `8.5/6.2` (average first, then instant) |
 
 All components nest a shared `Metric/Base`, so a base style change propagates to every type.
 
-**Scope:** Track-screen surfaces (Order Active trip strip, `TripPanel`). Adoption by the List (`TrackItemRow`, §3b) and Sessions rows is an open product decision and is not changed by this section.
+**Light surface:** the label, value and separator colours are themed variables (`metric-label`, `metric-value`, `metric-sep`; theme axis `surface`, default `dark`). Light surfaces (List, Sessions) set `theme: {surface: "light"}` on the strip instance: label `#737373`, value `#0A0A0A`, separator `#0000001F`. Inside cards the strip's separator and top padding are turned off.
+
+**Scope:** Track-screen surfaces (Order Active, Expanded and Strip Only trip strips; LIVE and READY `TripPanel`; Alt A), the List recent-trip rows (§3b) and the Sessions cards (Duration / Distance / Points). Alt B (Dashboard Panel) is an exploration and is not covered. **Documented exceptions:** (1) in the Strip Only card the strip uses a 2 px cell gap and a 90 px AVG/INST cell so it clears the expand chevron; (2) the completed-trip cost value keeps the alternating `TripInk`/`TripGreen` colour of §3b #10 as a value-colour override; (3) for the List rows the design uses the §5a value size (Roboto Mono 600, 16) and label-above-value, centred cells, superseding the 14sp Medium value styling of §3b #7 — the Compose code is still on the previous layout and has to be updated in a separate code task.
 
 ---
 
