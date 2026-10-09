@@ -8,9 +8,9 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.2  
+**Document Version:** 0.3  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-10-09  
+**Last Updated:** 2026-10-10  
 **Owned By:** Project Team
 
 ---
@@ -50,7 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
-| ERR-007 | 2026-10-09 | — | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Fix committed, pending device verification |
+| ERR-007 | 2026-10-09 | 2026-10-10 (partial: pending a real order) | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending |
 | ERR-006 | 2026-10-09 | — | Verification | ADR-024 average km/L | SESSION AVG km/L above 700 km/L — GPS distance over the whole session divided by fuel accumulated only while OBD was valid/connected | Open |
 | ERR-005 | 2026-07-10 | — | Verification | ADR-012 sessionActive decoupling | OBD connected + polling but `sessionActive=false` → avg km/L / cost / SESSION AVG / obd_sample writes skipped while instant km/L & L/h show | Open |
 | ERR-004 | 2026-07-07 | 2026-07-07 | Verification | ADR-007 Slice 1 v7→v8 | Room build crash — `fallbackToDestructiveMigrationFrom(7)` illegal alongside `MIGRATION_6_7` (end version 7); app crashed on launch | Resolved |
@@ -69,11 +69,11 @@ Log an entry whenever an error occurs during any of these phases:
 ### ERR-007: Duplicate order-trip cards — several MainActivity instances each saved the same order trip
 
 **Found At:** 2026-10-09 (device inspection: 3, 4 and 5 identical order-trip rows; manual trips never duplicated)  
-**Resolved At:** — (pending device verification)  
+**Resolved At:** 2026-10-10 (partial: pending a real order)  
 **Phase:** Verification  
 **Sprint/Task:** Order trip save path (ShareViewModel order-end collector) / Observer takeover  
 **Environment:** on-device use (user), debug build, Trips list  
-**Status:** Fix committed, pending device verification — build and device run gated per AGENTS.md §5a  
+**Status:** Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending  
 
 **Error Message / Output:**
 No crash. Trips list showed the same order trip 3–5 times. Heap dumps showed `ShareViewModel` count 1 → 2 after a takeover launch.
@@ -86,7 +86,11 @@ Two changes, pending device verification:
 1. `MainActivity` declared `android:launchMode="singleTask"` in `AndroidManifest.xml`, so there is one activity instance and one `ShareViewModel`.
 2. The stop-trip guard in `ShareViewModel` is process-wide: the `Mutex` moved to the companion object, plus a `lastPersistedTripStart` early return so the same order trip cannot be inserted twice even if more than one `ShareViewModel` exists.
 
-Known remaining: existing duplicate rows are not cleaned up by this fix. Debug-only side effect: a pending consent dialog above `MainActivity` is closed on takeover.
+Verified 2026-10-10 on SM-G965F (debug build): three takeover launches with the consent dialog pending kept a single `MainActivity` record; heap dump showed `ShareViewModel` 1 and `MainActivity` 1 (before the fix: 2 and 3). The end-to-end order-finish path is not yet verified.
+
+Data cleanup 2026-10-10: the 9 duplicate Trips rows (idx 30, 31, 33–35, 37–40) were deleted on device via the app's long-press delete. Kept idx 31, 32, 40 (plus unrelated new trip idx 41). Afterwards the track table had 32 rows, no repeated trip-start timestamps, and `PRAGMA integrity_check` = ok.
+
+Debug-only side effect: a pending consent dialog above `MainActivity` is closed on takeover.
 
 **Lesson Learned:**
 - `SINGLE_TOP` is not single-instance. Use `singleTask` when an activity must be unique.

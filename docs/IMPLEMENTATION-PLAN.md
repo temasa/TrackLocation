@@ -7,9 +7,9 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.40
+**Version:** 0.41
 **Status:** Active (migrated from implementation-plan.md + progress.md)
-**Last Updated:** 2026-10-09
+**Last Updated:** 2026-10-10
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
 
 > Migrated 2026-06-15 to the create-project schema. The detailed per-phase/slice contract from the legacy `implementation-plan.md` is preserved verbatim in **Appendix A**. The full session/progress audit log from the legacy `progress.md` is preserved verbatim in **Appendix B**. §6 below is a summarized task log over those sessions.
@@ -2839,6 +2839,8 @@ Scope decision:
 
 ### Fix: duplicate trip card on Trips list (stop-trip re-entrancy guard)
 
+**Superseded by** the process-wide guard in "Fix: duplicate order-trip cards — single-instance MainActivity + process-wide stop guard" below: the per-instance Mutex here did not cover multiple `ShareViewModel` instances.
+
 **What it does:** Serialises `stopActiveTrip` in `ShareViewModel` so a trip is persisted at most once per stop. A non-suspending mutex guard rejects a second concurrent stop, and the live state is re-checked inside the lock before any insert.
 
 **Observable result:** Tapping Stop (including a double-tap), or Stop racing the order-FINISHED auto-stop, yields exactly one card on the Trips list.
@@ -2863,11 +2865,17 @@ Scope decision:
 
 **Observable result:** Exactly one card per order trip, regardless of how many `MainActivity` instances were previously alive.
 
-**How to verify (manual; build gated per AGENTS.md §5a, NOT yet run):**
+**How to verify (manual; build gated per AGENTS.md §5a):**
 - With a Gojek order in progress and the debug MediaProjection consent dialog pending, finish the order and confirm exactly one new card on the Trips list.
 - After a takeover launch, `adb shell dumpsys activity activities | grep 'Hist #' | grep kolee` shows one `MainActivity` record. Trigger the takeover with `am start -n com.kolee.tracklocation/.MainActivity -f 0x30020000 --ez open_track true`.
 - Static: re-read `ShareViewModel.stopActiveTrip` and confirm the companion-level `stopTripMutex`, the `lastPersistedTripStart` early return, and `finally { unlock() }`.
-- Verification NOT run yet (build gated).
+
+**Verification (2026-10-10, SM-G965F, debug build):**
+- `:app:assembleDebug` succeeded (BUILD SUCCESSFUL in 4m 3s).
+- Debug APK installed with `adb install -r` (app data kept).
+- Takeover launch (`am start -n com.kolee.tracklocation/.MainActivity -f 0x30020000 --ez open_track true`) run 3 times with the debug MediaProjection consent dialog pending. Each time the system reported "Activity not started, intent has been delivered to currently running top-most instance". The task kept a single `MainActivity` record.
+- Heap dump (after GC): `ShareViewModel` 1 and `MainActivity` 1. Before the fix, the same launch on the old build gave 2 and 3.
+- NOT verified: a real order finishing end-to-end (the order-finish path), and the process-wide guard path (not triggered with a single instance).
 
 **Implementation steps (What/How):**
 1. **Edit** `app/src/main/AndroidManifest.xml` — add `android:launchMode="singleTask"` to the `.MainActivity` `<activity>` element.
@@ -2876,8 +2884,9 @@ Scope decision:
 2. **Edit** `viewmodel/ShareViewModel.kt` — move the `Mutex` into the `companion object` (process-wide); add `@Volatile private var lastPersistedTripStart = 0L` in the companion; inside the lock, after the fresh-state re-check, return early if `current.tripStartedAt > 0L && current.tripStartedAt == lastPersistedTripStart`; set `lastPersistedTripStart = current.tripStartedAt` immediately after the successful `insertTrack`.
    - Root cause: the previous per-instance mutex guarded only one `ShareViewModel`; several instances each had their own lock.
    - Known remaining: existing duplicate rows (idx 30, 31, 33–35, 37–40) are not cleaned up by this fix.
+   - Known remaining, resolved 2026-10-10: the 9 duplicate Trips rows (idx 30, 31, 33–35, 37–40) were deleted on device via the app's long-press delete. Kept idx 31, 32, 40 (plus unrelated new trip idx 41). Afterwards the track table had 32 rows, no repeated trip-start timestamps, and `PRAGMA integrity_check` = ok.
 
-- **Git Revision:** `---`
+- **Git Revision:** `d86e904`
 
 ## Local Build Note
 
