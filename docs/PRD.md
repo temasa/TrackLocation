@@ -7,10 +7,10 @@ description: Product Requirements Document — TrackLocation
 # Product Requirements Document
 ## TrackLocation
 
-**Document Version:** 0.19
+**Document Version:** 0.21
 **Status:** Active (migrated from product-spec.md + change-requests.md)
 **Created:** 2026-06-15
-**Last Updated:** 2026-10-08
+**Last Updated:** 2026-10-09
 **Owner:** Project Team
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -146,10 +146,10 @@ Sessions + trips + Observer P1 + OBD P1 form the working operational core. Sync,
 - **FR-05:** Observer captures only packages matching a user-configured allowlist (empty allowlist = capture all); history is not user-deletable.
 - **FR-06:** OBD samples are stored only while a session is active; trips/sessions link to samples via time-window queries (no FKs).
 - **FR-07:** When OBD is connected, speed = 0, and RPM > 0 (idle), the fuel consumption display shows the instantaneous fuel flow rate in L/h rather than "--".
-- **FR-08:** Session average km/L is the ratio of cumulative GPS distance to cumulative fuel consumed since the session started; it persists across app restarts and resets when a new session begins.
-- **FR-09:** Trip average km/L is the ratio of trip GPS distance to cumulative fuel consumed since the trip started; it persists to the trip record.
+- **FR-08:** Session average km/L is the ratio of cumulative **fuel-covered distance** to cumulative fuel consumed since the session started, both summed over the same fuel-covered poll intervals (ADR-024; shows `—` until covered distance > 0 and fuel > 0.01 L); it persists across app restarts and resets when a new session begins.
+- **FR-09:** Trip average km/L is the ratio of trip fuel-covered distance to cumulative fuel consumed since the trip started, over the same fuel-covered poll intervals (ADR-024); the fuel and covered distance persist to the trip record. Pre-v13 trips keep the legacy displayed-distance ÷ fuel value.
 - **FR-10:** Always-recording persists across app restarts. If an open session survives a force-stop/kill and is still recent (a location point within the ~2-minute launch grace window), the app resumes recording on next launch — the Session status card returns to Active and the session keeps accumulating. Sessions idle beyond the grace window are closed on launch and stay stopped.
-- **FR-11:** Fuel economy is presented as two instant metrics — **km/L** (shown when moving; `—` at rest) and **L/h** (shown whenever OBD is connected) — plus a single trip/session **average km/L**, derived uniformly as displayed displacement distance ÷ fuel integrated from `obd_sample` over the range (ADR-007).
+- **FR-11:** Fuel economy is presented as two instant metrics — **km/L** (shown when moving; `—` at rest) and **L/h** (shown whenever OBD is connected) — plus a single trip/session **average km/L**, derived uniformly as **fuel-covered distance ÷ fuel**, both integrated over the same fuel-covered poll intervals (valid fuel rate, 0 < dt < 60 s; covered distance = GPS speed × dt) (ADR-024, superseding the displacement-distance definition of ADR-007).
 - **FR-12:** An estimated **fuel cost** (litres consumed × price per litre, IDR `Rp`) is shown on the active Session card, the active-trip row, and completed-trip rows. The price is a first-class **effective-dated entity** (`fuel_price`), edited inline by tapping the cost (Save/Cancel) with multi-step in-memory **undo/redo**; edits append effective-now price rows (non-destructive). Active surfaces use the **current** price; a **completed trip** uses the price in effect at its **start** time and never re-costs when the price later changes (`—` if no price was set by then). Cost shows `—` when litres = 0 or no applicable price exists. (See ADR-008; supersedes the FR-12 v1 'no schema change' note.)
 - **FR-13:** On the Track screen a trip may be started with an optional destination (place-search autocomplete). Navigation is a sub-mode of a trip — never independent of one. Starting "trip + navigate" starts always-recording/session as any trip does; ending navigation (manual) ends the trip (`STOP_TRIP`, persisted) but never turns off always-recording. No auto-arrival — the user ends manually. (Exception: Gojek orders auto-start/auto-end their trip per FR-16 / ADR-015.) The destination is mutable mid-trip. Off-route deviation (~50 m, gated by 2–3 consecutive fixes, ≥15 s apart) triggers a re-route. Process death resumes both trip and navigation; routing failures fail soft (the trip always records track-only). Remaining distance + ETA show alongside trip metrics. (ADR-009)
 - **FR-14:** A derived, rebuildable **local route store** is built from the user's own canonical location traces (never from cached third-party routing content). Road-ahead prediction — including multiple previously-driven continuations at a junction — is served from this store for free; external routing is used only for roads not yet driven. The canonical location log remains untouched and is the source the store derives from. (ADR-010)

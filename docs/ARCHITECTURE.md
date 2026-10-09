@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.24
+**Document Version:** 0.25
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-08
+**Last Updated:** 2026-10-09
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -58,14 +58,18 @@ ObserverTripEntity (observer_trip)   ← DERIVED from captured tree snapshots; G
 ObdSampleEntity (obd_sample)
   ├── timestampMs, rpm, obdSpeedKmh
   ├── fuelRateLph, mafGramsPerSecond, fuelRateSource
-  └── adapterElapsedMs   (no FK to trip/session — linked by time-window queries)
+  ├── adapterElapsedMs
+  └── gpsSpeedKmh   (REAL?, added DB v13, ADR-024 — GPS speed at poll time; covered distance is re-integrated from it)
+  (no FK to trip/session — linked by time-window queries)
 
-SessionEntity (recording_session) — OBD accumulator columns (added DB v5)
-  ├── obdFuelConsumedL  (REAL, default 0.0) — cumulative L consumed this session
-  └── obdGpsDistanceKm  (REAL, default 0.0) — cumulative GPS km this session
+SessionEntity (recording_session) — OBD accumulator columns
+  ├── obdFuelConsumedL       (REAL, default 0.0) — cumulative L consumed this session (added DB v5)
+  └── obdCoveredDistanceKm   (REAL, default 0.0) — cumulative km over the same fuel-covered intervals (added DB v13, ADR-024)
+  (the former obdGpsDistanceKm column was dropped in v8, ADR-007)
 
-TrackEntity (trip) — OBD accumulator column (added DB v5)
-  └── obdFuelConsumedL  (REAL, default 0.0) — cumulative L consumed this trip
+TrackEntity (trip) — OBD accumulator columns
+  ├── obdFuelConsumedL       (REAL, default 0.0) — cumulative L consumed this trip (added DB v5)
+  └── obdCoveredDistanceKm   (REAL, default 0.0) — km over the same fuel-covered intervals (added DB v13, ADR-024)
 
 FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
   ├── pricePerLiter (REAL)
@@ -253,7 +257,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v12** (current; ADR-023 extends to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v13** (current; ADR-024 extends to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -279,6 +283,13 @@ Room database (`TrackDatabase`), at version **v12** (current; ADR-023 extends to
   ALTER TABLE track ADD COLUMN dropLng REAL
   ```
   No default values; all columns nullable.
+- `MIGRATION_12_13` (ADR-024, DB→**v13**): covered-distance columns for the fuel-covered-interval average:
+  ```sql
+  ALTER TABLE recording_session ADD COLUMN obdCoveredDistanceKm REAL NOT NULL DEFAULT 0.0
+  ALTER TABLE track ADD COLUMN obdCoveredDistanceKm REAL NOT NULL DEFAULT 0.0
+  ALTER TABLE obd_sample ADD COLUMN gpsSpeedKmh REAL
+  ```
+  Existing rows keep `0.0` / `NULL`; no backfill (pre-v13 trips keep the legacy displayed-distance ÷ fuel value).
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.
@@ -308,15 +319,18 @@ Room database (`TrackDatabase`), at version **v12** (current; ADR-023 extends to
 | mafGramsPerSecond | Double? | raw or estimated MAF |
 | fuelRateSource | String | `DIRECT_FUEL_RATE` / `MAF_DERIVED` / `SPEED_DENSITY` / `UNAVAILABLE` |
 | adapterElapsedMs | Long? | round-trip time to adapter |
+| gpsSpeedKmh | Double? | GPS speed at poll time (DB v13, ADR-024); null on pre-v13 rows (contributes 0 covered distance) |
 
 Fuel-rate fallback chain: `DIRECT(015E) → MAF(0110) → SPEED_DENSITY → UNAVAILABLE`. Speed-density estimate: `MAF(g/s) = (RPM × MAP_kPa × VE × Displacement_L × 28.97)/(120 × 8.314 × IAT_K)`, `fuel(L/h) = MAF/(14.7×λ) × 3600/745` (VE=0.85, gasoline; engine displacement is a user pref, default 1193 cc).
 
-**OBD Phase 2 accumulation — unified per ADR-007:**
-- **One averaging definition (session and trip):** `avg km/L = displacement distance ÷ fuel`. Distance = Σ `distanceBetween` over adjacent `location_log` samples = the **displayed** distance (`session.distanceMeters` for the session, trip `distanceInMeters`/`track.distance` for the trip). Fuel = Σ `fuelRate × dt` over `obd_sample` in `[startedAt, now]`.
-- **Live value = O(1) incremental cache** (session: `obdFuelConsumedL`; trip: in-memory total since `tripStartedAt`). **Authoritative value at close = re-integrate `obd_sample`** over the final window and persist it; `obd_sample` is the single source of truth for fuel, the cache is a disposable live proxy (ADR-007 "Option B" — cache = memoized integral of the canonical rows). Mid-drive restart reseeds the in-memory trip total by one `obd_sample` integration.
-- **Session average** = `session.distanceMeters / obdFuelConsumedL` (was `obdGpsDistanceKm / obdFuelConsumedL`). The `obdGpsDistanceKm` column is **dropped** (destructive v7→v8) and no longer read.
-- **Trip average** = `distanceInMeters / (obd_sample fuel over [tripStartedAt, now])`, computed live; at Stop `ShareViewModel.onTripCtaTap` writes the re-integrated total into `track.obdFuelConsumedL`.
-- **Display:** the average shows once distance > 0.01 km and fuel > 0, else `—`. Idle (fuel accrues, distance flat) correctly degrades the average — relies on the ADR-006 stale-speed fix.
+**OBD Phase 2 accumulation — unified per ADR-007; averaging definition amended by ADR-024:**
+- **One averaging definition (session and trip), per ADR-024 (supersedes the ADR-007 displacement-distance definition):** `avg km/L = Σ covered distance ÷ Σ fuel`, both taken over the same **fuel-covered intervals** — a poll interval with a valid fuel rate (0.1..100 L/h) and `0 < dt < 60 s`. Covered distance per interval = `gpsSpeedKmh` (GPS speed at that poll, stored on each `obd_sample`) × `dt`. Idle intervals (speed 0, fuel > 0) add fuel with 0 distance. Total fuel (and cost) is unchanged.
+- **Live value = O(1) incremental cache** (session: `obdFuelConsumedL` + `obdCoveredDistanceKm`, updated together by `SessionDao.addObdAccumulator(sessionId, fuelL, coveredKm)`; trip: in-memory fuel and covered-distance totals since `tripStartedAt`). **Authoritative value at close = re-integrate `obd_sample`** (`ObdFuelMath.integrateFuelLiters` and `integrateCoveredDistanceKm`, same guards; null `gpsSpeedKmh` contributes 0) over the final window and persist it (`TrackingService.stopAlwaysRecording` → session row; `ShareViewModel.onTripCtaTap` → `track.obdFuelConsumedL` and `track.obdCoveredDistanceKm`); `obd_sample` is the single source of truth for fuel, the cache is a disposable live proxy (ADR-007 "Option B" — cache = memoized integral of the canonical rows). Mid-drive restart reseeds both in-memory trip totals by one `obd_sample` integration.
+- **Session average** = `session.obdCoveredDistanceKm / session.obdFuelConsumedL` (ADR-024; `—` when covered = 0 or fuel ≤ 0.01 L). Pre-v13 sessions show `—`.
+- **Trip average (live)** = `tripCoveredKm / tripFuelL` (in-memory, same guard).
+- **Completed-trip average** = `track.obdCoveredDistanceKm / track.obdFuelConsumedL` when `obdCoveredDistanceKm > 0`, else the legacy `track.distance / track.obdFuelConsumedL` for pre-v13 trips (history not rewritten).
+- **No plausibility clamp and no accuracy gating on covered distance** (fuel must stay complete for cost; excluding intervals only from distance would re-break the ratio).
+- **Display:** idle (fuel accrues, distance flat) correctly degrades the average — relies on the ADR-006 stale-speed fix.
 - **Fuel cost (ADR-008):** `cost = litres × price`. Litres = session live `obdFuelConsumedL` (Session card) / in-memory trip total (active-trip row) / stored `track.obdFuelConsumedL` (completed row). Price is a first-class effective-dated entity `FuelPriceEntity(id, pricePerLiter, effectiveFromMs)` in the new `fuel_price` table (**MIGRATION_8_9**, DB→v9): current price = the row with max `effectiveFromMs`; Save/Undo/Redo append effective-now rows (non-destructive). Active session/trip use the current price; a **completed trip** uses the price effective at its **start** (`fuel_price` row with max `effectiveFromMs ≤ track.timestamp`, else `—`). Seed: a one-time code migration inserts the retired `obd_fuel_price_per_liter` scalar at `effectiveFromMs=0`. The `FuelPriceController` in-memory stack drives undo/redo; the DataStore scalar is deprecated as source of truth.
 
 ---

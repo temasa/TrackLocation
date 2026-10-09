@@ -28,7 +28,7 @@ Observed live (drive, 2026-07-10): instant km/L + L/h displayed; avg km/L + cost
 - Narrow session-start race: `closeAllActiveSessions` + `insertSession` are not atomic, so `getActiveSession()` could briefly return null (guarded — skips that tick) or a soon-to-close row (sub-second, single poll). Accepted as a known narrow window.
 
 ## Out of Scope (follow-ups surfaced by the impact analysis)
-- Partial-connect over-optimism: fuel burned while OBD was disconnected mid-trip isn't recovered, but GPS distance includes it → that trip's avg km/L reads slightly high.
+- ~~Partial-connect over-optimism: fuel burned while OBD was disconnected mid-trip isn't recovered, but GPS distance includes it → that trip's avg km/L reads slightly high.~~ **Resolved 2026-10-09 by [[024-avg-km-per-liter-over-fuel-covered-intervals]]** (averages now use covered distance over the same fuel-covered intervals).
 - `stopAlwaysRecording()` calls `stopTrip()` directly, possibly ending a trip without saving a `TrackEntity`.
 - Process kill mid-trip abandons trip state (`resumeIfActiveSession` restores session, not trip).
 - Dead write-only fields `sessionDistanceKm`/`sessionFuelLiters` in `ObdPollingService`.

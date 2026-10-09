@@ -18,6 +18,8 @@ The split was pragmatic: a session has a live DB row to accumulate into from the
 - No unit toggling. Averages remain a single km/L.
 
 ### Average metric — one derivation for both session and trip
+> **Superseded in part (Amendment 2026-10-09):** the *distance* definition below (displacement ÷ fuel) is replaced by ADR-024 (covered distance over fuel-covered intervals ÷ fuel). The `obd_sample`-canonical / memoized-accumulator model (Option B), reseed and close re-integration stand.
+
 `avg km/L = displacement distance ÷ fuel`, over the range:
 - **distance** = Σ `distanceBetween` over adjacent `location_log` samples = the *displayed* distance (`session.distanceMeters` / trip `distanceInMeters`). Chosen for consistency with the on-screen distance (eye-checkable), accepting slight curve under-read; not speed-integral.
 - **fuel** = Σ `fuelRate × dt` over `obd_sample` in the time window `[startedAt, now]`.
@@ -57,3 +59,7 @@ The split was pragmatic: a session has a live DB row to accumulate into from the
 - `docs/ARCHITECTURE.md` §8 (OBD Phase 2 accumulation — revised by this ADR)
 - `ObdPollingService` (fuel/distance integration), `ShareViewModel.onTripCtaTap` (trip close), `SessionsScreen`/`TripPanel` (display)
 - PRD §12 BR-02/BR-10, FR-03
+
+## Amendment 2026-10-09
+
+The averaging definition ("avg km/L = displacement distance ÷ fuel", and the consequence "one definition; averages match their own displayed distance") is superseded by [[024-avg-km-per-liter-over-fuel-covered-intervals]]. Average km/L is now Σ covered distance ÷ Σ fuel over the same fuel-covered poll intervals, which fixes SESSION AVG reading above 700 km/L (ERR-006). Instant metrics, total fuel/cost, and the Option B canonical-`obd_sample` model are unchanged.

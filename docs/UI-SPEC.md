@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.25
+**Document Version:** 0.27
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-08
+**Last Updated:** 2026-10-09
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -114,7 +114,7 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 2. **Current-trip hero card** — keep the Start/Stop CTA and function; align corner radius, padding, and spacing to Sessions' card rhythm.
 3. **Remove** the metrics row (Trips / Distance / Hours) and the empty search bar. *(Both were code-only, never spec'd; removed for parity with Sessions' header → card → list structure.)*
 4. **"Recent trips / Newest first"** list header — align typography to Sessions' "Recorded sessions" header.
-5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `distance(km) ÷ obdFuelConsumedL` km/L, from the existing `TrackEntity.obdFuelConsumedL`; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
+5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` km/L (ADR-024) when `obdCoveredDistanceKm > 0`, else the legacy `distance(km) ÷ obdFuelConsumedL` for pre-v13 trips; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
 6. **Recent-trip rows — cost stat (ADR-008):** add a 5th stat, **cost** (`Rp`) = `obdFuelConsumedL × price effective at the trip's start` (from the `fuel_price` effective-dated log); shows `—` when `obdFuelConsumedL = 0` or no price was in effect at the trip's start. Final completed-row stats: km / duration / avg speed / average km/L / cost.
 7. **Recent-trip rows — two-row metric grid (2026-07-08 fix):** the five stats no longer share a single row. Packing five equal-width columns clipped the values on-device (cost showed only `Rp`, avg speed lost its `h`, duration lost its last digit). `TrackItemRow` now mirrors `ActiveTripRow`'s two-row grid (card height 124→156dp): **base row** = km / duration / avg speed; **fuel row** = average km/L / cost (an empty third cell keeps the columns aligned with the base row). Stat **values** use `MonospaceFontFamily` (tabular digits, ideal for tight numeric columns) at 14sp / Medium — smaller and lighter than the previous 15sp / Bold — with `-0.3sp` tracking and `Ellipsis` overflow; **labels** at 10sp. Data was always persisted correctly; this was a purely visual fix.
 8. **Header fuel-price affordance (2026-07-08):** the `ListHeader` "Trips" row gains a trailing tappable **fuel-pump icon** (right-aligned, same row as the 40sp label). Tapping opens the existing `FuelCostEditorDialog` (§4). This is the **only persistent entry point** to set/edit the fuel price on the Trips screen — previously the editor was reachable only via the active-trip row's COST cell, which is absent when no trip is running. Icon-only (no price text); rendered from a new `res/drawable` vector (no Compose-1.2 extended-icons dependency).
@@ -209,7 +209,7 @@ A one-row strip appears below the order card while the trip is live (tripState i
 - **TIME** — elapsed duration in compact format (e.g., "2h13m", "42s", "3m15s"); updated live.
 - **DIST (km)** — label "DIST (km)"; value is the distance with one decimal place, no unit in the value (e.g., "12.5"); updated live.
 - **COST / NET (Rp.)** — label "COST / NET (Rp.)"; value formatted as "3.5k/21k" (estimated fuel cost then net profit, compact Rupiah without "Rp" prefix, no spaces around "/"). COST = trip litres burned × current fuel price; NET = OrderCard.earningsRp − COST (negative shown as "−8.4k"). Compact amounts: <1,000 → '850'; 1,000–999,999 → '8.4k'; ≥1,000,000 → '1.2jt'. TalkBack reads full Rupiah amounts. Missing data: "—" when OBD off / no fuel / no price; NET "—" when COST is "—" or no earnings.
-- **AVG / INST (km/L)** — label "AVG / INST (km/L)"; value formatted as "11.8/12.3" (trip-average km/L then instant km/L, each one decimal, no spaces around "/"). Instant "—" when not moving or no GPS fix. OBD not connected → "—/—"; average "—" until distance > 0.01 km and fuel > 0.
+- **AVG / INST (km/L)** — label "AVG / INST (km/L)"; value formatted as "11.8/12.3" (trip-average km/L then instant km/L, each one decimal, no spaces around "/"). Instant "—" when not moving or no GPS fix. OBD not connected → "—/—"; average "—" until covered distance > 0 and fuel > 0.01 L (ADR-024).
 
 Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1.
 
@@ -446,8 +446,8 @@ Instant fuel economy is shown as **two always-on cells** (no unit toggling), on 
 - **L/h** — always shown when OBD is connected (current fuel rate); `—` when OBD disconnected / engine off (RPM = 0).
 
 Averages remain a **single km/L** per surface (SESSION AVG on the Session card, TRIP AVG on the Trip panel):
-- `avg km/L = displayed displacement distance ÷ fuel` (unified session/trip derivation — ADR-007).
-- Shows a value once distance > 0.01 km and fuel > 0, else `—`.
+- `avg km/L = covered distance ÷ fuel`, both over the same fuel-covered poll intervals (unified session/trip derivation — ADR-024, superseding the displacement-distance definition of ADR-007). SESSION AVG = `session.obdCoveredDistanceKm ÷ obdFuelConsumedL`; live TRIP AVG = `tripCoveredKm ÷ tripFuelL`; completed-trip rows use `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` (legacy `distance ÷ fuel` for pre-v13 trips).
+- Shows `—` when covered distance = 0 or fuel ≤ 0.01 L; otherwise the value. Pre-v13 sessions show `—`.
 - While idling the average **degrades** (fuel keeps accruing, distance flat) — intended.
 
 #### Fuel cost (Rp) — Session OBD card + Trips active-trip row + completed trips

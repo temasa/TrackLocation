@@ -9,7 +9,7 @@ description: Document control register and change log — fully generic, ready t
 
 **Document Version:** 0.1  
 **Status:** Active  
-**Last Updated:** 2026-10-07  
+**Last Updated:** 2026-10-09  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -35,20 +35,20 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.20 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-08 |
-| `docs/ARCHITECTURE.md` | 0.24 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-08 |
-| `docs/adr/README.md` | 1.2 | Active (23 ADRs indexed) | Tech Lead | 2026-10-08 |
+| `docs/PRD.md` | 0.21 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-09 |
+| `docs/ARCHITECTURE.md` | 0.25 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-09 |
+| `docs/adr/README.md` | 1.3 | Active (24 ADRs indexed) | Tech Lead | 2026-10-09 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
 | `docs/adr/004-obd-raw-at-io.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
 | `docs/adr/006-location-dwell-collapse.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
-| `docs/adr/007-unified-fuel-economy-metrics.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
+| `docs/adr/007-unified-fuel-economy-metrics.md` | 1.1 | Accepted (amended 2026-10-09: averaging definition superseded by ADR-024) | Project owner | 2026-10-09 |
 | `docs/adr/008-fuel-price-effective-dated-entity.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/009-dual-mode-track-navigation.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/010-self-learning-route-store.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
-| `docs/adr/012-obd-accumulation-recording-state.md` | 1.0 | Accepted | Project owner | 2026-07-10 |
+| `docs/adr/012-obd-accumulation-recording-state.md` | 1.1 | Accepted (out-of-scope item resolved by ADR-024 2026-10-09) | Project owner | 2026-10-09 |
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
 | `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted (amended by ADR-015) | Project owner | 2026-10-05 |
 | `docs/adr/015-order-auto-start-trip.md` | 1.1 | Accepted (vocabulary aligned with code) | Project owner | 2026-10-08 |
@@ -60,11 +60,12 @@ When any controlled document changes, update both:
 | `docs/adr/021-debug-diagnostic-screen-recorder.md` | 1.1 | Accepted (amended 2026-10-08: opt-in background capture, 6 x 10 min retention) | Project owner | 2026-10-08 |
 | `docs/adr/022-order-trip-label-in-trips-list.md` | 1.0 | Accepted (amended by ADR-023 for presentation) | Project owner | 2026-10-08 |
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.39 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-08 |
-| `docs/UI-SPEC.md` | 0.26 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-08 |
+| `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.40 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-09 |
+| `docs/UI-SPEC.md` | 0.27 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-09 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
-| `docs/ERRORS-LOG.md` | 0.1 | Active (persistent) | Project Team | 2026-07-10 |
+| `docs/ERRORS-LOG.md` | 0.2 | Active (persistent) | Project Team | 2026-10-09 |
 | `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
@@ -91,6 +92,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-09 | adr/024 (new), adr/README, adr/007 (amended), adr/012 (amended), PRD, ARCHITECTURE, UI-SPEC, ERRORS-LOG, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/1.2/1.0/1.0/0.20/0.24/0.26/0.1/0.39/0.1 | 1.0/1.3/1.1/1.1/0.21/0.25/0.27/0.2/0.40/0.1 | Average km/L over fuel-covered intervals (ADR-024, docs only): SESSION AVG km/L exceeded 700 because session GPS distance was divided by fuel accumulated only while OBD was valid (ERR-006). avg km/L = Σ covered distance (GPS speed × dt) ÷ Σ fuel over the same fuel-covered poll intervals; Room v12→v13 `MIGRATION_12_13` (`obdCoveredDistanceKm` on `recording_session` + `track`, `gpsSpeedKmh` on `obd_sample`); no clamp, no backfill. ADR-007 averaging definition superseded; ADR-012 follow-up resolved; PRD FR-08/09/11; ARCHITECTURE entities/v13/average bullets (stale `obdGpsDistanceKm` listing fixed); UI-SPEC formulas + `—` rules; ERR-006 logged; IMPLEMENTATION-PLAN §1/§4/§6/Next Step + backfill of 4e52d0f. PRD/UI-SPEC headers were one behind this register (0.19/0.25); aligned to register+1. Code pending (AGENTS.md §5a/§5b). | Claude Code |
 | 2026-10-08 | adr/021 (amended), ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/0.23/0.38/0.1 | 1.1/0.24/0.39/0.1 | Debug recorder background capture + 6x10 min retention (ADR-021 Amendment 2026-10-08, debug-only): opt-in background capture (default OFF, "Background: OFF/ON" notification action) keeps recording the app in front when TrackLocation is backgrounded; segments 2 → 10 min and last 5 → 6 kept (~10 → ~60 min of video). ADR-021 amendment section added; superseded-in-part pointers on §3, §4, §8(b), the rollover/rotation bullets and Alternatives #5. ARCHITECTURE v0.23→0.24 (lifecycle and storage bullets). IMPLEMENTATION-PLAN v0.38→0.39 (§1 row, new §4 slice with What/Observable/How to Verify + 3 steps, pointers on the 2026-10-07 recorder slice, §6 Docs and Code rows In Progress with Git Revision '---'). DOCUMENT-CONTROL register + this row. Docs only; no code written yet (pending user approval, AGENTS.md §5b). PRD and UI-SPEC unchanged because the recorder is debug-only. | Claude Haiku 4.5 |
 | 2026-10-08 | adr/023 (amended), adr/017 (amended), PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/1.0/0.19/0.25/0.22/0.37/0.1 | 1.0/1.0/0.20/0.26/0.23/0.38/0.1 | One-time accepted-place backfill for migrated order trips (ADR-023 Amendment 2026-10-08): background reverse-geocoding of trip start location for v11→v12 migrated order trips with coordinates but no place names. ADR-023 amended with "Amendment 2026-10-08" section (context, decision 9 points, consequences). ADR-017 amended with backfill privacy note in Privacy Refinement section. PRD v0.19→0.20 (FR-20 extended with backfill mention). UI-SPEC v0.25→0.26 (§3b-order updated with backfill note). ARCHITECTURE v0.22→0.23 (post-migration backfill section added). IMPLEMENTATION-PLAN v0.37→0.38 (§4 new slice "One-time Accepted-Place Backfill for Migrated Order Trips (ADR-023 Amendment)" with What/Observable/How to Verify 8 checks + 7 implementation steps; §1 change log entry 0.38 added; §6 new task log row status In Progress Git Revision '---'; Next Step section updated with backfill context). DOCUMENT-CONTROL: register (adr/017, adr/023, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN versions updated) + this change log row. Docs only; no code or schema changes. Code implementation pending user approval (AGENTS.md §5b). | Claude Haiku 4.5 |
 | 2026-10-08 | adr/023 (new), adr/README, adr/022 (amended), adr/017 (amended), PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/1.1/1.0/1.0/0.18/0.24/0.21/0.36/0.1 | 1.0/1.2/1.0/1.0/0.19/0.25/0.22/0.37/0.1 | Order trip header card and geo snapshot (ADR-023): order-linked trip rows display three-line header (ACCEPTED/PICKUP/DROP) + 12 persisted geo columns (name + address + lat/lng for each location). Trip start location reverse-geocoded to "accepted" place name when trip ends (fail-soft if offline). New ADR-023 file (Context/Decision/Consequences/Alternatives/Related ADRs/References). adr/README v1.1→1.2 (ADR-023 row added, count 22→23). adr/022 amended (Presentation Supersession 2026-10-08 section: three-line header supersedes one-line label in row display; columns remain). adr/017 amended (Privacy Refinement 2026-10-08 section: reverse-geocoding sends driver coordinates to ORS for accepted location). PRD v0.18→0.19 (FR-20 extended with three-line header + geo snapshot details, FR-17 privacy refinement for reverse-geocoding driver coordinates). UI-SPEC v0.24→0.25 (§3b-order rewritten: three-line header card (ACCEPTED/PICKUP/DROP) description + missing-data rules + design exemption note). ARCHITECTURE v0.21→0.22 (MIGRATION_11_12 DB v11→v12 documented: twelve new nullable columns + comprehensive backfill logic for v11→v12 migration). IMPLEMENTATION-PLAN v0.36→0.37 (§4 new "Order Trip Header Card and Geo Snapshot (ADR-023)" slice with What/Observable/How to Verify block (7 checks) + 7 implementation steps (What/How); §6 new task log row (status In Progress, Git Revision '---'); §1 change log entry 0.37 added; Next Step section updated with ADR-023 context; updated Also-documented line). DOCUMENT-CONTROL: register (adr/022, adr/023, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN versions) + this change log row. Docs only; no schema/migration implementation yet. Code implementation pending user approval (AGENTS.md §5b). | Claude Haiku 4.5 |

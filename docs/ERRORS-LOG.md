@@ -8,9 +8,9 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.1  
+**Document Version:** 0.2  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-07-10  
+**Last Updated:** 2026-10-09  
 **Owned By:** Project Team
 
 ---
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-006 | 2026-10-09 | — | Verification | ADR-024 average km/L | SESSION AVG km/L above 700 km/L — GPS distance over the whole session divided by fuel accumulated only while OBD was valid/connected | Open |
 | ERR-005 | 2026-07-10 | — | Verification | ADR-012 sessionActive decoupling | OBD connected + polling but `sessionActive=false` → avg km/L / cost / SESSION AVG / obd_sample writes skipped while instant km/L & L/h show | Open |
 | ERR-004 | 2026-07-07 | 2026-07-07 | Verification | ADR-007 Slice 1 v7→v8 | Room build crash — `fallbackToDestructiveMigrationFrom(7)` illegal alongside `MIGRATION_6_7` (end version 7); app crashed on launch | Resolved |
 | ERR-003 | 2026-07-07 | 2026-07-07 | Verification | ADR-006 dwell collapse | Dwell collapse froze live GPS speed → OBD idle metric wrong (km/L instead of L/h) + phantom session distance | Resolved |
@@ -61,6 +62,29 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-006: SESSION AVG km/L above 700 — numerator and denominator accumulated over different intervals
+
+**Found At:** 2026-10-09 (user observation of the Session screen showing SESSION AVG > 700 km/L)  
+**Resolved At:** —  
+**Phase:** Verification  
+**Sprint/Task:** ADR-024 — average km/L over fuel-covered intervals  
+**Environment:** on-device use (user), Session screen OBD card  
+**Status:** Open — root cause identified; fix documented in ADR-024, code pending  
+
+**Error Message / Output:**
+No crash. Session screen "SESSION AVG" displayed values above 700 km/L (physically impossible).
+
+**Root Cause:**
+`ObdPollingService.kt` (~L457-461) computes `avgKmL = session.distanceMeters/1000 ÷ session.obdFuelConsumedL`. The numerator is GPS distance over the WHOLE always-on session (accumulated by `TrackingService` regardless of OBD). The denominator is fuel accumulated only while OBD is connected, a valid fuel rate exists (0.1..100 L/h) and the poll gap is < 60 s. Distance driven without matching fuel (OBD connected late, reconnect gaps, null-fuel stretches, gaps >= 60 s) inflates the ratio; the only guard was fuel > 0.01 L. The same mismatch exists in the live trip average (`gpsState.distanceInMeters / tripFuelLiters`) and in completed-trip rows (`track.distance / track.obdFuelConsumedL` in `TrackItemRow`). Previously noted as the out-of-scope "partial-connect over-optimism" in ADR-012.
+
+**Resolution:**
+Pending (docs-first). Per ADR-024: accumulate covered distance (`gpsSpeedKmh` x dt) over the same fuel-covered poll intervals as fuel (new columns `obdCoveredDistanceKm` on `recording_session` and `track`, `gpsSpeedKmh` on `obd_sample`; Room v12 -> v13 `MIGRATION_12_13`), and compute every average as covered distance ÷ fuel. No plausibility clamp.
+
+**Lesson Learned:**
+Accumulate the numerator and the denominator of a ratio over the same intervals. A ratio of two independently gated accumulators is a bug class (see also ERR-003, ERR-005, which also corrupted the OBD averages). Do not hide such a bug with a sanity clamp; fix the cause.
 
 ---
 
