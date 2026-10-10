@@ -18,7 +18,7 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 
 3. **Geocoding:** `GET https://api.openrouteservice.org/geocode/search?text=<place>&boundary.country=ID&size=1&focus.point.lat=<lat>&focus.point.lon=<lon>` (Pelias on OSM). Tested behaviour: landmark/venue names match well (e.g., Pondok Indah Mall); street names match at street level (e.g., Jalan Cipete Raya); long comma-separated Gojek-style addresses (street, sub-district, district, city) often return no result; house numbers fall back to city-level results (confidence ~0.6, unreliable).
 
-4. **Geocoding fallback ladder (required to improve reliability):**
+4. **Geocoding fallback ladder (required to improve reliability):** *(ladder order, bare-name removal and distance limits superseded by Amendment 2026-10-11)*
    1. Place name (pickupName/dropName) + city/area hint → search with `text=<name>&focus=driver_location`
    2. Full address (as-provided) → search with `text=<address>&focus=driver_location`
    3. Normalize 'Jl.' → 'Jalan', progressively drop district/sub-district words; retry
@@ -97,6 +97,7 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 ## Status Summary
 
 - **ADR Accepted:** 2026-10-06 — Supersedes the Google provider choice in ADR-016; all other ADR-016 behavior (planned frozen, runtime throttled re-fetch, fail-soft) unchanged.
+- **Amended:** 2026-10-11 — Geocode distance guard (50 km), reordered ladder without the bare-name candidate, and planned-route origin at the accepted point (see Amendment 2026-10-11). ADR remains Accepted.
 - **Docs Updated:** 2026-10-06 — PRD (FR-17 provider + accuracy caveat), ARCHITECTURE (ROUTE section geocoding ladder + ORS details), UI-SPEC (§3e attribution surface + handoff note), README (API key setup), IMPLEMENTATION-PLAN (new slice), adr/016 (status note), adr/011 (pointer note), adr/README (ADR-017 index row), DOCUMENT-CONTROL (register + change log).
 - **Code Implementation:** Pending user build permission (AGENTS.md §5a).
 - **Design Handoff:** Attribution placement subject to design review per AGENTS.md §12.
@@ -111,4 +112,37 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 
 ---
 
-**Amends:** ADR-016 (provider change from Google to ORS; behavior decisions in ADR-016 remain in force).
+## Amendment 2026-10-11 — Geocode Guard + Accepted-Point Origin
+
+**Amends:** decision 4 (ladder order, bare-name removal, distance limits) and the planned-route origin inherited from ADR-016. Status stays Accepted. Provider, attribution, privacy and fail-soft rules are unchanged.
+
+### Context
+
+Replaying recorded orders (observer_trip ids 37, 38, 39) through the shipped geocode ladder showed that ORS/Pelias accepts same-named places far from the driver at confidence 1.0. Examples: a Serpong pickup resolved to Tanjung Pinang (Riau Islands, more than 1000 km away); a South Jakarta pickup resolved to Bogor; order 38's pickup and drop both resolved to the same Bogor venue.
+
+Cause: the ladder tried the bare place name and bare street early, with no city. `focus.point` only biases ranking; there was no distance check. The route call then succeeds, so the overlay draws a line to a wrong or off-screen stop.
+
+Separately, the planned route started at whichever live fix arrived first, not at the point where the order was accepted. The Track screen also works as navigation, so the route must start from the accepted point.
+
+### Decision
+
+1. **Planned-route origin = accepted point.** The origin is the trip-start fix: the location row `activeTripStartLocationId`; else the first recorded path point; else the current live fix as a last resort. The planned route is accepted point → pickup (waypoint) → drop, fetched once and frozen as before. During the DROP phase at takeover it is accepted point → drop. The runtime route is unchanged (current location → next stop).
+2. **Geocode distance guard.** Every geocode request sends `boundary.circle.lat` / `boundary.circle.lon` = the driver's current location with `boundary.circle.radius=50` (km), in addition to `focus.point.*`. Client-side, any accepted result more than 50 km (`MAX_GEOCODE_DISTANCE_KM`) from the driver's current location is rejected. A rejected candidate falls through to the next ladder step. If all steps fail, nothing is drawn (fail-soft, unchanged).
+3. **Ladder reorder and removal.** (1) full address, normalised (`Jl.` → `Jalan`), including the city; (2) place name plus the last 1–2 address segments as an area hint; (3) house-number-stripped address and progressive trims; (4) street-only, last. The bare place-name-only candidate is removed. Layer and confidence acceptance rules, the 3-attempt quota and the 60 s retry are unchanged.
+4. **Diagnostics.** `OrderRouteController` and `OpenRouteServiceClient` log under their existing tags (tag names unchanged), per ladder step: order key seen, ladder index accepted, layer, confidence, distance to driver (km), or the rejection reason (`far` / `coarse` / `low-confidence` / `none`). They also log planned and runtime route fetch success or failure and point counts. Address text, coordinates and the API key are never logged.
+5. **Sanity check.** If pickup and drop resolve to the same point (under 30 m apart), a warning is logged. The route is still drawn; no behaviour is invented.
+
+No schema change, no new permission, no UI change (visuals, markers and attribution unchanged). Privacy is unchanged: the driver's coordinates are already sent as focus, and the circle boundary reuses them.
+
+### Consequences
+
+- **Positive:** far-away false matches are rejected before a route is drawn; the planned line starts where the order was accepted; a wrong pin can be traced from logcat.
+- **Negative / accepted risks:** street-level pins can still be off by metres. An address with no city (e.g. "Jl. Sukun No.10") may geocode to a wrong place inside the 50 km circle, or not at all. The 50 km radius is a coarse guard, not a precise match.
+
+### Verification
+
+IMPLEMENTATION-PLAN §4 slice "Observer — Geocode Guard & Accepted-Point Origin (ADR-017 Amendment 2026-10-11)", including its How to Verify block. Code and on-device checks are pending user permission (AGENTS.md §5a/§5b).
+
+---
+
+**Amends:** ADR-016 (provider change from Google to ORS; behavior decisions in ADR-016 remain in force). Amendment 2026-10-11 amends the ladder and origin rules above.

@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.26
+**Document Version:** 0.27
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-10
+**Last Updated:** 2026-10-11
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -181,9 +181,12 @@ ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
    → OrderRouteController collects activeOrder (from latestOrderFlow) and locationUiState
    → On order takeover (phase → PICKUP):
       Geocode pickup and drop addresses via OpenRouteService Geocoding (once per order, cached in-memory)
-      Geocoding fallback ladder: (1) place name + city focus, (2) full address, (3) normalize 'Jl.'→'Jalan' + drop districts, (4) street-only
+      Geocoding fallback ladder (ADR-017 Amendment 2026-10-11): (1) full address, normalized ('Jl.'→'Jalan'), including city, (2) place name + last 1–2 address segments as area hint, (3) house-number-stripped address + progressive trims, (4) street-only last; bare place name alone is not a candidate
+      Boundary guard: each request sends boundary.circle (driver's current location, radius 50 km) plus focus.point.*; client-side, any accepted result more than 50 km (MAX_GEOCODE_DISTANCE_KM) from the driver's current location is rejected and falls to the next step; all steps failing draws nothing (fail-soft)
       Reject results: confidence <0.8 unless venue/street layer; locality/localadmin/county/region/macroregion/country layers
-      Fetch planned route (current → pickup → drop via waypoint) via OpenRouteService Directions API
+      Planned-route origin = accepted point (trip-start fix: activeTripStartLocationId row, else first recorded path point, else current live fix as last resort)
+      Fetch planned route (accepted point → pickup → drop via waypoint; during DROP at takeover: accepted point → drop) via OpenRouteService Directions API; fetched once, frozen
+      Diagnostics (tags unchanged; no address text, coordinates or key logged): per ladder step order key seen, index accepted, layer, confidence, distance to driver (km) or reason rejected (far / coarse / low-confidence / none); planned/runtime fetch success or failure and point counts; warning if pickup and drop resolve <30 m apart
       Display as thin muted blue-grey polyline on TrackMap
    → On phase change (PICKUP → DROP) or off-route (>~40 m from polyline):
       Fetch runtime route (current → next stop: pickup or drop) via OpenRouteService Directions API
@@ -195,8 +198,8 @@ ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
       Clear both planned and runtime routes, remove markers, hide route state
       TrackMap reverts to recorded trace + live car position only
    → Failure handling: offline or API error → no route drawn, trip continues normally (fail-soft)
-   → External data flow: pickup/drop addresses and current location sent to OpenRouteService (Directions + Geocoding); customer name/phone never sent (ADR-013)
-   → Accuracy notes (ADR-017): street-level pins can be metres off on long roads; geocoding may fail for long comma-separated Gojek addresses; fail-soft (no route better than wrong route)
+   → External data flow: pickup/drop addresses and current location sent to OpenRouteService (Directions + Geocoding); the boundary circle reuses the driver's current coordinates (no new data class); customer name/phone never sent (ADR-013)
+   → Accuracy notes (ADR-017): street-level pins can be metres off on long roads; geocoding may fail for long comma-separated Gojek addresses; an address with no city may geocode wrongly inside the 50 km circle or not at all; fail-soft (no route better than wrong route)
 ```
 
 **Coupling:** Observer-to-tracking link is by signal/intent only (service isolation rule); the Observer service never calls `TrackingService` methods directly. `TrackingService` must never start/stop `ObserverAccessibilityService`. Foreground launch from a background accessibility service is gated by Android 10+ background-activity-start restrictions; a fallback mechanism (full-screen-intent notification or system alert window) may be required and must be verified on-device (test device: Samsung SM-G965F, Android 10). If the launch is blocked and `ShareViewModel` does not exist, the trip is started when the activity is next created. `orderOwnsTrip` is in-memory; after process death the trip is not auto-ended. Any new permission required will be documented separately.
