@@ -9,7 +9,7 @@ description: Document control register and change log — fully generic, ready t
 
 **Document Version:** 0.1  
 **Status:** Active  
-**Last Updated:** 2026-10-09  
+**Last Updated:** 2026-10-10  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -62,7 +62,7 @@ When any controlled document changes, update both:
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.42 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-10 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.43 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-10 |
 | `docs/UI-SPEC.md` | 0.28 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-10 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
@@ -93,6 +93,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-10 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.42/0.1 | 0.43/0.1 | ADR-025 revision record (docs only): IMPLEMENTATION-PLAN v0.42→0.43 (§1 row; §6 ADR-025 row Git Revision `---`→`d4954ed` (docs `d63ad3e`); Verification replaced with 2026-10-10 device verification result, including items recorded as NOT verified). DOCUMENT-CONTROL register updated for IMPLEMENTATION-PLAN; this row added. No source code changes. | Claude Code |
 | 2026-10-10 | adr/025 (new), adr/015 (amended), adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/1.1/1.3/0.21/0.25/0.27/0.41/0.1 | 1.0/1.2/1.4/0.22/0.26/0.28/0.42/0.1 | Order trip status + offline completion (ADR-025, docs only): new ADR-025 (persisted status chip `Completed` / `Completed · Offline` / `Cancelled` on order-linked trips; Gojek cancel → distinct `CANCELLED` phase; cash-order (`Tunai`) cancel keeps the trip with a drop-off snackbar within 150 m; Room v13→v14 `MIGRATION_13_14`). adr/015 amended 2026-10-10 (cancel rule for cash orders; original text kept). PRD v0.22 FR-16 (cancel rule, status chip). ARCHITECTURE v0.26 (track columns `orderStatus`/`orderOffline`, DB v14, CANCELLED phase, trip-end flow, migration; stale 'DB version 10' fixed). UI-SPEC v0.28 (§3b-order status chip, §3e cancel wording + drop-off snackbar). IMPLEMENTATION-PLAN v0.42 (§1 row, §4 slice with How to Verify, Next Step, §6 row); `---` Git Revision placeholders backfilled (0.19/0.20/0.21, ADR-024 rows). Code not started; device check of Cleared-after-cancel pending. | Claude Code |
 | 2026-10-10 | IMPLEMENTATION-PLAN, ERRORS-LOG, DOCUMENT-CONTROL | 0.40/0.2/0.1 | 0.41/0.3/0.1 | Device verification of the duplicate order-trip fix (ERR-007 / plan "Fix: duplicate order-trip cards"): `:app:assembleDebug` BUILD SUCCESSFUL, debug APK installed with `adb install -r`, takeover launch x3 with consent dialog pending kept one MainActivity (heap dump: ShareViewModel 1, MainActivity 1; before fix 2/3). End-to-end order check still pending. Duplicate Trips rows cleaned up on device (9 rows removed; 32 track rows afterwards, integrity_check ok). Plan task Git Revision set to d86e904; earlier stop-guard entry marked superseded. ERR-007 status and resolved-at updated (partial). Docs only. | Claude Code |
 | 2026-10-09 | adr/024 (new), adr/README, adr/007 (amended), adr/012 (amended), PRD, ARCHITECTURE, UI-SPEC, ERRORS-LOG, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | —/1.2/1.0/1.0/0.20/0.24/0.26/0.1/0.39/0.1 | 1.0/1.3/1.1/1.1/0.21/0.25/0.27/0.2/0.40/0.1 | Average km/L over fuel-covered intervals (ADR-024, docs only): SESSION AVG km/L exceeded 700 because session GPS distance was divided by fuel accumulated only while OBD was valid (ERR-006). avg km/L = Σ covered distance (GPS speed × dt) ÷ Σ fuel over the same fuel-covered poll intervals; Room v12→v13 `MIGRATION_12_13` (`obdCoveredDistanceKm` on `recording_session` + `track`, `gpsSpeedKmh` on `obd_sample`); no clamp, no backfill. ADR-007 averaging definition superseded; ADR-012 follow-up resolved; PRD FR-08/09/11; ARCHITECTURE entities/v13/average bullets (stale `obdGpsDistanceKm` listing fixed); UI-SPEC formulas + `—` rules; ERR-006 logged; IMPLEMENTATION-PLAN §1/§4/§6/Next Step + backfill of 4e52d0f. PRD/UI-SPEC headers were one behind this register (0.19/0.25); aligned to register+1. Code pending (AGENTS.md §5a/§5b). | Claude Code |
