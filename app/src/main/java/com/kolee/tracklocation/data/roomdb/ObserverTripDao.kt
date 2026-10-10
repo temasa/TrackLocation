@@ -21,10 +21,10 @@ interface ObserverTripDao {
     @Query("SELECT * FROM observer_trip WHERE pickupAddress = :pickupAddress AND dropAddress = :dropAddress ORDER BY lastSeenAt DESC LIMIT 1")
     suspend fun findByAddresses(pickupAddress: String, dropAddress: String): ObserverTripEntity?
 
-    @Query("SELECT * FROM observer_trip WHERE dropAddress = :dropAddress AND phase != 'FINISHED' ORDER BY lastSeenAt DESC LIMIT 1")
+    @Query("SELECT * FROM observer_trip WHERE dropAddress = :dropAddress AND phase NOT IN ('FINISHED', 'CANCELLED') ORDER BY lastSeenAt DESC LIMIT 1")
     suspend fun findLatestOpenByDropAddress(dropAddress: String): ObserverTripEntity?
 
-    @Query("SELECT * FROM observer_trip WHERE phase != 'FINISHED' ORDER BY lastSeenAt DESC LIMIT 1")
+    @Query("SELECT * FROM observer_trip WHERE phase NOT IN ('FINISHED', 'CANCELLED') ORDER BY lastSeenAt DESC LIMIT 1")
     suspend fun findLatestOpen(): ObserverTripEntity?
 
     @Query("SELECT * FROM observer_trip ORDER BY lastSeenAt DESC LIMIT 1")

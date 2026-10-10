@@ -111,11 +111,13 @@ fun GojekOrderCard(
         OrderPhase.PICKUP -> "Pickup"
         OrderPhase.DROP -> "Drop"
         OrderPhase.FINISHED -> "Done"
+        OrderPhase.CANCELLED -> "Cancelled"
     }
     val phaseColor = when (order.phase) {
         OrderPhase.PICKUP -> StatusPaused
         OrderPhase.DROP -> BrandGreen
         OrderPhase.FINISHED -> PanelTextSecondary
+        OrderPhase.CANCELLED -> PanelTextSecondary
     }
     val earningsText = order.earningsRp?.let { formatRupiah(it) }
 

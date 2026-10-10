@@ -103,7 +103,7 @@ class OrderTripRecorder(
                 }
                 return false
             }
-            OrderPhase.FINISHED -> {
+            OrderPhase.FINISHED, OrderPhase.CANCELLED -> {
                 val existing = dao.findLatestOpen() ?: return false
                 if (now - existing.lastSeenAt <= FINISHED_WINDOW_MS) {
                     dao.update(existing.copy(phase = card.phase.name, lastSeenAt = now))
@@ -115,7 +115,7 @@ class OrderTripRecorder(
 
     // A matching row is the same order only while unfinished and seen within the active window.
     private fun ObserverTripEntity.isSameActiveOrder(now: Long): Boolean =
-        phase != OrderPhase.FINISHED.name && now - lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
+        !isTerminalOrderPhase(phase) && now - lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
 
     private fun ObserverTripEntity.isComplete(): Boolean =
         pickupAddress != null && dropAddress != null && payment != null && earningsRp != null

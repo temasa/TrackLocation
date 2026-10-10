@@ -32,5 +32,9 @@ data class TrackEntity(
     val dropName: String? = null,
     val dropAddress: String? = null,
     val dropLat: Double? = null,
-    val dropLng: Double? = null
+    val dropLng: Double? = null,
+    // ADR-025: outcome of an order-linked trip ('COMPLETED' | 'CANCELLED'; null for manual trips).
+    // orderOffline is meaningful only when orderStatus == 'COMPLETED'.
+    val orderStatus: String? = null,
+    val orderOffline: Boolean = false
 )

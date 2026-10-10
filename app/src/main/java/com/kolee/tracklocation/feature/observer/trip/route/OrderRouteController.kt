@@ -5,6 +5,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
+import com.kolee.tracklocation.feature.observer.trip.isTerminal
 import com.kolee.tracklocation.tracking.LocationUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -61,7 +62,7 @@ class OrderRouteController(
             activeOrder
                 .map { o ->
                     o?.takeIf {
-                        it.phase != OrderPhase.FINISHED &&
+                        !it.phase.isTerminal() &&
                             !it.pickupAddress.isNullOrBlank() && !it.dropAddress.isNullOrBlank()
                     }
                 }

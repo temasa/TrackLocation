@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -80,6 +84,19 @@ fun TrackScreen() {
     // Map follow mode (UI-SPEC 3f): a user pan stops following; Recenter resumes it.
     var isFollowing by remember { mutableStateOf(true) }
     var recenterTick by remember { mutableStateOf(0) }
+
+    // ADR-025: one-shot drop-off prompt for a cash-cancelled order (on-screen only; never auto-stops).
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.dropOffEvents.collect {
+            val result = snackbarHostState.showSnackbar(
+                message = "Order cancelled in Gojek. You're at the drop-off. Stop trip?",
+                actionLabel = "Stop",
+                duration = SnackbarDuration.Long
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.onTripCtaTap()
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(300)
@@ -218,6 +235,13 @@ fun TrackScreen() {
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 14.dp, end = 14.dp, bottom = 190.dp)
+        )
     }
 
     if (performRequestPermission) {

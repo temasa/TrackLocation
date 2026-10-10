@@ -1,9 +1,16 @@
 package com.kolee.tracklocation.feature.observer.trip
 
-enum class OrderPhase { PICKUP, DROP, FINISHED }
+// ADR-025: CANCELLED = the Gojek cancel dialog; terminal like FINISHED (the home-screen Cleared stays FINISHED).
+enum class OrderPhase { PICKUP, DROP, FINISHED, CANCELLED }
+
+fun OrderPhase.isTerminal(): Boolean = this == OrderPhase.FINISHED || this == OrderPhase.CANCELLED
+
+/** String form of [isTerminal] for `observer_trip.phase` values. */
+fun isTerminalOrderPhase(phase: String): Boolean =
+    phase == OrderPhase.FINISHED.name || phase == OrderPhase.CANCELLED.name
 
 /**
- * "Same order" / "active order" window: a stored row seen within this window and not FINISHED is
+ * "Same order" / "active order" window: a stored row seen within this window and not terminal (FINISHED/CANCELLED) is
  * the order being served; older rows are stale, so a repeated address pair starts a new order.
  */
 const val ORDER_ACTIVE_WINDOW_MS = 2L * 60 * 60 * 1000

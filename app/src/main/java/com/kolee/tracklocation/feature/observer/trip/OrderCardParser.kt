@@ -6,8 +6,8 @@ package com.kolee.tracklocation.feature.observer.trip
  *
  * ADR-015 order lifecycle (Gojek terms): Taken = [OrderPhase.PICKUP] card, Carrying =
  * [OrderPhase.DROP] card, Drop off = [OrderPhase.FINISHED] card ("Selesai"). Two further terminal
- * signals also yield a bare FINISHED card: the cancel message (Cancelled) and the driver home
- * screen (Cleared).
+ * signals yield a bare card: the cancel message (Cancelled, [OrderPhase.CANCELLED], ADR-025) and
+ * the driver home screen (Cleared, [OrderPhase.FINISHED]).
  */
 object OrderCardParser {
 
@@ -19,7 +19,8 @@ object OrderCardParser {
         if (cancelButton != null && texts.contains(cancelButton) &&
             cancelMarker != null && texts.any { it.contains(cancelMarker, ignoreCase = true) }
         ) {
-            return OrderCard(phase = OrderPhase.FINISHED)
+            // ADR-025: distinct phase so cash-order cancels can keep the trip running.
+            return OrderCard(phase = OrderPhase.CANCELLED)
         }
         // Cleared: the home screen (all bottom-nav labels present) means no order is being served.
         if (rules.homeNavTexts.isNotEmpty() && texts.containsAll(rules.homeNavTexts)) {

@@ -132,14 +132,21 @@ fun TrackItemRow(
                     )
                 }
             }
-            Text(
-                text = SimpleDateFormat("EEE, HH:mm", Locale.ENGLISH).format(item.timestamp),
-                color = TripMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                modifier = Modifier.padding(start = 8.dp)
-            )
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 8.dp)) {
+                Text(
+                    text = SimpleDateFormat("EEE, HH:mm", Locale.ENGLISH).format(item.timestamp),
+                    color = TripMuted,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
+                )
+                // ADR-025: persisted order outcome chip (order-linked trips only).
+                OrderStatusChip(
+                    status = item.orderStatus,
+                    offline = item.orderOffline,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
         }
         Box(
             modifier = Modifier
@@ -287,4 +294,25 @@ private fun TrackStat(
             textAlign = TextAlign.Start
         )
     }
+}
+
+// ADR-025 / UI-SPEC §3b-order: Completed / Completed · Offline (green) / Cancelled (neutral); null = none.
+@Composable
+private fun OrderStatusChip(status: String?, offline: Boolean, modifier: Modifier = Modifier) {
+    val label = when (status) {
+        "COMPLETED" -> if (offline) "Completed · Offline" else "Completed"
+        "CANCELLED" -> "Cancelled"
+        else -> return
+    }
+    val tint = if (status == "COMPLETED") TripGreen else TripMuted
+    Text(
+        text = label,
+        color = tint,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        modifier = modifier
+            .border(1.dp, tint, RoundedCornerShape(999.dp))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    )
 }

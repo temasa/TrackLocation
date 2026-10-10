@@ -16,7 +16,9 @@ data class OrderCardRules(
     // cancel dialog's button + message marker.
     val homeNavTexts: List<String> = emptyList(),
     val cancelButton: String? = null,
-    val cancelMarker: String? = null
+    val cancelMarker: String? = null,
+    // ADR-025: payment text that marks a cash order (compared case-insensitively).
+    val cashPaymentLabel: String? = null
 )
 
 object GojekRules {
@@ -32,7 +34,8 @@ object GojekRules {
         finishedButton = "Selesai",
         homeNavTexts = listOf("Beranda", "Pendapatan", "Swadaya", "Pesan"),
         cancelButton = "Oke, sip",
-        cancelMarker = "nge-cancel"
+        cancelMarker = "nge-cancel",
+        cashPaymentLabel = "Tunai"
     )
 
     private val byPackage: Map<String, OrderCardRules> = mapOf(GOJEK.packageName to GOJEK)
