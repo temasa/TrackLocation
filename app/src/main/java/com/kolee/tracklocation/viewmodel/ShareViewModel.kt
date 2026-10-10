@@ -107,7 +107,14 @@ class ShareViewModel(
         scope = viewModelScope,
         client = routeProvider,
         activeOrder = activeOrder,
-        location = locationUiState
+        location = locationUiState,
+        // ADR-017 amendment: planned route starts at the accepted point (trip-start fix, else first path point).
+        acceptedOrigin = {
+            locationUiState.value.activeTripStartLocationId
+                ?.let { locationDao.getLocationByIdOnce(it) }
+                ?.let { LatLng(it.latitude, it.longitude) }
+                ?: locationUiState.value.pathPoints.firstOrNull()
+        }
     )
     val orderRoute: StateFlow<OrderRouteState> = orderRouteController.state
 

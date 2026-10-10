@@ -1,6 +1,7 @@
 package com.kolee.tracklocation.feature.observer.trip.route
 
 import android.content.Context
+import android.location.Location
 import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
@@ -25,14 +26,19 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
     private val apiKey: String = context.applicationContext.getString(R.string.ors_api_key)
 
     /**
-     * ADR-017 fallback ladder: name(+area hint) -> full address -> trimmed address -> street only.
-     * Returns the first accepted (non-coarse, confident enough) point, or null.
+     * ADR-017 fallback ladder: full address -> name(+area hint) -> trimmed address -> street only.
+     * Returns the first accepted (non-coarse, confident enough, within [MAX_GEOCODE_DISTANCE_KM]
+     * of [focus]) point, or null. Without a [focus] the distance guard cannot run, so fail soft.
      */
     override suspend fun geocode(name: String?, address: String, focus: LatLng?): LatLng? {
         if (apiKey.isBlank()) return null
+        if (focus == null) {
+            Log.w(TAG, "geocode skipped: no driver location for distance guard")
+            return null
+        }
         val candidates = buildCandidates(name, address)
-        for (text in candidates) {
-            val point = geocodeOne(text, focus)
+        for ((index, text) in candidates.withIndex()) {
+            val point = geocodeOne(text, focus, index)
             if (point != null) return point
         }
         return null
@@ -85,30 +91,62 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         }
     }
 
-    private suspend fun geocodeOne(text: String, focus: LatLng?): LatLng? {
+    private suspend fun geocodeOne(text: String, focus: LatLng, index: Int): LatLng? {
         val sb = StringBuilder(GEOCODE_URL)
             .append("?text=").append(URLEncoder.encode(text, "UTF-8"))
             .append("&boundary.country=ID&size=1")
-        if (focus != null) {
-            sb.append("&focus.point.lat=").append(focus.latitude)
-                .append("&focus.point.lon=").append(focus.longitude)
+            .append("&focus.point.lat=").append(focus.latitude)
+            .append("&focus.point.lon=").append(focus.longitude)
+            // ADR-017 amendment: hard server-side radius (km) around the driver.
+            .append("&boundary.circle.lat=").append(focus.latitude)
+            .append("&boundary.circle.lon=").append(focus.longitude)
+            .append("&boundary.circle.radius=").append(MAX_GEOCODE_DISTANCE_KM)
+        val json = request(sb.toString(), null, "geocode") ?: run {
+            Log.d(TAG, "geocode cand=$index http failure")
+            return null
         }
-        val json = request(sb.toString(), null, "geocode") ?: return null
         return try {
-            val features = json.optJSONArray("features") ?: return null
-            if (features.length() == 0) return null
+            val features = json.optJSONArray("features")
+            if (features == null || features.length() == 0) {
+                Log.d(TAG, "geocode cand=$index none")
+                return null
+            }
             val feature = features.getJSONObject(0)
             val props = feature.optJSONObject("properties") ?: return null
             val layer = props.optString("layer")
             val confidence = props.optDouble("confidence", 0.0)
-            if (layer in COARSE_LAYERS) return null
-            if (!(confidence >= MIN_CONFIDENCE || layer in PRECISE_LAYERS)) return null
             val c = feature.getJSONObject("geometry").getJSONArray("coordinates")
-            LatLng(c.getDouble(1), c.getDouble(0)) // coordinates are [lon, lat]
+            val point = LatLng(c.getDouble(1), c.getDouble(0)) // coordinates are [lon, lat]
+            val km = distanceKm(focus, point)
+            val head = "geocode cand=$index layer=$layer conf=${"%.2f".format(confidence)} d=${"%.1f".format(km)}km"
+            when {
+                layer in COARSE_LAYERS -> {
+                    Log.d(TAG, "$head rejected-coarse")
+                    null
+                }
+                !(confidence >= MIN_CONFIDENCE || layer in PRECISE_LAYERS) -> {
+                    Log.d(TAG, "$head rejected-lowconf")
+                    null
+                }
+                km > MAX_GEOCODE_DISTANCE_KM -> {
+                    Log.d(TAG, "$head rejected-far")
+                    null
+                }
+                else -> {
+                    Log.d(TAG, "$head accepted")
+                    point
+                }
+            }
         } catch (e: Exception) {
             Log.w(TAG, "geocode parse failed: ${e.javaClass.simpleName}")
             null
         }
+    }
+
+    private fun distanceKm(a: LatLng, b: LatLng): Float {
+        val out = FloatArray(1)
+        Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, out)
+        return out[0] / 1000f
     }
 
     /** Candidate query strings in ladder order, de-duplicated and capped at [MAX_QUERIES]. */
@@ -117,16 +155,13 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         val segments = address.split(',').map { it.trim() }.filter { it.isNotEmpty() }
         val trimmedName = name?.trim().orEmpty()
 
-        // 1. Place name (+ city/area hint = last 1-2 address segments), then the bare name.
-        if (trimmedName.isNotEmpty()) {
-            if (segments.size > 1) {
-                out.add(trimmedName + ", " + segments.takeLast(2).joinToString(", "))
-            }
-            out.add(trimmedName)
-        }
-
-        // 2. Full address with Jl. -> Jalan.
+        // 1. Full address (incl. city) with Jl. -> Jalan.
         if (segments.isNotEmpty()) out.add(normalise(segments.joinToString(", ")))
+
+        // 2. Place name + city/area hint (last 1-2 address segments). No bare-name candidate (ADR-017 amendment).
+        if (trimmedName.isNotEmpty() && segments.size > 1) {
+            out.add(trimmedName + ", " + segments.takeLast(2).joinToString(", "))
+        }
 
         // 3. Progressively trimmed: house numbers dropped, then trailing segments, keep street + city.
         val cleaned = segments
@@ -195,6 +230,7 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         const val TIMEOUT_MS = 10_000
         const val MAX_QUERIES = 6
         const val MIN_CONFIDENCE = 0.8
+        const val MAX_GEOCODE_DISTANCE_KM = 50 // ADR-017 amendment
         const val GEOCODE_URL = "https://api.openrouteservice.org/geocode/search"
         const val REVERSE_URL = "https://api.openrouteservice.org/geocode/reverse"
         const val REVERSE_RADIUS_KM = 1 // nearest hit within 1 km is plenty for "where was I"
