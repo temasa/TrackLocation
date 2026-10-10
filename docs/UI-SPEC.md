@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.27
+**Document Version:** 0.28
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-09
+**Last Updated:** 2026-10-10
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -155,6 +155,19 @@ Names are extracted location names only (no customer name/phone; full addresses 
 
 **Manual (non-order) trips:** Rows without an order header (manual trips, or order trips that failed to capture PICKUP/DROP names) remain unchanged — no header or price/net cell is shown. The row displays the standard metrics: distance / duration / avg speed / avg km/L / cost (§3b).
 
+**Order status chip (ADR-025, 2026-10-10):** Every order-linked completed trip row shows one status chip. It sits on the same line as the row's existing order header (next to the title), not in the metric grid. Manual trips show no chip; the live (in-progress) row shows no chip because its status is not saved until stop.
+
+| Status (stored) | Chip label | Look (provisional) |
+|---|---|---|
+| `COMPLETED`, `orderOffline = false` | `Completed` | Pill (999px radius, per §5), text and 1dp border in `TripGreen` (#16A34A) |
+| `COMPLETED`, `orderOffline = true` | `Completed · Offline` | Same green pill, text reads "Completed · Offline"; the offline text is what carries the meaning (not colour alone) |
+| `CANCELLED` | `Cancelled` | Pill, text and border in the existing neutral secondary-text token (no new colour) |
+
+- Chip text is the source of meaning; colour is secondary. Chip touch target is not interactive (display only).
+- Chip uses existing tokens and the status-chip shape from §5 (full pill, 999px). No new colour or elevation.
+- Missing status (pre-v14 manual trips) → no chip. Pre-v14 order-linked trips show `Completed` (migration backfill).
+- Screenshots to attach if this chip is externalised to a design handoff: Trips screen (an order-linked completed row, a manual row) and the Track screen order card (§3e).
+
 **Design note:** No new visual language is introduced — the header is plain text (reuses existing title/label typography), the three-line structure is simple typography stacking, and the price/net cell reuses the existing compact-Rupiah format and cell styling from the active-trip row (FR-12 integration). No external design handoff needed; user explicitly exempted from AGENTS.md §12 for this change (ADR-022, ADR-023).
 
 ---
@@ -192,7 +205,7 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 **Card states:**
 - **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
-- **Cleared/Cancelled/Dismissed** — Card is replaced by the normal `TripPanel`; the trip ends automatically.
+- **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared and Dismissed, and on Cancelled for a non-cash order. For a cash order cancelled in Gojek the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-025). The card's replacement by `TripPanel` in that cash-cancelled state is the proposed default and is an open question (ADR-025).
 
 **Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
@@ -214,6 +227,19 @@ A one-row strip appears below the order card while the trip is live (tripState i
 Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4, AVG/INST 1.4; values maxLines=1.
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
+
+**Drop-off snackbar (ADR-025, cash cancel only)**
+
+Shown on the Track screen only when a Gojek order with payment `Tunai` (cash) was cancelled in Gojek, the trip is still recording, and the driver comes within 150 m of the order's drop-off point (cached drop coordinates).
+
+- **Trigger:** first fix within 150 m of the drop-off after the cash cancel. Shown **once per trip**; it does not reappear if the driver leaves and returns to the point.
+- **Text:** "Order cancelled in Gojek. You're at the drop-off. Stop trip?"
+- **Action:** one text action, **Stop**. Tapping it runs the normal stop sequence (persist, then stop). Stopping within 150 m of the drop-off saves the trip as `Completed · Offline`; otherwise it saves as `Cancelled` (ADR-025 stop rules).
+- **Placement:** bottom of the Track screen, above the bottom navigation and the order card/trip panel. Non-blocking; it does not cover the map controls or take focus from the map.
+- **Duration:** indefinite. It never auto-dismisses by timer and never auto-stops the trip. Ignoring it does nothing; the normal Stop CTA stays available. Swiping it away also does nothing to the trip.
+- **Scope:** shown only while TrackLocation is on screen. There is no system notification, heads-up, or full-screen takeover (by design; a driver outside the app is not prompted).
+- **If drop coordinates cannot be resolved:** no snackbar. The trip keeps recording and is saved as `Cancelled` when the driver stops it.
+- **Visual:** Material 3 snackbar in the app's existing style; no new colour, no new visual language. Provisional; no separate design handoff requested (AGENTS.md §12: attach the Track screen with the order card as the baseline screenshot if a handoff is produced later).
 
 **Handoff Instructions (Trip strip)**
 
@@ -240,7 +266,7 @@ The strip is hidden when the order ends and `TripPanel` returns. Provisional vis
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
-**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared, Cancelled or Dismissed (ADR-014, ADR-015); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Dismissed, or Cancelled for a non-cash order (ADR-014, ADR-015, amended by ADR-025 for cash cancels); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 
@@ -279,7 +305,7 @@ Two driving routes are drawn on the Track screen's embedded Google Map while a G
 - **Planned route** fetched once when the order becomes Taken; frozen for the life of the order (never re-fetched).
 - **Runtime route** re-fetched on phase change (PICKUP → DROP) or when the driver deviates >~40 m from the polyline; throttled to at most once per 30 s and only after the driver moved ~100 m (prevents jitter).
 - **Markers** displayed at their geocoded LatLng coordinates; refresh on phase change.
-- **Clear on completion:** Both routes, markers, and route state are cleared when the order ends (FINISHED), is dismissed, or no active order remains. The map reverts to showing the recorded trace + live car position.
+- **Clear on completion:** Both routes, markers, and route state are cleared when the order ends (FINISHED or CANCELLED), is dismissed, or no active order remains. The map reverts to showing the recorded trace + live car position.
 - **Failure gracefully:** If the OpenRouteService API fails (offline, rate limit, invalid address, geocoding fallback exhausted, etc.), no route is drawn; the trip continues recording normally with no other disruption.
 
 **Handoff Instructions (Route overlay)**

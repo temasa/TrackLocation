@@ -6,6 +6,8 @@
 
 **Amended 2026-10-08:** vocabulary table and wording aligned with code - the trip ends when the order row reaches FINISHED, including at the Selesai screen.
 
+**Amended 2026-10-10 by ADR-025:** cancel no longer unconditionally auto-stops the trip. For a cash order (`Tunai`) cancelled in Gojek, the trip keeps recording until the driver stops it; a drop-off snackbar is offered within 150 m of the drop-off. Non-cash cancels still stop immediately. The Cancelled outcome is stored as a trip status (ADR-025). Original decision text below is kept as written; see "Amendment 2026-10-10 (ADR-025)".
+
 ## Context
 
 ADR-014 established automatic stopping of an active trip when a Gojek order card first becomes complete (pickup + drop + payment + earnings). However, this decision creates a semantic gap: the trip auto-stops at order acceptance, but does not auto-start when an order is taken. The driver's actual workflow is: order offered → order taken (driver driving to customer) → pickup → carrying → drop off → finished. The trip should capture the entire engagement lifecycle, starting when the driver commits to the order (Taken phase).
@@ -34,6 +36,17 @@ This ADR amends ADR-014 to: (1) auto-start a trip when the order becomes Taken (
 5. **In-memory flag survives activity recreation, not process death:** The `orderOwnsTrip` flag is held in `ShareViewModel`'s in-memory state. If the process is killed and relaunched, the flag is lost. On relaunch, the latest order row is queried; if it is still open and `FINISHED` has not arrived, the trip is not auto-ended (manual stop required). This trade-off simplifies the solution and defers cross-process persistence to future phases.
 
 ---
+
+## Amendment 2026-10-10 (ADR-025)
+
+The cancel branch of Decision 2 (`(c) Cancel message (Cancelled)` → AUTO-END) is amended as follows. Everything else in this ADR (Taken auto-start, Selesai, Cleared, Dismiss, the in-memory `orderOwnsTrip` flag, always-recording) is unchanged.
+
+- **Cancel + non-cash (or missing) payment:** unchanged. The cancel message yields `CANCELLED` (a terminal phase distinct from `FINISHED`), the trip stops immediately, and the trip is saved with status `CANCELLED`, `orderOffline = false`. No snackbar.
+- **Cancel + cash (`Tunai`):** the trip is **not** auto-stopped. It keeps recording. When the driver comes within 150 m of the order's cached drop coordinates, a non-blocking snackbar at the bottom of the Track screen asks "Stop trip?" with a **Stop** action, once per trip. The app never auto-closes it. The driver can ignore the snackbar and use the normal Stop CTA.
+- **Stop of a cash-cancelled trip:** within 150 m of the drop-off → status `COMPLETED` with `orderOffline = true` (shown as "Completed · Offline"); otherwise status `CANCELLED`, `orderOffline = false`.
+- **Phase table row "Cancelled"** is now `OrderPhase.CANCELLED` (not `FINISHED`). Terminal-state code must treat both `FINISHED` and `CANCELLED` as terminal.
+
+Open risk carried from ADR-025: a Gojek home screen ("Cleared", written as `FINISHED`) may follow the cancel dialog and could stop a cash trip early as `COMPLETED`. Verify on device before code is accepted.
 
 ## Consequences
 

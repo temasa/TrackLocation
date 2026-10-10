@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.25
+**Document Version:** 0.26
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-09
+**Last Updated:** 2026-10-10
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -52,7 +52,7 @@ AllowlistRuleEntity (allowlist_rule)   ← EXACT / REGEX, packageName-only, case
 ObserverTripEntity (observer_trip)   ← DERIVED from captured tree snapshots; Gojek-only extraction (ADR-013)
   ├── pickupName, pickupAddress, dropName, dropAddress
   ├── payment (e.g., GoPay/Kartu), earningsRp (integer)
-  ├── phase (pickup/drop-only/finished), firstSeenAt, lastSeenAt, handled (marked once the takeover for that order has been processed)
+  ├── phase (pickup/drop-only/finished/cancelled; cancelled added ADR-025, string column, no schema change), firstSeenAt, lastSeenAt, handled (marked once the takeover for that order has been processed)
   └── no FKs to trips/sessions; deduplication key = (pickupAddress, dropAddress)
 
 ObdSampleEntity (obd_sample)
@@ -70,6 +70,10 @@ SessionEntity (recording_session) — OBD accumulator columns
 TrackEntity (trip) — OBD accumulator columns
   ├── obdFuelConsumedL       (REAL, default 0.0) — cumulative L consumed this trip (added DB v5)
   └── obdCoveredDistanceKm   (REAL, default 0.0) — km over the same fuel-covered intervals (added DB v13, ADR-024)
+
+TrackEntity (trip) — Gojek order outcome columns (ADR-025)
+  ├── orderStatus            (TEXT, nullable) — 'COMPLETED' | 'CANCELLED'; NULL for manual trips (added DB v14; backfilled 'COMPLETED' where orderLabel IS NOT NULL)
+  └── orderOffline           (INTEGER, NOT NULL, default 0) — 1 = trip closed offline (cash order, stopped within 150 m of drop-off); meaningful only with orderStatus = 'COMPLETED' (added DB v14)
 
 FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
   ├── pricePerLiter (REAL)
@@ -107,7 +111,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 10) | Local-first storage with migrations |
+| Persistence | Room (current DB version 14) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -149,19 +153,25 @@ TRIP START (auto-start at Taken):
      → if a trip is live, keep it and set in-memory flag orderOwnsTrip=true
      → mark row handled
 
-TRIP END (auto-end at Selesai/Cleared/Cancelled/Dismissed):
+TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel rule per ADR-025):
    → Gojek parser recognizes terminal states:
      (a) Selesai screen = "Selesai" with earnings/summary (normal completion)
      (b) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
-     (c) cancel message = "Oke, sip" + text containing "nge-cancel"
-   → all yield OrderCard with phase=FINISHED
-     → OrderTripRecorder marks the latest open row FINISHED
+     (c) cancel message = "Oke, sip" + text containing "nge-cancel" → phase=CANCELLED (distinct from FINISHED)
+   → (a) and (b) yield OrderCard with phase=FINISHED; (c) yields phase=CANCELLED
+     → OrderTripRecorder marks the latest open row (FINISHED or CANCELLED)
      → ShareViewModel observes latestOrderFlow
-     → when FINISHED and orderOwnsTrip=true and a trip is live, run stopActiveTrip():
-        persist the trip (TrackEntity via insertTrack), then send STOP_TRIP
+     → when a terminal phase (FINISHED or CANCELLED) and orderOwnsTrip=true and a trip is live, decide by status:
+        - FINISHED → stopActiveTrip(status=COMPLETED, offline=false)
+        - CANCELLED, payment not cash ('Tunai' is the cash match, case-insensitive) or missing → stopActiveTrip(status=CANCELLED, offline=false)
+        - CANCELLED, cash, drop coordinates resolved → do NOT stop; keep recording; show one drop-off snackbar when within 150 m of drop coordinates (Track screen only; action "Stop")
+        - CANCELLED, cash, drop coordinates unresolved → do NOT stop; no snackbar; stop later saves CANCELLED
+     → stop of a cash-cancelled trip (snackbar Stop or Stop CTA): within 150 m of drop → COMPLETED + orderOffline=true; otherwise CANCELLED + orderOffline=false
+     → stopActiveTrip(): persist the trip (TrackEntity via insertTrack, with orderStatus/orderOffline), then send STOP_TRIP
         (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
      → clear orderOwnsTrip=false
    → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
+   → open risk (ADR-025): a home-screen "Cleared" (FINISHED) written after CANCELLED may end a cash trip early as COMPLETED; verify on device
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
    → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), COST / NET (estimated fuel cost = trip fuel from OBD accumulator × effective price; NET = OrderCard.earningsRp − COST), AVG/INST km/L, fed from TrackPanelState + OBD state + FuelPriceController + OrderCard earnings
@@ -181,7 +191,7 @@ ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
       Throttled: at most once per 30 s and only after driver moved ~100 m
    → Pickup and Drop map markers displayed at their geocoded LatLng coordinates
    → Attribution: '© openrouteservice.org | © OpenStreetMap contributors' visible while routes shown, hidden when none
-   → On terminal state (FINISHED) or dismiss:
+   → On terminal state (FINISHED or CANCELLED) or dismiss:
       Clear both planned and runtime routes, remove markers, hide route state
       TrackMap reverts to recorded trace + live car position only
    → Failure handling: offline or API error → no route drawn, trip continues normally (fail-soft)
@@ -257,7 +267,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v13** (current; ADR-024 extends to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v14** (current; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -290,6 +300,13 @@ Room database (`TrackDatabase`), at version **v13** (current; ADR-024 extends to
   ALTER TABLE obd_sample ADD COLUMN gpsSpeedKmh REAL
   ```
   Existing rows keep `0.0` / `NULL`; no backfill (pre-v13 trips keep the legacy displayed-distance ÷ fuel value).
+- `MIGRATION_13_14` (ADR-025, DB→**v14**): order trip outcome columns on `track`:
+  ```sql
+  ALTER TABLE track ADD COLUMN orderStatus TEXT
+  ALTER TABLE track ADD COLUMN orderOffline INTEGER NOT NULL DEFAULT 0
+  UPDATE track SET orderStatus = 'COMPLETED' WHERE orderLabel IS NOT NULL
+  ```
+  Order-linked trips existing before v14 are marked `COMPLETED` (the earlier cancel outcome was not stored; history not rewritten). Manual trips keep `orderStatus` NULL and show no chip. `orderOffline` defaults to `0`.
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.

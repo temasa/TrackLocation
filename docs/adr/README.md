@@ -103,7 +103,7 @@ Links to docs, code, or external resources supporting this decision.
 | [012](012-obd-accumulation-recording-state.md) | OBD Fuel Accumulation Gates on Shared Recording State | Accepted | 2026-07-10 |
 | [013](013-observer-trip-extraction.md) | Observer Trip Extraction (Gojek pickup/drop, device-only) | Accepted | 2026-10-05 |
 | [014](014-gojek-order-card-takeover.md) | Gojek Order Card Takeover of the Track Screen | Accepted | 2026-10-05 |
-| [015](015-order-auto-start-trip.md) | Gojek Order Lifecycle Drives the Trip (auto-start/auto-end) | Accepted | 2026-10-06 |
+| [015](015-order-auto-start-trip.md) | Gojek Order Lifecycle Drives the Trip (auto-start/auto-end; cancel rule amended by ADR-025) | Accepted | 2026-10-06 |
 | [016](016-order-route-overlay.md) | Gojek Order Route Overlay (planned + runtime routes) | Accepted | 2026-10-06 |
 | [017](017-order-route-provider-openrouteservice.md) | Order Route Provider: OpenRouteService (supersedes ADR-016 provider) | Accepted | 2026-10-06 |
 | [018](018-track-screen-live-location.md) | Track Screen Live Location (display-only, independent of recording) | Accepted | 2026-10-06 |
@@ -113,6 +113,7 @@ Links to docs, code, or external resources supporting this decision.
 | [022](022-order-trip-label-in-trips-list.md) | Order Trip Label in the Trips List (pickup → drop + price/net) | Accepted | 2026-10-08 |
 | [023](023-order-trip-header-card-and-geo-snapshot.md) | Order Trip Header Card (accepted/pickup/drop + saved geo details) | Accepted | 2026-10-08 |
 | [024](024-avg-km-per-liter-over-fuel-covered-intervals.md) | Average km/L over Fuel-covered Intervals (supersedes ADR-007 averaging definition) | Accepted | 2026-10-09 |
+| [025](025-order-trip-status-and-offline-completion.md) | Order Trip Status and Offline Completion (Completed / Completed · Offline / Cancelled; amends ADR-015 cancel rule) | Accepted | 2026-10-10 |
 
 ---
 
@@ -133,5 +134,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 1.3
-**Last Updated:** 2026-10-09
+**Version:** 1.4
+**Last Updated:** 2026-10-10
