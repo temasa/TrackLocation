@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.7  
+**Document Version:** 0.6  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-11  
 **Owned By:** Project Team
@@ -50,7 +50,6 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
-| ERR-010 | 2026-10-11 | 2026-10-11 (manual mitigation via adb; permanent fix pending ADR-028 banner) | Verification | Observer capture (ADR-013 / ADR-014 / ADR-015) | Observer accessibility service silently disabled (dropped from `ENABLED_ACCESSIBILITY_SERVICES` on force-stop / reinstall) from ~07:22 WIB; two Gojek orders not captured, Track auto-takeover did not fire; Observer Feed "live" chip still showed | Mitigated (manual); banner pending |
 | ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
 | ERR-008 | 2026-10-11 | — (code fixed; device check pending) | Verification | Session running cost / fuel accumulator | Running-session COST/fuel reset or stopped accumulating — TrackingService re-wrote its cached session row with REPLACE on every GPS point, clobbering OBD accumulator increments | Code fixed (partial UPDATE); device verification pending |
 | ERR-007 | 2026-10-09 | 2026-10-10 (partial: pending a real order) | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending |
@@ -66,32 +65,6 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
-
----
-
-### ERR-010: Observer service silently disabled — two Gojek orders missed, no visible warning
-
-**Found At:** 2026-10-11 ~20:00 WIB (found after the fact; the service had been off from ~07:22 WIB)  
-**Resolved At:** 2026-10-11 (manual mitigation via adb; the permanent mitigation is the Observer service-off banner, ADR-028, not yet implemented)  
-**Phase:** Verification  
-**Sprint/Task:** Observer capture for Gojek orders (ADR-013, ADR-014, ADR-015); Observer Feed (ADR-028)  
-**Environment:** Galaxy S9+ SM-G965F, Android 10, adb tunnel (`ANDROID_ADB_SERVER_PORT=5038`)  
-**Status:** Mitigated (manual); permanent fix pending  
-
-**Error Message / Output:**
-No crash and no build error. Two Gojek orders were not captured, and the Track auto-takeover (ADR-014 / ADR-015) never fired. The Observer Feed still showed its normal "live" chip, so nothing on screen indicated that capture was off.
-
-**Root Cause:**
-Android removes an accessibility service from `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` on force-stop or on reinstall. The Observer service was dropped at about 07:22 WIB, and capture stopped silently. The app never checked whether the service was enabled. The Observer Feed "live" chip reflects only the capture-switch preference, not whether accessibility events are delivered, so the screen looked healthy.
-
-**Resolution:**
-- **Manual, 2026-10-11:** the Observer component was re-added with `adb shell settings put secure enabled_accessibility_services <list>`, keeping the `rk.android.app.lockscreen` service enabled.
-- **Permanent (decided, not yet implemented):** ADR-028 adds an amber banner on the Observer Feed when the Observer service is not in the enabled list, with a tap that opens Accessibility settings. Code is pending approval; the slice is in IMPLEMENTATION-PLAN §4 "Observer Service-Off Banner (ADR-028)".
-
-**Lesson Learned:**
-1. A feature that depends on a system-granted service must show that service's own state. A status chip has to reflect the real dependency, not only a user preference. Otherwise the screen can look healthy while the feature is dead.
-2. Re-check Observer enablement after every `adb install -r` and every force-stop. Both can silently drop the accessibility service.
-3. For any silent capture loss, ask what the user sees when the dependency is off. If the answer is "nothing", add a visible state before shipping.
 
 ---
 

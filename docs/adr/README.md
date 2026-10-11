@@ -116,7 +116,6 @@ Links to docs, code, or external resources supporting this decision.
 | [025](025-order-trip-status-and-offline-completion.md) | Order Trip Status and Offline Completion (Completed / Completed · Offline / Cancelled; amends ADR-015 cancel rule) | Accepted | 2026-10-10 |
 | [026](026-saved-planned-route-and-comparison.md) | Saved Planned Route and Planned-vs-Actual Comparison (device-only; amends the 'not persisted' rule for the planned route; conditional on ORS ToS gate) | Accepted (conditional) | 2026-10-11 |
 | [027](027-fuel-balance-fill-up-and-reset.md) | Fuel Balance, Fill-up and Reset (fuel dock: fuel left, range, price, Fill up; derived from append-only `fuel_event`) | Accepted | 2026-10-11 |
-| [028](028-observer-service-off-banner.md) | Observer Service-Off Banner on the Observer Feed (detects the Observer accessibility service being disabled; amber banner, tap opens Accessibility settings) | Accepted | 2026-10-11 |
 
 ---
 
@@ -137,5 +136,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 1.7
+**Version:** 1.6
 **Last Updated:** 2026-10-11

@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.47
+**Document Version:** 0.46
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -180,19 +180,6 @@ The `SnapshotViewerSheet` bottom-sheet (opened by tapping a snapshot-bearing Obs
 **Meta strip — layout fix (2026-07-08).** The EVENT / FIRST SEEN / LAST SEEN chips previously shared one `Row`; a long event type (e.g. `WINDOW_CONTENT_CHANGED`) squeezed the last chip until its label wrapped one character per line (vertical `L-A-S-T-S-E-E-N`). The strip is now a `Column`: **row 1** is the event-type value alone in a full-width bordered box (no "EVENT" label); **row 2** holds FIRST SEEN and LAST SEEN chips at equal `weight(1f)`, with REPEAT appended when `repeatCount > 1`. Chip labels are pinned to `maxLines = 1, softWrap = false` so a squeezed label can never wrap vertically again.
 
 **Prev / Next event navigation (2026-07-08).** The title row gains two circular chevron buttons immediately left of the close button. They move the sheet to the previous (older) / next (newer) event **without leaving the overlay**, iterating only over snapshot-bearing events (`treeSnapshot != null`) so every target renders real content. Buttons render disabled/greyed at the ends of the list (and whenever the host supplies no handler). Sheet exposes `onPrev/onNext/canPrev/canNext` (defaulted → back-compatible); wired in `ObserverFeedScreen` over `uiState.events`.
-
----
-
-## 3c-svc. Observer service-off banner (ADR-028, 2026-10-11)
-
-When the Observer accessibility service is not enabled in system settings, the Observer Feed shows a banner that says so. Without it, the feed looked healthy while nothing was captured (the "live" chip reflects only the capture-switch preference, not the service).
-
-- **Placement:** on the Observer Feed (`Settings → Tools → Observer`), directly below the capture-chip / auto-scroll row and above the filter bar. Same amber banner style as the existing capture-paused banner (same colours and text style; no new visual language). No external design handoff: the owner explicitly skipped it (AGENTS.md §12 exemption, recorded in ADR-028).
-- **Copy:** "Observer service is OFF – orders won't be captured. Tap to enable."
-- **Tap action:** opens system Accessibility settings (`Settings.ACTION_ACCESSIBILITY_SETTINGS`). The banner does not turn the service on itself.
-- **Visibility:** shown only when the Observer service is absent from `ENABLED_ACCESSIBILITY_SERVICES`. Detection reads the system setting and does not require the service to be running. The state is re-read when the screen resumes (`ON_RESUME`), so the banner disappears on return from system Settings without leaving the Observer Feed.
-- **Interaction with the capture-paused banner:** independent. The two banners can show at once (for example, capture paused while the service is off shows both). Neither hides the other. The vertical order between them is set at code time and is not fixed by this spec.
-- **Other screens:** none. The banner lives only on the Observer Feed; the Track, List, Sessions and Settings screens are unchanged.
 
 ---
 
