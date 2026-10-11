@@ -75,7 +75,7 @@ fun MetricCell(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            text = label.uppercase(),
+            text = label,
             style = TextStyle(
                 color = theme.label,
                 fontSize = size.labelSize.sp,
