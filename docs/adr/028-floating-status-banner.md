@@ -1,6 +1,6 @@
 # ADR-028: Floating Status Banner (OBD and Observer)
 
-**Status:** Accepted (docs approved 2026-10-11; code not yet implemented)
+**Status:** Accepted; implemented in `8cd95f8` (2026-10-11); partly device-verified (see IMPLEMENTATION-PLAN section 4)
 **Date:** 2026-10-11
 **Decided By:** Project owner + Claude Code
 
@@ -101,6 +101,6 @@ Constraints:
 
 ## Open items
 
-- [ ] Code not yet implemented (IMPLEMENTATION-PLAN §4 slice "Floating Status Banner (ADR-028)").
-- [ ] Device verification pending. Gradle, emulator and device runs need explicit user permission (AGENTS §5a).
-- [ ] Tap-through on Android 10 (SM-G965F) to be verified: the OBD chip opens Bluetooth settings and the Observer chip opens Accessibility settings.
+- [ ] Not tested on device (IMPLEMENTATION-PLAN §4 slice "Floating Status Banner (ADR-028)", How to Verify items 4, 5, 8, 10, 16, 19, 20): the OBD Connected state hides the chip (no adapter was available); re-expansion on a real Connected to not connected transition (needs a live adapter); app restart resets the collapse to expanded; TalkBack wording of the chips and collapsed icons; a trip or session started with the banner active.
+- [ ] Observed once, not reproduced: in the first pass of the device run the banner re-expanded on List, Track and Settings after being collapsed, around an OBD state flicker (connecting to not connected). A clean second pass kept it collapsed. Watch for spurious re-expansion on OBD state changes; no bug filed.
+- [ ] Cosmetic (by design of a floating overlay): the chips cover the page title area, and the stacked chips overlap the top edge of the Session screen's Always-recording card.

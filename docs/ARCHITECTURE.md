@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.34
+**Document Version:** 0.35
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -155,7 +155,7 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card, the Trips active-trip row, and the Gojek order-card trip strip can compute fuel cost = litres × effective fuel price (from `fuel_price` table, FR-12/ADR-008).
 
-### Floating Status Banner (ADR-028, planned)
+### Floating Status Banner (ADR-028, implemented)
 
 ```
 ObdPollingService.obdUiState (StateFlow)  ──┐
@@ -166,6 +166,7 @@ ObserverViewModel.isOurServiceEnabled)        └── Collapse state: in-memor
 ```
 
 - **Host:** `StatusBannerHost` is mounted in `MainActivity` over the nav graph, at the top (below the status bar), the same host point as `FuelDockHost` (ADR-027). It is shown only on the Track, Sessions, Trips (List) and Settings routes (route list kept in sync with the fuel dock, UI-SPEC §5b).
+- **Classes (as built, `8cd95f8`):** `StatusBannerHost` (`ui/components`) renders the chips and the collapsed icons. `StatusBannerViewModel` is activity-scoped and holds the `collapsed`, `obdProblem` and `observerProblem` StateFlows. Its `startPolling()` loops over `isObserverServiceEnabled` every 1 s; polling starts on ON_START and stops on ON_STOP through a `LifecycleEventObserver`. The observer is used because `lifecycle-runtime-ktx` 2.3.1 has no `repeatOnLifecycle`. The shared check is `observer/ObserverServiceStatus.kt` (`isObserverServiceEnabled(context)`), also used by `ObserverViewModel`.
 - **Inputs:** the OBD state is read from `ObdPollingService.obdUiState` (no new OBD flow). The Observer state comes from one shared helper extracted from `ObserverViewModel.isOurServiceEnabled`; the Observer Feed `ServiceBanner` keeps using the same check, unchanged.
 - **Polling:** the Observer check re-runs every second only while the app is in the foreground.
 - **Taps:** the OBD chip opens `Settings.ACTION_BLUETOOTH_SETTINGS`; the Observer chip opens `Settings.ACTION_ACCESSIBILITY_SETTINGS`. Both are system settings intents; no in-app Bluetooth code is added.

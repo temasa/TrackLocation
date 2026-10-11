@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.47
+**Document Version:** 0.48
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -719,7 +719,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - (k) Device status (2026-10-11, partial, screenshots): dock on Session, List (light), Track (dark, plain) and Settings (light); absent on OBD Settings and Trip Details. Dialogs and persistence checked; FUEL LEFT Low (amber) and Critical (red) seen on the light and dark docks; the `~` state, RANGE colouring, the changed-price flow, TalkBack and the Alt / Order variants are not verified yet. See IMPLEMENTATION-PLAN §4 How to Verify.
 - (l) Contrast, owner review (device 2026-10-11, not changed): the red `#DC2626` FUEL LEFT value on the dark Track dock (`#173A2D`) is readable but has lower contrast than on the light dock. The owner decides whether to adjust it.
 
-## 5c. Floating Status Banner (2026-10-11) — designed in `ui-design.pen`; code not yet implemented
+## 5c. Floating Status Banner (2026-10-11) — designed in `ui-design.pen`; code implemented `8cd95f8`
 
 **Behaviour:** ADR-028 and PRD FR-23. This section covers the visual and layout spec only.
 
@@ -791,7 +791,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - Touch targets: collapsed icons 44 px; minimize button 32 px visual with a 48 dp hit area.
 - Check at code time that the banner does not hide the Track top controls or the status bar.
 
-**Status:** designed directly in `ui-design.pen` on 2026-10-11 (the "StatusBanner Components" section: Banner/OBD Not Connected, Banner/OBD Connecting, Banner/Observer Inactive, Banner/Collapsed OBD, Banner/Collapsed Observer; and states 1 to 8). No external design handoff is needed, the same as §5b. Code not yet implemented; see IMPLEMENTATION-PLAN §4 slice "Floating Status Banner (ADR-028)".
+**Status:** designed directly in `ui-design.pen` on 2026-10-11 (the "StatusBanner Components" section: Banner/OBD Not Connected, Banner/OBD Connecting, Banner/Observer Inactive, Banner/Collapsed OBD, Banner/Collapsed Observer; and states 1 to 8). No external design handoff is needed, the same as §5b. Code implemented `8cd95f8`; partly device-verified 2026-10-11 (see IMPLEMENTATION-PLAN §4 slice "Floating Status Banner (ADR-028)"). Not tested on device: the OBD Connected state (chip hidden), re-expansion on a real Connected to not connected change, restart reset to expanded, TalkBack wording of the chips and collapsed icons, and a trip or session started with the banner active. Cosmetic: the chips cover the page title area and overlap the top edge of the Session Always-recording card.
 
 ---
 
@@ -811,7 +811,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - Observer Phase 2: snapshot viewer + pagination done; truncation banner spec drafted, awaiting design approval.
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
 - Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`, `3354689`; build OK; partly device-verified 2026-10-11).
-- Floating status banner (§5c): designed in `ui-design.pen` 2026-10-11 (OBD not connected, Observer inactive, collapsed icons; eight states); code pending (ADR-028).
+- Floating status banner (§5c): designed in `ui-design.pen` 2026-10-11 (OBD not connected, Observer inactive, collapsed icons; eight states); code implemented `8cd95f8` (2026-10-11); partly device-verified 2026-10-11 (not tested: OBD Connected state, restart reset, TalkBack) (ADR-028).
 
 ---
 
