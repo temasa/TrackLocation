@@ -41,6 +41,23 @@ interface SessionDao {
     @Query("UPDATE recording_session SET obdFuelConsumedL = obdFuelConsumedL + :fuelL, obdCoveredDistanceKm = obdCoveredDistanceKm + :coveredKm WHERE id = :sessionId")
     suspend fun addObdAccumulator(sessionId: String, fuelL: Double, coveredKm: Double)
 
+    /**
+     * Per-location-point progress update for the active session. Writes ONLY the tracking
+     * columns and deliberately leaves obdFuelConsumedL / obdCoveredDistanceKm untouched, because
+     * ObdPollingService increments those directly in the DB; a full-row REPLACE from the
+     * service's cached SessionEntity would overwrite them with stale values.
+     */
+    @Query("UPDATE recording_session SET startLocationId = :startLocationId, endLocationId = :endLocationId, distanceMeters = :distanceMeters, durationMillis = :durationMillis, pointCount = :pointCount, isActive = :isActive WHERE id = :sessionId")
+    suspend fun updateSessionProgress(
+        sessionId: String,
+        startLocationId: Long?,
+        endLocationId: Long?,
+        distanceMeters: Double,
+        durationMillis: Long,
+        pointCount: Int,
+        isActive: Boolean
+    )
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(item: SessionEntity)
 

@@ -435,7 +435,17 @@ class TrackingService: Service() {
         )
         activeSession = updated
         lastSessionLocation = location
-        database.sessionDao.insertSession(updated)
+        // Partial UPDATE (not REPLACE): the cached session has stale OBD accumulators, which
+        // ObdPollingService increments directly in the DB.
+        database.sessionDao.updateSessionProgress(
+            sessionId = updated.id,
+            startLocationId = updated.startLocationId,
+            endLocationId = updated.endLocationId,
+            distanceMeters = updated.distanceMeters,
+            durationMillis = updated.durationMillis,
+            pointCount = updated.pointCount,
+            isActive = updated.isActive
+        )
     }
 
     private fun updateTripState(location: Location, locationId: Long) {

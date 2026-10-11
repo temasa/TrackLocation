@@ -8,9 +8,9 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.3  
+**Document Version:** 0.4  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-10-10  
+**Last Updated:** 2026-10-11  
 **Owned By:** Project Team
 
 ---
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-008 | 2026-10-11 | — (code fixed; device check pending) | Verification | Session running cost / fuel accumulator | Running-session COST/fuel reset or stopped accumulating — TrackingService re-wrote its cached session row with REPLACE on every GPS point, clobbering OBD accumulator increments | Code fixed (partial UPDATE); device verification pending |
 | ERR-007 | 2026-10-09 | 2026-10-10 (partial: pending a real order) | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending |
 | ERR-006 | 2026-10-09 | — | Verification | ADR-024 average km/L | SESSION AVG km/L above 700 km/L — GPS distance over the whole session divided by fuel accumulated only while OBD was valid/connected | Open |
 | ERR-005 | 2026-07-10 | — | Verification | ADR-012 sessionActive decoupling | OBD connected + polling but `sessionActive=false` → avg km/L / cost / SESSION AVG / obd_sample writes skipped while instant km/L & L/h show | Open |
@@ -63,6 +64,29 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-008: Running-session cost/fuel reset on every GPS point — cached session row written back with REPLACE
+
+**Found At:** 2026-10-11 (device observation on the Sessions screen + code analysis)  
+**Resolved At:** — (code fixed 2026-10-11; device verification pending)  
+**Phase:** Verification  
+**Sprint/Task:** Session running cost / fuel accumulators (TrackingService cache write-back vs ObdPollingService increments)  
+**Environment:** on-device drive (user), SM-G965F Android 10 (running-session COST on the Sessions screen)  
+**Status:** Code fixed — device verification PENDING  
+
+**Error Message / Output:**
+No crash. Observed: the running-session COST (litres × price) periodically reset or stopped accumulating while OBD was polling; the session average km/L was also affected.
+
+**Root Cause:**
+`TrackingService.updateActiveSession()` kept a cached `SessionEntity` and wrote it back with `insertSession` (Room `@Insert`, REPLACE) on every location point. `ObdPollingService` increments `obdFuelConsumedL` / `obdCoveredDistanceKm` directly in the database through `SessionDao.addObdAccumulator`. Each REPLACE overwrote the whole row with the stale accumulator values held in the cache, clobbering the fuel and covered-distance totals written since the cache was last refreshed. The close paths (session start insert, `stopAlwaysRecording` re-integration from `obd_sample`) were not affected.
+
+**Resolution:**
+Added `SessionDao.updateSessionProgress(...)`, a partial `UPDATE` of only `startLocationId`, `endLocationId`, `distanceMeters`, `durationMillis`, `pointCount` and `isActive`. `updateActiveSession()` now calls it, so the OBD accumulator columns are never written from the service cache. No schema change, no Room migration. Note: the unused `SessionDao.updateSession` (`@Update`) would have the same hazard if it were used on a cached session. Static review only — not built, not unit-tested, not device-verified (AGENTS.md §5a, no permission given).
+
+**Lesson Learned:**
+Never write back a full row from a cached entity when another writer increments columns of that same row in the database. Use a targeted `UPDATE` that names only the columns this writer owns. A REPLACE insert or an `@Update` of a stale copy silently reverts concurrent counters, and the symptom appears only intermittently. Device check still required: the running-session COST should keep rising across GPS points.
 
 ---
 
