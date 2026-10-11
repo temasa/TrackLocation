@@ -33,9 +33,15 @@ import java.util.Locale
 
 const val MetricEmpty = "—"
 
-enum class MetricTheme(val label: Color, val value: Color, val separator: Color) {
-    Dark(PanelTextSecondary, PanelTextPrimary, PanelBorder),
-    Light(TripMuted, TripInk, MetricSeparatorLight),
+enum class MetricTheme(
+    val label: Color,
+    val value: Color,
+    val separator: Color,
+    val horizontalAlignment: Alignment.Horizontal,
+    val textAlign: TextAlign,
+) {
+    Dark(PanelTextSecondary, PanelTextPrimary, PanelBorder, Alignment.CenterHorizontally, TextAlign.Center),
+    Light(TripMuted, TripInk, MetricSeparatorLight, Alignment.Start, TextAlign.Start),
 }
 
 enum class MetricSize(
@@ -65,7 +71,7 @@ fun MetricCell(
     }
     Column(
         modifier = semanticsModifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = theme.horizontalAlignment,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
@@ -75,7 +81,7 @@ fun MetricCell(
                 fontSize = size.labelSize.sp,
                 fontWeight = FontWeight.Normal,
                 letterSpacing = size.labelSpacing.sp,
-                textAlign = TextAlign.Center,
+                textAlign = theme.textAlign,
             ),
             maxLines = 1,
         )
@@ -88,7 +94,7 @@ fun MetricCell(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = size.valueSpacing.sp,
                 fontFeatureSettings = "tnum",
-                textAlign = TextAlign.Center,
+                textAlign = theme.textAlign,
             ),
             maxLines = 1,
         )
