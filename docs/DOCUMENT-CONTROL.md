@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.3  
+**Document Version:** 0.4  
 **Status:** Active  
 **Last Updated:** 2026-10-11  
 **Owner:** Product Manager  
@@ -63,8 +63,8 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.52 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.38 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.53 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.39 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.4 | Active (persistent) | Project Team | 2026-10-11 |
@@ -72,7 +72,7 @@ When any controlled document changes, update both:
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.3 | Active | Product Manager | 2026-06-15 |
+| `docs/DOCUMENT-CONTROL.md` | 0.4 | Active | Product Manager | 2026-06-15 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -94,6 +94,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | IMPLEMENTATION-PLAN, UI-SPEC, DOCUMENT-CONTROL | 0.52/0.38/0.3 | 0.53/0.39/0.4 | Metric cell left alignment implemented in Compose (UI-SPEC §5a decision (d), code `2b64eaf`; static review only, no build or device run): `MetricCell` aligns from `MetricTheme` (Light start, Dark centred). IMPLEMENTATION-PLAN §1 row 0.53, §4 How to Verify item 8, step 1 note, Next Step "Current" note, §6 row Completed (Git Revision `2b64eaf`, replacing the last Task Log `---`). UI-SPEC v0.39 §5a (d) updated from pending to implemented. Build and device check pending user permission. | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN, UI-SPEC, DOCUMENT-CONTROL | 0.51/0.37/0.2 | 0.52/0.38/0.3 | Metric cell left alignment on light surfaces (UI-SPEC §5a, docs only): cells on light surfaces (List rows, Sessions cards incl. COST row) left-aligned; dark Track strips stay centred; Earnings stays right-aligned. UI-SPEC §3b #7, §5a Cell, Row, Light surface, exception (3), §4 COST status, code-side decision (d). IMPLEMENTATION-PLAN §1 row, §4 How to Verify item 8 and step 1 note, Next Step note, §6 row (Not started, `---`); COST-row task set to Completed (`7760d48`). Register row for DOCUMENT-CONTROL corrected 0.1 → 0.3 to match its header. PRD and ARCHITECTURE not changed (no stale mentions). No source change; Compose alignment follow-up pending. | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN, UI-SPEC, DOCUMENT-CONTROL | 0.50/0.36/0.1 | 0.51/0.37/0.2 | Sessions card COST row (UI-SPEC §5a exception (5)): COST as a separate left-aligned row below the five-cell strip on recorded-session cards, value = fuel L × current shared price, compact, `—` when no fuel or price; design in `ui-design.pen`; IMPLEMENTATION-PLAN §4 How to Verify item 7 and §6 row (Not started, `---`); UI-SPEC §4 Session card group and §5a scope/exception (5). PRD and ARCHITECTURE not changed. | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.49 | 0.50 | Metric Display Standard in Compose slice: code committed (`82188e5`, `a53fa75`, `6d51091`; docs `6c2bead`) and partly device-verified (`:app:assembleDebug` BUILD SUCCESSFUL; APK installed and launched on Galaxy S9+; Sessions cards and List finished rows checked). §1 row 0.50, §3 phase row, §4 slice status and steps, Next Step entry, §6 row Git Revision and Verification filled; remaining device checks listed in Next Step. DOCUMENT-CONTROL stays 0.1; UI-SPEC not changed. | Claude Haiku 5.5 |

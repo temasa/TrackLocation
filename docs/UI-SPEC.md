@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.38
+**Document Version:** 0.39
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -624,7 +624,7 @@ All components nest a shared `Metric/Base`, so a base style change propagates to
 - (a) **Strip Only card:** the AVG/INST cell uses weight 1.7 as a stand-in for the 90 px width in exception (1), because the Compose strip lays out cells by relative weight. Revisit if the expand chevron overlaps the cell on device.
 - (b) **List live row (`ActiveTripRow`):** ONE row of six compact cells in canonical order TIME / DIST (km) / SPEED (km/h) / COST/NET (Rp.) / FLOW (L/h) / AVG/INST (km/L), weights 44 / 40 / 60 / 46 / 40 / 70. This supersedes the two-row live layout.
 - (c) **List finished-trip row:** ONE row of five compact cells TIME / DIST (km) / AVG SPEED (km/h) / COST (Rp.) / AVG FUEL (km/L), weights 48 / 44 / 82 / 52 / 76, card height 132 dp. The order price / net moves to the order header column. The 132 dp height may clip non-header order rows slightly; check on device.
-- (d) **Light-surface alignment (2026-10-11; code follow-up pending):** cells on light surfaces (List rows, Sessions cards incl. COST row) are left-aligned; dark Track strips stay centred. `MetricCell` alignment change not yet implemented (IMPLEMENTATION-PLAN §4 How to Verify item 8).
+- (d) **Light-surface alignment (2026-10-11; implemented in Compose, static review, device check pending):** cells on light surfaces (List rows, Sessions cards incl. COST row) are left-aligned; dark Track strips stay centred. `MetricCell` derives alignment from its theme (commit `2b64eaf`; IMPLEMENTATION-PLAN §4 How to Verify item 8).
 
 ---
 
