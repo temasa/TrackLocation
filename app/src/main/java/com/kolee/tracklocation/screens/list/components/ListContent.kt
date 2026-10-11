@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +46,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -62,7 +60,6 @@ import com.kolee.tracklocation.feature.obd.FuelPriceController
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
-import com.kolee.tracklocation.feature.obd.ui.FuelCostEditorDialog
 import com.kolee.tracklocation.feature.obd.ui.formatIdr
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.tracking.LocationUiState
@@ -147,7 +144,6 @@ private fun TrackSuccessState(
         FuelPriceController.attach(fuelPriceDao, ObdPreferencesDataStore(context.applicationContext))
     }
     val priceState by FuelPriceController.state.collectAsState()
-    var showPriceDialog by remember { mutableStateOf(false) }
     val tripFuelConsumedL = connected?.tripFuelConsumedL
     val price = priceState.currentPrice
     val costText = if (tripFuelConsumedL != null && price > 0.0) {
@@ -198,7 +194,7 @@ private fun TrackSuccessState(
         ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item { ListHeader(onFuelClick = { showPriceDialog = true }) }
+        item { ListHeader() }
         item {
             CurrentTripCard(
                 uiState = uiState,
@@ -216,8 +212,7 @@ private fun TrackSuccessState(
                     instantKmLText = instantKmLText,
                     lphText = lphText,
                     tripAvgKmLText = tripAvgKmLText,
-                    costText = costText,
-                    onCostClick = { showPriceDialog = true }
+                    costText = costText
                 )
             }
         }
@@ -240,9 +235,6 @@ private fun TrackSuccessState(
                     costText = tripCosts[item.idx] ?: "—",
                     onClick = { onSelect.invoke(item.idx) },
                     onLongClick = { showDialogForDeletion = true },
-                    onCostClick = {
-                        showTripFuelPriceToast(context, item.idx, tripPrices[item.idx] ?: 0.0)
-                    },
                     costColor = if (tripCostColorFlags[item.idx] == true) TripGreen else TripInk,
                     pricePerLiter = tripPrices[item.idx] ?: 0.0
                 )
@@ -258,22 +250,6 @@ private fun TrackSuccessState(
             }
         }
     }
-
-    // Fuel Cost (FR-12): shared price editor with in-memory undo/redo.
-    if (showPriceDialog) {
-        FuelCostEditorDialog(
-            current = priceState.currentPrice,
-            canUndo = priceState.canUndo,
-            canRedo = priceState.canRedo,
-            onSave = { newPrice ->
-                FuelPriceController.set(newPrice)
-                showPriceDialog = false
-            },
-            onUndo = { FuelPriceController.undo() },
-            onRedo = { FuelPriceController.redo() },
-            onDismiss = { showPriceDialog = false }
-        )
-    }
 }
 
 @Composable
@@ -282,8 +258,7 @@ private fun ActiveTripRow(
     instantKmLText: String,
     lphText: String,
     tripAvgKmLText: String,
-    costText: String,
-    onCostClick: () -> Unit
+    costText: String
 ) {
     val now by produceState(initialValue = System.currentTimeMillis(), uiState.isTracking) {
         while (true) {
@@ -377,8 +352,7 @@ private fun ActiveTripRow(
             MetricCell(
                 label = "COST (Rp.)",
                 value = costText,
-                modifier = Modifier.weight(46f)
-                    .clickable { onCostClick() },
+                modifier = Modifier.weight(46f),
                 theme = MetricTheme.Light,
                 size = MetricSize.Compact
             )
@@ -462,7 +436,7 @@ private fun ActiveTripBadge() {
 }
 
 @Composable
-private fun ListHeader(onFuelClick: () -> Unit = {}) {
+private fun ListHeader() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom,
@@ -484,30 +458,7 @@ private fun ListHeader(onFuelClick: () -> Unit = {}) {
                 letterSpacing = 0.sp
             )
         }
-        Icon(
-            painter = painterResource(id = R.drawable.ic_fuel_pump),
-            contentDescription = "Set fuel price",
-            tint = TripInk,
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable(onClick = onFuelClick)
-                .padding(6.dp)
-                .size(26.dp)
-        )
     }
-}
-
-private fun showTripFuelPriceToast(
-    context: android.content.Context,
-    trackIdx: Int,
-    pricePerLiter: Double
-) {
-    val msg = if (pricePerLiter > 0.0) {
-        "Track #$trackIdx fuel price: ${formatIdr(pricePerLiter)} / litre"
-    } else {
-        "No fuel price recorded for this trip"
-    }
-    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
 }
 
 @Composable

@@ -15,7 +15,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,7 +67,6 @@ import com.kolee.tracklocation.feature.obd.FuelPriceController
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
 import com.kolee.tracklocation.feature.obd.service.ObdUiState
-import com.kolee.tracklocation.feature.obd.ui.FuelCostEditorDialog
 import com.kolee.tracklocation.feature.obd.ui.formatIdr
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.tracking.Actions
@@ -130,7 +128,6 @@ fun SessionsScreen() {
         )
     }
     val priceState by FuelPriceController.state.collectAsState()
-    var showPriceDialog by remember { mutableStateOf(false) }
 
     val sessions = viewModel.sessionsState.mapIndexed { index, session ->
         session.toUiItem(index = sessionsIndex(viewModel.sessionsState.size, index))
@@ -175,7 +172,6 @@ fun SessionsScreen() {
                     obdState = obdState,
                     locationUiState = locationUiState,
                     costText = costText,
-                    onCostClick = { showPriceDialog = true },
                     onReconnect = {
                         val intent = Intent(context, ObdPollingService::class.java).apply {
                             action = ObdPollingService.ACTION_RECONNECT_NOW
@@ -202,22 +198,6 @@ fun SessionsScreen() {
                     requestRecordingPermission = false
                     performTrackingService(context, Actions.START_RECORDING)
                 }
-            )
-        }
-
-        // Fuel Cost (FR-12): shared price editor with in-memory undo/redo.
-        if (showPriceDialog) {
-            FuelCostEditorDialog(
-                current = priceState.currentPrice,
-                canUndo = priceState.canUndo,
-                canRedo = priceState.canRedo,
-                onSave = { newPrice ->
-                    FuelPriceController.set(newPrice)
-                    showPriceDialog = false
-                },
-                onUndo = { FuelPriceController.undo() },
-                onRedo = { FuelPriceController.redo() },
-                onDismiss = { showPriceDialog = false }
             )
         }
     }
@@ -689,7 +669,6 @@ private fun ObdStatusCard(
     obdState: ObdUiState,
     locationUiState: com.kolee.tracklocation.tracking.LocationUiState,
     costText: String,
-    onCostClick: () -> Unit,
     onReconnect: () -> Unit
 ) {
     Card(
@@ -833,11 +812,10 @@ private fun ObdStatusCard(
                     }
                 }
 
-                // Fuel Cost (FR-12): tappable COST cell (litres × shared price). "—" when unset.
+                // Fuel Cost (FR-12): COST cell (display-only) (litres × shared price). "—" when unset.
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onCostClick() }
                         .padding(top = 8.dp, bottom = 4.dp)
                 ) {
                     Column {

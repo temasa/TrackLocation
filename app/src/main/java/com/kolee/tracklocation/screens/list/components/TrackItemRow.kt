@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +57,6 @@ fun TrackItemRow(
     costText: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    onCostClick: () -> Unit = {},
     costColor: Color = TripInk,
     // ADR-022: price-per-litre in effect at trip start (0.0 = none); used for the order net.
     pricePerLiter: Double = 0.0
@@ -214,9 +212,7 @@ fun TrackItemRow(
             MetricCell(
                 label = "COST (Rp.)",
                 value = costCompactText,
-                modifier = Modifier
-                    .weight(52f)
-                    .clickable(onClick = onCostClick),
+                modifier = Modifier.weight(52f),
                 theme = MetricTheme.Light,
                 size = MetricSize.Compact,
                 valueColor = costColor
