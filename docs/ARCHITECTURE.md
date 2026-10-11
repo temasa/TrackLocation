@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.32
+**Document Version:** 0.33
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -349,7 +349,7 @@ Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR
     fetchedAt INTEGER
   )
   ```
-  No backfill: trips recorded before v15 have no planned route. Exported schema `15.json` is added with the code change. Gate: ORS ToS check (ADR-026 decision 10) before the code ships.
+  No backfill: trips recorded before v15 have no planned route. No exported schema JSON is added (`TrackDatabase` has `exportSchema = false`); the migration is verified by installing over a copy of the v14 database before the code ships. Gate: ORS ToS check (ADR-026 decision 10) before the code ships.
 - `MIGRATION_15_16` (ADR-027, DB→**v16**, implemented in commit `a197453`; `assembleDebug` OK and run on a Galaxy S9+ over the existing v15 data on 2026-10-11 without a migration error; schema comparison and a copy-based install not done): new table, no change to existing tables. (The original scope said v14 → v15; the code is already at v15 via ADR-026, so this is v15 → v16.)
   ```sql
   CREATE TABLE fuel_event (

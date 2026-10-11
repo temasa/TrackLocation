@@ -16,7 +16,7 @@ The owner wants to review a finished trip: where the plan said to go versus wher
 
 ## Decision
 
-1. **New Room table `trip_planned_route`** via `MIGRATION_14_15` (DB version 14 → 15; exported schema and ARCHITECTURE updated). Columns:
+1. **New Room table `trip_planned_route`** via `MIGRATION_14_15` (DB version 14 → 15; no exported schema JSON, `exportSchema = false`; migration verified by installing over a copy of the v14 database; ARCHITECTURE updated). Columns:
    - `tripStartedAt` INTEGER PRIMARY KEY — equals `track.timestamp` of the owning trip. **No foreign key** (same convention as `observer_trip`).
    - `kind` TEXT NOT NULL — `'ORDER'` | `'NAV'`.
    - `geometry` TEXT NOT NULL — ORS encoded polyline, precision 5, stored exactly as returned.

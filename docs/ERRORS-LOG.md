@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.5  
+**Document Version:** 0.6  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-11  
 **Owned By:** Project Team
@@ -84,7 +84,7 @@ No crash and no build error. After install the dock did not appear on any screen
 `FuelDock` was mounted inside `screens/MainScreen.kt`, but no code calls `MainScreen`; the real app shell is `MainActivity.setContent`. The static review checked the dock composable, its imports and its Compose 1.2 APIs, but never checked that the host composable is referenced from the entry point.
 
 **Resolution:**
-New `ui/components/FuelDockHost.kt` (dock, the three dialogs and the route-to-theme mapping) mounted in `MainActivity`'s Scaffold `bottomBar` as `Column { FuelDockHost; BottomNavigationScreen }` (commit `3354689`). `MainScreen.kt` was restored to its pre-dock content and is still dead code; deleting it is a suggested follow-up, not done. After a rebuild and reinstall the dock rendered on Session, List, Track and Settings.
+New `ui/components/FuelDockHost.kt` (dock, the three dialogs and the route-to-theme mapping) mounted in `MainActivity`'s Scaffold `bottomBar` as `Column { FuelDockHost; BottomNavigationScreen }` (commit `3354689`). `MainScreen.kt` was restored to its pre-dock content, was dead code, and was deleted 2026-10-11 (dead code removed; no call sites). After a rebuild and reinstall the dock rendered on Session, List, Track and Settings.
 
 **Lesson Learned:**
 1. Before mounting UI into a host composable, grep for its call sites. A host with no caller is dead code, and anything mounted in it never renders.

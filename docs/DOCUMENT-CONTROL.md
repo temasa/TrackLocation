@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.7  
+**Document Version:** 0.8  
 **Status:** Active  
 **Last Updated:** 2026-10-11  
 **Owner:** Product Manager  
@@ -36,7 +36,7 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.26 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
-| `docs/ARCHITECTURE.md` | 0.32 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
+| `docs/ARCHITECTURE.md` | 0.33 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
 | `docs/adr/README.md` | 1.6 | Active (27 ADRs indexed) | Tech Lead | 2026-10-11 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -64,16 +64,16 @@ When any controlled document changes, update both:
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.5 | Accepted; code implemented 2026-10-11; build OK; device-verified partially (Reset accepts 0 L) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.60 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.45 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.61 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.46 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
-| `docs/ERRORS-LOG.md` | 0.5 | Active (persistent) | Project Team | 2026-10-11 |
+| `docs/ERRORS-LOG.md` | 0.6 | Active (persistent) | Project Team | 2026-10-11 |
 | `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.7 | Active | Product Manager | 2026-10-11 |
+| `docs/DOCUMENT-CONTROL.md` | 0.8 | Active | Product Manager | 2026-10-11 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -95,6 +95,11 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.60 | 0.61 | Schema and cleanup corrections (docs only): no exported Room schema JSON (`exportSchema = false`) stated in the v14 → v15 migration slice text, the TrackEntity note and the v15 → v16 verification note; MainScreen.kt deletion recorded (dead code, deleted 2026-10-11, commit `da14b98`) in Next Step, the device-run note and the mount-point note; §1 row 0.61. | Claude Haiku 5.5 |
+| 2026-10-11 | ARCHITECTURE | 0.32 | 0.33 | MIGRATION_14_15 note corrected: no exported schema JSON (`exportSchema = false`); migration verified by installing over a copy of the v14 database. | Claude Haiku 5.5 |
+| 2026-10-11 | UI-SPEC | 0.45 | 0.46 | §5b note (i) mount point: `screens/MainScreen.kt` recorded as deleted 2026-10-11 (dead code). | Claude Haiku 5.5 |
+| 2026-10-11 | ERRORS-LOG | 0.5 | 0.6 | ERR-009 resolution text: dead `screens/MainScreen.kt` removed (deleted 2026-10-11); follow-up no longer pending. | Claude Haiku 5.5 |
+| 2026-10-11 | DOCUMENT-CONTROL | 0.7 | 0.8 | Register rows for ARCHITECTURE 0.33, IMPLEMENTATION-PLAN 0.61, UI-SPEC 0.46, ERRORS-LOG 0.6 and this document; change log rows for the schema and MainScreen.kt docs commit. | Claude Haiku 5.5 |
 | 2026-10-11 | adr/027 | 1.4 | 1.5 | Reset-to-0 correction: the Reset-to-0 L deviation was a misread (Reset accepts 0 L; verified on device); open item replaced; Revision 1.5 summary added; device checks recorded (Reset 0 / 2 / 5; FUEL LEFT Low and Critical on light and dark docks). | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.59 | 0.60 | Reset-to-0 correction: deviation and open item removed from the slice header, Next Step, How to Verify items 5, 9 and 14, device-run note and §6 row; items 5 and 9 updated (Reset 0 accepted; Low / Critical seen); contrast observation added to Next Step for owner review; §1 row 0.60. | Claude Haiku 5.5 |
 | 2026-10-11 | UI-SPEC | 0.44 | 0.45 | §5b note (j) corrected (Reset accepts 0 L); note (k) updated (Low / Critical seen); note (l) contrast observation for owner review added. | Claude Haiku 5.5 |
