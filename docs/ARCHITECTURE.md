@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.28
+**Document Version:** 0.29
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -55,7 +55,7 @@ ObserverTripEntity (observer_trip)   ← DERIVED from captured tree snapshots; G
   ├── phase (pickup/drop-only/finished/cancelled; cancelled added ADR-025, string column, no schema change), firstSeenAt, lastSeenAt, handled (marked once the takeover for that order has been processed)
   └── no FKs to trips/sessions; deduplication key = (pickupAddress, dropAddress)
 
-TripPlannedRouteEntity (trip_planned_route)   ← saved planned route per trip, device-only (ADR-026, DB v15; not yet implemented)
+TripPlannedRouteEntity (trip_planned_route)   ← saved planned route per trip, device-only (ADR-026, DB v15; code in f26bb03)
   ├── tripStartedAt (INTEGER PK) = track.timestamp of the owning trip; NO FK (same convention as observer_trip)
   ├── kind (TEXT NOT NULL) — 'ORDER' | 'NAV' (NAV reserved for ADR-009, not implemented)
   ├── geometry (TEXT NOT NULL) — ORS encoded polyline, precision 5, as returned
@@ -84,7 +84,16 @@ TrackEntity (trip) — Gojek order outcome columns (ADR-025)
 
 FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
   ├── pricePerLiter (REAL)
-  └── effectiveFromMs (Long, @Index) — current price = latest row; completed-trip cost uses the row effective at trip start
+  └── effectiveFromMs (Long, @Index) — current price = latest row; completed-trip cost uses the row effective at trip start; a Fill up with a changed price appends a row here (ADR-027)
+
+FuelEventEntity (fuel_event)   ← append-only fuel log for the fuel dock (added DB v16, ADR-027; no FK)
+  ├── id (INTEGER PK AUTOINCREMENT)
+  ├── kind (TEXT NOT NULL) — 'RESET' | 'FILL_UP'
+  ├── litres (REAL NOT NULL) — starting level (RESET) or litres added (FILL_UP)
+  ├── pricePerLiter (REAL, nullable) — price entered in Fill up when changed; NULL when the default price was kept
+  └── createdAtMs (INTEGER NOT NULL)
+  Fuel balance (derived, never stored; ADR-027): anchor = latest RESET (resetAt = its createdAtMs); fuelLeft = max(0, anchor.litres + Σ FILL_UP.litres with createdAtMs > resetAt − Σ OBD fuel consumed in (resetAt, now]); no RESET → `—`. Only OBD-measured litres reduce it; OBD disconnected → frozen.
+  RANGE (display only) = fuelLeft × session avg km/L (obdCoveredDistanceKm ÷ obdFuelConsumedL, ADR-024).
 
 KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10, ADR-010); rebuildable, never source-of-truth
   ├── simplified directed polyline (Douglas–Peucker) + bearingDegrees
@@ -100,6 +109,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
 - `observer_trip` is retained independently: 90 days / 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete.
+- `fuel_event` (ADR-027) is append-only and has no FK. The fuel balance is derived from it and the OBD fuel integral, never stored as a column.
 - `trip_planned_route` (ADR-026) is a separate table (not a `track` column: `track` list queries load whole rows and already carry a large `pathPoints` string). It has no FK; it is deleted with its trip (same DAO transaction path as the `track` delete) plus an app-start orphan sweep (no matching `track.timestamp` AND `fetchedAt` older than 24 h). It is never ingested into the local route store (ADR-010, PRD BR-15/BR-16); the optimized route is never persisted.
 
 ---
@@ -119,7 +129,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 14; v15 planned by ADR-026) | Local-first storage with migrations |
+| Persistence | Room (current DB version 15; v16 planned by ADR-027) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -286,7 +296,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v14** (current; **v15 planned by ADR-026**, not yet implemented; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v15** (current; **v16 planned by ADR-027**, not yet implemented; ADR-026 extends to v15, code `f26bb03`; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -326,7 +336,7 @@ Room database (`TrackDatabase`), at version **v14** (current; **v15 planned by A
   UPDATE track SET orderStatus = 'COMPLETED' WHERE orderLabel IS NOT NULL
   ```
   Order-linked trips existing before v14 are marked `COMPLETED` (the earlier cancel outcome was not stored; history not rewritten). Manual trips keep `orderStatus` NULL and show no chip. `orderOffline` defaults to `0`.
-- `MIGRATION_14_15` (ADR-026, DB→**v15**, planned, not yet implemented): new table, no change to existing tables:
+- `MIGRATION_14_15` (ADR-026, DB→**v15**, implemented in code `f26bb03`): new table, no change to existing tables:
   ```sql
   CREATE TABLE trip_planned_route (
     tripStartedAt INTEGER NOT NULL PRIMARY KEY,
@@ -339,6 +349,17 @@ Room database (`TrackDatabase`), at version **v14** (current; **v15 planned by A
   )
   ```
   No backfill: trips recorded before v15 have no planned route. Exported schema `15.json` is added with the code change. Gate: ORS ToS check (ADR-026 decision 10) before the code ships.
+- `MIGRATION_15_16` (ADR-027, DB→**v16**, planned, not yet implemented): new table, no change to existing tables. (The original scope said v14 → v15; the code is already at v15 via ADR-026, so this is v15 → v16.)
+  ```sql
+  CREATE TABLE fuel_event (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    kind TEXT NOT NULL,
+    litres REAL NOT NULL,
+    pricePerLiter REAL,
+    createdAtMs INTEGER NOT NULL
+  )
+  ```
+  Append-only; no deletes in ADR-027. Exported schema `16.json` is added with the code change. Migration verified on a copy of the device DB before shipping.
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.
