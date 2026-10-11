@@ -6,6 +6,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.kolee.tracklocation.navigation.BottomNavigationScreen
 import com.kolee.tracklocation.navigation.NavGraph
+import com.kolee.tracklocation.ui.components.FuelDockHost
 import androidx.core.content.ContextCompat
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
@@ -144,7 +146,12 @@ class MainActivity : ComponentActivity() {
                 }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    bottomBar = { BottomNavigationScreen(navController = navController) }
+                    bottomBar = {
+                        Column {
+                            FuelDockHost(navController = navController)
+                            BottomNavigationScreen(navController = navController)
+                        }
+                    }
                 ) { paddingValues ->
                     NavGraph(
                         navHostController = navController,
