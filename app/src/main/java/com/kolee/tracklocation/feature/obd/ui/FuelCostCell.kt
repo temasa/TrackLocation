@@ -42,10 +42,13 @@ import java.text.DecimalFormatSymbols
  * Format an IDR amount as "Rp " + grouped integer with '.' thousands separators, no decimals.
  * e.g. 12500.0 -> "Rp 12.500". Fuel Cost (FR-12).
  */
-fun formatIdr(amount: Double): String {
+fun formatIdr(amount: Double): String = "Rp " + formatIdrPlain(amount)
+
+/** Same grouping as [formatIdr] without the "Rp " prefix, e.g. 10000.0 -> "10.000". */
+fun formatIdrPlain(amount: Double): String {
     val symbols = DecimalFormatSymbols().apply { groupingSeparator = '.' }
     val df = DecimalFormat("#,##0", symbols)
-    return "Rp " + df.format(amount)
+    return df.format(amount)
 }
 
 /**
@@ -73,12 +76,19 @@ fun FuelCostEditorDialog(
                 .padding(20.dp)
         ) {
             Text(
-                text = "Fuel price (Rp / litre)",
+                text = "Fuel price",
                 color = TripInk,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
             )
             Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = "Price (Rp/L)",
+                color = TripMuted,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
 
             Box(
                 modifier = Modifier
@@ -104,6 +114,13 @@ fun FuelCostEditorDialog(
                     },
                 )
             }
+
+            Text(
+                text = "Applies from now. Finished trips keep their price.",
+                color = TripMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp),
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

@@ -74,3 +74,7 @@ val ObserverAmberHair = Color(0xFFF5E3B8)
 val ObserverCardAlt = Color(0xFFF8FAF7)
 val ObserverGreenLight = Color(0xFF22C55E)
 val ObserverGreenBg = Color(0x1F22C55E)
+
+// Fuel dock level colours (ADR-027 Decision 9)
+val FuelLowAmber = Color(0xFFD97706)       // < 6 L
+val FuelCriticalRed = Color(0xFFDC2626)    // < 3 L
