@@ -74,9 +74,11 @@ import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricEmpty
 import com.kolee.tracklocation.ui.components.MetricSize
 import com.kolee.tracklocation.ui.components.MetricStrip
 import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatCompactAmount
 import com.kolee.tracklocation.ui.components.formatMetricCount
 import com.kolee.tracklocation.ui.components.formatMetricDecimal
 import com.kolee.tracklocation.ui.components.formatMetricPair
@@ -186,6 +188,7 @@ fun SessionsScreen() {
             if (sessions.isNotEmpty()) {
                 SessionsList(
                     sessions = sessions,
+                    pricePerLiter = priceState.currentPrice,
                     modifier = Modifier.weight(1f)
                 )
             } else {
@@ -423,6 +426,7 @@ private fun sessionsIndex(size: Int, index: Int): Int = size - index
 @Composable
 private fun SessionsList(
     sessions: List<SessionUiItem>,
+    pricePerLiter: Double,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -453,13 +457,16 @@ private fun SessionsList(
             }
         }
         items(sessions.size) { index ->
-            SessionRow(item = sessions[index])
+            SessionRow(item = sessions[index], pricePerLiter = pricePerLiter)
         }
     }
 }
 
 @Composable
-private fun SessionRow(item: SessionUiItem) {
+private fun SessionRow(item: SessionUiItem, pricePerLiter: Double) {
+    val costText = item.totalFuelL?.takeIf { pricePerLiter > 0.0 }
+        ?.let { formatCompactAmount(Math.round(it * pricePerLiter)) }
+        ?: MetricEmpty
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -555,6 +562,18 @@ private fun SessionRow(item: SessionUiItem) {
                         label = "POINTS",
                         value = formatMetricCount(item.points),
                         modifier = Modifier.weight(48f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                ) {
+                    MetricCell(
+                        label = "COST (Rp.)",
+                        value = costText,
                         theme = MetricTheme.Light,
                         size = MetricSize.Compact
                     )
