@@ -1,6 +1,6 @@
 # ADR-027: Fuel Balance, Fill-up and Reset (Fuel Dock)
 
-**Status:** Accepted (revision 1.2, 2026-10-11) — dock and dialogs designed in `ui-design.pen` (design commit `237e940`); Reset entry point decided 2026-10-11; COST cells display-only decided 2026-10-11 (Decision 12); dock state thresholds and colours confirmed by the owner 2026-10-11 (Decision 9); consumption since a Reset uses a stored OBD baseline, not `obd_sample` (Decision 2); code not started
+**Status:** Accepted; code implemented 2026-10-11 (static review only; build and device verification pending)
 **Date:** 2026-10-11
 **Decided By:** Project owner + Claude Code
 
@@ -120,14 +120,14 @@ PRD (FR-22 new, FR-12 cross-reference), ARCHITECTURE (`fuel_event` entity, balan
 
 - **Dock states:** thresholds 6 L (low), 3 L (critical), 10% uncovered distance (low confidence), and the amber `#D97706` / red `#DC2626` colours were confirmed by the owner on 2026-10-11 (Decision 9).
 - **`pricePerLiter` NULL when the default price is kept:** the event then refers to the fuel price row in effect at its `createdAtMs`. Chosen by the assistant.
-- **Cumulative OBD total (rev. 1.2):** `cumulativeNow` = Σ `recording_session.obdFuelConsumedL` over all session rows, active included (Decision 2). Chosen by the assistant. Confirmed in code 2026-10-11: `ObdPollingService` writes each poll's litres to the active row via `addObdAccumulator`, so no separate live value is read. ADR-012 gating applies to that accumulator.
-- **Session close re-integration (rev. 1.2):** at session close the stored `obdFuelConsumedL` is re-integrated from `obd_sample` (ADR-007; `TrackingService` `reintegratedFuelL`). If that value differs from the value accumulated during the drive, `cumulativeNow` shifts once by the difference at close. Expected to be small; recorded, not decided here.
+- **Cumulative OBD total (rev. 1.2):** `cumulativeNow` = Σ `recording_session.obdFuelConsumedL` over all session rows, active included (Decision 2). Chosen by the assistant. Confirmed in code 2026-10-11: `ObdPollingService` writes each poll's litres to the active row via `addObdAccumulator`, so no separate live value is read. ADR-012 gating applies to that accumulator. To verify on device.
+- **Session close re-integration (rev. 1.2):** at session close the stored `obdFuelConsumedL` is re-integrated from `obd_sample` (ADR-007; `TrackingService` `reintegratedFuelL`). If that value differs from the value accumulated during the drive, `cumulativeNow` shifts once by the difference at close. Expected to be small; recorded, not decided here. To verify on device.
 - **Number formats:** FUEL LEFT to one decimal (e.g. `24.0`) and RANGE in whole km (e.g. `310`), as in the design; PRICE uses the §5a compact Rp format. Confirm at code time.
 
 ## Open items / gates
 
 - [x] **Owner confirmed the dock state thresholds (6 L / 3 L / 10%) and the amber `#D97706` / red `#DC2626` colours on 2026-10-11** (Decision 9).
-- [x] **Code check, live litres (confirmed 2026-10-11):** `ObdPollingService` accumulates each poll's litres into the active `recording_session.obdFuelConsumedL` (`addObdAccumulator`), so the cumulative total is Σ over all session rows, active included (Decision 2; Assumptions).
+- [ ] **Code check, live litres (to verify on device):** `ObdPollingService` accumulates each poll's litres into the active `recording_session.obdFuelConsumedL` (`addObdAccumulator`), so the cumulative total is Σ over all session rows, active included (Decision 2; Assumptions). To verify on device.
 - [ ] **Code gate (before merge):** verify that no session-delete path exists (Consequences).
 - [ ] **Migration ordering:** if ADR-026 code ships to v15 before this ADR, this migration is v15 → v16 (as written). If the owner wants both changes in one release, they may be combined into one migration; decide before code.
 - [ ] Owner decides whether a fuel-event correction path (edit or delete) is needed later; out of scope here.
@@ -137,5 +137,6 @@ PRD (FR-22 new, FR-12 cross-reference), ARCHITECTURE (`fuel_event` entity, balan
 - **ADR Accepted:** 2026-10-11.
 - **Docs Updated:** 2026-10-11 — PRD (FR-22; FR-12 v0.26), ARCHITECTURE, UI-SPEC (§5b; §4 and §3b #9 v0.41), IMPLEMENTATION-PLAN (v0.56), adr/README, ADR-008 (amendment 2026-10-11, UI entry points), DOCUMENT-CONTROL.
 - **Revision 1.2 (2026-10-11):** Decision 2 and Decision 6 now use the stored `resetBaselineL` (Reset writes the cumulative OBD total), replacing the earlier "OBD integral since the Reset" wording; Decision 9 thresholds and colours confirmed by the owner; session-removal and OBD-disconnect risks recorded. ARCHITECTURE v0.30, IMPLEMENTATION-PLAN v0.57, UI-SPEC v0.42 updated to match; PRD unchanged (v0.26, FR-22 does not name samples or thresholds).
-- **Design:** dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs and dock states designed in `ui-design.pen` (2026-10-11 update; `f39e1d4` added the dock first). OBD Settings has no dock. Reset entry point decided. Trips header fuel-pump icon removed from the design (Decision 11); COST cells display-only, no tap and no Toast (Decision 12); code removal pending.
-- **Code Implementation:** Not started. No build, test or device run performed.
+- **Revision 1.3 (2026-10-11):** code implemented (see Code Implementation). Status line updated; the live-litres check and session-close re-integration are marked to verify on device. ARCHITECTURE v0.31, IMPLEMENTATION-PLAN v0.58, UI-SPEC v0.43 updated to match.
+- **Design:** dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs and dock states designed in `ui-design.pen` (2026-10-11 update; `f39e1d4` added the dock first). OBD Settings has no dock. Reset entry point decided. Trips header fuel-pump icon removed from the design (Decision 11); COST cells display-only, no tap and no Toast (Decision 12); code removal implemented (`9d01688`).
+- **Code Implementation:** implemented 2026-10-11 in commits `a197453` (data layer), `36030ef` (dock UI) and `9d01688` (removals); static review only. No build, test or device run performed; build and device verification pending.

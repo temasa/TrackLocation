@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.42
+**Document Version:** 0.43
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -53,7 +53,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
 | Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, COST/NET, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
-| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code not started | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
+| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`; static review only) | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -118,7 +118,7 @@ Recommended copy: Title `Always-recording`; ON `Active` / OFF `Inactive`; ON hel
 5. **Recent-trip rows** (`TrackItemRow`) — add a 4th stat, **efficiency**: `track.obdCoveredDistanceKm ÷ obdFuelConsumedL` km/L (ADR-024) when `obdCoveredDistanceKm > 0`, else the legacy `distance(km) ÷ obdFuelConsumedL` for pre-v13 trips; shows `"—"` when `obdFuelConsumedL = 0` (trip recorded without OBD).
 6. **Recent-trip rows — cost stat (ADR-008):** add a 5th stat, **cost** (`Rp`) = `obdFuelConsumedL × price effective at the trip's start` (from the `fuel_price` effective-dated log); shows `—` when `obdFuelConsumedL = 0` or no price was in effect at the trip's start. Final completed-row stats, in canonical order (§5a): duration / km / avg speed / cost / average km/L.
 7. **Recent-trip rows — two-row metric grid (2026-07-08 fix):** the five stats no longer share a single row. Packing five equal-width columns clipped the values on-device (cost showed only `Rp`, avg speed lost its `h`, duration lost its last digit). `TrackItemRow` now mirrors `ActiveTripRow`'s two-row grid (card height 124→156dp): **base row** = duration / km / avg speed; **fuel row** = cost / average km/L (an empty third cell keeps the columns aligned with the base row). Stat **values** use `MonospaceFontFamily` (tabular digits, ideal for tight numeric columns) at 14sp / Medium — smaller and lighter than the previous 15sp / Bold — with `-0.3sp` tracking and `Ellipsis` overflow; **labels** at 10sp. Data was always persisted correctly; this was a purely visual fix. **Design update (2026-10-09):** the grid renders as §5a metric cells — label above value, unit in the label (`TIME`, `DIST (km)`, `AVG SPEED (km/h)`, `COST (Rp.)`, `AVG FUEL (km/L)`), left-aligned on the light surface (2026-10-11; earlier centred), e.g. `22m15s` / `12.4` / `33.5` / `8.2k` / `8.5`. The value styling above (14sp Medium) is superseded in the design; implemented in Compose 2026-10-11 (static review; device check pending). **Single-row update (2026-10-09, later):** in the design the five stats sit in ONE row per card, in canonical order — TIME, DIST, AVG SPEED, COST, AVG FUEL — instead of the two-row grid; the card is 310 px wide inside its 18 px padding, so the row uses weighted cell widths 48 / 44 / 82 / 52 / 76 with a 2 px gap, label Inter 8 (letter-spacing 0) and value Roboto Mono 600 at 12, which keeps every label on one line. The two-row grid text above is superseded in the design; implemented in Compose 2026-10-11 (static review; device check pending).
-8. **Header fuel-price affordance (2026-07-08) — REMOVED / SUPERSEDED 2026-10-11:** the fuel dock PRICE pencil (§5b) is now the price entry point from outside the cost cells. The Trips header fuel-pump icon is no longer in `ui-design.pen`; code removal is pending (IMPLEMENTATION-PLAN §4 fuel dock slice, step 6). The historic 2026-07-08 spec below no longer applies in the design: the `ListHeader` "Trips" row gains a trailing tappable **fuel-pump icon** (right-aligned, same row as the 40sp label). Tapping opens the existing `FuelCostEditorDialog` (§4). This is the **only persistent entry point** to set/edit the fuel price on the Trips screen — previously the editor was reachable only via the active-trip row's COST cell, which is absent when no trip is running. Icon-only (no price text); rendered from a new `res/drawable` vector (no Compose-1.2 extended-icons dependency).
+8. **Header fuel-price affordance (2026-07-08) — REMOVED / SUPERSEDED 2026-10-11:** the fuel dock PRICE pencil (§5b) is now the price entry point from outside the cost cells. The Trips header fuel-pump icon is no longer in `ui-design.pen`; code removal implemented (`9d01688`; IMPLEMENTATION-PLAN §4 fuel dock slice, step 6). The historic 2026-07-08 spec below no longer applies in the design: the `ListHeader` "Trips" row gains a trailing tappable **fuel-pump icon** (right-aligned, same row as the 40sp label). Tapping opens the existing `FuelCostEditorDialog` (§4). This is the **only persistent entry point** to set/edit the fuel price on the Trips screen — previously the editor was reachable only via the active-trip row's COST cell, which is absent when no trip is running. Icon-only (no price text); rendered from a new `res/drawable` vector (no Compose-1.2 extended-icons dependency).
 9. **Completed-trip cost read-out (2026-07-08) — REMOVED / SUPERSEDED 2026-10-11:** the cost cell is display-only and the Toast is removed (§4, ADR-027 Decision 12). Historic spec, kept for reference: tapping the **cost** cell on a completed `TrackItemRow` shows a **Toast** with the historic fuel price applied to that trip — the `fuel_price` row effective at the trip's **start** (`priceEffectiveAt(timestamp)`), price-per-litre only (e.g. "Track #12 fuel price: Rp 12.500 / litre"). **Read-only per ADR-008** — never opens the editable `FuelCostEditorDialog`, so finished trips are never re-costed. When no price was in effect at the trip's start (cost `—`), the Toast reads "No fuel price recorded for this trip." The cost cell's tap is independent of the row's tap-to-open-detail / long-press-to-delete.
 10. **Completed-trip cost color alternation (2026-07-08, cosmetic):** on the completed `TrackItemRow` list, the **cost value** alternates between two theme colors — `TripInk` (#0A0A0A) and `TripGreen` (#16A34A) — toggling each time a row's cost differs from the row **above** it. Equal-cost runs (including consecutive `—`) share one color; the color flips at each change boundary, as a visual cue that the applied cost changed between adjacent trips. Purely cosmetic — no data or ordering change; only the cost value's text color is affected (labels and every other stat unchanged).
 
@@ -629,11 +629,11 @@ All components nest a shared `Metric/Base`, so a base style change propagates to
 
 ---
 
-## 5b. Fuel Dock (2026-10-11) — designed in `ui-design.pen`; code not started
+## 5b. Fuel Dock (2026-10-11) — designed in `ui-design.pen`; code implemented (static review)
 
 **Behaviour:** ADR-027 and PRD FR-22. This section covers the visual and layout spec only.
 
-**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code not started. No build, test or device run. The state thresholds and colours were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9).
+**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`); static review only. No build, test or device run; build and device verification pending. The state thresholds and colours were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9).
 
 **Placement:** a persistent dock, full width, **64 px high**, absolutely positioned directly **above the bottom navigation**. It is part of the screen scaffold on the screens listed below, not a per-screen element. Panels and map buttons on Track move up to clear it (see layout shifts).
 
@@ -705,6 +705,16 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 
 ---
 
+**Implementation notes (2026-10-11, code `36030ef`):**
+- (a) Dark dock background uses `TripHeroBg` (`#173A2D`, opaque) with `PanelBorder`, not the semi-transparent `PanelBg`, because nothing sits behind the dock.
+- (b) The Fill up pill uses `#22C55E` (`TripHeroBrandGreen`); `TripGreen` (`#16A34A`) does not match the design.
+- (c) Each pencil is drawn at 12 dp, but its clickable box is 28 dp, below the 48 dp touch-target guideline. This is a deliberate deviation to keep the 64 dp dock layout; flagged for owner review.
+- (d) Range is shown as a whole number, fuel left with one decimal, and price with dot thousands separators and no "Rp".
+- (e) TalkBack: each cell has a contentDescription `LABEL, value`, but child texts are not hidden, so some screen readers may read both. To check on device.
+- (f) Fill up writes `pricePerLiter` and a new `fuel_price` row only when the entered price is > 0 and differs from the current price.
+- (g) Fill ups made before the first Reset are ignored; fuel left stays `—` until a Reset.
+- (h) Litres inputs accept a comma decimal separator.
+
 ## 6. Responsive Design & Accessibility
 
 - Mobile-first; fluid grid; touch targets sized for in-motion use (≥48dp goal; some legacy cards at 44dp — see task log).
@@ -720,7 +730,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - Observer Phase 1 UI: implemented, verified on device (2026-05-29).
 - Observer Phase 2: snapshot viewer + pagination done; truncation banner spec drafted, awaiting design approval.
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
-- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code not started.
+- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`; static review only; build and device verification pending).
 
 ---
 

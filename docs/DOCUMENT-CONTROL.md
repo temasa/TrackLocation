@@ -36,7 +36,7 @@ When any controlled document changes, update both:
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
 | `docs/PRD.md` | 0.26 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
-| `docs/ARCHITECTURE.md` | 0.30 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
+| `docs/ARCHITECTURE.md` | 0.31 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
 | `docs/adr/README.md` | 1.6 | Active (27 ADRs indexed) | Tech Lead | 2026-10-11 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -63,9 +63,9 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.2 | Accepted (fuel dock; dock, pencils, dialogs and states designed 2026-10-11; dock thresholds and colours confirmed 2026-10-11; consumption via stored Reset baseline `resetBaselineL`, rev. 1.2; Trips header fuel-pump price control removed 2026-10-11; COST cells display-only 2026-10-11, Decision 12; code not started) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.57 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.42 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
+| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.3 | Accepted; code implemented 2026-10-11 (static review only; build and device verification pending) | Project owner | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.58 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.43 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.4 | Active (persistent) | Project Team | 2026-10-11 |
@@ -95,6 +95,10 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | adr/027 | 1.2 | 1.3 | Code implemented (commits `a197453`, `36030ef`, `9d01688`); static review only, no build, test or device run. Status line updated; live-litres check and session-close re-integration marked to verify on device. | Claude Haiku 5.5 |
+| 2026-10-11 | ARCHITECTURE | 0.30 | 0.31 | MIGRATION_15_16, DB v16 and `fuel_event` marked implemented (commit `a197453`); current DB version text updated to v16; static review only. | Claude Haiku 5.5 |
+| 2026-10-11 | UI-SPEC | 0.42 | 0.43 | §5b implementation notes (a)–(h) added (code `36030ef`); §5b heading, §2 row and §7 status updated to code implemented (static review; build and device verification pending); header fuel-price item (8) updated to code removal implemented (`9d01688`). | Claude Haiku 5.5 |
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.57 | 0.58 | Fuel dock code status: §6 rows Completed (code, static review) with revisions `a197453`, `36030ef`, `9d01688` (`---` backfilled); §4 slice status, steps 1–6 implemented and implementation notes added; Next Step Current updated; §1 row 0.58. | Claude Haiku 5.5 |
 | 2026-10-11 | adr/027 | 1.1 | 1.2 | Consumption model Option A (retention-proof): Decision 2 and Decision 6 use a stored `resetBaselineL` on RESET rows (cumulative OBD fuel total at the Reset = Σ `recording_session.obdFuelConsumedL` over all session rows, active included) instead of OBD integral / `obd_sample` since the Reset; formula, session-removal and OBD-disconnect risks recorded; Decision 9 dock thresholds (6 L, 3 L, 10%) and colours (amber `#D97706`, red `#DC2626`) confirmed by the owner 2026-10-11, "to confirm" wording removed; Open items and Status Summary updated. | Claude Haiku 5.5 |
 | 2026-10-11 | ARCHITECTURE | 0.29 | 0.30 | `fuel_event` entity gains `resetBaselineL` (RESET rows only); balance derivation in §2 rewritten to the cumulative-baseline formula (no `obd_sample` read); `fuel_event` invariant updated; `MIGRATION_15_16` CREATE TABLE includes `resetBaselineL` and a note that no exported schema exists (`exportSchema = false`). | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.56 | 0.57 | Fuel dock decisions recorded (docs only, code not started): retention-proof consumption model (Reset stores `resetBaselineL`; cumulative total = Σ session rows, active included), no exported schema (`exportSchema = false`), dock thresholds and amber / red colours confirmed 2026-10-11 and all "to be confirmed" notes removed (prerequisite 2, Next Step, How to Verify items 9–10, step 4); slice What, steps 1–2 (note and formula) and How to Verify items 11, 13, 14, 15 superseded; §1 row 0.57 added. Status Not started; the two existing `---` §6 rows untouched. | Claude Haiku 5.5 |
