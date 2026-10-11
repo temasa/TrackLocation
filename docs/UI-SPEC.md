@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.46
+**Document Version:** 0.47
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -719,6 +719,82 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - (k) Device status (2026-10-11, partial, screenshots): dock on Session, List (light), Track (dark, plain) and Settings (light); absent on OBD Settings and Trip Details. Dialogs and persistence checked; FUEL LEFT Low (amber) and Critical (red) seen on the light and dark docks; the `~` state, RANGE colouring, the changed-price flow, TalkBack and the Alt / Order variants are not verified yet. See IMPLEMENTATION-PLAN §4 How to Verify.
 - (l) Contrast, owner review (device 2026-10-11, not changed): the red `#DC2626` FUEL LEFT value on the dark Track dock (`#173A2D`) is readable but has lower contrast than on the light dock. The owner decides whether to adjust it.
 
+## 5c. Floating Status Banner (2026-10-11) — designed in `ui-design.pen`; code not yet implemented
+
+**Behaviour:** ADR-028 and PRD FR-23. This section covers the visual and layout spec only.
+
+**Purpose:** Tell the driver, on the main screens, when the OBD adapter is not connected or when the Observer accessibility service is not active. The existing Observer Feed `ServiceBanner` only helps while the Observer screen is open (ERR-010).
+
+**Placement and routes:** one overlay, `StatusBannerHost`, mounted in `MainActivity` over the nav graph (same host point as the fuel dock, §5b). It sits at the **top** of the screen, below the status bar, at x = 16 and about y = 48 px, full width minus the 16 px gutters. It does not sit on the bottom navigation or the fuel dock.
+- Shown on: Track (all variants), Sessions, Trips (List) and Settings.
+- Hidden on: Details, OBD Settings, Observer Feed and Observer Settings.
+- **This route list must stay in sync with the fuel dock list in §5b.** Change both together.
+
+**States (eight, from `ui-design.pen`):**
+
+| # | State | Chips shown | Screen shown on | Where in `ui-design.pen` |
+|---|-------|-------------|-----------------|--------------------------|
+| 1 | OBD not connected | OBD chip (amber, expanded) | Sessions (light) | "State 1 OBD not connected" (a Track variant on the dark map is also in the file) |
+| 2 | OBD connecting | OBD chip ("OBD connecting…") | Sessions (light) | "State 2 OBD connecting" |
+| 3 | Observer inactive | Observer chip (red, expanded) | Sessions (light) | "State 3 Observer inactive" |
+| 4 | Both problems, stacked | Observer chip on top, OBD chip below | Sessions (light) | "State 4 both stacked"; "State 4 on Track" (dark map) shows the same on Track |
+| 5 | All good | None (no banner) | Sessions (light) | "State 5 all good (no banner)" |
+| 6 | Both collapsed | Two 44 px icons, Observer on top | Sessions (light) | "State 6 both collapsed (Sessions)" |
+| 7 | Observer only, collapsed | One 44 px red eye-off icon | Sessions (light) | "State 7 Observer only collapsed (Sessions)" |
+| 8 | Both collapsed | Two 44 px icons, Observer on top | Track (dark map) | "State 8 both collapsed (Track)" |
+
+**OBD state mapping (from `ObdPollingService.obdUiState`):** `Connected` shows no OBD chip. `Connecting` and `Retrying` show "OBD connecting…". `Idle` and `Waiting` show "OBD not connected". The OBD chip also shows when the OBD feature is turned off in OBD Settings (owner decision: always show; no hiding when disabled).
+
+**Chip anatomy and dimensions (expanded):**
+- Width 358, height 48, corner radius 14, 1.5 px border, soft shadow.
+- Left: state icon (amber Bluetooth-off for OBD, red eye-off for Observer), then a title line and a hint line.
+- Right: a divider, then the minimize button (32 px visual, 48 dp hit area).
+- When both chips are shown, the Observer chip stacks on top of the OBD chip.
+
+**Colours (tokens):**
+
+| Token | Hex | Use |
+|-------|-----|-----|
+| warn-bg | `#FFF7E6` | OBD chip background |
+| warn-border | `#F5B041` | OBD chip border |
+| warn-ink | `#7A4A00` | OBD chip title and hint text |
+| warn-accent | `#D97706` | OBD chip icon and collapsed icon |
+| err-bg | `#FEECEC` | Observer chip background |
+| err-border | `#F08A8A` | Observer chip border |
+| err-ink | `#8A1C1C` | Observer chip title and hint text |
+| err-accent | `#DC2626` | Observer chip icon and collapsed icon |
+
+**Copy:**
+
+| Chip | Title | Hint line |
+|------|-------|-----------|
+| OBD (Idle, Waiting) | OBD not connected | Tap to open Bluetooth settings |
+| OBD (Connecting, Retrying) | OBD connecting… | Tap to open Bluetooth settings |
+| Observer | Observer inactive | Orders won't be captured · Tap to fix |
+
+**Tap targets:**
+- **Body of an expanded chip:** opens the system settings. OBD opens `Settings.ACTION_BLUETOOTH_SETTINGS`; Observer opens `Settings.ACTION_ACCESSIBILITY_SETTINGS` (the same intent as the Observer Feed `ServiceBanner`). Neither opens an in-app Bluetooth screen.
+- **Minimize button:** collapses the banner to icon-only chips.
+- **Collapsed icon:** expands the banner again. It does **not** open settings, to avoid accidental taps.
+
+**Collapsed icons:** 44 px circles at the top right, stacked vertically with Observer on top when both are shown. Amber Bluetooth-off for OBD; red eye-off for Observer.
+
+**Collapse memory:**
+- The collapsed or expanded choice applies to all screens where the banner is shown.
+- It is held in memory and lasts for the app session only. It resets on app restart, so a warning can never stay hidden forever.
+- If a problem state changes (for example OBD goes from connected to disconnected, or the Observer service is turned off again), the affected chip re-expands even if it was collapsed.
+
+**Accessibility:**
+- Do not rely on colour alone: every chip has an icon and text, and the collapsed icons use shape (Bluetooth-off, eye-off) as well as colour.
+- TalkBack reads the title plus the action, for example "OBD not connected. Opens Bluetooth settings".
+- Collapsed icons read their title and the expand action (wording to confirm at code time).
+- Touch targets: collapsed icons 44 px; minimize button 32 px visual with a 48 dp hit area.
+- Check at code time that the banner does not hide the Track top controls or the status bar.
+
+**Status:** designed directly in `ui-design.pen` on 2026-10-11 (the "StatusBanner Components" section: Banner/OBD Not Connected, Banner/OBD Connecting, Banner/Observer Inactive, Banner/Collapsed OBD, Banner/Collapsed Observer; and states 1 to 8). No external design handoff is needed, the same as §5b. Code not yet implemented; see IMPLEMENTATION-PLAN §4 slice "Floating Status Banner (ADR-028)".
+
+---
+
 ## 6. Responsive Design & Accessibility
 
 - Mobile-first; fluid grid; touch targets sized for in-motion use (≥48dp goal; some legacy cards at 44dp — see task log).
@@ -735,6 +811,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - Observer Phase 2: snapshot viewer + pagination done; truncation banner spec drafted, awaiting design approval.
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
 - Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`, `3354689`; build OK; partly device-verified 2026-10-11).
+- Floating status banner (§5c): designed in `ui-design.pen` 2026-10-11 (OBD not connected, Observer inactive, collapsed icons; eight states); code pending (ADR-028).
 
 ---
 

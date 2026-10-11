@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.9  
+**Document Version:** 0.10  
 **Status:** Active  
 **Last Updated:** 2026-10-11  
 **Owner:** Product Manager  
@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.26 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
-| `docs/ARCHITECTURE.md` | 0.33 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
-| `docs/adr/README.md` | 1.6 | Active (27 ADRs indexed) | Tech Lead | 2026-10-11 |
+| `docs/PRD.md` | 0.27 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
+| `docs/ARCHITECTURE.md` | 0.34 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
+| `docs/adr/README.md` | 1.7 | Active (28 ADRs indexed) | Tech Lead | 2026-10-11 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -64,11 +64,12 @@ When any controlled document changes, update both:
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.5 | Accepted; code implemented 2026-10-11; build OK; device-verified partially (Reset accepts 0 L) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.61 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.46 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
+| `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted (docs only; code pending) | Project owner | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.62 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.47 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
-| `docs/ERRORS-LOG.md` | 0.7 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually) | Project Team | 2026-10-11 |
+| `docs/ERRORS-LOG.md` | 0.8 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually) | Project Team | 2026-10-11 |
 | `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
@@ -95,6 +96,14 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | adr/028 (new) | — | 1.0 | Floating status banner (OBD and Observer), Accepted (docs only; code pending): top overlay `StatusBannerHost` in MainActivity on Track, Sessions, List and Settings; chips and tap-through to system settings; in-memory collapse. Supersedes the reverted draft `339e366`. | Claude Haiku 5.5 |
+| 2026-10-11 | adr/README | 1.6 | 1.7 | ADR index: ADR-028 row added, count 27 → 28. | Claude Haiku 5.5 |
+| 2026-10-11 | PRD | 0.26 | 0.27 | FR-23 new (floating OBD and Observer status banner; route set, always-show rule, chip behaviours, tap-through, collapse and session-only memory; no schema change; PRD §12 untouched). (ADR-028) | Claude Haiku 5.5 |
+| 2026-10-11 | UI-SPEC | 0.46 | 0.47 | New §5c Floating Status Banner (designed in `ui-design.pen`; eight-state table, anatomy, colours, copy, tap targets, collapse memory, accessibility); §7 status line added. | Claude Haiku 5.5 |
+| 2026-10-11 | ARCHITECTURE | 0.33 | 0.34 | New §5 subsection "Floating Status Banner (ADR-028, planned)": inputs, state mapping, in-memory collapse, no schema change. | Claude Haiku 5.5 |
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.61 | 0.62 | §4 slice "Floating Status Banner (ADR-028)" (How to Verify, pending; five steps), §6 rows (docs Completed `---`; code Planned `---`), §1 change-log row. | Claude Haiku 5.5 |
+| 2026-10-11 | ERRORS-LOG | 0.7 | 0.8 | ERR-010 lesson 2 and resolution text: screen-closed gap addressed by ADR-028 (code pending); status column unchanged. | Claude Haiku 5.5 |
+| 2026-10-11 | DOCUMENT-CONTROL | 0.9 | 0.10 | Register rows for adr/028 (new), PRD 0.27, ARCHITECTURE 0.34, UI-SPEC 0.47, IMPLEMENTATION-PLAN 0.62, ERRORS-LOG 0.8 and adr/README 1.7; change log rows for this update. | Claude Haiku 5.5 |
 | 2026-10-11 | ERRORS-LOG | 0.6 | 0.7 | ERR-010 added (Observer accessibility service silently disabled; two Gojek orders not captured, no auto-start; mitigated manually via adb; existing in-screen ServiceBanner noted as partial coverage); register row updated; DOCUMENT-CONTROL 0.8 → 0.9 (register and change log). | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.60 | 0.61 | Schema and cleanup corrections (docs only): no exported Room schema JSON (`exportSchema = false`) stated in the v14 → v15 migration slice text, the TrackEntity note and the v15 → v16 verification note; MainScreen.kt deletion recorded (dead code, deleted 2026-10-11, commit `da14b98`) in Next Step, the device-run note and the mount-point note; §1 row 0.61. | Claude Haiku 5.5 |
 | 2026-10-11 | ARCHITECTURE | 0.32 | 0.33 | MIGRATION_14_15 note corrected: no exported schema JSON (`exportSchema = false`); migration verified by installing over a copy of the v14 database. | Claude Haiku 5.5 |

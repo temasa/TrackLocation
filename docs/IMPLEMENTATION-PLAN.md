@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.61
+**Version:** 0.62
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-11
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -70,6 +70,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.62 | 2026-10-11 | Floating status banner (ADR-028, docs only; code not started): new §4 slice "Floating Status Banner (ADR-028)" with What / Observable result / How to Verify (20 items, pending, not run) and five numbered steps; §6 rows added: the docs and `.pen` design row (Completed, `---`) and the code row (Planned, `---`). ADR-028 new (Accepted, code pending); PRD v0.27 (FR-23); UI-SPEC v0.47 (§5c, §7); ARCHITECTURE v0.34 (§5 subsection); ERRORS-LOG v0.8 (ERR-010 lesson and resolution text). |
 | 0.61 | 2026-10-11 | Schema and cleanup corrections (docs only): the Room database has `exportSchema = false`, so no schema JSON (`14.json`, `15.json`, `16.json`) is exported or committed; slice text that claimed an exported schema file (v14 → v15 migration, its verification and the TrackEntity note) corrected, and migration verification stated as an install over a copy of the previous database. The unused `screens/MainScreen.kt` (dead code, no call sites) was deleted 2026-10-11 (commit `da14b98`); the fuel dock Next Step item and device-run and mount-point notes updated to match. ADR-026 (no version line), ARCHITECTURE 0.33, UI-SPEC 0.46, ERRORS-LOG 0.6, DOCUMENT-CONTROL 0.8 updated to match. No code change beyond the file deletion, no tests. | Claude Haiku 5.5 |
 | 0.60 | 2026-10-11 | Reset-to-0 correction (docs only): the Reset-to-0 L deviation recorded in 0.59 was a misread of the first screenshots (the dialog opens empty with a grey 0 hint; Save is disabled only while the field is empty; `ResetFuelDialog` accepts any value >= 0). Deviation and open item removed from the slice header, Next Step, How to Verify items 5, 9 and 14, the device-run note and the §6 fuel dock row; Reset 0 accepted recorded (device 2026-10-11). New device evidence: FUEL LEFT Low (amber, Reset 5 → 5.0) and Critical (red, Reset 0 and 2) on the light and dark docks; RANGE colouring and `~` not exercised. Red value contrast on the dark dock added to Next Step for owner review (UI-SPEC §5b note (l)). ADR-027 1.5, UI-SPEC 0.45, DOCUMENT-CONTROL 0.7 updated to match. No code change. | Claude Haiku 5.5 |
 | 0.59 | 2026-10-11 | Fuel dock device results recorded (docs only): `:app:assembleDebug` BUILD SUCCESSFUL; installed over existing data on the Galaxy S9+. The first device run found that the dock did not render: it was mounted in `screens/MainScreen.kt`, which no code calls. Fix `3354689` mounts `FuelDockHost` (new `ui/components/FuelDockHost.kt`) in MainActivity's Scaffold `bottomBar`. Partial device verification recorded in §4 How to Verify (items 2, 5 and 6 ✓; 3, 4, 7–19 ✗ with per-item notes) and a device-run note; §6 rows `a197453`, `36030ef`, `3354689` (Completed, device-verified partial) and `9d01688` Verification updated; Next Step updated (open: OBD / driving checks, changed-price flow, owner decision on Reset to 0 L, optional deletion of dead `MainScreen.kt`). ADR-027 1.4, ARCHITECTURE 0.32, UI-SPEC 0.44, ERRORS-LOG 0.5 (ERR-009). No code change, no tests. | Claude Haiku 5.5 |
@@ -948,6 +949,49 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ---
 
+### Floating Status Banner (ADR-028)
+
+**Prerequisites:** (1) Design: done 2026-10-11 in `ui-design.pen` (StatusBanner Components and states 1 to 8; UI-SPEC §5c; designed in the `.pen`, no external handoff). (2) ADR-028 accepted 2026-10-11 (docs approved; the earlier draft was reverted in `339e366`). (3) Route set and tap targets as in UI-SPEC §5c and ADR-028 Decisions 2, 6 and 7. **Status: design and docs done 2026-10-11; code NOT started; verification pending (not run).**
+
+**What it does:** Adds one floating status banner at the top of the screen, below the status bar, on Track, Sessions, Trips (List) and Settings. It shows an amber OBD chip when the adapter is not connected ("OBD not connected", or "OBD connecting…" while connecting or retrying; always shown, even when the OBD feature is off) and a red Observer chip when the Observer accessibility service is not enabled ("Observer inactive"). Tapping a chip's body opens the system Bluetooth or Accessibility settings. A minimize button collapses the banner to 44 px icons; tapping an icon expands it again. The collapse choice is in memory only (session scope). It is hidden on Details, OBD Settings, Observer Feed and Observer Settings. No schema change, no new bottom-nav destination, GPS tracking and the always-recording switch untouched.
+
+**Observable result:** On Track, Sessions, Trips and Settings, with OBD disconnected, an amber "OBD not connected" chip shows below the status bar. With the Observer service off, a red "Observer inactive" chip shows; with both off, the Observer chip is on top. With everything healthy, no banner shows. Tapping the minimize button leaves icon-only chips at the top right. Tapping a collapsed icon expands it without opening settings. After an app restart the banner is expanded again.
+
+**How to Verify:** (All items pending; **not run**. Gradle, emulator and device runs need explicit user permission, AGENTS §5a. Device: Galaxy S9+ SM-G965F, Android 10.)
+
+1. (Static, allowed) Confirm the design in `ui-design.pen`: "StatusBanner Components" section and states 1 to 8 match UI-SPEC §5c.
+2. (Static, allowed) Confirm the banner route list equals the fuel dock route list (UI-SPEC §5b): Track, Sessions, Trips (List), Settings.
+3. **OBD not connected:** with OBD enabled and no adapter connected (Idle or Waiting), open Track, Sessions, Trips and Settings. Each shows the amber chip "OBD not connected" with the hint "Tap to open Bluetooth settings".
+4. **OBD connecting / retrying:** with the adapter powered off then on, the chip reads "OBD connecting…" while the state is Connecting or Retrying.
+5. **OBD connected:** with the adapter connected, the OBD chip is hidden.
+6. **Observer inactive:** in the system Accessibility settings, turn off the Observer service. Within about 1 to 2 s (app in the foreground) the red chip "Observer inactive" with the hint "Orders won't be captured · Tap to fix" appears. Turn it back on: the chip disappears within about 1 to 2 s.
+7. **Both problems:** with OBD disconnected and the Observer service off, both chips show, stacked with the Observer chip on top.
+8. **All healthy:** with OBD connected and the Observer service on, no banner shows on any of the four routes.
+9. **Hidden routes:** with a problem present, no banner shows on Details, OBD Settings, Observer Feed or Observer Settings.
+10. **OBD feature off:** turn the OBD feature off in OBD Settings: the OBD chip still shows (owner decision: always show).
+11. **OBD tap-through:** tap the body of the OBD chip: the system Bluetooth settings open (not an in-app Bluetooth screen).
+12. **Observer tap-through:** tap the body of the Observer chip: the system Accessibility settings open.
+13. **Minimize:** tap the minimize button: the expanded chips collapse to 44 px icons at the top right, Observer on top when both are shown. The minimize button is 32 px visual with a 48 dp hit area.
+14. **Expand:** tap a collapsed icon: it expands again and no settings screen opens.
+15. **Collapse persists:** collapse the banner, switch between Track, Sessions, Trips and Settings: it stays collapsed on each.
+16. **Restart resets:** force-stop and relaunch the app: the banner is expanded again.
+17. **Re-expand on change:** with a chip collapsed, change its problem state (OBD connected then disconnected; Observer turned off again): that chip re-expands.
+18. **No overlap:** on Track (dark map) the banner does not hide the Track top controls or the status bar; the fuel dock (ADR-027) and the banner do not overlap.
+19. **TalkBack:** each chip reads its title and action (for example "OBD not connected. Opens Bluetooth settings"); each collapsed icon reads its title. Note: uiautomator dumps were blocked on the test phone (see the fuel dock device run), so this may need another check method.
+20. **Observer Feed unchanged:** with the Observer service off, the existing red `ServiceBanner` still shows on the Observer Feed, unchanged.
+
+**Implementation steps (numbered, What/How; status: all NOT started):** Paths are under `app/src/main/java/com/kolee/tracklocation/`.
+
+1. **Shared Observer-enabled helper** (not started): *What:* extract the accessibility check from `ObserverViewModel.isOurServiceEnabled` into one shared helper (package and class match, as today). *How:* a small helper used by both the ViewModel and the banner; the Observer Feed `ServiceBanner` keeps its behaviour unchanged.
+2. **StatusBannerHost composable** (not started): *What:* the banner host, the OBD and Observer chips and the collapsed icons in `ui/components/`, built from UI-SPEC §5c. *How:* map `obdUiState` (Connected hidden; Connecting and Retrying "connecting"; Idle and Waiting "not connected"); poll the shared helper every second while foregrounded; Compose 1.2 APIs only.
+3. **Mount in MainActivity** (not started): *What:* mount `StatusBannerHost` as a top overlay over the nav graph, beside `FuelDockHost`, below the status bar. *How:* show only on the Track, Sessions, List and Settings routes, with the route list kept in sync with the fuel dock (UI-SPEC §5b). Confirm the host is reached from the entry point (ERR-009: a host with no caller never renders).
+4. **Taps and collapse state** (not started): *What:* wire the chip body taps to `Settings.ACTION_BLUETOOTH_SETTINGS` and `Settings.ACTION_ACCESSIBILITY_SETTINGS`, and the minimize button and collapsed-icon expand. *How:* collapse state in memory only (not Room, not DataStore); a chip re-expands when its problem state changes; collapsed icons expand and do not open settings.
+5. **Docs sync** (not started): *What:* record the device results in §6 and the ADR-028 status; update UI-SPEC §5c and §7 if the handoff changes; keep the ARCHITECTURE §5 subsection matched to the code. *How:* after the code and any device run the owner permits.
+
+**Schema: none. No Room migration, no new permission, no new network call.**
+
+---
+
 ## 5. Timeline at a Glance
 
 | Phase | Focus | Deliverable | Status |
@@ -965,6 +1009,8 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-10-11 | ADR-028 floating status banner (OBD + Observer): docs and `.pen` design (8 states incl. collapsed). Code not implemented. | Completed | --- | Docs only; no build/test run (AGENTS 5a). Design reviewed in ui-design.pen screenshots. |
+| 2026-10-11 | Floating Status Banner code (ADR-028): shared Observer-enabled helper; `StatusBannerHost` (OBD and Observer chips, collapsed icons) mounted in MainActivity at the top on Track, Sessions, List and Settings; tap-through to system Bluetooth / Accessibility settings; in-memory collapse state. Slice: IMPLEMENTATION-PLAN §4 "Floating Status Banner (ADR-028)". | Planned | --- | Not run. Verification pending (How to Verify items 1 to 20, §4 slice); Gradle and device runs need explicit user permission (AGENTS 5a). |
 | 2026-10-11 | Remove Trips header fuel-pump icon and COST-cell tap / Toast (code): delete the `ListHeader` trailing `ic_fuel_pump` icon, `onFuelClick` wiring and `ic_fuel_pump.xml` if unused (ADR-027 Decision 11); remove tap-to-edit and the completed-trip Toast from all COST cells, keeping `FuelCostEditorDialog` reachable only from the dock PRICE pencil (ADR-027 Decision 12). Already removed from the design 2026-10-11. | Completed (code); device-verified (partial) | 9d01688 | Static review; build OK 2026-10-11. Device 2026-10-11: header shows the title only (no fuel-pump icon); COST cell taps on a List row and a Sessions card show no dialog and no Toast. Not run: Session OBD card, Trips active-trip row, Track strips (How to Verify item 19 partial). |
 | 2026-10-11 | Fuel dock design update: edit pencils in the value row (FUEL LEFT opens Reset fuel, PRICE opens Fuel price; right of the number, not at the cell edge), Fill up / Reset fuel / Fuel price dialogs (designed in the `.pen`, no external handoff), dock states (Not set, Normal, Low, Critical, Low confidence; thresholds and colours to confirm), OBD Settings dock removed, Trips header fuel-pump button removed from the design (ADR-027, UI-SPEC §5b). | Completed | 237e940 | Design only; screenshots reviewed in Pencil; no build, test or device run. |
 | 2026-10-11 | Fuel dock design in `ui-design.pen` (`FuelDock/Dark` on Track variants: Alt A, Alt B, LIVE, Order Strip Only, Order Active; `FuelDock/Light` on List, Sessions, Settings; layout shifts for Alt A, Alt B, LIVE, Strip Only). Commit `f39e1d4` also added a dock on OBD Settings; the design-update row above removes it. | Completed | f39e1d4 | Design only; screenshots reviewed in Pencil; no build, test or device run. |

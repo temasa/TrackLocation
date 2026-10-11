@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.7  
+**Document Version:** 0.8  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-11  
 **Owned By:** Project Team
@@ -87,13 +87,13 @@ No crash. Symptom: the Observer captured nothing from 2026-10-11 07:21 WIB until
 **Not the cause:** the order-card parser and the trip recorder; the capture switch (`observer_prefs` was never written, so `capture_running` defaults to true). Gojek events on 2026-10-11 before 07:21 were home-screen only (Beranda/Pendapatan), so no orders were missed before the service died.
 
 **Resolution:**
-Mitigated manually on 2026-10-11 with `adb shell settings put secure enabled_accessibility_services`, keeping `rk.android.app.lockscreen`'s service in the list. No code change.
+Mitigated manually on 2026-10-11 with `adb shell settings put secure enabled_accessibility_services`, keeping `rk.android.app.lockscreen`'s service in the list. No code change. ADR-028 (2026-10-11) is the planned screen-closed mitigation: a floating status banner on the main screens, code pending.
 
 Existing mitigation (verified in code, not new): the Observer Feed shows a red `ServiceBanner` ("Service Disabled", tap to open accessibility settings), polled every second via `ObserverViewModel.isOurServiceEnabled`. It only helps while the Observer screen is open.
 
 **Lesson Learned:**
 1. Re-check Observer accessibility enablement after every `adb install -r` or force-stop (`dumpsys accessibility` or the `settings get secure enabled_accessibility_services` check).
-2. The in-screen banner does not cover the case where the driver never opens the Observer screen while driving. Any gap in coverage needs a mechanism that works without the screen open; this is an open product question, not a decision made here.
+2. The in-screen banner does not cover the case where the driver never opens the Observer screen while driving. That screen-closed gap is addressed by the floating status banner decided in ADR-028 (2026-10-11), code pending.
 3. Verify the existing UI and code before asserting a gap. The banner already existed; the real gap is the screen-closed case.
 
 ---

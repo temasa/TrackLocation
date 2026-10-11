@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.33
+**Document Version:** 0.34
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -154,6 +154,24 @@ ELM327 adapter → RFCOMM/SPP socket → ObdPollingService (poll @1–5 Hz, raw 
 ```
 
    `ObdUiState.Connected` additionally carries `sessionFuelConsumedL` and `tripFuelConsumedL` (litres) so the Session card, the Trips active-trip row, and the Gojek order-card trip strip can compute fuel cost = litres × effective fuel price (from `fuel_price` table, FR-12/ADR-008).
+
+### Floating Status Banner (ADR-028, planned)
+
+```
+ObdPollingService.obdUiState (StateFlow)  ──┐
+                                             ├→ StatusBannerHost (MainActivity overlay, top)
+Observer-enabled helper (shared, 1 s poll    ─┘     ├── OBD chip:      Connecting/Retrying → connecting; Idle/Waiting → not connected; Connected → hidden
+while foregrounded; extracted from            │      └── Observer chip: service not enabled → "Observer inactive"; enabled → hidden
+ObserverViewModel.isOurServiceEnabled)        └── Collapse state: in-memory only (session), not persisted
+```
+
+- **Host:** `StatusBannerHost` is mounted in `MainActivity` over the nav graph, at the top (below the status bar), the same host point as `FuelDockHost` (ADR-027). It is shown only on the Track, Sessions, Trips (List) and Settings routes (route list kept in sync with the fuel dock, UI-SPEC §5b).
+- **Inputs:** the OBD state is read from `ObdPollingService.obdUiState` (no new OBD flow). The Observer state comes from one shared helper extracted from `ObserverViewModel.isOurServiceEnabled`; the Observer Feed `ServiceBanner` keeps using the same check, unchanged.
+- **Polling:** the Observer check re-runs every second only while the app is in the foreground.
+- **Taps:** the OBD chip opens `Settings.ACTION_BLUETOOTH_SETTINGS`; the Observer chip opens `Settings.ACTION_ACCESSIBILITY_SETTINGS`. Both are system settings intents; no in-app Bluetooth code is added.
+- **State:** the collapsed or expanded choice and the "re-expand on problem change" rule are held in memory only. They reset on app restart and are not written to Room or DataStore.
+- **Schema:** no Room change. The banner reads existing state and writes nothing.
+- **Service isolation:** the banner does not call `TrackingService`, `ObdPollingService` methods or `ObserverAccessibilityService` methods; it only observes state. GPS tracking is unaffected.
 
 ### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015, extended by ADR-016)
 
