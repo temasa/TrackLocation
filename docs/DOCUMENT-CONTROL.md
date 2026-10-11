@@ -63,7 +63,7 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.47 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.48 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
 | `docs/UI-SPEC.md` | 0.35 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
@@ -94,6 +94,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.47 | 0.48 | Metric Display Standard in Compose slice (UI-SPEC §5a; docs only, code not started): §1 row, §3 phase row, §4 slice with What / Observable result / How to Verify and five numbered steps plus recorded assumptions, Next Step entry, §6 row In Progress (Git Revision `---`). ERR-008 §6 row Git Revision backfilled `---` → `ad082a6` (confirmed in `git log`). No source, schema or Gradle/test run. DOCUMENT-CONTROL stays 0.1 (own rules unchanged). | Claude Haiku 5.5 |
 | 2026-10-11 | UI-SPEC | 0.30 (dev) / 0.34 (ui-design) | 0.35 | Merged branch worktree-ui-design into dev: metric display standard §5a, List/Sessions card metric rows (ui-design 0.28–0.34) combined with ADR-025/ADR-026 UI-SPEC content (dev 0.28–0.30); version renumbered to 0.35 to avoid collision. `ui-design.pen` taken from ui-design. Code for the §5a metric components still pending. | Claude Sonnet 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN, ERRORS-LOG | 0.46/0.3 | 0.47/0.4 | Session COST/fuel accumulator reset fix (ERR-008; code fixed, uncommitted, static review only; device check pending): IMPLEMENTATION-PLAN §1 row 0.47 and §6 row (Git Revision `---`); ERRORS-LOG new ERR-008 entry + quick-reference row. Root cause: TrackingService wrote its cached session row with REPLACE on every GPS point, clobbering OBD fuel/covered-distance accumulators. | Claude Haiku 5.5 |
 | 2026-10-11 | UI-SPEC | 0.29 | 0.30 | UI-SPEC §3e: planned-route origin and prompt corrected to accepted point; no visual change | Claude Haiku 4.5 |
