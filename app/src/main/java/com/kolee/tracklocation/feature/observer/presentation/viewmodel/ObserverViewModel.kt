@@ -3,9 +3,7 @@ package com.kolee.tracklocation.feature.observer.presentation.viewmodel
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.view.accessibility.AccessibilityManager
-import com.kolee.tracklocation.observer.ObserverAccessibilityService
+import com.kolee.tracklocation.observer.isObserverServiceEnabled
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -42,7 +40,6 @@ class ObserverViewModel(
 ) : ViewModel() {
 
     private val allowlistRuleDao = TrackDatabase.getDatabase(context).allowlistRuleDao
-    private val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
 
     private val _uiState = MutableStateFlow(ObserverUiState())
     val uiState: StateFlow<ObserverUiState> = _uiState.asStateFlow()
@@ -348,13 +345,7 @@ class ObserverViewModel(
         return packageOk && queryOk
     }
 
-    private fun isOurServiceEnabled(): Boolean {
-        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        return enabled.any {
-            it.resolveInfo.serviceInfo.packageName == context.packageName &&
-            it.resolveInfo.serviceInfo.name == ObserverAccessibilityService::class.java.name
-        }
-    }
+    private fun isOurServiceEnabled(): Boolean = isObserverServiceEnabled(context)
 
     companion object {
         private const val PAGE_SIZE = 50

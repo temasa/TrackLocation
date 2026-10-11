@@ -6,6 +6,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.kolee.tracklocation.navigation.Screen
@@ -23,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kolee.tracklocation.navigation.BottomNavigationScreen
 import com.kolee.tracklocation.navigation.NavGraph
 import com.kolee.tracklocation.ui.components.FuelDockHost
+import com.kolee.tracklocation.ui.components.StatusBannerHost
 import androidx.core.content.ContextCompat
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
@@ -153,10 +156,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { paddingValues ->
-                    NavGraph(
-                        navHostController = navController,
-                        modifier = Modifier.padding(paddingValues)
-                    )
+                    // Banner overlays the nav graph; the Box adds no touch handling of its own.
+                    Box(modifier = Modifier.padding(paddingValues)) {
+                        NavGraph(navHostController = navController, modifier = Modifier)
+                        StatusBannerHost(
+                            navController = navController,
+                            modifier = Modifier.align(Alignment.TopStart)
+                        )
+                    }
                 }
             }
         }
