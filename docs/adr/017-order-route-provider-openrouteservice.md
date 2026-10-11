@@ -78,6 +78,7 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 - **ADR-011** (Routing Engine via Connector-Adapter) — establishes the RouteProvider port interface; this ADR re-adopts ORS for Gojek order routes (ADR-016 had chosen Google).
 - **ADR-016** (Gojek Order Route Overlay) — defines behavior (planned + runtime routes, markers, throttling, fail-soft); this ADR changes only the provider.
 - **ADR-013** (Observer Trip Extraction) — provides pickup/drop addresses used by this ADR's geocoding.
+- **ADR-026** (Saved Planned Route and Comparison) — persists the planned route device-only per trip; amends the 'not persisted' rule for the planned route only (conditional on the ORS ToS gate).
 - **ADR-015** (Gojek Order Lifecycle Drives the Trip) — manages order phases (PICKUP/DROP/FINISHED); routes key off these phases.
 - **ADR-009** (Dual-mode Track Navigation) — also uses ORS via ADR-011 (same provider, different use case).
 
@@ -98,6 +99,7 @@ ADR-011 had already chosen OpenRouteService (free tier, no card required) as the
 
 - **ADR Accepted:** 2026-10-06 — Supersedes the Google provider choice in ADR-016; all other ADR-016 behavior (planned frozen, runtime throttled re-fetch, fail-soft) unchanged.
 - **Amended:** 2026-10-11 — Geocode distance guard (50 km), reordered ladder without the bare-name candidate, and planned-route origin at the accepted point (see Amendment 2026-10-11). ADR remains Accepted.
+- **Pointer 2026-10-11:** ADR-026 amends the 'not persisted' rule inherited from ADR-016 for the planned route only (saved device-only per trip, with comparison); provider, attribution and the runtime route rules here are unchanged.
 - **Docs Updated:** 2026-10-06 — PRD (FR-17 provider + accuracy caveat), ARCHITECTURE (ROUTE section geocoding ladder + ORS details), UI-SPEC (§3e attribution surface + handoff note), README (API key setup), IMPLEMENTATION-PLAN (new slice), adr/016 (status note), adr/011 (pointer note), adr/README (ADR-017 index row), DOCUMENT-CONTROL (register + change log).
 - **Code Implementation:** Pending user build permission (AGENTS.md §5a).
 - **Design Handoff:** Attribution placement subject to design review per AGENTS.md §12.

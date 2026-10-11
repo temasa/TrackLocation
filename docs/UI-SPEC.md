@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.28
+**Document Version:** 0.29
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-10
+**Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -295,6 +295,7 @@ Shown on the Track screen only when a Gojek order with payment `Tunai` (cash) wa
 Two driving routes are drawn on the Track screen's embedded Google Map while a Gojek order is active. Per AGENTS §12 the visuals are **design-handoff-first** — this section records the structure, not final visual specs.
 
 **Visuals (PROVISIONAL styling until handoff):**
+- *(2026-10-11: line styles, legend and the saved planned route on trip details are specified in §3j, ADR-026; the planned line is dashed there and its origin is the accepted point, ADR-017 Amendment.)*
 - **Planned route:** thin, muted blue-grey polyline (RGB hex `#B0BEC5` or equivalent theme token); width ~4 dp; connects current location → pickup → drop (pickup as a waypoint); drawn below other map elements (lower zIndex).
 - **Runtime route:** bold orange polyline (RGB hex `#FF9800` or equivalent theme token); width ~6 dp; connects current location → next stop (pickup during PICKUP phase, drop during DROP phase); drawn above the planned route (higher zIndex).
 - **Markers:** Pickup and Drop locations receive map markers with titles "Pickup" / "Drop" shown on tap; use standard Material Design marker coloring (default blue for most markers, or custom colors at the designer's discretion).
@@ -456,6 +457,76 @@ When OBD is not connected only the first two cells are shown (identical to the p
 **Accessibility:** Camera orientation is a display affordance (map only); no new controls or motion-sensitive animations beyond the existing camera animations (smooth bearing interpolation, zoom animation). Screen-reader focus and semantic meaning are unchanged.
 
 **Design handoff:** No new visual surface or controls required. Camera behavior uses only the existing CameraPosition bearing/tilt properties (Compose 1.2 / maps-compose 2.5.3 compatible). No design handoff needed.
+
+---
+
+## 3j. Route Lines: Planned / Optimized / Actual + Trip Details Comparison (2026-10-11) — pending design handoff (ADR-026)
+
+**Purpose:** Tell the three route lines apart at a glance, on the live Track screen and on the trip details map, and show a planned-vs-actual comparison after the trip. Per AGENTS §12 the visuals below are **design-handoff-first**; the values are PROVISIONAL until the design returns, and code must not invent visuals. Applies to order trips; the same surface is reserved for future navigation trips (ADR-009, `kind='NAV'`, not implemented). Prerequisites for code: this handoff approved AND the ORS ToS gate cleared (ADR-026 decision 10).
+
+**Line styles (no colour-only encoding):**
+
+| Line | Meaning | Style | Width (relative to `POLYLINE_WIDTH`) | Lifetime |
+|---|---|---|---|---|
+| Planned | accepted point → pickup → drop, frozen at takeover | **dashed**, thin, muted blue-grey (`#B0BEC5` or theme token) | ~0.6x | persisted device-only with the trip |
+| Optimized | current location → next stop, navigation aid | **solid**, bold, orange (`#FF9800` or theme token) | ~1.4x | memory only, cleared at order end |
+| Actual | recorded GPS trace | **solid**, blue (existing trace colour) | 1.0x | location log + `track.pathPoints` |
+
+Dash vs. solid and thin vs. bold carry the meaning in addition to hue, so the lines remain distinguishable for colour-blind users. Draw order, bottom to top: planned, actual, optimized (live screen); planned under actual (details map). Pickup/Drop markers, the car marker (§3i) and the base map are unchanged.
+
+**Legend (compact, dismissible):**
+- Three entries: a short line sample plus label "Planned", "Optimized", "Actual".
+- At most one line of height; horizontal strip with a small close affordance (>= 48dp touch target for the dismiss control).
+- Placement must avoid: the top-start ORS attribution, the order card, and the map controls (Recenter FAB). Provisional: top-end below the status bar, or directly above the order card; final placement from the handoff.
+- Dismissal is per-screen-visit (a remembered per-viewer preference is acceptable); it never hides the lines themselves.
+
+**Live Track screen rules:**
+- The legend shows only while an order is active (i.e. while at least a planned or optimized line is drawn); hidden otherwise.
+- Glanceable while driving: no new interactive element is required to read the map; the legend dismiss is optional.
+- Optimized-line behaviour (deviation-based refresh, throttling) is unchanged from §3e; this section only restyles and labels.
+- Planned and optimized lines never appear for manual trips.
+
+**Trip details map (DetailsTrackMap / DetailsScreen):**
+- Draws the saved planned line (dashed) under the actual line; camera fits the bounds of BOTH lines (planned plus actual), with the existing padding.
+- Legend shows two entries here (Planned, Actual); no Optimized entry (it is never saved).
+- **Comparison card** below or beside the map (final layout from the handoff), four numbers with units:
+  - Planned: `X.X km`
+  - Actual: `X.X km`
+  - Extra: `+X.X km` / `−X.X km` (signed, actual − planned)
+  - Max deviation: `NNN m`
+  
+  TalkBack strings: "Planned route 12.3 kilometres", "Actual route 13.1 kilometres", "Extra distance plus 0.8 kilometres" (or "minus ..."), "Maximum deviation from plan 240 metres". Values are derived at display time; missing values show `—`.
+- **Attribution** '© openrouteservice.org | © OpenStreetMap contributors' is visible whenever the saved plan is drawn (not placed on the top-start corner if it collides with the map controls on this screen; final placement from the handoff).
+- **Empty state** (trip recorded before DB v15, plan fetch failed, or manual trip): no planned line, no comparison card; a quiet caption "No planned route saved". The actual line and existing details content are unchanged.
+
+**Compose 1.2-compatible notes:** use maps-compose 2.5.3 `Polyline(pattern = listOf(Dash(...), Gap(...)))` for the dashed planned line (`pattern` is a Google Maps SDK property, not a Compose API); no `ModalBottomSheet`, no animation `label` params, no Compose >= 1.3 APIs. Legend and card are plain Material 3 components using existing "Kinetic Precision" tokens (§5).
+
+**Display-only / no behaviour change:** no change to recording, the canonical location log or trip/session model; no new bottom-nav destination.
+
+**Handoff Instructions (Route lines + comparison)**
+
+**Step-by-step process (Claude Design / Google Stitch / `ui-design.pen`):**
+1. Capture the screenshots in the checklist below from the running app (dark and light if available).
+2. Open Claude Design or Google Stitch (or the project's `ui-design.pen` through the Pencil tools), attach the screenshots, and paste the prompt below.
+3. Refine the three line styles (dash pattern, widths, hues) so planned / optimized / actual are distinguishable without colour alone, over the map in both themes.
+4. Design the compact dismissible legend and its placement on the Track screen (clear of the ORS attribution, order card and Recenter FAB).
+5. Design the trip details comparison card (four numbers, units, signed extra km), the two-entry legend, the attribution placement and the "No planned route saved" empty state.
+6. Include dark and light variants; check contrast over map imagery.
+7. Review against the constraints (no colour-only meaning, >= 48dp touch targets, Compose 1.2-compatible), then export and record per `docs/WORKFLOW.md §3`.
+
+**Screenshot checklist (attach current-app screens):**
+- Track screen with a live order: planned + optimized + actual lines visible together, Pickup/Drop markers, the order card and ORS attribution.
+- Trips list with an order-trip card (§3b-order), to carry the card and list density.
+- Trip details map screen (existing actual line, top app bar, current layout below the map).
+- Bottom navigation and top app bar.
+- Map controls / Recenter FAB (§3f), to place the legend clear of them.
+- Light and dark variants if available.
+
+**Tool recommendation:** Claude Design primary (line styling, legend and card variants, dark/light); Google Stitch alternative for quick state variants; `ui-design.pen` for matching the existing design file (external handoff, `docs/WORKFLOW.md §3`).
+
+**Copy-paste-ready prompt:**
+
+> Design the route-line system and the trip comparison view for TrackLocation, an Android (Jetpack Compose 1.2, Material 3, "Kinetic Precision" design system, see attached screenshots) driver app with an embedded Google Map. Three lines exist: (1) PLANNED — the route frozen when a Gojek order was accepted (accepted point to pickup to drop): dashed, thin, receded muted blue-grey; (2) OPTIMIZED — a live navigation aid from the current location to the next stop: solid, bold, orange, drawn on top, only while an order is active; (3) ACTUAL — the recorded GPS trace: solid blue. The lines must be distinguishable without relying on colour alone (dash vs. solid, thin vs. bold). Deliver: (a) the three line styles with widths and dash pattern, for dark and light themes, over map imagery; (b) a compact, dismissible legend with three entries (Planned, Optimized, Actual), at most one line tall, placed on the live Track screen so it does not overlap the top-start "© openrouteservice.org | © OpenStreetMap contributors" attribution, the Gojek order card at the bottom, or the Recenter FAB; it is shown only while an order is active; (c) the trip details map: the saved planned line (dashed) under the actual line, camera fitted to both, a two-entry legend (Planned, Actual), the attribution visible whenever the plan is drawn, and a comparison card with four numbers and units: Planned km, Actual km, Extra km (signed, actual minus planned), Max deviation in metres, plus accessible TalkBack strings; (d) the empty state caption "No planned route saved" for old trips. Constraints: the driver glances at the live map while driving, so no new required interaction; touch targets >= 48dp; do not add bottom-nav destinations; keep the existing glass-panel/card language; output must be implementable with Compose 1.2-era components and maps-compose Polyline dash patterns.
 
 ---
 

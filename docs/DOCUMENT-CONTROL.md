@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.23 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
-| `docs/ARCHITECTURE.md` | 0.27 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
-| `docs/adr/README.md` | 1.4 | Active (25 ADRs indexed) | Tech Lead | 2026-10-10 |
+| `docs/PRD.md` | 0.24 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
+| `docs/ARCHITECTURE.md` | 0.28 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
+| `docs/adr/README.md` | 1.5 | Active (26 ADRs indexed) | Tech Lead | 2026-10-11 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -52,8 +52,8 @@ When any controlled document changes, update both:
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
 | `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted (amended by ADR-015) | Project owner | 2026-10-05 |
 | `docs/adr/015-order-auto-start-trip.md` | 1.2 | Accepted (vocabulary aligned with code; cancel rule amended by ADR-025) | Project owner | 2026-10-10 |
-| `docs/adr/016-order-route-overlay.md` | 1.1 | Accepted (provider superseded by ADR-017; planned-route origin amended 2026-10-11) | Project owner | 2026-10-11 |
-| `docs/adr/017-order-route-provider-openrouteservice.md` | 1.1 | Accepted (amended 2026-10-08 for backfill privacy; amended 2026-10-11 for geocode guard + accepted-point origin) | Project owner | 2026-10-11 |
+| `docs/adr/016-order-route-overlay.md` | 1.2 | Accepted (provider superseded by ADR-017; planned-route origin amended 2026-10-11; 'not persisted' rule amended for the planned route by ADR-026) | Project owner | 2026-10-11 |
+| `docs/adr/017-order-route-provider-openrouteservice.md` | 1.2 | Accepted (amended 2026-10-08 for backfill privacy; amended 2026-10-11 for geocode guard + accepted-point origin; ADR-026 pointer 2026-10-11) | Project owner | 2026-10-11 |
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
 | `docs/adr/019-trip-control-start-stop.md` | 1.0 | Rejected (short record; code reverted) | Project owner | 2026-10-07 |
 | `docs/adr/020-track-navigation-camera.md` | 1.0 | Accepted | Project owner | 2026-10-07 |
@@ -62,10 +62,11 @@ When any controlled document changes, update both:
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.45 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.28 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-10 |
+| `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.46 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.29 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
-| `docs/IMPLEMENTATION-ISSUES.md` | 0.3 | Ready to use (blocker protocol; Issue #2 resolved) | Tech Lead | 2026-10-07 |
+| `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.3 | Active (persistent) | Project Team | 2026-10-10 |
 | `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
@@ -93,6 +94,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | adr/026 (new), adr/README, adr/016 (pointer), adr/017 (pointer), PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, IMPLEMENTATION-ISSUES, DOCUMENT-CONTROL | —/1.4/1.1/1.1/0.23/0.27/0.28/0.45/0.3/0.1 | 1.0/1.5/1.2/1.2/0.24/0.28/0.29/0.46/0.4/0.1 | Saved planned route + planned-vs-actual comparison (ADR-026, docs only, device-only): the planned order route is persisted in a new Room table `trip_planned_route` (v14→v15 `MIGRATION_14_15`; write-at-fetch, hydrate after process death, deleted with the trip, 24 h orphan sweep, no backfill); optimized (runtime) route stays in memory only; actual trace unchanged; comparison numbers (planned/actual/extra km, max deviation m) derived at display time; `kind='NAV'` reserved for ADR-009. New ADR-026 (Accepted, conditional on the openrouteservice/HeiGIT ToS gate). adr/README 1.4→1.5 (row, count 25→26). adr/016 and adr/017 'not persisted' pointers (versions 1.1→1.2). PRD 0.24 (FR-17 amended, FR-21 new, BR-15 amended, BR-16 new). ARCHITECTURE 0.28 (entity, ROUTE flow, v15 migration, invariants). UI-SPEC 0.29 (new §3j line styles, legend, trip details comparison, Handoff Instructions). IMPLEMENTATION-PLAN 0.46 (§1, §4 slice with How to Verify, Next Step, §6 rows: Docs Completed, Code Not Started/Blocked). IMPLEMENTATION-ISSUES 0.3→0.4 (Issue #3, ToS gate). No source change; code blocked on the ToS gate and the §3j design handoff. Not committed (Git Revision `---` placeholders in plan §6). | Claude Sonnet 5.5 |
 | 2026-10-11 | adr/017 (amended), adr/016 (status note), PRD, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.0/1.0/0.22/0.26/0.44/0.1 | 1.1/1.1/0.23/0.27/0.45/0.1 | Geocode guard + accepted-point origin (ADR-017 Amendment 2026-10-11, docs only): geocode requests carry a 50 km `boundary.circle` around the driver and results more than 50 km away are rejected client-side; ladder reordered (full address with city first, bare place name removed); planned route origin = accepted point (trip-start fix, live-fix fallback) instead of the current fix; accept/reject and route diagnostics logs; same-point warning. adr/017 Amendment section + superseded pointers on decision 4 and Status Summary; adr/016 status note (origin now accepted point). PRD v0.22→0.23 (FR-17 origin, ladder, guard). ARCHITECTURE v0.26→0.27 (ROUTE section). IMPLEMENTATION-PLAN v0.44→0.45 (§1 row, new §4 slice with How to Verify, §6 row In Progress with Git Revision `---`). UI-SPEC unchanged (no visual change). No schema change, no permission change. Code implemented and deployed 2026-10-11 (commit d70c3c5); live-order device verification pending. DOCUMENT-CONTROL 0.1 unchanged (own rules not changed). | Claude Haiku 4.5 |
 | 2026-10-10 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.43/0.1 | 0.44/0.1 | Status refresh (docs only): IMPLEMENTATION-PLAN v0.43→0.44 (ADR-025 "Current" status block in Next Step rewritten to reflect code `d4954ed`, the 2026-10-10 build and device install, and the resolved open questions; §1 row added). Cancel-flow device checks remain NOT verified. DOCUMENT-CONTROL register updated for IMPLEMENTATION-PLAN; this row added. No source code changes. | Claude Code |
 | 2026-10-10 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.42/0.1 | 0.43/0.1 | ADR-025 revision record (docs only): IMPLEMENTATION-PLAN v0.42→0.43 (§1 row; §6 ADR-025 row Git Revision `---`→`d4954ed` (docs `d63ad3e`); Verification replaced with 2026-10-10 device verification result, including items recorded as NOT verified). DOCUMENT-CONTROL register updated for IMPLEMENTATION-PLAN; this row added. No source code changes. | Claude Code |

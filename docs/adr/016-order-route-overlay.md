@@ -1,6 +1,6 @@
 # ADR-016: Gojek Order Route Overlay (planned + runtime routes)
 
-**Status:** Accepted (provider superseded by ADR-017; behaviour decisions remain in force; planned-route origin is now the accepted point, see ADR-017 Amendment 2026-10-11)
+**Status:** Accepted (provider superseded by ADR-017; behaviour decisions remain in force; planned-route origin is now the accepted point, see ADR-017 Amendment 2026-10-11; the planned route is now persisted device-only per ADR-026, the runtime route stays non-persisted)
 **Date:** 2026-10-06
 **Decided By:** Project owner + Claude Code
 
@@ -12,7 +12,7 @@ This ADR adds two car routes (driving mode) to `TrackMap` during an active Gojek
 1. **Planned route:** current location → pickup → drop (pickup as a waypoint); fetched once when the order is taken, then frozen.
 2. **Runtime route:** current location → next stop (pickup during PICKUP phase, drop during DROP phase); re-fetched on phase change or when the driver deviates >~40 m from the polyline, throttled to at most once per 30 s and only after the driver moved ~100 m.
 
-Pickup and drop locations receive map markers (titled "Pickup" / "Drop"). All route state is cleared on order completion (FINISHED), dismissal, or no active order. Routes are display-only, not persisted, and do not affect the canonical location log or trip/session model (PRD §12).
+Pickup and drop locations receive map markers (titled "Pickup" / "Drop"). All route state is cleared on order completion (FINISHED), dismissal, or no active order. Routes are display-only, not persisted (amended 2026-10-11: ADR-026 persists the planned route device-only with its trip; the runtime route stays non-persisted), and do not affect the canonical location log or trip/session model (PRD §12).
 
 ---
 

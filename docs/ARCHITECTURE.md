@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.27
+**Document Version:** 0.28
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -55,6 +55,13 @@ ObserverTripEntity (observer_trip)   ← DERIVED from captured tree snapshots; G
   ├── phase (pickup/drop-only/finished/cancelled; cancelled added ADR-025, string column, no schema change), firstSeenAt, lastSeenAt, handled (marked once the takeover for that order has been processed)
   └── no FKs to trips/sessions; deduplication key = (pickupAddress, dropAddress)
 
+TripPlannedRouteEntity (trip_planned_route)   ← saved planned route per trip, device-only (ADR-026, DB v15; not yet implemented)
+  ├── tripStartedAt (INTEGER PK) = track.timestamp of the owning trip; NO FK (same convention as observer_trip)
+  ├── kind (TEXT NOT NULL) — 'ORDER' | 'NAV' (NAV reserved for ADR-009, not implemented)
+  ├── geometry (TEXT NOT NULL) — ORS encoded polyline, precision 5, as returned
+  ├── distanceM, durationS (INTEGER) — ORS routes[0].summary
+  └── originSource (TEXT 'ACCEPTED' | 'FALLBACK_LIVE'), fetchedAt (INTEGER)
+
 ObdSampleEntity (obd_sample)
   ├── timestampMs, rpm, obdSpeedKmh
   ├── fuelRateLph, mafGramsPerSecond, fuelRateSource
@@ -93,6 +100,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
 - `observer_trip` is retained independently: 90 days / 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete.
+- `trip_planned_route` (ADR-026) is a separate table (not a `track` column: `track` list queries load whole rows and already carry a large `pathPoints` string). It has no FK; it is deleted with its trip (same DAO transaction path as the `track` delete) plus an app-start orphan sweep (no matching `track.timestamp` AND `fetchedAt` older than 24 h). It is never ingested into the local route store (ADR-010, PRD BR-15/BR-16); the optimized route is never persisted.
 
 ---
 
@@ -111,7 +119,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 14) | Local-first storage with migrations |
+| Persistence | Room (current DB version 14; v15 planned by ADR-026) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -177,7 +185,7 @@ TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel rule per ADR-025):
    → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), COST / NET (estimated fuel cost = trip fuel from OBD accumulator × effective price; NET = OrderCard.earningsRp − COST), AVG/INST km/L, fed from TrackPanelState + OBD state + FuelPriceController + OrderCard earnings
    → after terminal state, trip strip and card disappear; TripPanel returns
 
-ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
+ROUTE (Planned + Optimized/Runtime + Actual, ADR-016, provider ADR-017, persistence ADR-026):
    → OrderRouteController collects activeOrder (from latestOrderFlow) and locationUiState
    → On order takeover (phase → PICKUP):
       Geocode pickup and drop addresses via OpenRouteService Geocoding (once per order, cached in-memory)
@@ -187,17 +195,25 @@ ROUTE (Planned + Runtime, ADR-016, provider ADR-017):
       Planned-route origin = accepted point (trip-start fix: activeTripStartLocationId row, else first recorded path point, else current live fix as last resort)
       Fetch planned route (accepted point → pickup → drop via waypoint; during DROP at takeover: accepted point → drop) via OpenRouteService Directions API; fetched once, frozen
       Diagnostics (tags unchanged; no address text, coordinates or key logged): per ladder step order key seen, index accepted, layer, confidence, distance to driver (km) or reason rejected (far / coarse / low-confidence / none); planned/runtime fetch success or failure and point counts; warning if pickup and drop resolve <30 m apart
-      Display as thin muted blue-grey polyline on TrackMap
+      Extract routes[0].summary distance/duration along with the geometry (RouteResult)
+      Persist at fetch (ADR-026, planned code): write trip_planned_route row (kind 'ORDER', keyed by LocationUiState.tripStartedAt, originSource ACCEPTED or FALLBACK_LIVE) immediately after the fetch succeeds; if tripStartedAt == 0 skip persisting and log
+      Hydrate (ADR-026): on process restart, if a row exists for the current trip, restore the frozen plan from it instead of re-planning from a new origin
+      Display as dashed thin blue-grey polyline on TrackMap (UI-SPEC §3j)
    → On phase change (PICKUP → DROP) or off-route (>~40 m from polyline):
       Fetch runtime route (current → next stop: pickup or drop) via OpenRouteService Directions API
-      Display as bold orange polyline above the planned route
+      Display as solid bold orange polyline above the planned route; in-memory only, never persisted, never fed to the route store (BR-16)
       Throttled: at most once per 30 s and only after driver moved ~100 m
    → Pickup and Drop map markers displayed at their geocoded LatLng coordinates
    → Attribution: '© openrouteservice.org | © OpenStreetMap contributors' visible while routes shown, hidden when none
    → On terminal state (FINISHED or CANCELLED) or dismiss:
-      Clear both planned and runtime routes, remove markers, hide route state
+      Clear both planned and runtime routes from memory (the persisted planned row stays with its trip), remove markers, hide route state
       TrackMap reverts to recorded trace + live car position only
    → Failure handling: offline or API error → no route drawn, trip continues normally (fail-soft)
+   → Trip details (ADR-026): load trip_planned_route by track.timestamp; decode the polyline; draw dashed under the actual line; compute comparison at display time with a pure RouteComparison util, never persisted:
+        Planned km = distanceM / 1000; Actual km = track.distance; Extra km = actual − planned (signed);
+        Max deviation m = max over actual path points of the distance to the planned polyline
+      No row (pre-v15 trip, failed plan, manual trip) → empty state "No planned route saved"; attribution shown whenever the saved plan is drawn
+   → Data lifetime (ADR-026): planned = persisted device-only with its trip; optimized = memory only; actual = canonical location log + track.pathPoints
    → External data flow: pickup/drop addresses and current location sent to OpenRouteService (Directions + Geocoding); the boundary circle reuses the driver's current coordinates (no new data class); customer name/phone never sent (ADR-013)
    → Accuracy notes (ADR-017): street-level pins can be metres off on long roads; geocoding may fail for long comma-separated Gojek addresses; an address with no city may geocode wrongly inside the 50 km circle or not at all; fail-soft (no route better than wrong route)
 ```
@@ -270,7 +286,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v14** (current; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v14** (current; **v15 planned by ADR-026**, not yet implemented; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -310,6 +326,19 @@ Room database (`TrackDatabase`), at version **v14** (current; ADR-025 extends to
   UPDATE track SET orderStatus = 'COMPLETED' WHERE orderLabel IS NOT NULL
   ```
   Order-linked trips existing before v14 are marked `COMPLETED` (the earlier cancel outcome was not stored; history not rewritten). Manual trips keep `orderStatus` NULL and show no chip. `orderOffline` defaults to `0`.
+- `MIGRATION_14_15` (ADR-026, DB→**v15**, planned, not yet implemented): new table, no change to existing tables:
+  ```sql
+  CREATE TABLE trip_planned_route (
+    tripStartedAt INTEGER NOT NULL PRIMARY KEY,
+    kind TEXT NOT NULL,
+    geometry TEXT NOT NULL,
+    distanceM INTEGER,
+    durationS INTEGER,
+    originSource TEXT,
+    fetchedAt INTEGER
+  )
+  ```
+  No backfill: trips recorded before v15 have no planned route. Exported schema `15.json` is added with the code change. Gate: ORS ToS check (ADR-026 decision 10) before the code ships.
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.

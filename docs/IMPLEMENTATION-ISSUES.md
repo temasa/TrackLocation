@@ -8,9 +8,9 @@ description: Blocker protocol and live communication channel — fully generic, 
 
 ## TrackLocation - Phase 1
 
-**Version:** 0.3  
+**Version:** 0.4  
 **Status:** Issue log + blocker protocol  
-**Last Updated:** 2026-10-07
+**Last Updated:** 2026-10-11
 
 ---
 
@@ -183,6 +183,31 @@ Owner chose **Option 2** (2026-10-07): Re-icon and relabel the LIVE button as St
 **Resolved:** 2026-10-07  
 **Resolution:** Option 2 — relabel/re-icon the LIVE control as Stop; PAUSED unreachable; see UI-SPEC §3g and Issue #2 (Resolved). Code and design-handoff follow-up recorded in IMPLEMENTATION-PLAN §4 and §6.  
 **Related:** ADR-019 (Rejected — contains this option; later partially adopted via this decision).
+
+---
+
+### Issue #3: openrouteservice / HeiGIT ToS may not allow storing returned route geometry (ADR-026 gate)
+
+**Sprint/Task:** Saved Planned Route + Planned-vs-Actual Comparison (ADR-026), IMPLEMENTATION-PLAN §4
+**Severity:** Blocker (for ADR-026 code only; the rest of the app is unaffected)
+**Status:** Raised
+
+**Problem:**
+ADR-026 persists the ORS Directions geometry of a trip's planned route in `trip_planned_route` for display and comparison. The ORS/HeiGIT Terms of Service (https://account.heigit.org/info/tos) sections available during research ban unacceptable use and overburdening and require attribution on the free API, but did not state whether storing returned route geometry is permitted. PRD BR-15 previously forbade caching third-party routing results; it was amended (2026-10-11) only on the assumption that storage is allowed.
+
+**Context:**
+Owner decision 2026-10-11: persist the planned route device-only and compare it with the actual trip. The data is OSM-derived, so ODbL attribution applies wherever stored routes are shown (already planned: '© openrouteservice.org | © OpenStreetMap contributors').
+
+**Options:**
+1. Owner reads the full ToS or contacts HeiGIT and confirms storing is permitted — Pros: feature ships as designed. Cons: needs an external answer; may require conditions (retention, attribution) to be added to ADR-026.
+2. Storing is NOT permitted — fall back to storing nothing from ORS (display-only, as today), and revisit ADR-026 (for example store only the user's own actual trace, which needs no ORS data) — Pros: no licence risk. Cons: no post-trip planned-vs-actual comparison.
+
+**Recommendation:**
+Option 1 check first; do not start ADR-026 code until the finding is recorded in ADR-026 decision 10. If unclear, treat as not permitted.
+
+**Asked:** 2026-10-11  
+**Asking:** Claude Sonnet 5.5  
+**Related:** ADR-026 decision 10, PRD FR-21 / BR-15, IMPLEMENTATION-PLAN §4 and §6 (Code row Blocked).
 
 ---
 
