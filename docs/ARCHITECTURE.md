@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.35
+**Document Version:** 0.36
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -91,10 +91,15 @@ FuelEventEntity (fuel_event)   ← append-only fuel log for the fuel dock (added
   ├── kind (TEXT NOT NULL) — 'RESET' | 'FILL_UP'
   ├── litres (REAL NOT NULL) — starting level (RESET) or litres added (FILL_UP)
   ├── pricePerLiter (REAL, nullable) — price entered in Fill up when changed; NULL when the default price was kept
-  ├── resetBaselineL (REAL, nullable) — RESET rows only: cumulative OBD fuel total at the moment of the Reset (rev. 1.2); NULL for FILL_UP
+  ├── resetBaselineL (REAL, nullable) — RESET rows only: OBD ledger fuelConsumedL at the moment of the Reset (rev. 1.2 wording: Σ session litres; the ledger value from v17, ADR-027 rev. 1.6); NULL for FILL_UP
   └── createdAtMs (INTEGER NOT NULL)
-  Fuel balance (derived, never stored; ADR-027 rev. 1.2): anchor = latest RESET (resetAt = its createdAtMs; resetBaselineL = its baseline); cumulativeNow = Σ recording_session.obdFuelConsumedL over all session rows, active included (one query/Flow; OBD litres accrue into the active row on every poll via addObdAccumulator); fuelLeft = max(0, anchor.litres + Σ FILL_UP.litres (createdAtMs > resetAt) − max(0, cumulativeNow − anchor.resetBaselineL)); no RESET → `—`. Reads no obd_sample rows, so it survives obd_sample retention pruning. Only OBD-measured litres reduce it; OBD disconnected → frozen.
-  RANGE (display only) = fuelLeft × session avg km/L (obdCoveredDistanceKm ÷ obdFuelConsumedL, ADR-024).
+
+ObdLedgerEntity (obd_ledger)   ← session-independent OBD running total (added DB v17, ADR-027 rev. 1.6; planned, code not started; no FK)
+  ├── id (INTEGER PK, singleton: one row, id = 1)
+  └── fuelConsumedL (REAL NOT NULL, default 0) — cumulative OBD litres: each poll's fuel increment (valid rate 0.1..100 L/h, same gates as ADR-024), including idle (engine on, stationary); one column only
+  Written by ObdPollingService on every poll, whether or not a recording session exists and whether or not always-recording is ON (the session accumulators `addObdAccumulator` are unchanged). Seeded by MIGRATION_16_17 from the Σ of the session totals.
+  Fuel balance (derived, never stored; ADR-027 rev. 1.6): anchor = latest RESET (resetAt = its createdAtMs; resetBaselineL = its baseline); cumulativeNow = obd_ledger.fuelConsumedL; fuelLeft = max(0, anchor.litres + Σ FILL_UP.litres (createdAtMs > resetAt) − max(0, cumulativeNow − anchor.resetBaselineL)); no RESET → `—`. Reads no obd_sample rows, so it survives obd_sample retention pruning. Only OBD-measured litres reduce it (idle included when the OBD rate is valid); OBD disconnected → frozen.
+  RANGE (display only, ADR-027 rev. 1.6) = fuelLeft × ROLLING AVG km/L over the last 60 s of OBD driving (window covered km ÷ window litres; in-memory window fed by the same poll increments, not persisted, lost on restart; published to the dock through a shared state holder). While stationary (window < 0.05 km or ≤ 0.01 L) the last valid value is held; before any valid value since app start RANGE shows `—`. No active session needed. The session average (obdCoveredDistanceKm ÷ obdFuelConsumedL, ADR-024) is unchanged and still shown on the Session card.
 
 KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10, ADR-010); rebuildable, never source-of-truth
   ├── simplified directed polyline (Douglas–Peucker) + bearingDegrees
@@ -110,7 +115,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
 - `observer_trip` is retained independently: 90 days / 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete.
-- `fuel_event` (ADR-027) is append-only and has no FK. The fuel balance is derived from it and the OBD cumulative total (Σ `recording_session.obdFuelConsumedL` over all session rows, active included, compared with the RESET's `resetBaselineL`), never stored as a column.
+- `fuel_event` (ADR-027) is append-only and has no FK. The fuel balance is derived from it and the OBD ledger (`obd_ledger.fuelConsumedL`, compared with the RESET's `resetBaselineL`), never stored as a column. From v17 the ledger, not Σ `recording_session.obdFuelConsumedL`, is the cumulative source (ADR-027 rev. 1.6), so the balance and RANGE do not need an active session.
 - `trip_planned_route` (ADR-026) is a separate table (not a `track` column: `track` list queries load whole rows and already carry a large `pathPoints` string). It has no FK; it is deleted with its trip (same DAO transaction path as the `track` delete) plus an app-start orphan sweep (no matching `track.timestamp` AND `fetchedAt` older than 24 h). It is never ingested into the local route store (ADR-010, PRD BR-15/BR-16); the optimized route is never persisted.
 
 ---
@@ -130,7 +135,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 |---|---|---|
 | UI | Jetpack Compose + Material 3 | Accepted product UI direction; compose-pinned at Compose UI 1.2.x (compiler extension 1.2.0) |
 | Language | Kotlin 1.7.0 | Project baseline (note: incompatible with `kotlin-obd-api` — see ADR/OBD approach) |
-| Persistence | Room (current DB version 16; `fuel_event` v16 implemented by ADR-027, commit `a197453`) | Local-first storage with migrations |
+| Persistence | Room (current code DB version 16; `fuel_event` v16 implemented by ADR-027, commit `a197453`; DB v17 with `obd_ledger` designed by ADR-027 rev. 1.6, implementation pending) | Local-first storage with migrations |
 | Preferences | DataStore | Observer + OBD settings/state |
 | GPS | Foreground `TrackingService` (`foregroundServiceType="location"`) | Continuous always-recording |
 | Telemetry | `ObdPollingService` (`foregroundServiceType="connectedDevice"`) + raw AT I/O over Bluetooth RFCOMM/SPP | ELM327 Bluetooth Classic |
@@ -316,7 +321,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR-027**, implemented in commit `a197453`; `assembleDebug` OK and run on a Galaxy S9+ over the existing v15 data on 2026-10-11 without a migration error (schema comparison not done); ADR-026 extends to v15, code `f26bb03`; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v16** in code (current; **v17 planned by ADR-027 rev. 1.6**: new `obd_ledger` table (one column), `MIGRATION_16_17`, implementation pending, not in code yet; **v16 added by ADR-027**, implemented in commit `a197453`; `assembleDebug` OK and run on a Galaxy S9+ over the existing v15 data on 2026-10-11 without a migration error (schema comparison not done); ADR-026 extends to v15, code `f26bb03`; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -381,6 +386,17 @@ Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR
   )
   ```
   `resetBaselineL` is set only on RESET rows (cumulative OBD fuel total at the Reset, ADR-027 rev. 1.2) and is NULL for FILL_UP. Append-only; no deletes in ADR-027. No exported schema (`TrackDatabase` has `exportSchema = false`); the migration is verified by installing over a copy of the v15 database before shipping.
+
+- `MIGRATION_16_17` (ADR-027 rev. 1.6, DB→**v17**, planned; implementation pending, not in code yet):
+  ```sql
+  CREATE TABLE obd_ledger (
+    id INTEGER PRIMARY KEY NOT NULL,
+    fuelConsumedL REAL NOT NULL DEFAULT 0
+  );
+  INSERT INTO obd_ledger (id, fuelConsumedL)
+    SELECT 1, COALESCE(SUM(obdFuelConsumedL), 0) FROM recording_session;
+  ```
+  The seed keeps existing Reset baselines (`resetBaselineL`) valid. No change to `fuel_event`. A fresh install creates the singleton row on database create (or on first write if missing). No other table changes. Verification: install over a copy of the v16 database; FUEL LEFT unchanged.
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.
