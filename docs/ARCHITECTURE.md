@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.29
+**Document Version:** 0.30
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -91,8 +91,9 @@ FuelEventEntity (fuel_event)   ← append-only fuel log for the fuel dock (added
   ├── kind (TEXT NOT NULL) — 'RESET' | 'FILL_UP'
   ├── litres (REAL NOT NULL) — starting level (RESET) or litres added (FILL_UP)
   ├── pricePerLiter (REAL, nullable) — price entered in Fill up when changed; NULL when the default price was kept
+  ├── resetBaselineL (REAL, nullable) — RESET rows only: cumulative OBD fuel total at the moment of the Reset (rev. 1.2); NULL for FILL_UP
   └── createdAtMs (INTEGER NOT NULL)
-  Fuel balance (derived, never stored; ADR-027): anchor = latest RESET (resetAt = its createdAtMs); fuelLeft = max(0, anchor.litres + Σ FILL_UP.litres with createdAtMs > resetAt − Σ OBD fuel consumed in (resetAt, now]); no RESET → `—`. Only OBD-measured litres reduce it; OBD disconnected → frozen.
+  Fuel balance (derived, never stored; ADR-027 rev. 1.2): anchor = latest RESET (resetAt = its createdAtMs; resetBaselineL = its baseline); cumulativeNow = Σ recording_session.obdFuelConsumedL over all session rows, active included (one query/Flow; OBD litres accrue into the active row on every poll via addObdAccumulator); fuelLeft = max(0, anchor.litres + Σ FILL_UP.litres (createdAtMs > resetAt) − max(0, cumulativeNow − anchor.resetBaselineL)); no RESET → `—`. Reads no obd_sample rows, so it survives obd_sample retention pruning. Only OBD-measured litres reduce it; OBD disconnected → frozen.
   RANGE (display only) = fuelLeft × session avg km/L (obdCoveredDistanceKm ÷ obdFuelConsumedL, ADR-024).
 
 KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10, ADR-010); rebuildable, never source-of-truth
@@ -109,7 +110,7 @@ KnownSegmentEntity (known_segment)   ← DERIVED from location_log (added DB v10
 - OBD samples and Observer events have **no foreign keys** to trips/sessions; they associate via `samplesBetween(startMs, endMs)` / time windows.
 - Observer history is never user-deletable; retention is automatic (7 days / 50,000 rows, whichever is smaller).
 - `observer_trip` is retained independently: 90 days / 5,000 rows, whichever is smaller; automatic pruning; no user-facing delete.
-- `fuel_event` (ADR-027) is append-only and has no FK. The fuel balance is derived from it and the OBD fuel integral, never stored as a column.
+- `fuel_event` (ADR-027) is append-only and has no FK. The fuel balance is derived from it and the OBD cumulative total (Σ `recording_session.obdFuelConsumedL` over all session rows, active included, compared with the RESET's `resetBaselineL`), never stored as a column.
 - `trip_planned_route` (ADR-026) is a separate table (not a `track` column: `track` list queries load whole rows and already carry a large `pathPoints` string). It has no FK; it is deleted with its trip (same DAO transaction path as the `track` delete) plus an app-start orphan sweep (no matching `track.timestamp` AND `fetchedAt` older than 24 h). It is never ingested into the local route store (ADR-010, PRD BR-15/BR-16); the optimized route is never persisted.
 
 ---
@@ -356,10 +357,11 @@ Room database (`TrackDatabase`), at version **v15** (current; **v16 planned by A
     kind TEXT NOT NULL,
     litres REAL NOT NULL,
     pricePerLiter REAL,
+    resetBaselineL REAL,
     createdAtMs INTEGER NOT NULL
   )
   ```
-  Append-only; no deletes in ADR-027. Exported schema `16.json` is added with the code change. Migration verified on a copy of the device DB before shipping.
+  `resetBaselineL` is set only on RESET rows (cumulative OBD fuel total at the Reset, ADR-027 rev. 1.2) and is NULL for FILL_UP. Append-only; no deletes in ADR-027. No exported schema (`TrackDatabase` has `exportSchema = false`); the migration is verified by installing over a copy of the v15 database before shipping.
 
 **Backfill logic for MIGRATION_11_12 (v11→v12):**
 - For each `track` row with `orderLabel NOT NULL` (order-linked trips), match against `observer_trip` rows using the window rule: `firstSeenAt − 2 min` to `lastSeenAt + 5 min`, exactly one unambiguous match.

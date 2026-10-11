@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.41
+**Document Version:** 0.42
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -53,7 +53,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
 | Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, COST/NET, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
-| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours to confirm; code not started | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
+| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code not started | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -633,7 +633,7 @@ All components nest a shared `Metric/Base`, so a base style change propagates to
 
 **Behaviour:** ADR-027 and PRD FR-22. This section covers the visual and layout spec only.
 
-**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code not started. No build, test or device run. The state thresholds and colours need owner confirmation before code.
+**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code not started. No build, test or device run. The state thresholds and colours were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9).
 
 **Placement:** a persistent dock, full width, **64 px high**, absolutely positioned directly **above the bottom navigation**. It is part of the screen scaffold on the screens listed below, not a per-screen element. Panels and map buttons on Track move up to clear it (see layout shifts).
 
@@ -673,11 +673,11 @@ Edit pencils are 12 px lucide pencil icons in the label colour, one for each of 
 |---|---|---|---|
 | Not set | Before the first Fill up or Reset | `—` | `—` |
 | Normal | Fuel left at or above 6 L | e.g. `24.0`, normal colour | e.g. `310`, normal colour |
-| Low | Fuel left below 6 L | value in amber | amber |
-| Critical | Fuel left below 3 L | value in red | red |
+| Low | Fuel left below 6 L | value in amber `#D97706` | amber `#D97706` |
+| Critical | Fuel left below 3 L | value in red `#DC2626` | red `#DC2626` |
 | Low confidence | More than 10% of the distance was not covered by OBD | value prefixed with `~` (e.g. `~24.0`) | prefixed with `~` (e.g. `~310`) |
 
-The thresholds (6 L, 3 L, 10%) and the amber / red colours are taken from the design file and are **not yet owner-confirmed**; confirm before code (ADR-027 Decision 9).
+The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9). Normal and Not set keep the normal value colour and the `—` placeholder.
 
 **Fill up dialog (designed, frame `Dialog Column`, FillUpDialog):**
 - Title: Fill up.
@@ -720,7 +720,7 @@ The thresholds (6 L, 3 L, 10%) and the amber / red colours are taken from the de
 - Observer Phase 1 UI: implemented, verified on device (2026-05-29).
 - Observer Phase 2: snapshot viewer + pagination done; truncation banner spec drafted, awaiting design approval.
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
-- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours to confirm; code not started.
+- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code not started.
 
 ---
 
