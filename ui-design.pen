@@ -2750,6 +2750,41 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LBueW",
+                  "name": "CostRow",
+                  "theme": {
+                    "surface": "light"
+                  },
+                  "width": "fill_container",
+                  "children": [
+                    {
+                      "id": "t81cj",
+                      "type": "ref",
+                      "ref": "hMBXP",
+                      "name": "CostCell",
+                      "width": 60,
+                      "descendants": {
+                        "TekIj": {
+                          "width": 60,
+                          "alignItems": "start"
+                        },
+                        "TekIj/y0RW9Y": {
+                          "fontSize": 8,
+                          "textGrowth": "auto",
+                          "textAlign": "left"
+                        },
+                        "TekIj/QIi9H": {
+                          "content": "5k",
+                          "fontSize": 12,
+                          "textGrowth": "auto",
+                          "textAlign": "left"
+                        }
+                      }
+                    }
+                  ]
                 }
               ]
             },
@@ -2918,6 +2953,41 @@
                           }
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Ty5yZ",
+                  "name": "CostRow",
+                  "theme": {
+                    "surface": "light"
+                  },
+                  "width": "fill_container",
+                  "children": [
+                    {
+                      "id": "nmPjP",
+                      "type": "ref",
+                      "ref": "hMBXP",
+                      "name": "CostCell",
+                      "width": 60,
+                      "descendants": {
+                        "TekIj": {
+                          "width": 60,
+                          "alignItems": "start"
+                        },
+                        "TekIj/y0RW9Y": {
+                          "fontSize": 8,
+                          "textGrowth": "auto",
+                          "textAlign": "left"
+                        },
+                        "TekIj/QIi9H": {
+                          "content": "4k",
+                          "fontSize": 12,
+                          "textGrowth": "auto",
+                          "textAlign": "left"
+                        }
+                      }
                     }
                   ]
                 }
