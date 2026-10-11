@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.6  
+**Document Version:** 0.7  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-11  
 **Owned By:** Project Team
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-010 | 2026-10-11 | 2026-10-11 (mitigated manually; no code fix) | Verification | Observer accessibility service / order auto-start | Observer accessibility service silently disabled; two Gojek orders not captured and no auto-start trip — service dropped from `enabled_accessibility_services`, so nothing was captured from 07:21 WIB until the evening | Mitigated (manual); in-screen ServiceBanner covers only while the Observer screen is open |
 | ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
 | ERR-008 | 2026-10-11 | — (code fixed; device check pending) | Verification | Session running cost / fuel accumulator | Running-session COST/fuel reset or stopped accumulating — TrackingService re-wrote its cached session row with REPLACE on every GPS point, clobbering OBD accumulator increments | Code fixed (partial UPDATE); device verification pending |
 | ERR-007 | 2026-10-09 | 2026-10-10 (partial: pending a real order) | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending |
@@ -65,6 +66,35 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-010: Observer accessibility service silently disabled; two Gojek orders not captured, no auto-start
+
+**Found At:** 2026-10-11 ~20:00 WIB (investigating two Gojek orders that were not captured and did not auto-start a trip)  
+**Resolved At:** 2026-10-11 (mitigated manually via `adb shell settings put secure enabled_accessibility_services`, keeping `rk.android.app.lockscreen`'s service in the list)  
+**Phase:** Verification  
+**Sprint/Task:** Observer accessibility service / order auto-start (`launchTrackTakeover` via `OrderTripRecorder`)  
+**Environment:** on-device (user), SM-G965F Android 10, debug builds (`adb install -r`, force-stops during debug cycles)  
+**Status:** Mitigated (manual) — no code fix; recurrence not yet prevented  
+
+**Error Message / Output:**
+No crash. Symptom: the Observer captured nothing from 2026-10-11 07:21 WIB until the evening — no `observer_event` rows from any app and no `observer_trip` rows after 2026-10-10. Because `launchTrackTakeover` is only called from `OrderTripRecorder` (via `ObserverAccessibilityService.onAccessibilityEvent`), the order auto-start never fired.
+
+**Root Cause:**
+`ObserverAccessibilityService` was not in `Settings.Secure` `enabled_accessibility_services` (`dumpsys accessibility`: installed but not enabled or bound). Most likely trigger: app force-stop or reinstall during debug cycles, which makes Android drop the service. Logcat did not reach back to 07:22, so this is strongly indicated but not proven. Force-stops at 19:37 and 19:44 on 2026-10-11 were confirmed in logcat; usage stats show all foreground services stopping together at 06:56, 07:22 and 07:27.
+
+**Not the cause:** the order-card parser and the trip recorder; the capture switch (`observer_prefs` was never written, so `capture_running` defaults to true). Gojek events on 2026-10-11 before 07:21 were home-screen only (Beranda/Pendapatan), so no orders were missed before the service died.
+
+**Resolution:**
+Mitigated manually on 2026-10-11 with `adb shell settings put secure enabled_accessibility_services`, keeping `rk.android.app.lockscreen`'s service in the list. No code change.
+
+Existing mitigation (verified in code, not new): the Observer Feed shows a red `ServiceBanner` ("Service Disabled", tap to open accessibility settings), polled every second via `ObserverViewModel.isOurServiceEnabled`. It only helps while the Observer screen is open.
+
+**Lesson Learned:**
+1. Re-check Observer accessibility enablement after every `adb install -r` or force-stop (`dumpsys accessibility` or the `settings get secure enabled_accessibility_services` check).
+2. The in-screen banner does not cover the case where the driver never opens the Observer screen while driving. Any gap in coverage needs a mechanism that works without the screen open; this is an open product question, not a decision made here.
+3. Verify the existing UI and code before asserting a gap. The banner already existed; the real gap is the screen-closed case.
 
 ---
 
