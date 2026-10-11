@@ -73,6 +73,14 @@ import com.kolee.tracklocation.feature.obd.ui.formatIdr
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.TrackingService
+import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricSize
+import com.kolee.tracklocation.ui.components.MetricStrip
+import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatMetricCount
+import com.kolee.tracklocation.ui.components.formatMetricDecimal
+import com.kolee.tracklocation.ui.components.formatMetricPair
+import com.kolee.tracklocation.ui.components.formatMetricTime
 import com.kolee.tracklocation.ui.theme.TripBackground
 import com.kolee.tracklocation.ui.theme.TripBorder
 import com.kolee.tracklocation.ui.theme.TripBorderSoft
@@ -84,7 +92,6 @@ import com.kolee.tracklocation.ui.theme.TripInk
 import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
 import com.kolee.tracklocation.ui.theme.TripTertiary
-import com.kolee.tracklocation.utils.TimeUtilFormatter
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -96,6 +103,9 @@ private data class SessionUiItem(
     val durationMs: Long,
     val distanceKm: Float,
     val points: Int,
+    val avgSpeedKmh: Double?,
+    val avgKmPerLiter: Double?,
+    val totalFuelL: Double?,
     val active: Boolean = false
 )
 
@@ -396,6 +406,14 @@ private fun SessionEntity.toUiItem(index: Int): SessionUiItem {
         durationMs = durationMillis,
         distanceKm = (distanceMeters / 1000.0).toFloat(),
         points = pointCount,
+        avgSpeedKmh = if (durationMillis > 0L) {
+            (distanceMeters / 1000.0) / (durationMillis / 3_600_000.0)
+        } else null,
+        // ADR-024: covered distance / fuel over the same fuel-covered intervals.
+        avgKmPerLiter = if (obdCoveredDistanceKm > 0.0 && obdFuelConsumedL > 0.01) {
+            obdCoveredDistanceKm / obdFuelConsumedL
+        } else null,
+        totalFuelL = if (obdFuelConsumedL > 0.0) obdFuelConsumedL else null,
         active = isActive
     )
 }
@@ -496,24 +514,49 @@ private fun SessionRow(item: SessionUiItem) {
                         .height(1.dp)
                         .background(TripBorderSoft)
                 )
-                Row(
+                MetricStrip(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    theme = MetricTheme.Light,
+                    showSeparator = false,
+                    spacing = 2.dp
                 ) {
-                    SessionMetric(
-                        value = TimeUtilFormatter.getTime(item.durationMs),
-                        label = "duration",
-                        modifier = Modifier.weight(1f)
+                    MetricCell(
+                        label = "TIME",
+                        value = formatMetricTime(item.durationMs),
+                        modifier = Modifier.weight(52f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
                     )
-                    SessionMetric(
-                        value = String.format(Locale.ENGLISH, "%.2f km", item.distanceKm),
-                        label = "distance",
-                        modifier = Modifier.weight(1f)
+                    MetricCell(
+                        label = "DIST (km)",
+                        value = formatMetricDecimal(item.distanceKm.toDouble()),
+                        modifier = Modifier.weight(46f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
                     )
-                    SessionMetric(
-                        value = item.points.toString(),
-                        label = "points",
-                        modifier = Modifier.weight(1f)
+                    MetricCell(
+                        label = "AVG SPEED (km/h)",
+                        value = formatMetricDecimal(item.avgSpeedKmh),
+                        modifier = Modifier.weight(82f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
+                    )
+                    MetricCell(
+                        label = "AVG/TOTAL (km/L/L)",
+                        value = formatMetricPair(
+                            item.avgKmPerLiter?.let { formatMetricDecimal(it) },
+                            item.totalFuelL?.let { formatMetricDecimal(it) }
+                        ),
+                        modifier = Modifier.weight(90f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
+                    )
+                    MetricCell(
+                        label = "POINTS",
+                        value = formatMetricCount(item.points),
+                        modifier = Modifier.weight(48f),
+                        theme = MetricTheme.Light,
+                        size = MetricSize.Compact
                     )
                 }
             }
@@ -563,32 +606,6 @@ private fun MarkerGutter(accent: Color) {
                 .size(width = 2.5f.dp, height = 32.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(accent)
-        )
-    }
-}
-
-@Composable
-private fun SessionMetric(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = value,
-            color = TripInk,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 17.sp,
-            letterSpacing = 0.sp,
-            maxLines = 1
-        )
-        Text(
-            text = label,
-            color = TripMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Normal,
-            modifier = Modifier.padding(top = 6.dp)
         )
     }
 }
