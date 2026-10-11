@@ -141,7 +141,7 @@ No schema change, no new permission, no UI change (visuals, markers and attribut
 
 ### Verification
 
-IMPLEMENTATION-PLAN §4 slice "Observer — Geocode Guard & Accepted-Point Origin (ADR-017 Amendment 2026-10-11)", including its How to Verify block. Code and on-device checks are pending user permission (AGENTS.md §5a/§5b).
+IMPLEMENTATION-PLAN §4 slice "Observer — Geocode Guard & Accepted-Point Origin (ADR-017 Amendment 2026-10-11)", including its How to Verify block. Code implemented, built (`:app:assembleDebug`) and installed on device 2026-10-11 (commit d70c3c5). Live-order on-device verification is still pending.
 
 ---
 
