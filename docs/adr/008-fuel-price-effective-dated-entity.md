@@ -42,6 +42,10 @@ Room **MIGRATION_8_9** (DB v8→v9) creates the empty `fuel_price` table. A one-
 - A schema change + migration (v8→v9) and one extra small query per completed-row render (cheap; can be batched).
 - Superseding wording: the FR-12 v1 claim of "no schema change / price not persisted" (commit `c14627e`) is now obsolete.
 
+## Amendment 2026-10-11
+
+UI entry points changed; the model is unchanged. The fuel price is now edited only from the fuel dock PRICE pencil (the Fuel price dialog, the same FR-12 editor; see [ADR-027](027-fuel-balance-fill-up-and-reset.md) Decision 12). COST cells are display-only: tapping one no longer opens the editor, and the completed-trip Toast is removed. The `fuel_price` model in Decisions above (effective-dated rows, Save/Undo/Redo append, completed trip priced at trip start) is not changed.
+
 ## Alternatives Considered
 1. **Per-trip price column on `TrackEntity` (snapshot at close):** rejected — owner wanted price as a separate entity, and a column duplicates the price onto every trip.
 2. **Keep the DataStore scalar, live re-price completed trips:** rejected — editing the price would retroactively change historical costs.

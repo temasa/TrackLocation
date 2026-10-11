@@ -1,6 +1,6 @@
 # ADR-027: Fuel Balance, Fill-up and Reset (Fuel Dock)
 
-**Status:** Accepted — dock and dialogs designed in `ui-design.pen` (design update 2026-10-11; commit hash backfilled in the next commit); Reset entry point decided 2026-10-11; state thresholds and colours need owner confirmation before code; code not started
+**Status:** Accepted — dock and dialogs designed in `ui-design.pen` (design commit `237e940`); Reset entry point decided 2026-10-11; COST cells display-only decided 2026-10-11 (Decision 12); state thresholds and colours need owner confirmation before code; code not started
 **Date:** 2026-10-11
 **Decided By:** Project owner + Claude Code
 
@@ -62,6 +62,7 @@ Constraints:
 
 10. **Out of this ADR:** tank capacity, undo/delete of fuel events, fuel-level alerts beyond the display states above, any change to GPS tracking, the canonical log, sessions/trips, or the navigation structure.
 11. **Trips header price control removed (2026-10-11).** The fuel-pump icon added to the Trips `ListHeader` on 2026-07-08 (UI-SPEC §3b #8; historic IMPLEMENTATION-PLAN slice) is removed from the design. The PRICE pencil on the fuel dock is the price entry point from outside the cost cells; the Fuel price dialog is the same FR-12 editor. Code removal is pending (IMPLEMENTATION-PLAN §4 fuel dock slice, step 6).
+12. **COST cells are display-only (decided 2026-10-11).** The COST cells (Session OBD card, Trips active-trip row, completed-trip rows, Sessions COST row, Track strips) have no tap target: tapping one does nothing (no editor, no Toast). The read-only Toast on completed-trip cost cells (the 2026-07-08 read-out, UI-SPEC §3b #9) is removed. The PRICE pencil on the fuel dock (Decision 7) is the single price entry point, and the Fuel price dialog is the only UI that edits the price. The ADR-008 model is unchanged (effective-dated rows; a completed trip uses the price in effect at its start); only its UI entry points are amended (see the ADR-008 amendment 2026-10-11). Code removal is pending (IMPLEMENTATION-PLAN §4 fuel dock slice, step 6).
 
 ## Consequences
 
@@ -124,11 +125,10 @@ PRD (FR-22 new, FR-12 cross-reference), ARCHITECTURE (`fuel_event` entity, balan
 - [ ] **Owner confirms the dock state thresholds (6 L / 3 L / 10%) and the amber / red colours** (Decision 9) before code.
 - [ ] **Migration ordering:** if ADR-026 code ships to v15 before this ADR, this migration is v15 → v16 (as written). If the owner wants both changes in one release, they may be combined into one migration; decide before code.
 - [ ] Owner decides whether a fuel-event correction path (edit or delete) is needed later; out of scope here.
-- [ ] **Should tapping the COST cell on Trips / Session cards still open the price editor?** (owner to decide; the Trips header fuel-pump route is removed by Decision 11). Until decided, the COST-cell tap is unchanged.
 
 ## Status Summary
 
 - **ADR Accepted:** 2026-10-11.
-- **Docs Updated:** 2026-10-11 — PRD (FR-22), ARCHITECTURE, UI-SPEC (§5b), IMPLEMENTATION-PLAN, adr/README, DOCUMENT-CONTROL.
-- **Design:** dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs and dock states designed in `ui-design.pen` (2026-10-11 update; `f39e1d4` added the dock first). OBD Settings has no dock. Reset entry point decided. Trips header fuel-pump icon removed from the design (Decision 11); code removal pending.
+- **Docs Updated:** 2026-10-11 — PRD (FR-22; FR-12 v0.26), ARCHITECTURE, UI-SPEC (§5b; §4 and §3b #9 v0.41), IMPLEMENTATION-PLAN (v0.56), adr/README, ADR-008 (amendment 2026-10-11, UI entry points), DOCUMENT-CONTROL.
+- **Design:** dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs and dock states designed in `ui-design.pen` (2026-10-11 update; `f39e1d4` added the dock first). OBD Settings has no dock. Reset entry point decided. Trips header fuel-pump icon removed from the design (Decision 11); COST cells display-only, no tap and no Toast (Decision 12); code removal pending.
 - **Code Implementation:** Not started. No build, test or device run performed.

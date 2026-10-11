@@ -35,7 +35,7 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.25 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
+| `docs/PRD.md` | 0.26 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
 | `docs/ARCHITECTURE.md` | 0.29 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
 | `docs/adr/README.md` | 1.6 | Active (27 ADRs indexed) | Tech Lead | 2026-10-11 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
@@ -44,7 +44,7 @@ When any controlled document changes, update both:
 | `docs/adr/004-obd-raw-at-io.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
 | `docs/adr/006-location-dwell-collapse.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
 | `docs/adr/007-unified-fuel-economy-metrics.md` | 1.1 | Accepted (amended 2026-10-09: averaging definition superseded by ADR-024) | Project owner | 2026-10-09 |
-| `docs/adr/008-fuel-price-effective-dated-entity.md` | 1.0 | Accepted | Project owner | 2026-07-07 |
+| `docs/adr/008-fuel-price-effective-dated-entity.md` | 1.1 | Accepted (amended 2026-10-11: UI entry points only, see ADR-027 Decision 12; model unchanged) | Project owner | 2026-10-11 |
 | `docs/adr/009-dual-mode-track-navigation.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/010-self-learning-route-store.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
 | `docs/adr/011-routing-engine-adapter.md` | 1.0 | Accepted | Tech Lead | 2026-07-08 |
@@ -63,9 +63,9 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.0 | Accepted (fuel dock; dock, pencils, dialogs and states designed 2026-10-11; state thresholds to confirm; Trips header fuel-pump price control removed 2026-10-11; code not started) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.55 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.40 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
+| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.1 | Accepted (fuel dock; dock, pencils, dialogs and states designed 2026-10-11; state thresholds to confirm; Trips header fuel-pump price control removed 2026-10-11; COST cells display-only 2026-10-11, Decision 12; code not started) | Project owner | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.56 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/UI-SPEC.md` | 0.41 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.4 | Active (persistent) | Project Team | 2026-10-11 |
@@ -95,6 +95,11 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | adr/027 | 1.0 | 1.1 | Decision 12 added: COST cells are display-only (no tap-to-edit, completed-trip Toast removed); the fuel dock PRICE pencil is the single price entry point. Open item on COST-cell tap closed and removed; status and summary updated. | Claude Haiku 5.5 |
+| 2026-10-11 | adr/008 | 1.0 | 1.1 | Amendment 2026-10-11 added: UI entry points changed (price edited only from the fuel dock PRICE pencil; COST cells display-only; Toast removed), see ADR-027 Decision 12. Model (effective-dated rows, price at trip start) unchanged. | Claude Haiku 5.5 |
+| 2026-10-11 | PRD | 0.25 | 0.26 | FR-12: price edited only from the fuel dock PRICE pencil (FR-22), Save/Cancel with undo/redo; inline cost tap-to-edit and completed-trip cost Toast removed; cost cells display-only (ADR-027 Decision 12). No change to §8 or §12. | Claude Haiku 5.5 |
+| 2026-10-11 | UI-SPEC | 0.40 | 0.41 | §4 Fuel cost: cost cells read-only with no tap target; price edited via dock PRICE pencil (§5b), Save/Cancel and undo/redo kept; §4 completed-trip note updated; §3b #9 completed-trip cost Toast marked REMOVED / SUPERSEDED (historic text kept); §3a active-trip cost stat no longer says tap to edit. | Claude Haiku 5.5 |
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.55 | 0.56 | Fuel dock slice step 6 extended (COST-cell tap-to-edit and Toast removal; FuelCostEditorDialog reachable only from the PRICE pencil); How to Verify item 19 extended; §6 removal row renamed and extended; §6 design-update row backfilled `237e940`; Next Step updated (only dock thresholds and colours open); 2026-07-08 completed-trip Toast slice marked superseded; §1 row 0.56. | Claude Haiku 5.5 |
 | 2026-10-11 | adr/027 (new) | — | 1.0 | Fuel balance, fill-up and reset (ADR-027): derived fuel left (Reset + Fill up − OBD litres since Reset, floor 0), RANGE = fuel left × session avg km/L, PRICE from the shared fuel price, `fuel_event` append-only table, Room v15 → v16 (`MIGRATION_15_16`; v15 is already in code via ADR-026). Reset entry point decided 2026-10-11 (pencil in the FUEL LEFT row); design-derived dock states (6 L / 3 L / 10% thresholds, amber / red) recorded for owner confirmation before code. Trips header fuel-pump price control removed 2026-10-11 (Decision 11; PRICE pencil is the price entry point). Pencils sit in the value row, right of the number (Decision 8). Open question on the COST-cell tap added. | Claude Haiku 5.5 |
 | 2026-10-11 | adr/README | 1.5 | 1.6 | ADR index: ADR-027 row added, count 26 → 27. | Claude Haiku 5.5 |
 | 2026-10-11 | PRD | 0.24 | 0.25 | FR-22 new (fuel dock, fill up, reset, fuel left, range, PRICE; edit pencils in the FUEL LEFT and PRICE value rows; dock on Track, List, Sessions, Settings only, not on OBD Settings, Details or Observer screens; append-only `fuel_event`, DB v16); FR-12 cross-reference to FR-22 / ADR-027 (PRICE pencil opens the same editor as a Fuel price dialog; Trips header fuel-pump price control removed 2026-10-11, ADR-027 Decision 11). No change to PRD §8 Out of Scope or §12 locked rules. | Claude Haiku 5.5 |
