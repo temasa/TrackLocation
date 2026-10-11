@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.44
+**Document Version:** 0.45
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -715,8 +715,9 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - (g) Fill ups made before the first Reset are ignored; fuel left stays `—` until a Reset.
 - (h) Litres inputs accept a comma decimal separator.
 - (i) Mount point (2026-10-11, fix `3354689`): the dock is mounted in `MainActivity` through `ui/components/FuelDockHost.kt` (Scaffold `bottomBar`, above the bottom navigation). The first code mounted it in `screens/MainScreen.kt`, which no code calls; that file is now dead code.
-- (j) Reset dialog zero-litre deviation (open, ADR-027 open items): the dialog opens with `0` prefilled and Save is disabled at 0, so a Reset to exactly 0 L is not possible in the current code. The written spec sets no minimum for the Reset field (only "required"), so the owner must decide whether 0 L is accepted. Not decided.
-- (k) Device status (2026-10-11, partial, screenshots): dock on Session, List (light), Track (dark, plain) and Settings (light); absent on OBD Settings and Trip Details. Dialogs and persistence checked; the Low / Critical / `~` states, the changed-price flow, TalkBack and the Alt / Order variants are not verified yet. See IMPLEMENTATION-PLAN §4 How to Verify.
+- (j) Reset accepts 0 L (verified on device 2026-10-11: typing 0 enables Save and the dock shows 0.0; the dialog opens empty with a grey 0 hint, Save is disabled while the field is empty).
+- (k) Device status (2026-10-11, partial, screenshots): dock on Session, List (light), Track (dark, plain) and Settings (light); absent on OBD Settings and Trip Details. Dialogs and persistence checked; FUEL LEFT Low (amber) and Critical (red) seen on the light and dark docks; the `~` state, RANGE colouring, the changed-price flow, TalkBack and the Alt / Order variants are not verified yet. See IMPLEMENTATION-PLAN §4 How to Verify.
+- (l) Contrast, owner review (device 2026-10-11, not changed): the red `#DC2626` FUEL LEFT value on the dark Track dock (`#173A2D`) is readable but has lower contrast than on the light dock. The owner decides whether to adjust it.
 
 ## 6. Responsive Design & Accessibility
 
