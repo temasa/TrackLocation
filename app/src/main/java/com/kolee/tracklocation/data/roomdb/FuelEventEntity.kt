@@ -10,7 +10,7 @@ const val FUEL_EVENT_FILL_UP = "FILL_UP"
 /**
  * ADR-027: append-only fuel-dock log. [litres] is the starting level for a RESET and the litres
  * added for a FILL_UP. [resetBaselineL] is set only on RESET rows: the cumulative OBD fuel total
- * (Σ recording_session.obdFuelConsumedL) at the moment of the Reset; NULL for FILL_UP.
+ * (obd_ledger.fuelConsumedL, ADR-027 Decision 13) at the moment of the Reset; NULL for FILL_UP.
  * [pricePerLiter] is set only when the user changed the price in the Fill up dialog. No foreign
  * keys (same convention as observer_trip and trip_planned_route).
  */

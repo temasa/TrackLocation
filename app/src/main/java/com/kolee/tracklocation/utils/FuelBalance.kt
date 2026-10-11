@@ -10,7 +10,7 @@ object FuelBalance {
     /**
      * ADR-027 Decision 2: fuel left = max(0, anchor + fill-ups since the Reset − consumption since
      * the Reset). [resetLitres] and [resetBaselineL] come from the latest RESET event; consumption
-     * is the growth of [cumulativeNowL] since that baseline. Returns null when there is no Reset.
+     * is the growth of [cumulativeNowL] (the obd_ledger total) since that baseline. Returns null when there is no Reset.
      */
     fun fuelLeft(
         resetLitres: Double?,
@@ -24,7 +24,7 @@ object FuelBalance {
     }
 
     /**
-     * ADR-027 Decision 5 / ADR-024: session average km/L = covered distance ÷ OBD fuel.
+     * ADR-024: session average (no longer used by the dock RANGE) km/L = covered distance ÷ OBD fuel.
      * Null when the session has no meaningful average yet (fuel ≤ 0.01 L or covered distance ≤ 0).
      */
     fun avgKmL(sessionCoveredKm: Double, sessionFuelL: Double): Double? {
@@ -33,7 +33,7 @@ object FuelBalance {
     }
 
     /**
-     * ADR-027 Decision 5: RANGE = fuel left × session average km/L. Null if either input is null.
+     * ADR-027 Decision 5: RANGE = fuel left × rolling avg km/L (last 1 km of driving, RollingEfficiency). Null if either input is null.
      */
     fun rangeKm(fuelLeftL: Double?, avgKmL: Double?): Double? {
         if (fuelLeftL == null || avgKmL == null) return null

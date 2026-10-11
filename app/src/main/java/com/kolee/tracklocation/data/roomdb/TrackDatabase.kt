@@ -19,9 +19,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         FuelPriceEntity::class,
         ObserverTripEntity::class,
         TripPlannedRouteEntity::class,
-        FuelEventEntity::class
+        FuelEventEntity::class,
+        ObdLedgerEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 abstract class TrackDatabase: RoomDatabase() {
@@ -36,6 +37,7 @@ abstract class TrackDatabase: RoomDatabase() {
     abstract val observerTripDao: ObserverTripDao
     abstract val tripPlannedRouteDao: TripPlannedRouteDao
     abstract val fuelEventDao: FuelEventDao
+    abstract val obdLedgerDao: ObdLedgerDao
 
     companion object {
         @Volatile
@@ -267,6 +269,24 @@ abstract class TrackDatabase: RoomDatabase() {
             }
         }
 
+        /** ADR-027 Decision 13: session-independent OBD fuel ledger, seeded from the session totals. */
+        private val MIGRATION_16_17 = object: Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `obd_ledger` (
+                        `id` INTEGER PRIMARY KEY NOT NULL,
+                        `fuelConsumedL` REAL NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "INSERT INTO `obd_ledger` (`id`, `fuelConsumedL`) " +
+                        "SELECT 1, COALESCE(SUM(`obdFuelConsumedL`), 0.0) FROM `recording_session`"
+                )
+            }
+        }
+
         private val MIGRATION_4_5 = object: Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `recording_session` ADD COLUMN `obdFuelConsumedL` REAL NOT NULL DEFAULT 0.0")
@@ -435,7 +455,7 @@ abstract class TrackDatabase: RoomDatabase() {
                     TrackDatabase::class.java,
                     "track_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
                     .build()
                 INSTANCE = instance
                 return instance

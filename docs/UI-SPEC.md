@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.49
+**Document Version:** 0.50
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -646,7 +646,7 @@ All components nest a shared `Metric/Base`, so a base style change propagates to
 | Cell | Value | Tap |
 |---|---|---|
 | FUEL LEFT (L) | Fuel balance, one decimal (e.g. `40.0`); `—` until a Reset | The **pencil** in the same row, right of the value, opens the **Reset fuel** dialog (the cell itself is not the tap target) |
-| RANGE (km) | Fuel left × rolling average km/L over the last minute of OBD driving (ADR-027 Decision 5), whole km (e.g. `310`); held while stationary; `—` before a valid value exists since app start | None (read-only, no pencil) |
+| RANGE (km) | Fuel left × rolling average km/L over the last 1.0 km of moving OBD driving (ADR-027 Decision 5, rev. 1.7), whole km (e.g. `310`); previous value held until the window covers 0.2 km and while stationary; `—` before any value has been shown since app start | None (read-only, no pencil) |
 | PRICE (Rp/L) | Current shared fuel price (`FuelPriceController`, same as FR-12) | The **pencil** in the same row, right of the value, opens the **Fuel price** dialog (the FR-12 price editor) |
 | Fill up | Green pill button | Opens the **Fill up** dialog |
 
@@ -700,8 +700,8 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 
 **`—` rules:**
 - FUEL LEFT shows `—` until one Reset has been done.
-- RANGE shows `—` when FUEL LEFT is `—`, or before any valid rolling value exists since app start. While the car is stationary (less than 0.05 km or 0.01 L in the last minute) RANGE holds the last valid value. RANGE does not depend on the active session (ADR-027 Decision 5, rev. 1.6).
-- Idle (engine on, car stationary, valid OBD fuel rate) lowers FUEL LEFT and so RANGE, with no distance added (ADR-027 Decision 13).
+- RANGE shows `—` when FUEL LEFT is `—`, or before any value has been shown since app start. The rolling window covers the last 1.0 km of moving driving (speed ≥ 2 km/h; idle polls do not enter it). The average is shown once the window covers at least 0.2 km and its litres are above 0.01 L; otherwise, and while the car is stationary, RANGE holds the previous value. RANGE does not depend on the active session (ADR-027 Decision 5, rev. 1.6 and 1.7).
+- Idle (engine on, car stationary, valid OBD fuel rate) lowers FUEL LEFT, and so RANGE (fuel left × the held km/L), with no distance added (ADR-027 Decision 13).
 - PRICE shows `—` when no fuel price is set.
 
 ---

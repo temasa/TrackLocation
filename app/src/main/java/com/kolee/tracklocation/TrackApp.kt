@@ -43,6 +43,10 @@ class TrackApp: Application() {
         TrackDatabase.getDatabase(this).fuelEventDao
     }
 
+    val obdLedgerDao by lazy {
+        TrackDatabase.getDatabase(this).obdLedgerDao
+    }
+
     override fun onCreate() {
         super.onCreate()
         val channel = NotificationChannel(

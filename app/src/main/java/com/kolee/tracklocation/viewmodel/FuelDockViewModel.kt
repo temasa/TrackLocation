@@ -10,8 +10,10 @@ import com.kolee.tracklocation.data.roomdb.FUEL_EVENT_FILL_UP
 import com.kolee.tracklocation.data.roomdb.FUEL_EVENT_RESET
 import com.kolee.tracklocation.data.roomdb.FuelEventDao
 import com.kolee.tracklocation.data.roomdb.FuelEventEntity
+import com.kolee.tracklocation.data.roomdb.ObdLedgerDao
 import com.kolee.tracklocation.data.roomdb.SessionDao
 import com.kolee.tracklocation.feature.obd.FuelPriceController
+import com.kolee.tracklocation.feature.obd.RollingEfficiency
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import com.kolee.tracklocation.utils.FuelBalance
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +52,7 @@ private data class ActiveSessionStats(
 class FuelDockViewModel(
     private val fuelEventDao: FuelEventDao,
     private val sessionDao: SessionDao,
+    private val obdLedgerDao: ObdLedgerDao,
 ) : ViewModel() {
 
     val uiState: StateFlow<FuelDockUiState> = combine(
@@ -62,7 +65,7 @@ class FuelDockViewModel(
                 }
             }
         },
-        sessionDao.totalObdFuelConsumedL(),
+        obdLedgerDao.totalFuelL(),
         sessionDao.getAllSessions().map { sessions ->
             val active = sessions.firstOrNull { it.isActive }
             ActiveSessionStats(
@@ -72,27 +75,27 @@ class FuelDockViewModel(
             )
         },
         FuelPriceController.state.map { it.currentPrice },
-    ) { resetAndFills, cumulativeNow, active, price ->
+        RollingEfficiency.avgKmL,
+    ) { resetAndFills, cumulativeNow, active, price, rollingAvg ->
         val fuelLeft = FuelBalance.fuelLeft(
             resetAndFills.resetLitres,
             resetAndFills.resetBaselineL,
             resetAndFills.fillUpLitres,
             cumulativeNow,
         )
-        val avg = FuelBalance.avgKmL(active.coveredKm, active.fuelL)
         FuelDockUiState(
             fuelLeftL = fuelLeft,
-            rangeKm = FuelBalance.rangeKm(fuelLeft, avg),
+            rangeKm = FuelBalance.rangeKm(fuelLeft, rollingAvg),
             price = price,
             level = FuelBalance.level(fuelLeft),
             lowConfidence = FuelBalance.isLowConfidence(active.distanceKm, active.coveredKm),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FuelDockUiState())
 
-    /** ADR-027: store the starting level and the current cumulative OBD total as the baseline. */
+    /** ADR-027: store the starting level and the current OBD ledger total as the baseline. */
     fun reset(litres: Double) {
         viewModelScope.launch(Dispatchers.IO) {
-            val baseline = sessionDao.totalObdFuelConsumedLOnce()
+            val baseline = obdLedgerDao.totalFuelLOnce()
             fuelEventDao.insert(
                 FuelEventEntity(
                     kind = FUEL_EVENT_RESET,
@@ -126,7 +129,7 @@ class FuelDockViewModel(
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as TrackApp
                 // Idempotent; other screens call it too.
                 FuelPriceController.attach(app.fuelPriceDao, ObdPreferencesDataStore(app))
-                FuelDockViewModel(app.fuelEventDao, app.sessionDao)
+                FuelDockViewModel(app.fuelEventDao, app.sessionDao, app.obdLedgerDao)
             }
         }
     }

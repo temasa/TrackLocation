@@ -9,6 +9,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.kolee.tracklocation.data.roomdb.ObdSampleEntity
+import com.kolee.tracklocation.feature.obd.RollingEfficiency
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -333,6 +334,7 @@ class ObdPollingService : Service() {
         fuelProbeFailStreak = 0
         fuelKnownUnsupported = false
         sdCycle = 0
+        RollingEfficiency.clearWindow() // ADR-027 Decision 5: new connection, new window (held value kept)
 
         while (currentCoroutineContext().isActive && bluetoothSocket === socket) {
                 try {
@@ -405,19 +407,27 @@ class ObdPollingService : Service() {
                     var tripAvgKmL: Double? = null
                     // Fuel Cost (FR-12): session litres from the persisted accumulator; null when 0.
                     var sessionFuelConsumedL: Double? = null
+                    // Guard against a huge increment after a long stall/gap (e.g. adapter
+                    // reconnect, backgrounding): only integrate plausible poll intervals.
+                    val dtGuardOk = dtSeconds > 0 && dtSeconds < 60.0
+                    // ADR-024: a "fuel-covered" interval has a valid rate (0.1..100 L/h) and a
+                    // plausible dt. Fuel and covered distance are accumulated over exactly the
+                    // same intervals (matches ObdFuelMath), so the average cannot be inflated.
+                    val rateValid = fuelRateLph != null && fuelRateLph in 0.1..100.0
+                    val covered = rateValid && dtGuardOk
+                    val fuelIncrementL = if (covered && fuelRateLph != null) {
+                        fuelRateLph * dtSeconds / 3600.0
+                    } else 0.0
+                    val coveredIncrementKm = if (covered) gpsSpeedKmh.toDouble() * dtSeconds / 3600.0 else 0.0
+
+                    // ADR-027 Decision 13: the ledger counts every fuel-covered interval (idle
+                    // included) whether or not a session or always-recording exists.
+                    if (fuelIncrementL > 0.0) {
+                        (applicationContext as com.kolee.tracklocation.TrackApp).obdLedgerDao.addFuel(fuelIncrementL)
+                    }
+                    RollingEfficiency.onInterval(fuelIncrementL, coveredIncrementKm, gpsSpeedKmh.toDouble())
+
                     if (gpsState.isAlwaysRecording) {
-                        // Guard against a huge increment after a long stall/gap (e.g. adapter
-                        // reconnect, backgrounding): only integrate plausible poll intervals.
-                        val dtGuardOk = dtSeconds > 0 && dtSeconds < 60.0
-                        // ADR-024: a "fuel-covered" interval has a valid rate (0.1..100 L/h) and a
-                        // plausible dt. Fuel and covered distance are accumulated over exactly the
-                        // same intervals (matches ObdFuelMath), so the average cannot be inflated.
-                        val rateValid = fuelRateLph != null && fuelRateLph in 0.1..100.0
-                        val covered = rateValid && dtGuardOk
-                        val fuelIncrementL = if (covered && fuelRateLph != null) {
-                            fuelRateLph * dtSeconds / 3600.0
-                        } else 0.0
-                        val coveredIncrementKm = if (covered) gpsSpeedKmh.toDouble() * dtSeconds / 3600.0 else 0.0
                         val distIncrementKm = if (dtGuardOk) gpsSpeedKmh * dtSeconds / 3600.0 else 0.0
 
                         if (fuelRateLph != null && !rateValid && dtGuardOk) {
