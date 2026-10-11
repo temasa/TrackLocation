@@ -845,28 +845,6 @@
                       "fontWeight": "800"
                     }
                   ]
-                },
-                {
-                  "type": "frame",
-                  "id": "BXL70",
-                  "name": "FuelBtn",
-                  "width": 38,
-                  "height": 38,
-                  "cornerRadius": 999,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon",
-                      "id": "wYA2W",
-                      "name": "FuelIcon",
-                      "width": 22,
-                      "height": 22,
-                      "icon": "fuel",
-                      "library": "lucide",
-                      "fill": "#0A0A0A"
-                    }
-                  ]
                 }
               ]
             },
@@ -1798,6 +1776,10 @@
           "y": 708,
           "descendants": {
             "xOa5j/fFJF3/QIi9H": {
+              "content": "5.4",
+              "fill": "#D97706"
+            },
+            "xOa5j/h3EJCL": {
               "content": "5.4",
               "fill": "#D97706"
             },
@@ -5515,6 +5497,9 @@
             "xOa5j/fFJF3/QIi9H": {
               "content": "—"
             },
+            "xOa5j/h3EJCL": {
+              "content": "—"
+            },
             "U5QtT/y86mFE/QIi9H": {
               "content": "—"
             }
@@ -6539,23 +6524,6 @@
               ]
             }
           ]
-        },
-        {
-          "id": "wTSXP",
-          "type": "ref",
-          "ref": "nx1wC",
-          "name": "FuelDock",
-          "layoutPosition": "absolute",
-          "x": 0,
-          "y": 708,
-          "descendants": {
-            "xOa5j/fFJF3/QIi9H": {
-              "content": "—"
-            },
-            "U5QtT/y86mFE/QIi9H": {
-              "content": "—"
-            }
-          }
         }
       ]
     },
@@ -10284,6 +10252,10 @@
               "content": "2.1",
               "fill": "#DC2626"
             },
+            "t4v01L/h3EJCL": {
+              "content": "2.1",
+              "fill": "#DC2626"
+            },
             "POOta/y86mFE/QIi9H": {
               "content": "28",
               "fill": "#DC2626"
@@ -11509,6 +11481,7 @@
                   "reusable": true,
                   "width": 80,
                   "layout": "vertical",
+                  "gap": 2,
                   "alignItems": "center",
                   "children": [
                     {
@@ -11522,9 +11495,41 @@
                           "content": "FUEL LEFT (L)"
                         },
                         "QIi9H": {
-                          "content": "24.0"
+                          "content": "24.0",
+                          "enabled": false
                         }
                       }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "A7SVJt",
+                      "name": "ValueRow",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "h3EJCL",
+                          "name": "Value",
+                          "fill": "$metric-value",
+                          "content": "24.0",
+                          "fontFamily": "Roboto Mono",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.3
+                        },
+                        {
+                          "type": "icon",
+                          "id": "ULhu8",
+                          "name": "EditIcon",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "pencil",
+                          "library": "lucide",
+                          "fill": "$metric-label"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -11561,6 +11566,7 @@
                   "reusable": true,
                   "width": 80,
                   "layout": "vertical",
+                  "gap": 2,
                   "alignItems": "center",
                   "children": [
                     {
@@ -11574,9 +11580,41 @@
                           "content": "PRICE (Rp/L)"
                         },
                         "QIi9H": {
-                          "content": "10.000"
+                          "content": "10.000",
+                          "enabled": false
                         }
                       }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "CXwpz",
+                      "name": "ValueRow",
+                      "width": "fill_container",
+                      "gap": 4,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Nmi2G",
+                          "name": "Value",
+                          "fill": "$metric-value",
+                          "content": "10.000",
+                          "fontFamily": "Roboto Mono",
+                          "fontSize": 16,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.3
+                        },
+                        {
+                          "type": "icon",
+                          "id": "hcxLj",
+                          "name": "EditIcon",
+                          "width": 12,
+                          "height": 12,
+                          "icon": "pencil",
+                          "library": "lucide",
+                          "fill": "$metric-label"
+                        }
+                      ]
                     }
                   ]
                 }
@@ -11999,6 +12037,9 @@
                     "xOa5j/fFJF3/QIi9H": {
                       "content": "—"
                     },
+                    "xOa5j/h3EJCL": {
+                      "content": "—"
+                    },
                     "U5QtT/y86mFE/QIi9H": {
                       "content": "—"
                     }
@@ -12066,6 +12107,10 @@
                       "content": "5.4",
                       "fill": "#D97706"
                     },
+                    "xOa5j/h3EJCL": {
+                      "content": "5.4",
+                      "fill": "#D97706"
+                    },
                     "U5QtT/y86mFE/QIi9H": {
                       "content": "70",
                       "fill": "#D97706"
@@ -12105,6 +12150,10 @@
                       "content": "2.1",
                       "fill": "#DC2626"
                     },
+                    "xOa5j/h3EJCL": {
+                      "content": "2.1",
+                      "fill": "#DC2626"
+                    },
                     "U5QtT/y86mFE/QIi9H": {
                       "content": "28",
                       "fill": "#DC2626"
@@ -12141,6 +12190,9 @@
                   "width": "fill_container",
                   "descendants": {
                     "xOa5j/fFJF3/QIi9H": {
+                      "content": "~24.0"
+                    },
+                    "xOa5j/h3EJCL": {
                       "content": "~24.0"
                     },
                     "U5QtT/y86mFE/QIi9H": {
@@ -12216,7 +12268,7 @@
                       "id": "sJJqa",
                       "name": "FieldLabel",
                       "fill": "$trip-muted",
-                      "content": "Fuel now (L)",
+                      "content": "Litres added (L)",
                       "fontFamily": "Inter",
                       "fontSize": 12,
                       "fontWeight": "600"
@@ -12241,7 +12293,7 @@
                           "id": "pQlMd",
                           "name": "InputValue",
                           "fill": "$trip-ink",
-                          "content": "24.0",
+                          "content": "10.0",
                           "fontFamily": "Roboto Mono",
                           "fontSize": 16,
                           "fontWeight": "600"
@@ -12263,7 +12315,7 @@
                       "id": "cgXLD",
                       "name": "FieldLabel",
                       "fill": "$trip-muted",
-                      "content": "Price (Rp/L)",
+                      "content": "Price (Rp/L) - optional",
                       "fontFamily": "Inter",
                       "fontSize": 12,
                       "fontWeight": "600"
@@ -12302,7 +12354,7 @@
                   "id": "essZq",
                   "name": "Helper",
                   "fill": "$trip-muted",
-                  "content": "Burn is counted from now.",
+                  "content": "Price defaults to the latest. Changing it saves a new price from now.",
                   "fontFamily": "Inter",
                   "fontSize": 13,
                   "fontWeight": "normal"
@@ -12371,6 +12423,310 @@
             },
             {
               "type": "frame",
+              "id": "Sp73E",
+              "name": "ResetFuelDialog",
+              "width": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 28,
+              "stroke": "$trip-border",
+              "strokeWidth": 1,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000026",
+                "offset": {
+                  "x": 0,
+                  "y": 8
+                },
+                "blur": 24
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "k7Ok3i",
+                  "name": "Title",
+                  "fill": "$trip-ink",
+                  "content": "Reset fuel",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "rZU80",
+                  "name": "Field Fuel now (L)",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Usr83",
+                      "name": "FieldLabel",
+                      "fill": "$trip-muted",
+                      "content": "Fuel in tank now (L)",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fJVtx",
+                      "name": "Input",
+                      "width": "fill_container",
+                      "fill": "$trip-surface",
+                      "cornerRadius": 12,
+                      "stroke": "$trip-border",
+                      "strokeWidth": 1,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "KNQK5",
+                          "name": "InputValue",
+                          "fill": "$trip-ink",
+                          "content": "40.0",
+                          "fontFamily": "Roboto Mono",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "gBmQD",
+                  "name": "Helper",
+                  "fill": "$trip-muted",
+                  "content": "Sets the starting amount. Fuel left counts down from here.",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "BwJfv",
+                  "name": "Actions",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "o2AhPE",
+                      "name": "CancelBtn",
+                      "height": 40,
+                      "cornerRadius": 20,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "e5cVJz",
+                          "name": "CancelLabel",
+                          "fill": "$trip-muted",
+                          "content": "Cancel",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dAuWJ",
+                      "name": "SaveBtn",
+                      "height": 40,
+                      "fill": "#22C55E",
+                      "cornerRadius": 20,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "E191A2",
+                          "name": "SaveLabel",
+                          "fill": "#FFFFFF",
+                          "content": "Save",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qBjDO",
+              "name": "FuelPriceDialog",
+              "width": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 28,
+              "stroke": "$trip-border",
+              "strokeWidth": 1,
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#00000026",
+                "offset": {
+                  "x": 0,
+                  "y": 8
+                },
+                "blur": 24
+              },
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VqV1s",
+                  "name": "Title",
+                  "fill": "$trip-ink",
+                  "content": "Fuel price",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "opjBe",
+                  "name": "Field Price (Rp/L)",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "idx5p",
+                      "name": "FieldLabel",
+                      "fill": "$trip-muted",
+                      "content": "Price (Rp/L)",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VFBvb",
+                      "name": "Input",
+                      "width": "fill_container",
+                      "fill": "$trip-surface",
+                      "cornerRadius": 12,
+                      "stroke": "$trip-border",
+                      "strokeWidth": 1,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "VBqHN",
+                          "name": "InputValue",
+                          "fill": "$trip-ink",
+                          "content": "10.000",
+                          "fontFamily": "Roboto Mono",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "vURNw",
+                  "name": "Helper",
+                  "fill": "$trip-muted",
+                  "content": "Applies from now. Finished trips keep their price.",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "ieUkW",
+                  "name": "Actions",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ZYi8j",
+                      "name": "CancelBtn",
+                      "height": 40,
+                      "cornerRadius": 20,
+                      "padding": [
+                        0,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "qHcaj",
+                          "name": "CancelLabel",
+                          "fill": "$trip-muted",
+                          "content": "Cancel",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Lu3HU",
+                      "name": "SaveBtn",
+                      "height": 40,
+                      "fill": "#22C55E",
+                      "cornerRadius": 20,
+                      "padding": [
+                        0,
+                        20
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "SM2Na",
+                          "name": "SaveLabel",
+                          "fill": "#FFFFFF",
+                          "content": "Save",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
               "id": "IWrra",
               "name": "Annotation",
               "width": "fill_container",
@@ -12397,7 +12753,7 @@
                   "fill": "$trip-muted",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "• Tapping PRICE opens the existing price editor (Save / Cancel, undo / redo).",
+                  "content": "• Pencil beside FUEL LEFT → Reset fuel (set the tank level). Pencil beside PRICE → Fuel price (Save / Cancel, undo / redo). Fill up → Fill up. RANGE is read-only.",
                   "lineHeight": 1.3,
                   "fontFamily": "Inter",
                   "fontSize": 12,
@@ -12410,7 +12766,7 @@
                   "fill": "$trip-muted",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "• Save appends a fuel reset row and, if the price changed, an effective-now price row.",
+                  "content": "• Fill up adds litres to fuel left; a price row is saved only if the price was changed. Reset sets the starting amount.",
                   "lineHeight": 1.3,
                   "fontFamily": "Inter",
                   "fontSize": 12,
