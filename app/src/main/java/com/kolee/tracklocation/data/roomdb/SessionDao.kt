@@ -63,4 +63,15 @@ interface SessionDao {
 
     @Update
     suspend fun updateSession(item: SessionEntity)
+
+    /**
+     * ADR-027: cumulative OBD fuel total over ALL session rows, active included. Drives the fuel
+     * balance (fuel left = Reset litres + fill-ups − growth since the Reset baseline).
+     */
+    @Query("SELECT COALESCE(SUM(obdFuelConsumedL), 0.0) FROM recording_session")
+    fun totalObdFuelConsumedL(): Flow<Double>
+
+    /** ADR-027: one-shot read of [totalObdFuelConsumedL], used when a Reset stores its baseline. */
+    @Query("SELECT COALESCE(SUM(obdFuelConsumedL), 0.0) FROM recording_session")
+    suspend fun totalObdFuelConsumedLOnce(): Double
 }
