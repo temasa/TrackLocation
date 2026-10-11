@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.4  
+**Document Version:** 0.5  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-11  
 **Owned By:** Project Team
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
 | ERR-008 | 2026-10-11 | — (code fixed; device check pending) | Verification | Session running cost / fuel accumulator | Running-session COST/fuel reset or stopped accumulating — TrackingService re-wrote its cached session row with REPLACE on every GPS point, clobbering OBD accumulator increments | Code fixed (partial UPDATE); device verification pending |
 | ERR-007 | 2026-10-09 | 2026-10-10 (partial: pending a real order) | Verification | Order trip save (multi-instance MainActivity) | Duplicate order-trip cards (3–5 identical rows) — several MainActivity instances each collected the order-end event | Root-cause fix verified on device via takeover repro (single MainActivity, 1 ShareViewModel); end-to-end order check pending |
 | ERR-006 | 2026-10-09 | — | Verification | ADR-024 average km/L | SESSION AVG km/L above 700 km/L — GPS distance over the whole session divided by fuel accumulated only while OBD was valid/connected | Open |
@@ -64,6 +65,31 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-009: Fuel dock not rendering — mounted in an unreferenced composable (`screens/MainScreen.kt`)
+
+**Found At:** 2026-10-11 (first device run; time not recorded)  
+**Resolved At:** 2026-10-11 (fix `3354689`)  
+**Phase:** Verification  
+**Sprint/Task:** Fuel dock, Fill up and Reset (ADR-027) first on-device run  
+**Environment:** local (`:app:assembleDebug`, `adb install -r` over existing data, Galaxy S9+ SM-G965F, Android 10)  
+**Status:** Resolved  
+
+**Error Message / Output:**
+No crash and no build error. After install the dock did not appear on any screen. Found by the device run, not by the build or by static review.
+
+**Root Cause:**
+`FuelDock` was mounted inside `screens/MainScreen.kt`, but no code calls `MainScreen`; the real app shell is `MainActivity.setContent`. The static review checked the dock composable, its imports and its Compose 1.2 APIs, but never checked that the host composable is referenced from the entry point.
+
+**Resolution:**
+New `ui/components/FuelDockHost.kt` (dock, the three dialogs and the route-to-theme mapping) mounted in `MainActivity`'s Scaffold `bottomBar` as `Column { FuelDockHost; BottomNavigationScreen }` (commit `3354689`). `MainScreen.kt` was restored to its pre-dock content and is still dead code; deleting it is a suggested follow-up, not done. After a rebuild and reinstall the dock rendered on Session, List, Track and Settings.
+
+**Lesson Learned:**
+1. Before mounting UI into a host composable, grep for its call sites. A host with no caller is dead code, and anything mounted in it never renders.
+2. Static review must confirm the host is reachable from the entry point (MainActivity), not only that the new code compiles.
+3. Run an early device smoke test of a new visible element right after the first build, before writing the rest of the feature.
 
 ---
 

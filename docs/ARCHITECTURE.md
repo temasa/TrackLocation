@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.31
+**Document Version:** 0.32
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-11
 **Owner:** Tech Lead
@@ -297,7 +297,7 @@ Trip/Session detail screens resolve path from location_log ranges.
 
 ## 8. Database Schema
 
-Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR-027**, implemented in commit `a197453`, static review only; ADR-026 extends to v15, code `f26bb03`; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
+Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR-027**, implemented in commit `a197453`; `assembleDebug` OK and run on a Galaxy S9+ over the existing v15 data on 2026-10-11 without a migration error (schema comparison not done); ADR-026 extends to v15, code `f26bb03`; ADR-025 extends to v14 2026-10-10; ADR-024 extended to v13 2026-10-09; ADR-023 extended to v12 2026-10-08). 
 
 **Current migrations (all inline in `TrackDatabase.kt`):**
 - `MIGRATION_1_2` (legacy serialized trip paths → canonical location rows + trip boundaries)
@@ -350,7 +350,7 @@ Room database (`TrackDatabase`), at version **v16** (current; **v16 added by ADR
   )
   ```
   No backfill: trips recorded before v15 have no planned route. Exported schema `15.json` is added with the code change. Gate: ORS ToS check (ADR-026 decision 10) before the code ships.
-- `MIGRATION_15_16` (ADR-027, DB→**v16**, implemented in commit `a197453`; static review only, not built or run on device): new table, no change to existing tables. (The original scope said v14 → v15; the code is already at v15 via ADR-026, so this is v15 → v16.)
+- `MIGRATION_15_16` (ADR-027, DB→**v16**, implemented in commit `a197453`; `assembleDebug` OK and run on a Galaxy S9+ over the existing v15 data on 2026-10-11 without a migration error; schema comparison and a copy-based install not done): new table, no change to existing tables. (The original scope said v14 → v15; the code is already at v15 via ADR-026, so this is v15 → v16.)
   ```sql
   CREATE TABLE fuel_event (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

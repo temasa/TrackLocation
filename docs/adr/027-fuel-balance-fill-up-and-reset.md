@@ -1,6 +1,6 @@
 # ADR-027: Fuel Balance, Fill-up and Reset (Fuel Dock)
 
-**Status:** Accepted; code implemented 2026-10-11 (static review only; build and device verification pending)
+**Status:** Accepted; code implemented 2026-10-11; build OK; device-verified partially (see IMPLEMENTATION-PLAN §4)
 **Date:** 2026-10-11
 **Decided By:** Project owner + Claude Code
 
@@ -132,6 +132,8 @@ PRD (FR-22 new, FR-12 cross-reference), ARCHITECTURE (`fuel_event` entity, balan
 - [ ] **Migration ordering:** if ADR-026 code ships to v15 before this ADR, this migration is v15 → v16 (as written). If the owner wants both changes in one release, they may be combined into one migration; decide before code.
 - [ ] Owner decides whether a fuel-event correction path (edit or delete) is needed later; out of scope here.
 
+- [ ] **Reset to 0 L (open owner question, found on device 2026-10-11):** the Reset fuel dialog opens with `0` prefilled and Save is disabled at 0, so a Reset to exactly 0 L is not possible in the current code. The written spec sets no minimum for the Reset field (only "required"; Fill up requires > 0), so 0 L is allowed by the text. The owner decides whether Reset accepts 0; not decided here.
+
 ## Status Summary
 
 - **ADR Accepted:** 2026-10-11.
@@ -139,4 +141,5 @@ PRD (FR-22 new, FR-12 cross-reference), ARCHITECTURE (`fuel_event` entity, balan
 - **Revision 1.2 (2026-10-11):** Decision 2 and Decision 6 now use the stored `resetBaselineL` (Reset writes the cumulative OBD total), replacing the earlier "OBD integral since the Reset" wording; Decision 9 thresholds and colours confirmed by the owner; session-removal and OBD-disconnect risks recorded. ARCHITECTURE v0.30, IMPLEMENTATION-PLAN v0.57, UI-SPEC v0.42 updated to match; PRD unchanged (v0.26, FR-22 does not name samples or thresholds).
 - **Revision 1.3 (2026-10-11):** code implemented (see Code Implementation). Status line updated; the live-litres check and session-close re-integration are marked to verify on device. ARCHITECTURE v0.31, IMPLEMENTATION-PLAN v0.58, UI-SPEC v0.43 updated to match.
 - **Design:** dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs and dock states designed in `ui-design.pen` (2026-10-11 update; `f39e1d4` added the dock first). OBD Settings has no dock. Reset entry point decided. Trips header fuel-pump icon removed from the design (Decision 11); COST cells display-only, no tap and no Toast (Decision 12); code removal implemented (`9d01688`).
-- **Code Implementation:** implemented 2026-10-11 in commits `a197453` (data layer), `36030ef` (dock UI) and `9d01688` (removals); static review only. No build, test or device run performed; build and device verification pending.
+- **Revision 1.4 (2026-10-11):** build OK (`assembleDebug`). Device run (partial, screenshots): the dock was not rendering because it was mounted in the unused `screens/MainScreen.kt`; fix `3354689` mounts `FuelDockHost` in MainActivity. Dock, Reset / Fill up / Fuel price dialogs, persistence and the v15 → v16 migration over existing data verified; OBD, driving, changed-price and TalkBack checks still open (IMPLEMENTATION-PLAN §4). Reset-to-0 L added to the open items. ARCHITECTURE v0.32, IMPLEMENTATION-PLAN v0.59, UI-SPEC v0.44, ERRORS-LOG v0.5 (ERR-009) updated to match.
+- **Code Implementation:** implemented 2026-10-11 in commits `a197453` (data layer), `36030ef` (dock UI), `9d01688` (removals) and `3354689` (mount fix); build OK; partial device verification.

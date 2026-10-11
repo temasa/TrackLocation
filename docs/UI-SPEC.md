@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.43
+**Document Version:** 0.44
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-11
 **Owner:** Product Manager / UX Designer
@@ -53,7 +53,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | OBD Settings | Current (P1) | `Settings → Tools → OBD` |
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
 | Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, COST/NET, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
-| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`; static review only) | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
+| Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `3354689`); build OK; partly device-verified 2026-10-11 | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -633,7 +633,7 @@ All components nest a shared `Metric/Base`, so a base style change propagates to
 
 **Behaviour:** ADR-027 and PRD FR-22. This section covers the visual and layout spec only.
 
-**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`); static review only. No build, test or device run; build and device verification pending. The state thresholds and colours were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9).
+**Status:** Dock, edit pencils, the three dialogs (Fill up, Reset fuel, Fuel price) and the dock states are designed directly in `ui-design.pen` (2026-10-11 design update; the dock was first added in commit `f39e1d4`, which also put a dock on OBD Settings; the update removes it). The dialogs were designed in the `.pen` file itself, so no external design handoff is needed. Code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`, mount fix `3354689`). `:app:assembleDebug` BUILD SUCCESSFUL; partly device-verified 2026-10-11 (screenshots; per-item status in IMPLEMENTATION-PLAN §4 How to Verify). The state thresholds and colours were confirmed by the project owner on 2026-10-11 (ADR-027 Decision 9).
 
 **Placement:** a persistent dock, full width, **64 px high**, absolutely positioned directly **above the bottom navigation**. It is part of the screen scaffold on the screens listed below, not a per-screen element. Panels and map buttons on Track move up to clear it (see layout shifts).
 
@@ -714,6 +714,9 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - (f) Fill up writes `pricePerLiter` and a new `fuel_price` row only when the entered price is > 0 and differs from the current price.
 - (g) Fill ups made before the first Reset are ignored; fuel left stays `—` until a Reset.
 - (h) Litres inputs accept a comma decimal separator.
+- (i) Mount point (2026-10-11, fix `3354689`): the dock is mounted in `MainActivity` through `ui/components/FuelDockHost.kt` (Scaffold `bottomBar`, above the bottom navigation). The first code mounted it in `screens/MainScreen.kt`, which no code calls; that file is now dead code.
+- (j) Reset dialog zero-litre deviation (open, ADR-027 open items): the dialog opens with `0` prefilled and Save is disabled at 0, so a Reset to exactly 0 L is not possible in the current code. The written spec sets no minimum for the Reset field (only "required"), so the owner must decide whether 0 L is accepted. Not decided.
+- (k) Device status (2026-10-11, partial, screenshots): dock on Session, List (light), Track (dark, plain) and Settings (light); absent on OBD Settings and Trip Details. Dialogs and persistence checked; the Low / Critical / `~` states, the changed-price flow, TalkBack and the Alt / Order variants are not verified yet. See IMPLEMENTATION-PLAN §4 How to Verify.
 
 ## 6. Responsive Design & Accessibility
 
@@ -730,7 +733,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - Observer Phase 1 UI: implemented, verified on device (2026-05-29).
 - Observer Phase 2: snapshot viewer + pagination done; truncation banner spec drafted, awaiting design approval.
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
-- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`; static review only; build and device verification pending).
+- Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`, `3354689`; build OK; partly device-verified 2026-10-11).
 
 ---
 
