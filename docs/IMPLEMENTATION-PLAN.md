@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.61
+**Version:** 0.62
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-11
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -70,6 +70,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.62 | 2026-10-11 | Observer service-off banner (ADR-028, docs only; code not started): new §4 slice "Observer Service-Off Banner (ADR-028)" with What / Observable result / How to Verify (5 items) and five numbered steps (`ServiceOffBanner` on the Observer Feed when the Observer accessibility service is not in `ENABLED_ACCESSIBILITY_SERVICES`; re-checked on ON_RESUME); §6 row added (In Progress, `---`, code pending); ADR-028 referenced. UI-SPEC v0.47, ERRORS-LOG v0.7 (ERR-010), ADR README v1.7. |
 | 0.61 | 2026-10-11 | Schema and cleanup corrections (docs only): the Room database has `exportSchema = false`, so no schema JSON (`14.json`, `15.json`, `16.json`) is exported or committed; slice text that claimed an exported schema file (v14 → v15 migration, its verification and the TrackEntity note) corrected, and migration verification stated as an install over a copy of the previous database. The unused `screens/MainScreen.kt` (dead code, no call sites) was deleted 2026-10-11 (commit `da14b98`); the fuel dock Next Step item and device-run and mount-point notes updated to match. ADR-026 (no version line), ARCHITECTURE 0.33, UI-SPEC 0.46, ERRORS-LOG 0.6, DOCUMENT-CONTROL 0.8 updated to match. No code change beyond the file deletion, no tests. | Claude Haiku 5.5 |
 | 0.60 | 2026-10-11 | Reset-to-0 correction (docs only): the Reset-to-0 L deviation recorded in 0.59 was a misread of the first screenshots (the dialog opens empty with a grey 0 hint; Save is disabled only while the field is empty; `ResetFuelDialog` accepts any value >= 0). Deviation and open item removed from the slice header, Next Step, How to Verify items 5, 9 and 14, the device-run note and the §6 fuel dock row; Reset 0 accepted recorded (device 2026-10-11). New device evidence: FUEL LEFT Low (amber, Reset 5 → 5.0) and Critical (red, Reset 0 and 2) on the light and dark docks; RANGE colouring and `~` not exercised. Red value contrast on the dark dock added to Next Step for owner review (UI-SPEC §5b note (l)). ADR-027 1.5, UI-SPEC 0.45, DOCUMENT-CONTROL 0.7 updated to match. No code change. | Claude Haiku 5.5 |
 | 0.59 | 2026-10-11 | Fuel dock device results recorded (docs only): `:app:assembleDebug` BUILD SUCCESSFUL; installed over existing data on the Galaxy S9+. The first device run found that the dock did not render: it was mounted in `screens/MainScreen.kt`, which no code calls. Fix `3354689` mounts `FuelDockHost` (new `ui/components/FuelDockHost.kt`) in MainActivity's Scaffold `bottomBar`. Partial device verification recorded in §4 How to Verify (items 2, 5 and 6 ✓; 3, 4, 7–19 ✗ with per-item notes) and a device-run note; §6 rows `a197453`, `36030ef`, `3354689` (Completed, device-verified partial) and `9d01688` Verification updated; Next Step updated (open: OBD / driving checks, changed-price flow, owner decision on Reset to 0 L, optional deletion of dead `MainScreen.kt`). ADR-027 1.4, ARCHITECTURE 0.32, UI-SPEC 0.44, ERRORS-LOG 0.5 (ERR-009). No code change, no tests. | Claude Haiku 5.5 |
@@ -948,6 +949,36 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ---
 
+### Observer Service-Off Banner (ADR-028)
+
+**Prerequisites:** (1) Design: not needed. The owner explicitly skipped an external design handoff; the banner reuses the existing amber `CapturePausedBanner` style (UI-SPEC §3c-svc; ADR-028 Decision 5). (2) Decision recorded: ADR-028 Accepted 2026-10-11. (3) Incident: ERR-010 (2026-10-11), the Observer service was dropped from the enabled list on force-stop or reinstall and nothing told the user.
+
+**What it does:** When the Observer accessibility service is not enabled in system settings, the Observer Feed shows an amber banner below the capture-chip / auto-scroll row and above the filter bar: "Observer service is OFF – orders won't be captured. Tap to enable." Tapping it opens Settings.ACTION_ACCESSIBILITY_SETTINGS. Detection reads `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` and matches `com.kolee.tracklocation/.observer.ObserverAccessibilityService` or `com.kolee.tracklocation/com.kolee.tracklocation.observer.ObserverAccessibilityService` (via `ComponentName.unflattenFromString`, case-sensitive). It does not require the service to be running. The state is re-read on screen ON_RESUME. No schema change, no new permission, no PRD or ARCHITECTURE change.
+
+**Observable result:** With the service enabled, the Observer Feed shows no banner. With the service disabled, the banner appears on the Observer Feed (not on other screens). Tapping it opens system Accessibility settings. After enabling the service and returning to the app, the banner disappears without leaving the Observer Feed. The banner is independent of the capture-paused banner: with capture paused and the service off, both show.
+
+**How to Verify:**
+
+1. **✗ not verified yet:** (Service enabled, no banner) With the Observer service enabled in system Settings (Accessibility → TrackLocation → on), open Settings → Tools → Observer. No service-off banner is shown; the capture chip and feed are unchanged.
+2. **✗ not verified yet:** (Service disabled, banner shown) In system Settings → Accessibility, turn the TrackLocation Observer service off (or force-stop the app and let the service drop out of the list, then reopen). Open Settings → Tools → Observer. The amber banner "Observer service is OFF – orders won't be captured. Tap to enable." appears below the capture-chip row and above the filter bar.
+3. **✗ not verified yet:** (Tap opens settings) With the banner visible, tap it. System Accessibility settings open. Tapping the banner does not turn the service on by itself.
+4. **✗ not verified yet:** (Re-enable, return, banner gone) In Accessibility settings, enable the TrackLocation Observer service. Press Back to return to TrackLocation, staying on the Observer Feed. The banner disappears without leaving the screen (refreshed on ON_RESUME).
+5. **✗ not verified yet:** (Both banners) Pause the capture switch on the Observer Feed while the service is off. Both the service-off banner and the capture-paused banner are shown. Neither hides the other.
+
+**Hardware prerequisite:** Galaxy S9+ (SM-G965F) via the adb tunnel (`ANDROID_ADB_SERVER_PORT=5038`). Steps 2–5 need the device with the Observer service toggled in system Settings; step 2 may also be reproduced with `adb shell settings put secure enabled_accessibility_services <list without the Observer component>` (restore afterwards). Gradle builds and device runs need explicit user permission (AGENTS.md §5a); this slice's docs were written without a build, test or device run.
+
+**Implementation steps (numbered, What/How; status: planned, code not started; docs step done 2026-10-11):** Paths are under `app/src/main/java/com/kolee/tracklocation/`.
+
+1. **Detection helper** (not started): a pure function under `feature/observer/` (for example `ObserverServiceState`) that takes the raw `ENABLED_ACCESSIBILITY_SERVICES` string and returns true when it contains the Observer component in either the short or the full form (ADR-028 Decision 1). It parses each entry with `ComponentName.unflattenFromString` and compares case-sensitively. A null or empty setting returns false.
+2. **State and ViewModel** (not started): add `serviceEnabled: Boolean` to `ObserverUiState` (default true, so no banner flashes before the first read) and `ObserverViewModel.refreshServiceState()`, which reads `Settings.Secure.getString(contentResolver, ENABLED_ACCESSIBILITY_SERVICES)` through the helper in step 1 and updates the state.
+3. **Banner composable** (not started): new `ServiceOffBanner` under `feature/observer/presentation/components/`, modelled on `CapturePausedBanner` (amber surface, same text style). Takes an `onClick` that launches `Settings.ACTION_ACCESSIBILITY_SETTINGS`. Compose 1.2 APIs only.
+4. **Screen wiring** (not started): in `ObserverFeedScreen`, call `refreshServiceState()` from a `DisposableEffect` that registers a `LifecycleEventObserver` on the lifecycle owner and reacts to `ON_RESUME` (removed in `onDispose`; no newer lifecycle-compose API). Show `ServiceOffBanner` in the banner slot below the capture-chip / auto-scroll row and above the filter bar, only when `serviceEnabled` is false. The capture-paused banner is unchanged and shows independently.
+5. **Docs after device check** (docs step done 2026-10-11 for the ADR and UI-SPEC; device results still to record): record the How to Verify results in §6 and mark each item ✓ or ✗ here; update ADR-028 status if the device run changes anything.
+
+**Schema: none. No Room migration. No new permission. No change to GPS tracking, the Observer capture logic or the capture-switch preference.**
+
+---
+
 ## 5. Timeline at a Glance
 
 | Phase | Focus | Deliverable | Status |
@@ -965,6 +996,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-10-11 | Observer service-off banner (ADR-028): amber `ServiceOffBanner` on the Observer Feed when the Observer accessibility service is not in `ENABLED_ACCESSIBILITY_SERVICES` (re-checked on ON_RESUME; tap opens Accessibility settings; independent of the capture-paused banner). Docs only so far: ADR-028, UI-SPEC §3c-svc, this slice, ERRORS-LOG ERR-010. Code pending user approval. | In Progress | --- | Docs only; no build, test or device run. How to Verify items 1–5 open (§4 slice). |
 | 2026-10-11 | Remove Trips header fuel-pump icon and COST-cell tap / Toast (code): delete the `ListHeader` trailing `ic_fuel_pump` icon, `onFuelClick` wiring and `ic_fuel_pump.xml` if unused (ADR-027 Decision 11); remove tap-to-edit and the completed-trip Toast from all COST cells, keeping `FuelCostEditorDialog` reachable only from the dock PRICE pencil (ADR-027 Decision 12). Already removed from the design 2026-10-11. | Completed (code); device-verified (partial) | 9d01688 | Static review; build OK 2026-10-11. Device 2026-10-11: header shows the title only (no fuel-pump icon); COST cell taps on a List row and a Sessions card show no dialog and no Toast. Not run: Session OBD card, Trips active-trip row, Track strips (How to Verify item 19 partial). |
 | 2026-10-11 | Fuel dock design update: edit pencils in the value row (FUEL LEFT opens Reset fuel, PRICE opens Fuel price; right of the number, not at the cell edge), Fill up / Reset fuel / Fuel price dialogs (designed in the `.pen`, no external handoff), dock states (Not set, Normal, Low, Critical, Low confidence; thresholds and colours to confirm), OBD Settings dock removed, Trips header fuel-pump button removed from the design (ADR-027, UI-SPEC §5b). | Completed | 237e940 | Design only; screenshots reviewed in Pencil; no build, test or device run. |
 | 2026-10-11 | Fuel dock design in `ui-design.pen` (`FuelDock/Dark` on Track variants: Alt A, Alt B, LIVE, Order Strip Only, Order Active; `FuelDock/Light` on List, Sessions, Settings; layout shifts for Alt A, Alt B, LIVE, Strip Only). Commit `f39e1d4` also added a dock on OBD Settings; the design-update row above removes it. | Completed | f39e1d4 | Design only; screenshots reviewed in Pencil; no build, test or device run. |
