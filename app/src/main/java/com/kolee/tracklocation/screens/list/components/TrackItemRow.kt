@@ -32,6 +32,14 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricEmpty
+import com.kolee.tracklocation.ui.components.MetricSize
+import com.kolee.tracklocation.ui.components.MetricStrip
+import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatCompactAmount
+import com.kolee.tracklocation.ui.components.formatMetricDecimal
+import com.kolee.tracklocation.ui.components.formatMetricTime
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
 import com.kolee.tracklocation.ui.theme.TripBorder
 import com.kolee.tracklocation.ui.theme.TripGreen
@@ -55,14 +63,18 @@ fun TrackItemRow(
     // ADR-022: price-per-litre in effect at trip start (0.0 = none); used for the order net.
     pricePerLiter: Double = 0.0
 ) {
-    val distanceText = "${String.format("%.2f", item.distance / 1000f)} km"
-    val timeText = TimeUtilFormatter.getTime(item.duration)
+    val timeText = formatMetricTime(item.duration)
+    val distanceText = formatMetricDecimal(item.distance / 1000.0)
     val averageSpeedText = if (item.duration > 0) {
-        val hours = item.duration / 3_600_000f
-        val kilometers = item.distance / 1000f
-        "${String.format(Locale.ENGLISH, "%.1f", kilometers / hours)} km/h"
+        formatMetricDecimal((item.distance / 1000.0) / (item.duration / 3_600_000.0))
     } else {
-        ""
+        MetricEmpty
+    }
+    // UI-SPEC §5a: compact amount without "Rp" prefix; "—" when no cost (same condition as costText).
+    val costCompactText = if (costText != MetricEmpty && item.obdFuelConsumedL > 0.0 && pricePerLiter > 0.0) {
+        formatCompactAmount(Math.round(item.obdFuelConsumedL * pricePerLiter))
+    } else {
+        MetricEmpty
     }
     // ADR-024: covered distance / fuel when available; legacy distance / fuel for pre-v13 trips.
     val efficiencyText = if (item.obdFuelConsumedL > 0.0 && item.obdCoveredDistanceKm > 0.0) {
@@ -70,7 +82,7 @@ fun TrackItemRow(
     } else if (item.obdFuelConsumedL > 0.0) {
         String.format(Locale.ENGLISH, "%.1f", (item.distance / 1000f) / item.obdFuelConsumedL)
     } else {
-        "—"
+        MetricEmpty
     }
     // ADR-022: order trips show "price / net" (net = earnings - litres x price at trip start).
     val orderLabel = item.orderLabel
@@ -93,7 +105,7 @@ fun TrackItemRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (showOrderHeader) Modifier.heightIn(min = 156.dp) else Modifier.height(156.dp))
+            .then(if (showOrderHeader) Modifier.heightIn(min = 132.dp) else Modifier.height(132.dp))
             .clip(RoundedCornerShape(18.dp))
             .background(TripSurface)
             .border(1.dp, TripBorder, RoundedCornerShape(18.dp))
@@ -146,6 +158,21 @@ fun TrackItemRow(
                     offline = item.orderOffline,
                     modifier = Modifier.padding(top = 6.dp)
                 )
+                // ADR-022 / UI-SPEC §3b-order: order price / net now lives in the header area.
+                if (orderPriceNetText != null) {
+                    Text(
+                        text = orderPriceNetText,
+                        color = TripInk,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = MonospaceFontFamily,
+                        letterSpacing = (-0.3).sp,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .semantics { contentDescription = "Order price and net profit, $orderPriceNetText" }
+                    )
+                }
             }
         }
         Box(
@@ -154,62 +181,53 @@ fun TrackItemRow(
                 .height(1.dp)
                 .background(TripBorder)
         )
-        // Base row — distance / duration / avg speed (mirrors ActiveTripRow's two-row grid so
-        // the five metrics no longer clip in a single cramped 5-column row).
-        Row(
+        // UI-SPEC §3b #7 / §5a: ONE strip, canonical order, widths 48 / 44 / 82 / 52 / 76.
+        MetricStrip(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp)
+                .padding(top = 12.dp),
+            theme = MetricTheme.Light,
+            showSeparator = false,
+            spacing = 2.dp
         ) {
-            TrackStat(
-                value = distanceText,
-                label = "km",
-                modifier = Modifier.weight(1f)
-            )
-            TrackStat(
+            MetricCell(
+                label = "TIME",
                 value = timeText,
-                label = "duration",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(48f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
             )
-            TrackStat(
+            MetricCell(
+                label = "DIST (km)",
+                value = distanceText,
+                modifier = Modifier.weight(44f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "AVG SPEED (km/h)",
                 value = averageSpeedText,
-                label = "avg speed",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(82f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
             )
-        }
-        // Fuel row — km/L / cost / (order trips) price / net; the third cell is otherwise empty to
-        // keep columns aligned with the base row.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        ) {
-            TrackStat(
-                value = efficiencyText,
-                label = "km/L",
-                modifier = Modifier.weight(1f)
-            )
-            TrackStat(
-                value = costText,
-                label = "cost",
+            MetricCell(
+                label = "COST (Rp.)",
+                value = costCompactText,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(52f)
                     .clickable(onClick = onCostClick),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact,
                 valueColor = costColor
             )
-            if (orderPriceNetText != null) {
-                TrackStat(
-                    value = orderPriceNetText,
-                    label = "price / net",
-                    // Wider + smaller than its neighbours: "Rp28k / Rp19.6k" does not fit a 1/3 cell.
-                    modifier = Modifier
-                        .weight(1.5f)
-                        .semantics { contentDescription = "Order price and net profit, $orderPriceNetText" },
-                    valueFontSize = 12.sp
-                )
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+            MetricCell(
+                label = "AVG FUEL (km/L)",
+                value = efficiencyText,
+                modifier = Modifier.weight(76f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
         }
     }
 }
@@ -263,35 +281,6 @@ private fun RouteIndicator() {
                 .size(9.dp)
                 .clip(CircleShape)
                 .background(TripGreen)
-        )
-    }
-}
-
-@Composable
-private fun TrackStat(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-    valueColor: Color = TripInk,
-    valueFontSize: TextUnit = 14.sp
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = value,
-            color = valueColor,
-            fontSize = valueFontSize,
-            fontWeight = FontWeight.Medium,
-            fontFamily = MonospaceFontFamily,
-            letterSpacing = (-0.3).sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = label,
-            color = TripMuted,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Start
         )
     }
 }

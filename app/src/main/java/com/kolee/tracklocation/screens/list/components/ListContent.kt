@@ -82,6 +82,14 @@ import com.kolee.tracklocation.ui.theme.TripHeroIndicatorWash
 import com.kolee.tracklocation.ui.theme.TripHeroReadoutIdle
 import com.kolee.tracklocation.ui.theme.TripHeroReadoutLive
 import com.kolee.tracklocation.ui.theme.TripHeroStopRed
+import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricSize
+import com.kolee.tracklocation.ui.components.MetricStrip
+import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatCompactAmount
+import com.kolee.tracklocation.ui.components.formatMetricDecimal
+import com.kolee.tracklocation.ui.components.formatMetricPair
+import com.kolee.tracklocation.ui.components.formatMetricTime
 import com.kolee.tracklocation.ui.theme.TripInk
 import com.kolee.tracklocation.ui.theme.TripMuted
 import com.kolee.tracklocation.ui.theme.TripSurface
@@ -143,7 +151,7 @@ private fun TrackSuccessState(
     val tripFuelConsumedL = connected?.tripFuelConsumedL
     val price = priceState.currentPrice
     val costText = if (tripFuelConsumedL != null && price > 0.0) {
-        formatIdr(tripFuelConsumedL * price)
+        formatCompactAmount(Math.round(tripFuelConsumedL * price))
     } else "—"
 
     // ADR-008: active-row OBD stats, separated from the base row.
@@ -287,17 +295,21 @@ private fun ActiveTripRow(
         (now - uiState.tripStartedAt).coerceAtLeast(0L)
     } else 0L
     val distanceKm = uiState.distanceInMeters / 1000f
-    val distanceText = "${String.format(Locale.ENGLISH, "%.2f", distanceKm)} km"
-    val durationText = formatElapsed(elapsedMs)
+    val distanceText = formatMetricDecimal(distanceKm.toDouble())
+    val durationText = formatMetricTime(elapsedMs)
     val avgSpeedText = run {
-        val hours = elapsedMs / 3_600_000f
-        if (hours > 0f) "${String.format(Locale.ENGLISH, "%.1f", distanceKm / hours)} km/h" else "0.0 km/h"
+        val hours = elapsedMs / 3_600_000.0
+        if (hours > 0.0) formatMetricDecimal(distanceKm / hours) else formatMetricDecimal(0.0)
     }
+    val avgInstText = formatMetricPair(
+        tripAvgKmLText.takeIf { it != "—" },
+        instantKmLText.takeIf { it != "—" }
+    )
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(156.dp)
+            .height(132.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(TripSurface)
             .border(1.5.dp, TripGreen, RoundedCornerShape(18.dp))
@@ -332,31 +344,57 @@ private fun ActiveTripRow(
                 .height(1.dp)
                 .background(TripBorder)
         )
-        // ADR-008: base row — distance / duration / avg speed.
-        Row(
+        // UI-SPEC §3a / §5a: ONE strip, canonical order, widths 44 / 40 / 60 / 46 / 40 / 70.
+        MetricStrip(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp)
+                .padding(top = 12.dp),
+            theme = MetricTheme.Light,
+            showSeparator = false,
+            spacing = 2.dp
         ) {
-            ActiveTripStat(value = distanceText, label = "km", modifier = Modifier.weight(1f))
-            ActiveTripStat(value = durationText, label = "duration", modifier = Modifier.weight(1f))
-            ActiveTripStat(value = avgSpeedText, label = "avg speed", modifier = Modifier.weight(1f))
-        }
-        // ADR-008: OBD row — instant km/L / L/h / trip-average km/L / cost (tappable).
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        ) {
-            ActiveTripStat(value = instantKmLText, label = "km/L", modifier = Modifier.weight(1f))
-            ActiveTripStat(value = lphText, label = "L/h", modifier = Modifier.weight(1f))
-            ActiveTripStat(value = tripAvgKmLText, label = "avg km/L", modifier = Modifier.weight(1f))
-            ActiveTripStat(
+            MetricCell(
+                label = "TIME",
+                value = durationText,
+                modifier = Modifier.weight(44f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "DIST (km)",
+                value = distanceText,
+                modifier = Modifier.weight(40f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "AVG SPEED (km/h)",
+                value = avgSpeedText,
+                modifier = Modifier.weight(60f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "COST (Rp.)",
                 value = costText,
-                label = "cost",
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onCostClick() }
+                modifier = Modifier.weight(46f)
+                    .clickable { onCostClick() },
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "FLOW (L/h)",
+                value = lphText,
+                modifier = Modifier.weight(40f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
+            )
+            MetricCell(
+                label = "AVG/INST (km/L)",
+                value = avgInstText,
+                modifier = Modifier.weight(70f),
+                theme = MetricTheme.Light,
+                size = MetricSize.Compact
             )
         }
     }
@@ -419,29 +457,6 @@ private fun ActiveTripBadge() {
             color = TripGreen,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun ActiveTripStat(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = value,
-            color = TripInk,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1
-        )
-        Text(
-            text = label,
-            color = TripMuted,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium
         )
     }
 }
