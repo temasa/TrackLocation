@@ -48,6 +48,7 @@ import com.kolee.tracklocation.feature.obd.service.ObdUiState
 import com.kolee.tracklocation.permission.CheckAndRequestPermissions
 import com.kolee.tracklocation.screens.track.components.GojekOrderCard
 import com.kolee.tracklocation.screens.track.components.MapControls
+import com.kolee.tracklocation.screens.track.components.RouteLegend
 import com.kolee.tracklocation.screens.track.components.TrackMap
 import com.kolee.tracklocation.screens.track.components.TripPanel
 import com.kolee.tracklocation.tracking.rememberLiveFix
@@ -81,6 +82,8 @@ fun TrackScreen() {
     val liveFix by rememberLiveFix(enabled = allPermissionsGranted)
     val displayLocation = liveFix?.latLng ?: locationUiState.currentLocation
     var isShowPanel by remember { mutableStateOf(false) }
+    // ADR-026: legend dismissal is remembered for this screen visit only.
+    var legendDismissed by remember { mutableStateOf(false) }
     // Map follow mode (UI-SPEC 3f): a user pan stops following; Recenter resumes it.
     var isFollowing by remember { mutableStateOf(true) }
     var recenterTick by remember { mutableStateOf(0) }
@@ -185,6 +188,20 @@ fun TrackScreen() {
                     .padding(start = 8.dp, top = 8.dp)
                     .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                     .padding(horizontal = 6.dp, vertical = 4.dp)
+            )
+        }
+
+        // ADR-026 / UI-SPEC §3j: legend only while an order is active and a route line is drawn;
+        // top-end keeps clear of the top-start attribution, the bottom order card and the Recenter FAB.
+        if (!legendDismissed && activeOrder != null &&
+            (orderRoute.plannedRoute.size > 1 || orderRoute.runtimeRoute.size > 1)
+        ) {
+            RouteLegend(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = 8.dp, top = 8.dp),
+                showOptimized = true,
+                onDismiss = { legendDismissed = true }
             )
         }
 

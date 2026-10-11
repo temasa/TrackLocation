@@ -14,6 +14,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import kotlin.math.roundToInt
 
 /**
  * ADR-017: OpenRouteService geocoding (Pelias) + directions client (HttpURLConnection + org.json,
@@ -64,8 +65,8 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         }
     }
 
-    /** Driving route polyline origin -> [waypoint]? -> destination, or null. */
-    override suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng?): List<LatLng>? {
+    /** Driving route origin -> [waypoint]? -> destination, or null. */
+    override suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng?): RouteResult? {
         if (apiKey.isBlank()) return null
         val points = listOfNotNull(origin, waypoint, destination)
         val body = try {
@@ -83,8 +84,14 @@ class OpenRouteServiceClient(context: Context) : RouteProvider {
         }
         val json = request(DIRECTIONS_URL, body, "route") ?: return null
         return try {
-            val encoded = json.getJSONArray("routes").getJSONObject(0).getString("geometry")
-            PolyUtil.decode(encoded).takeIf { it.size > 1 }
+            val route = json.getJSONArray("routes").getJSONObject(0)
+            val encoded = route.getString("geometry")
+            // ADR-026: summary is optional; absence leaves distance/duration null.
+            val summary = route.optJSONObject("summary")
+            val distanceM = summary?.optDouble("distance")?.takeIf { !it.isNaN() }?.roundToInt()
+            val durationS = summary?.optDouble("duration")?.takeIf { !it.isNaN() }?.roundToInt()
+            val points = PolyUtil.decode(encoded)
+            if (points.size > 1) RouteResult(points, distanceM, durationS, encoded) else null
         } catch (e: Exception) {
             Log.w(TAG, "route parse failed: ${e.javaClass.simpleName}")
             null

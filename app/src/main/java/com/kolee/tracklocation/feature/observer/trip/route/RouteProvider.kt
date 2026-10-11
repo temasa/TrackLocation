@@ -14,9 +14,20 @@ interface RouteProvider {
     /** Place name + full address label nearest ([lat], [lng]), or null (also when offline). */
     suspend fun reverseGeocode(lat: Double, lng: Double): ReverseGeocodeResult?
 
-    /** Driving route polyline origin -> [waypoint]? -> destination, or null. */
-    suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng? = null): List<LatLng>?
+    /** Driving route origin -> [waypoint]? -> destination (ADR-026: with summary + raw geometry), or null. */
+    suspend fun route(origin: LatLng, destination: LatLng, waypoint: LatLng? = null): RouteResult?
 }
 
 /** ADR-023: reverse-geocode hit; [name] is the short place name, [address] the full label. */
 data class ReverseGeocodeResult(val name: String?, val address: String?)
+
+/**
+ * ADR-026: a directions result. [encoded] is the ORS polyline (precision 5) exactly as returned,
+ * [distanceM]/[durationS] come from `routes[0].summary` (null when absent).
+ */
+data class RouteResult(
+    val points: List<LatLng>,
+    val distanceM: Int?,
+    val durationS: Int?,
+    val encoded: String
+)

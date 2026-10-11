@@ -11,7 +11,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import android.util.Log
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.PolyUtil
 import com.kolee.tracklocation.data.roomdb.LocationDao
 import com.kolee.tracklocation.data.roomdb.ObdSampleDao
 import com.kolee.tracklocation.data.roomdb.ObdSampleEntity
@@ -22,6 +24,8 @@ import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.data.roomdb.TrackDao
 import com.kolee.tracklocation.data.roomdb.TrackEntity
+import com.kolee.tracklocation.data.roomdb.TripPlannedRouteDao
+import com.kolee.tracklocation.data.roomdb.TripPlannedRouteEntity
 import com.kolee.tracklocation.feature.observer.trip.ORDER_ACTIVE_WINDOW_MS
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.GojekRules
@@ -30,6 +34,9 @@ import com.kolee.tracklocation.feature.observer.trip.isTerminalOrderPhase
 import com.kolee.tracklocation.feature.observer.trip.route.OpenRouteServiceClient
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteController
 import com.kolee.tracklocation.feature.observer.trip.route.OrderRouteState
+import com.kolee.tracklocation.feature.observer.trip.route.PlannedRouteStore
+import com.kolee.tracklocation.feature.observer.trip.route.RouteResult
+import com.kolee.tracklocation.feature.observer.trip.route.StoredPlan
 import com.kolee.tracklocation.feature.observer.trip.route.ReverseGeocodeResult
 import com.kolee.tracklocation.tracking.Actions
 import com.kolee.tracklocation.tracking.LocationUiState
@@ -59,7 +66,8 @@ class ShareViewModel(
     private val locationDao: LocationDao,
     private val sessionDao: SessionDao,
     private val obdSampleDao: ObdSampleDao,
-    private val observerTripDao: ObserverTripDao
+    private val observerTripDao: ObserverTripDao,
+    private val tripPlannedRouteDao: TripPlannedRouteDao
 ): ViewModel() {
 
     var locationUiState = TrackingService.locationUiState
@@ -70,6 +78,11 @@ class ShareViewModel(
     var selectedTrackState by mutableStateOf(TrackEntity())
         private set
     var selectedTrackPathPoints by mutableStateOf<List<LatLng>>(emptyList())
+        private set
+    // ADR-026: saved planned route of the selected trip (null = none saved) for the details screen.
+    var selectedTrackPlannedRoute by mutableStateOf<List<LatLng>?>(null)
+        private set
+    var selectedTrackPlannedDistanceM by mutableStateOf<Int?>(null)
         private set
     private var job: Job? = null
 
@@ -114,7 +127,27 @@ class ShareViewModel(
                 ?.let { locationDao.getLocationByIdOnce(it) }
                 ?.let { LatLng(it.latitude, it.longitude) }
                 ?: locationUiState.value.pathPoints.firstOrNull()
-        }
+        },
+        // ADR-026: planned route persisted at fetch, keyed by the running trip's start time.
+        plannedRouteStore = object : PlannedRouteStore {
+            override suspend fun save(tripStartedAt: Long, kind: String, route: RouteResult, originSource: String) {
+                tripPlannedRouteDao.upsert(
+                    TripPlannedRouteEntity(
+                        tripStartedAt = tripStartedAt,
+                        kind = kind,
+                        geometry = route.encoded,
+                        distanceM = route.distanceM,
+                        durationS = route.durationS,
+                        originSource = originSource,
+                        fetchedAt = System.currentTimeMillis()
+                    )
+                )
+            }
+
+            override suspend fun load(tripStartedAt: Long): StoredPlan? =
+                tripPlannedRouteDao.getByTripStartedAt(tripStartedAt)?.toStoredPlan()
+        },
+        tripStartedAt = { locationUiState.value.tripStartedAt }
     )
     val orderRoute: StateFlow<OrderRouteState> = orderRouteController.state
 
@@ -144,6 +177,16 @@ class ShareViewModel(
         com.kolee.tracklocation.feature.obd.ObdFuelMath.integrateFuelLiters(samples)
 
     init {
+        // ADR-026: orphan sweep. Rows without a track older than 24 h; a running trip has no track row yet.
+        viewModelScope.launch {
+            try {
+                tripPlannedRouteDao.deleteOrphansOlderThan(System.currentTimeMillis() - PLANNED_ORPHAN_MAX_AGE_MS)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ShareViewModel", "planned route orphan sweep failed: ${e.javaClass.simpleName}")
+            }
+        }
         // ADR-023 amendment: one-time accepted-place backfill (once per process, never concurrent).
         if (backfillStarted.compareAndSet(false, true)) {
             viewModelScope.launch { backfillAcceptedPlaces() }
@@ -424,18 +467,48 @@ class ShareViewModel(
     fun deleteTrack(item: TrackEntity) {
         viewModelScope.launch {
             databaseDao.deleteTrack(item)
+            // ADR-026: the planned route lives and dies with its trip.
+            try {
+                tripPlannedRouteDao.deleteByTripStartedAt(item.timestamp)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ShareViewModel", "planned route delete failed: ${e.javaClass.simpleName}")
+            }
         }
     }
 
     fun getTrack(idx: Int) {
         job?.cancel()
+        // ADR-026: clear the previous selection's plan so it never flashes on another trip.
+        selectedTrackPlannedRoute = null
+        selectedTrackPlannedDistanceM = null
         job = viewModelScope.launch {
             databaseDao.getTrackById(idx).distinctUntilChanged().collect { track ->
                 selectedTrackState = track
-                selectedTrackPathPoints = getPathPointsForTrack(track)
+                val points = getPathPointsForTrack(track)
+                // ADR-026: plan first, so the details screen never shows "No planned route saved" in between.
+                loadSelectedPlannedRoute(track)
+                selectedTrackPathPoints = points
             }
         }
     }
+
+    // ADR-026: saved plan (if any) of [track]; display and comparison only, never fed to the route store.
+    private suspend fun loadSelectedPlannedRoute(track: TrackEntity) {
+        val plan = try {
+            if (track.timestamp > 0L) tripPlannedRouteDao.getByTripStartedAt(track.timestamp)?.toStoredPlan() else null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("ShareViewModel", "planned route load failed: ${e.javaClass.simpleName}")
+            null
+        }
+        selectedTrackPlannedRoute = plan?.points?.takeIf { it.size > 1 }
+        selectedTrackPlannedDistanceM = plan?.distanceM
+    }
+
+    private fun TripPlannedRouteEntity.toStoredPlan() = StoredPlan(PolyUtil.decode(geometry), distanceM)
 
     private suspend fun getPathPointsForTrack(track: TrackEntity): List<LatLng> {
         val startLocationId = track.startLocationId
@@ -469,6 +542,7 @@ class ShareViewModel(
         const val DROP_OFF_RADIUS_M = 150
         private const val ORDER_STATUS_COMPLETED = "COMPLETED"
         private const val ORDER_STATUS_CANCELLED = "CANCELLED"
+        private const val PLANNED_ORPHAN_MAX_AGE_MS = 24L * 60 * 60 * 1000
         private const val ORDER_STALENESS_TICK_MS = 60_000L
         private const val REVERSE_GEOCODE_TIMEOUT_MS = 8_000L
         private const val BACKFILL_MAX_TRIPS = 20
@@ -484,7 +558,8 @@ class ShareViewModel(
                     locationDao = application.locationDao,
                     sessionDao = application.sessionDao,
                     obdSampleDao = application.obdSampleDao,
-                    observerTripDao = application.observerTripDao
+                    observerTripDao = application.observerTripDao,
+                    tripPlannedRouteDao = application.tripPlannedRouteDao
                 )
             }
         }

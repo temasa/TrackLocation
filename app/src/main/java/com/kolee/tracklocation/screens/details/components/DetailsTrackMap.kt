@@ -25,6 +25,8 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import com.kolee.tracklocation.screens.track.components.LoadingCircularProgress
+import com.kolee.tracklocation.screens.track.components.PLANNED_LINE_COLOR
+import com.kolee.tracklocation.screens.track.components.PLANNED_LINE_PATTERN
 import com.kolee.tracklocation.utils.POLYLINE_WIDTH
 import com.kolee.tracklocation.utils.bitmapDescriptorFromVector
 import com.kolee.tracklocation.R
@@ -34,7 +36,8 @@ private const val TAG = "DetailsTrackMap"
 @Composable
 fun BoxScope.DetailsTrackMap(
     modifier: Modifier = Modifier,
-    pathPoints: List<LatLng>
+    pathPoints: List<LatLng>,
+    plannedRoute: List<LatLng>? = null // ADR-026: saved plan, drawn dashed under the actual line
 ) {
     var isMapLoaded by remember { mutableStateOf(false) }
     var cameraPositionState = rememberCameraPositionState()
@@ -50,9 +53,11 @@ fun BoxScope.DetailsTrackMap(
     LoadingCircularProgress(isMapLoaded)
 
     if (pathPoints.size >= 2) {
-        val bound = remember {
+        // ADR-026: fit both lines; keyed so a late-arriving plan is included.
+        val bound = remember(pathPoints, plannedRoute) {
             LatLngBounds.builder().apply {
                 includeAll(pathPoints)
+                plannedRoute?.let { includeAll(it) }
             }.build()
         }
 
@@ -72,10 +77,20 @@ fun BoxScope.DetailsTrackMap(
         onMapLoaded = {isMapLoaded = true}
     ) {
         if (pathPoints.size >= 2) {
+            if (plannedRoute != null && plannedRoute.size >= 2) {
+                Polyline(
+                    points = plannedRoute,
+                    color = PLANNED_LINE_COLOR,
+                    width = POLYLINE_WIDTH * 0.6f,
+                    pattern = PLANNED_LINE_PATTERN,
+                    zIndex = 0f
+                )
+            }
             Polyline(
                 points = pathPoints,
                 color = Color.Blue.copy(alpha = 0.7f),
-                width = POLYLINE_WIDTH
+                width = POLYLINE_WIDTH,
+                zIndex = 1f
             )
 
             PutMarker(

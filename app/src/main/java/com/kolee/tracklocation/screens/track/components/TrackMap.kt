@@ -19,6 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.Dash
+import com.google.android.gms.maps.model.Gap
+import com.google.android.gms.maps.model.PatternItem
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraMoveStartedReason
 import com.google.maps.android.compose.GoogleMap
@@ -34,6 +37,11 @@ import com.kolee.tracklocation.R
 
 private const val TAG = "TrackMap"
 private const val NAVIGATION_ENTRY_ZOOM = 17f // ADR-020
+
+// ADR-026 / UI-SPEC §3j: shared with RouteLegend and the details map so swatches match the lines.
+internal val PLANNED_LINE_COLOR = Color(0xFFB0BEC5)
+internal val OPTIMIZED_LINE_COLOR = Color(0xFFFF9800)
+internal val PLANNED_LINE_PATTERN: List<PatternItem> = listOf(Dash(24f), Gap(16f))
 
 @Composable
 fun BoxScope.TrackMap(
@@ -143,20 +151,23 @@ fun BoxScope.TrackMap(
             Log.d(TAG, "onMapLoaded")
             isMapLoaded = true}
     ) {
-        // PROVISIONAL styling (ADR-016 / UI-SPEC §3e): planned route (thin, muted) under the
-        // runtime route (bold orange); both under the recorded trace and the car marker.
+        // PROVISIONAL styling (ADR-026 / UI-SPEC §3j): planned = dashed, thin, blue-grey; optimized =
+        // solid, bold, orange; actual = solid blue. zIndex bottom to top: planned, actual, optimized.
         if (plannedRoute.size > 1) {
             Polyline(
                 points = plannedRoute,
-                color = Color(0xFF78909C),
-                width = POLYLINE_WIDTH * 0.6f
+                color = PLANNED_LINE_COLOR,
+                width = POLYLINE_WIDTH * 0.6f,
+                pattern = PLANNED_LINE_PATTERN,
+                zIndex = 0f
             )
         }
         if (runtimeRoute.size > 1) {
             Polyline(
                 points = runtimeRoute,
-                color = Color(0xFFFF8F00),
-                width = POLYLINE_WIDTH
+                color = OPTIMIZED_LINE_COLOR,
+                width = POLYLINE_WIDTH * 1.4f,
+                zIndex = 2f
             )
         }
         if (pickup != null) {
@@ -194,7 +205,8 @@ fun BoxScope.TrackMap(
             Polyline(
                 points = pathPoints,
                 color = Color.Blue,
-                width = POLYLINE_WIDTH
+                width = POLYLINE_WIDTH,
+                zIndex = 1f
             )
         }
     }
