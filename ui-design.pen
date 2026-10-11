@@ -1151,14 +1151,20 @@
                           "ref": "a1w9b",
                           "name": "TimeCell",
                           "width": 48,
+                          "alignItems": "start",
                           "descendants": {
+                            "PPaaQ": {
+                              "alignItems": "start"
+                            },
                             "PPaaQ/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "PPaaQ/QIi9H": {
                               "content": "22m15s",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1168,14 +1174,20 @@
                           "ref": "zH8dD",
                           "name": "DistCell",
                           "width": 44,
+                          "alignItems": "start",
                           "descendants": {
+                            "Sj4M1": {
+                              "alignItems": "start"
+                            },
                             "Sj4M1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "Sj4M1/QIi9H": {
                               "content": "12.4",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1185,14 +1197,20 @@
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
                           "width": 82,
+                          "alignItems": "start",
                           "descendants": {
+                            "ZLh0b": {
+                              "alignItems": "start"
+                            },
                             "ZLh0b/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "ZLh0b/QIi9H": {
                               "content": "33.5",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1202,14 +1220,20 @@
                           "ref": "hMBXP",
                           "name": "CostCell",
                           "width": 52,
+                          "alignItems": "start",
                           "descendants": {
+                            "TekIj": {
+                              "alignItems": "start"
+                            },
                             "TekIj/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "TekIj/QIi9H": {
                               "content": "—",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1219,14 +1243,20 @@
                           "ref": "p4fbw",
                           "name": "AvgFuelCell",
                           "width": 76,
+                          "alignItems": "start",
                           "descendants": {
+                            "isyU1": {
+                              "alignItems": "start"
+                            },
                             "isyU1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "isyU1/QIi9H": {
                               "content": "—",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         }
@@ -1376,14 +1406,20 @@
                           "ref": "a1w9b",
                           "name": "TimeCell",
                           "width": 48,
+                          "alignItems": "start",
                           "descendants": {
+                            "PPaaQ": {
+                              "alignItems": "start"
+                            },
                             "PPaaQ/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "PPaaQ/QIi9H": {
                               "content": "18m42s",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1393,14 +1429,20 @@
                           "ref": "zH8dD",
                           "name": "DistCell",
                           "width": 44,
+                          "alignItems": "start",
                           "descendants": {
+                            "Sj4M1": {
+                              "alignItems": "start"
+                            },
                             "Sj4M1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "Sj4M1/QIi9H": {
                               "content": "8.8",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1410,14 +1452,20 @@
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
                           "width": 82,
+                          "alignItems": "start",
                           "descendants": {
+                            "ZLh0b": {
+                              "alignItems": "start"
+                            },
                             "ZLh0b/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "ZLh0b/QIi9H": {
                               "content": "28.1",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1427,14 +1475,20 @@
                           "ref": "hMBXP",
                           "name": "CostCell",
                           "width": 52,
+                          "alignItems": "start",
                           "descendants": {
+                            "TekIj": {
+                              "alignItems": "start"
+                            },
                             "TekIj/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "TekIj/QIi9H": {
                               "content": "8.2k",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1444,14 +1498,20 @@
                           "ref": "p4fbw",
                           "name": "AvgFuelCell",
                           "width": 76,
+                          "alignItems": "start",
                           "descendants": {
+                            "isyU1": {
+                              "alignItems": "start"
+                            },
                             "isyU1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "isyU1/QIi9H": {
                               "content": "14.2",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         }
@@ -1601,14 +1661,20 @@
                           "ref": "a1w9b",
                           "name": "TimeCell",
                           "width": 48,
+                          "alignItems": "start",
                           "descendants": {
+                            "PPaaQ": {
+                              "alignItems": "start"
+                            },
                             "PPaaQ/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "PPaaQ/QIi9H": {
                               "content": "11m05s",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1618,14 +1684,20 @@
                           "ref": "zH8dD",
                           "name": "DistCell",
                           "width": 44,
+                          "alignItems": "start",
                           "descendants": {
+                            "Sj4M1": {
+                              "alignItems": "start"
+                            },
                             "Sj4M1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "Sj4M1/QIi9H": {
                               "content": "5.2",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1635,14 +1707,20 @@
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
                           "width": 82,
+                          "alignItems": "start",
                           "descendants": {
+                            "ZLh0b": {
+                              "alignItems": "start"
+                            },
                             "ZLh0b/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "ZLh0b/QIi9H": {
                               "content": "28.1",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1652,14 +1730,20 @@
                           "ref": "hMBXP",
                           "name": "CostCell",
                           "width": 52,
+                          "alignItems": "start",
                           "descendants": {
+                            "TekIj": {
+                              "alignItems": "start"
+                            },
                             "TekIj/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "TekIj/QIi9H": {
                               "content": "—",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -1669,14 +1753,20 @@
                           "ref": "p4fbw",
                           "name": "AvgFuelCell",
                           "width": 76,
+                          "alignItems": "start",
                           "descendants": {
+                            "isyU1": {
+                              "alignItems": "start"
+                            },
                             "isyU1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "isyU1/QIi9H": {
                               "content": "—",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         }
@@ -2668,14 +2758,20 @@
                           "ref": "a1w9b",
                           "name": "TimeCell",
                           "width": 52,
+                          "alignItems": "start",
                           "descendants": {
+                            "PPaaQ": {
+                              "alignItems": "start"
+                            },
                             "PPaaQ/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "PPaaQ/QIi9H": {
                               "content": "45m12s",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2685,14 +2781,20 @@
                           "ref": "zH8dD",
                           "name": "DistCell",
                           "width": 46,
+                          "alignItems": "start",
                           "descendants": {
+                            "Sj4M1": {
+                              "alignItems": "start"
+                            },
                             "Sj4M1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "Sj4M1/QIi9H": {
                               "content": "5.2",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2702,14 +2804,20 @@
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
                           "width": 82,
+                          "alignItems": "start",
                           "descendants": {
+                            "ZLh0b": {
+                              "alignItems": "start"
+                            },
                             "ZLh0b/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "ZLh0b/QIi9H": {
                               "content": "6.9",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2719,14 +2827,20 @@
                           "ref": "wGdYg",
                           "name": "AvgTotalCell",
                           "width": 90,
+                          "alignItems": "start",
                           "descendants": {
+                            "BWnDn": {
+                              "alignItems": "start"
+                            },
                             "BWnDn/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "BWnDn/QIi9H": {
                               "content": "10.4/0.5",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2736,14 +2850,20 @@
                           "ref": "I7ACc",
                           "name": "PointsCell",
                           "width": 48,
+                          "alignItems": "start",
                           "descendants": {
+                            "o9eeik": {
+                              "alignItems": "start"
+                            },
                             "o9eeik/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "o9eeik/QIi9H": {
                               "content": "1,284",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         }
@@ -2873,14 +2993,20 @@
                           "ref": "a1w9b",
                           "name": "TimeCell",
                           "width": 52,
+                          "alignItems": "start",
                           "descendants": {
+                            "PPaaQ": {
+                              "alignItems": "start"
+                            },
                             "PPaaQ/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "PPaaQ/QIi9H": {
                               "content": "32m05s",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2890,14 +3016,20 @@
                           "ref": "zH8dD",
                           "name": "DistCell",
                           "width": 46,
+                          "alignItems": "start",
                           "descendants": {
+                            "Sj4M1": {
+                              "alignItems": "start"
+                            },
                             "Sj4M1/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "Sj4M1/QIi9H": {
                               "content": "3.8",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2907,14 +3039,20 @@
                           "ref": "YI2fu",
                           "name": "AvgSpeedCell",
                           "width": 82,
+                          "alignItems": "start",
                           "descendants": {
+                            "ZLh0b": {
+                              "alignItems": "start"
+                            },
                             "ZLh0b/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "ZLh0b/QIi9H": {
                               "content": "7.1",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2924,14 +3062,20 @@
                           "ref": "wGdYg",
                           "name": "AvgTotalCell",
                           "width": 90,
+                          "alignItems": "start",
                           "descendants": {
+                            "BWnDn": {
+                              "alignItems": "start"
+                            },
                             "BWnDn/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "BWnDn/QIi9H": {
                               "content": "9.5/0.4",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         },
@@ -2941,14 +3085,20 @@
                           "ref": "I7ACc",
                           "name": "PointsCell",
                           "width": 48,
+                          "alignItems": "start",
                           "descendants": {
+                            "o9eeik": {
+                              "alignItems": "start"
+                            },
                             "o9eeik/y0RW9Y": {
                               "fontSize": 8,
-                              "letterSpacing": 0
+                              "letterSpacing": 0,
+                              "textAlign": "left"
                             },
                             "o9eeik/QIi9H": {
                               "content": "932",
-                              "fontSize": 12
+                              "fontSize": 12,
+                              "textAlign": "left"
                             }
                           }
                         }
