@@ -25,9 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -44,6 +42,10 @@ import com.kolee.tracklocation.feature.observer.trip.OrderCard
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.screens.track.TrackPanelState
 import com.kolee.tracklocation.screens.track.TripState
+import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricStrip
+import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatCompactAmount
 import com.kolee.tracklocation.ui.theme.BrandGreen
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
 import com.kolee.tracklocation.ui.theme.PanelBg
@@ -80,22 +82,6 @@ private val EarningsStyle = TextStyle(
     fontSize = 16.sp,
     fontWeight = FontWeight.SemiBold,
     color = PanelTextPrimary
-)
-
-// PROVISIONAL trip strip (UI-SPEC §3e): private copies of TripPanel's unit-label / metric styles.
-private val StripLabelStyle = TextStyle(
-    fontSize = 10.sp,
-    letterSpacing = 0.4.sp,
-    color = PanelTextSecondary
-)
-
-private val StripValueStyle = TextStyle(
-    fontFamily = MonospaceFontFamily,
-    fontSize = 16.sp,
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = (-0.3).sp,
-    color = PanelTextPrimary,
-    fontFeatureSettings = "tnum"
 )
 
 @Composable
@@ -156,7 +142,7 @@ fun GojekOrderCard(
                     )
                     .semantics { contentDescription = "Tap to expand order card" }
             ) {
-                TripStrip(tripStripState!!, order.earningsRp)
+                TripStrip(tripStripState!!, order.earningsRp, stripOnly = true)
             }
         } else {
             Column {
@@ -273,7 +259,7 @@ fun GojekOrderCard(
 
 // PROVISIONAL: TIME / DIST / COST-NET / AVG-INST km/L, no extra interactivity.
 @Composable
-private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
+private fun TripStrip(state: TrackPanelState, earningsRp: Long?, stripOnly: Boolean = false) {
     // COST / NET (FR-16): cost = trip litres x pump price; NET only when both cost and earnings exist.
     val tripFuelL = state.tripFuelL
     val costRp: Long? =
@@ -301,56 +287,36 @@ private fun TripStrip(state: TrackPanelState, earningsRp: Long?) {
             "instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .drawBehind {
-                drawLine(
-                    color = PanelBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
-            .padding(top = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    // UI-SPEC §5a: Strip Only uses a 2dp cell gap and a wider AVG/INST cell to clear the chevron.
+    MetricStrip(
+        modifier = Modifier.fillMaxWidth(),
+        theme = MetricTheme.Dark,
+        spacing = if (stripOnly) 2.dp else 6.dp
     ) {
-        Column(
-            modifier = Modifier
-                .weight(0.7f)
-                .semantics { contentDescription = "Elapsed $elapsedDesc" },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "TIME", style = StripLabelStyle, maxLines = 1)
-            Text(text = formatCompactElapsed(state.elapsedMs), style = StripValueStyle, maxLines = 1)
-        }
-        Column(
-            modifier = Modifier
-                .weight(0.7f)
-                .semantics { contentDescription = "Distance $distText kilometers" },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "DIST (km)", style = StripLabelStyle, maxLines = 1)
-            Text(text = distText, style = StripValueStyle, maxLines = 1)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1.4f)
-                .semantics { contentDescription = costNetDesc },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "COST / NET (Rp.)", style = StripLabelStyle, maxLines = 1)
-            Text(text = "$costText/$netText", style = StripValueStyle, maxLines = 1)
-        }
-        Column(
-            modifier = Modifier
-                .weight(1.4f)
-                .semantics { contentDescription = fuelDesc },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "AVG / INST (km/L)", style = StripLabelStyle, maxLines = 1)
-            Text(text = "$avgText/$instText", style = StripValueStyle, maxLines = 1)
-        }
+        MetricCell(
+            label = "TIME",
+            value = formatCompactElapsed(state.elapsedMs),
+            modifier = Modifier.weight(0.7f),
+            contentDescription = "Elapsed $elapsedDesc"
+        )
+        MetricCell(
+            label = "DIST (km)",
+            value = distText,
+            modifier = Modifier.weight(0.7f),
+            contentDescription = "Distance $distText kilometers"
+        )
+        MetricCell(
+            label = "COST/NET (Rp.)",
+            value = "$costText/$netText",
+            modifier = Modifier.weight(1.4f),
+            contentDescription = costNetDesc
+        )
+        MetricCell(
+            label = "AVG/INST (km/L)",
+            value = "$avgText/$instText",
+            modifier = Modifier.weight(if (stripOnly) 1.7f else 1.4f),
+            contentDescription = fuelDesc
+        )
     }
 }
 
@@ -367,21 +333,6 @@ private fun formatCompactRupiah(value: Long): String {
             } else {
                 "Rp${String.format(Locale.US, "%.1f", abs / 1_000_000.0)}jt"
             }
-        }
-    }
-    return if (value < 0) "\u2212$body" else body
-}
-
-// No-prefix variant for TripStrip where the label already shows "(Rp.)".
-// 850 -> "850", 8_400 -> "8.4k", 1_200_000 -> "1.2jt"; negatives get a U+2212 prefix.
-private fun formatCompactAmount(value: Long): String {
-    val abs = Math.abs(value)
-    val body = when {
-        abs < 1_000L -> "$abs"
-        else -> {
-            val k = String.format(Locale.US, "%.1f", abs / 1000.0)
-            if (abs < 1_000_000L && k != "1000.0") "${k}k"
-            else String.format(Locale.US, "%.1f", abs / 1_000_000.0) + "jt"
         }
     }
     return if (value < 0) "\u2212$body" else body

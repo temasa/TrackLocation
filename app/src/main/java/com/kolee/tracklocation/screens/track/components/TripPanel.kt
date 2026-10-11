@@ -30,18 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -53,6 +48,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kolee.tracklocation.screens.track.TrackPanelState
 import com.kolee.tracklocation.screens.track.TripState
+import com.kolee.tracklocation.ui.components.MetricCell
+import com.kolee.tracklocation.ui.components.MetricEmpty
+import com.kolee.tracklocation.ui.components.MetricStrip
+import com.kolee.tracklocation.ui.components.MetricTheme
+import com.kolee.tracklocation.ui.components.formatMetricPair
 import com.kolee.tracklocation.ui.theme.BrandGreen
 import com.kolee.tracklocation.ui.theme.BrandGreenDark
 import com.kolee.tracklocation.ui.theme.MonospaceFontFamily
@@ -64,8 +64,6 @@ import com.kolee.tracklocation.ui.theme.PanelTextSecondary
 import com.kolee.tracklocation.ui.theme.PanelTextTertiary
 import com.kolee.tracklocation.ui.theme.StatusPaused
 import com.kolee.tracklocation.utils.TimeUtilFormatter
-import kotlin.math.cos
-import kotlin.math.sin
 
 private val EyebrowStyle = TextStyle(
     fontFamily = MonospaceFontFamily,
@@ -80,21 +78,6 @@ private val TimerStyle = TextStyle(
     fontSize = 30.sp,
     fontWeight = FontWeight.SemiBold,
     letterSpacing = (-0.8).sp,
-    color = PanelTextPrimary,
-    fontFeatureSettings = "tnum"
-)
-
-private val UnitLabelStyle = TextStyle(
-    fontSize = 10.sp,
-    letterSpacing = 0.4.sp,
-    color = PanelTextSecondary
-)
-
-private val MetricValueStyle = TextStyle(
-    fontFamily = MonospaceFontFamily,
-    fontSize = 16.sp,
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = (-0.3).sp,
     color = PanelTextPrimary,
     fontFeatureSettings = "tnum"
 )
@@ -243,105 +226,41 @@ private fun TripCtaButton(tripState: TripState, onTap: () -> Unit) {
     }
 }
 
-// UI-SPEC §3g: single row merging the old StatsRow (KM, KM/HR) and ObdRow (L/H, AVG/INST km/L).
-// OBD cells only appear when obdConnected; without OBD the row shows two cells as before.
+// UI-SPEC §3g / §5a: single MetricStrip; OBD cells only appear when obdConnected.
 @Composable
 private fun CombinedMetricsRow(state: TrackPanelState) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .drawBehind {
-                drawLine(
-                    color = PanelBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
-            .padding(top = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
+    val distText = "%.1f".format(state.distanceKm)
+    val speedText = "%.1f".format(state.speedKmh)
+    MetricStrip(modifier = Modifier.fillMaxWidth(), theme = MetricTheme.Dark) {
         MetricCell(
+            label = "DIST (km)",
+            value = distText,
             modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.Start,
-            isDistance = true,
-            unit = "KM",
-            value = "%.2f".format(state.distanceKm),
-            accessibilityText = "%.2f kilometers".format(state.distanceKm)
+            contentDescription = "$distText kilometers"
         )
         MetricCell(
+            label = "SPEED (km/h)",
+            value = speedText,
             modifier = Modifier.weight(1f),
-            horizontalAlignment = if (state.obdConnected) Alignment.CenterHorizontally else Alignment.End,
-            isDistance = false,
-            unit = "KM/HR",
-            value = "%.1f".format(state.speedKmh),
-            accessibilityText = "%.1f kilometers per hour".format(state.speedKmh)
+            contentDescription = "$speedText kilometers per hour"
         )
         if (state.obdConnected) {
-            val lphText = state.fuelRateLph?.takeIf { it > 0.0 }?.let { "%.1f".format(it) } ?: "—"
-            ObdMetricCell(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                label = "L/H",
+            val lphText = state.fuelRateLph?.takeIf { it > 0.0 }?.let { "%.1f".format(it) } ?: MetricEmpty
+            MetricCell(
+                label = "FLOW (L/h)",
                 value = lphText,
-                accessibilityText = "Fuel rate $lphText litres per hour"
+                modifier = Modifier.weight(1f),
+                contentDescription = "Fuel rate $lphText litres per hour"
             )
-            val avgText = state.tripAvgKmL?.let { "%.1f".format(it) } ?: "—"
-            val instText = state.instantKmL?.let { "%.1f".format(it) } ?: "—"
-            ObdMetricCell(
+            val avgText = state.tripAvgKmL?.let { "%.1f".format(it) }
+            val instText = state.instantKmL?.let { "%.1f".format(it) }
+            MetricCell(
+                label = "AVG/INST (km/L)",
+                value = formatMetricPair(avgText, instText),
                 modifier = Modifier.weight(1.4f),
-                horizontalAlignment = Alignment.End,
-                label = "AVG/INST km/L",
-                value = "$avgText/$instText",
-                accessibilityText = "Average ${if (avgText == "—") "unavailable" else avgText}, instant ${if (instText == "—") "unavailable" else instText} kilometers per litre"
+                contentDescription = "Average ${avgText ?: "unavailable"}, instant ${instText ?: "unavailable"} kilometers per litre"
             )
         }
-    }
-}
-
-@Composable
-private fun MetricCell(
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    isDistance: Boolean,
-    unit: String,
-    value: String,
-    accessibilityText: String
-) {
-    Column(
-        modifier = modifier.semantics { contentDescription = accessibilityText },
-        horizontalAlignment = horizontalAlignment
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            Canvas(modifier = Modifier.size(14.dp)) {
-                if (isDistance) drawDistanceIcon(PanelTextSecondary)
-                else drawSpeedIcon(PanelTextSecondary)
-            }
-            Text(text = unit, style = UnitLabelStyle)
-        }
-        Spacer(Modifier.height(2.dp))
-        Text(text = value, style = MetricValueStyle)
-    }
-}
-
-@Composable
-private fun ObdMetricCell(
-    modifier: Modifier,
-    horizontalAlignment: Alignment.Horizontal,
-    label: String,
-    value: String,
-    accessibilityText: String
-) {
-    Column(
-        modifier = modifier.semantics { contentDescription = accessibilityText },
-        horizontalAlignment = horizontalAlignment
-    ) {
-        Text(text = label, style = UnitLabelStyle)
-        Spacer(Modifier.height(2.dp))
-        Text(text = value, style = MetricValueStyle)
     }
 }
 
@@ -366,45 +285,6 @@ private fun DrawScope.drawStopGlyph(color: Color) {
         addRoundRect(RoundRect(6f * sx, 6f * sy, 18f * sx, 18f * sy, CornerRadius(2f * sx, 2f * sy)))
     }
     drawPath(path, color)
-}
-
-// Distance (location pin) icon: circle head + tapered sides + inner circle
-private fun DrawScope.drawDistanceIcon(color: Color) {
-    val w = size.width; val h = size.height
-    val stroke = Stroke(width = 2.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-    val cx = w * 0.5f
-    val headCy = h * 0.40f
-    val headR = w * 0.34f
-
-    drawCircle(color, radius = headR, center = Offset(cx, headCy), style = stroke)
-
-    // Tapered lines from circle base to pin tip
-    val angRad = Math.toRadians(28.0).toFloat()
-    val lx = cx - headR * sin(angRad)
-    val rx = cx + headR * sin(angRad)
-    val baseY = headCy + headR * cos(angRad)
-    val tipY = h * 0.93f
-
-    drawLine(color, Offset(lx, baseY), Offset(cx, tipY), 2.2.dp.toPx(), StrokeCap.Round)
-    drawLine(color, Offset(rx, baseY), Offset(cx, tipY), 2.2.dp.toPx(), StrokeCap.Round)
-
-    // Inner circle (hole in pin head)
-    drawCircle(color, radius = headR * 0.37f, center = Offset(cx, headCy), style = stroke)
-}
-
-// Speed (lightning bolt) icon: M13 2 4 14h7l-1 8 9-12h-7l1-8z
-private fun DrawScope.drawSpeedIcon(color: Color) {
-    val sx = size.width / 24f; val sy = size.height / 24f
-    val path = Path().apply {
-        moveTo(13f * sx, 2f * sy)
-        lineTo(4f * sx, 14f * sy)
-        lineTo(11f * sx, 14f * sy)
-        lineTo(10f * sx, 22f * sy)
-        lineTo(19f * sx, 10f * sy)
-        lineTo(12f * sx, 10f * sy)
-        close()
-    }
-    drawPath(path, color, style = Stroke(width = 2.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
 @RequiresApi(Build.VERSION_CODES.S)

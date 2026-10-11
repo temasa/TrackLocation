@@ -59,6 +59,7 @@ val PanelTextPrimary = Color(0xFFFFFFFF)
 val PanelTextSecondary = Color(0xC7FFFFFF)      // rgba(255,255,255,0.78)
 val PanelTextTertiary = Color(0x73FFFFFF)       // rgba(255,255,255,0.45)
 val StatusPaused = Color(0xFFF5A524)            // amber dot
+val MetricSeparatorLight = Color(0x1F000000)        // rgba(0,0,0,0.12) — light-surface metric strip
 val MapFabBg = Color(0xEBFFFFFF)                // rgba(255,255,255,0.92)
 
 // Observer color tokens (additions per OBSERVER_PHASE1_SPEC.md)
