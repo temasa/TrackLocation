@@ -63,7 +63,7 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.49 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.50 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
 | `docs/UI-SPEC.md` | 0.36 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
 | `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
@@ -94,6 +94,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-11 | IMPLEMENTATION-PLAN | 0.49 | 0.50 | Metric Display Standard in Compose slice: code committed (`82188e5`, `a53fa75`, `6d51091`; docs `6c2bead`) and partly device-verified (`:app:assembleDebug` BUILD SUCCESSFUL; APK installed and launched on Galaxy S9+; Sessions cards and List finished rows checked). §1 row 0.50, §3 phase row, §4 slice status and steps, Next Step entry, §6 row Git Revision and Verification filled; remaining device checks listed in Next Step. DOCUMENT-CONTROL stays 0.1; UI-SPEC not changed. | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.48 | 0.49 | Metric Display Standard in Compose slice: code implemented (uncommitted; static review only, no Gradle/test/device run). §1 row, §3 phase row, §4 slice status and steps, Next Step entry, §6 row Completed (code) with Git Revision `---` and device-check list. DOCUMENT-CONTROL stays 0.1 (own rules unchanged). | Claude Haiku 5.5 |
 | 2026-10-11 | UI-SPEC | 0.35 | 0.36 | Metric Display Standard code status: §3b #7, §4 Session card group and §5a exception (3) updated from "code pending" to implemented in Compose 2026-10-11 (static review; device check pending); §5a code-side decisions added (Strip Only AVG/INST weight 1.7 stand-in for 90 px; List live row one row of six cells; List finished-row weights and 132 dp card). | Claude Haiku 5.5 |
 | 2026-10-11 | IMPLEMENTATION-PLAN | 0.47 | 0.48 | Metric Display Standard in Compose slice (UI-SPEC §5a; docs only, code not started): §1 row, §3 phase row, §4 slice with What / Observable result / How to Verify and five numbered steps plus recorded assumptions, Next Step entry, §6 row In Progress (Git Revision `---`). ERR-008 §6 row Git Revision backfilled `---` → `ad082a6` (confirmed in `git log`). No source, schema or Gradle/test run. DOCUMENT-CONTROL stays 0.1 (own rules unchanged). | Claude Haiku 5.5 |
