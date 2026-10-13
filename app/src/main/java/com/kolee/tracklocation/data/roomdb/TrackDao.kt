@@ -13,6 +13,10 @@ interface TrackDao {
     @Query("SELECT * FROM track ORDER BY timestamp DESC")
     fun getAllTracks(): Flow<List<TrackEntity>>
 
+    // ADR-029: order trips of the current session, selected by time window (track has no session id).
+    @Query("SELECT * FROM track WHERE timestamp >= :startedAtMs AND orderLabel IS NOT NULL ORDER BY timestamp")
+    fun getSessionOrderTracks(startedAtMs: Long): Flow<List<TrackEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrack(item: TrackEntity): Long
 
