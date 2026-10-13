@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-011 | 2026-10-13 | 2026-10-13 (fix in `7b9b1cd`; rebuild green in 58 s) | Compilation | ADR-029 overlay (`feature/overlay/ui/OverlayWindowHost.kt`) | `:app:compileDebugKotlin` FAILED — `Unresolved reference: ViewTreeSavedStateRegistryOwner` at (18, 28) and (98, 13); the static `ViewTreeSavedStateRegistryOwner.set(view, owner)` call is not callable from Kotlin on savedstate 1.2.0 | Resolved |
 | ERR-010 | 2026-10-11 | 2026-10-11 (mitigated manually; no code fix) | Verification | Observer accessibility service / order auto-start | Observer accessibility service silently disabled; two Gojek orders not captured and no auto-start trip — service dropped from `enabled_accessibility_services`, so nothing was captured from 07:21 WIB until the evening | Mitigated (manual); in-screen ServiceBanner covers only while the Observer screen is open |
 | ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
 | ERR-008 | 2026-10-11 | — (code fixed; device check pending) | Verification | Session running cost / fuel accumulator | Running-session COST/fuel reset or stopped accumulating — TrackingService re-wrote its cached session row with REPLACE on every GPS point, clobbering OBD accumulator increments | Code fixed (partial UPDATE); device verification pending |
@@ -66,6 +67,35 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-011: ADR-029 overlay host — `ViewTreeSavedStateRegistryOwner` unresolved at compile time
+
+**Found At:** 2026-10-13 (first debug build of the ADR-029 overlay slices, `:app:compileDebugKotlin`)  
+**Resolved At:** 2026-10-13 (fix in `7b9b1cd`; second build succeeded in 58 s)  
+**Phase:** Compilation  
+**Sprint/Task:** ADR-029 overlay — `feature/overlay/ui/OverlayWindowHost.kt` (ComposeView hosted in a Service/WindowManager window)  
+**Environment:** debug build (Gradle, `:app:compileDebugKotlin`); androidx.savedstate 1.2.0, lifecycle 2.5.1  
+**Status:** Resolved  
+
+**Error Message / Output:**
+```
+e: .../feature/overlay/ui/OverlayWindowHost.kt: (18, 28): Unresolved reference: ViewTreeSavedStateRegistryOwner
+e: .../feature/overlay/ui/OverlayWindowHost.kt: (98, 13): Unresolved reference: ViewTreeSavedStateRegistryOwner
+> Task :app:compileDebugKotlin FAILED
+```
+
+**Root Cause:**
+The project resolves androidx.savedstate 1.2.0, where `ViewTreeSavedStateRegistryOwner` is a Kotlin file. It exposes only the extension `View.setViewTreeSavedStateRegistryOwner(owner)`; the Java-style static `ViewTreeSavedStateRegistryOwner.set(view, owner)` is not callable from Kotlin. The sibling setters `ViewTreeLifecycleOwner` and `ViewTreeViewModelStoreOwner` (lifecycle 2.5.1) were still Java-style and resolved, which hid the difference. The code was written without compiling (AGENTS §5a: no Gradle without permission), and the slice-5 report had already flagged this import as a likely compile risk.
+
+**Resolution:**
+Import `androidx.savedstate.setViewTreeSavedStateRegistryOwner` and call `setViewTreeSavedStateRegistryOwner(lifecycleOwner)` inside the ComposeView `apply` block. Second build succeeded in 58 s.
+
+**Lesson Learned:**
+1. When hosting Compose in a Service/WindowManager window, check which `ViewTree*` setters are extensions and which are static in the resolved library versions. Do not assume the Java-style static call from older examples still compiles.
+2. When a slice agent flags a likely compile error, build that slice early instead of deferring it.
+3. Unbuilt multi-slice code concentrates errors. Build after each slice when permission allows, so a single compile failure does not hide behind several others.
 
 ---
 

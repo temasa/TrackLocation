@@ -1,6 +1,6 @@
 # ADR-029: Session Overlay Banner (System Overlay Above Other Apps)
 
-**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); implementation decisions recorded 2026-10-13 (Decisions 1, 4 and 9 amended, Decision 11 added); code in progress (IMPLEMENTATION-PLAN §4, slices 1 to 9)
+**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); implementation decisions recorded 2026-10-13 (Decisions 1, 4 and 9 amended, Decision 11 added); circle shows fuel-left litres with a level-band ring, not a percentage (Decision 5 amended, owner-visible deviation, 2026-10-13); code in progress (IMPLEMENTATION-PLAN §4, slices 1 to 9)
 **Date:** 2026-10-13
 **Decided By:** Project owner + Claude Code
 
@@ -48,6 +48,8 @@ Constraints:
    - **Session-to-order link:** the `track` table has no session id, so the current session's orders are selected by time window: `track.timestamp >= active session startedAt AND orderLabel IS NOT NULL`, through a new read-only DAO query. No schema change and no Room migration. Known limitation: a trip that started before an older open session was adopted can be misattributed.
 
 5. **Shrink and circle.** The strip has a shrink button. Tapping it collapses the strip to a **48 px** draggable circle. A drag moves the circle. A tap (without a drag) restores the strip. The circle has no Fill-up action. The circle position is persisted in DataStore and clamped to the screen bounds, so it stays reachable after rotation or a screen-size change.
+
+   *Amendment 2026-10-13 (owner-visible deviation, implementation):* the collapsed circle shows the **fuel-left litres** (for example `12.4`, with a fuel icon), not a percentage. The ring is coloured by the fuel level band from `FuelBalance.level` (Normal green, Low amber below 6 L, Critical red below 3 L; the same bands as the UI-SPEC §5b Fuel Dock). A percentage needs a tank-capacity setting, which the code does not have and which is a product decision not yet made. The pen circle frames (`Overlay State 4`, `Overlay/Circle`) still draw `62%` and must be updated, or a tank-capacity setting specified, before they are treated as final (UI-SPEC §5d).
 
 6. **One-time permission prompt.** The app asks once for the overlay permission (from Settings or on the first session). The prompt is a one-time **centred dialog** titled "Show session totals over other apps", with the buttons **Not now** and **Open settings**. It is not a card on the Session screen. Open settings deep-links to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`. If the permission is not granted, the overlay does not show. Nothing else changes: tracking, recording and the in-app UI keep working.
 
@@ -98,6 +100,10 @@ Constraints:
 - **Keyboard overlap (Decision 9).** The Fill-up form needs the soft keyboard. The keyboard can cover the input fields if the panel is placed badly. This is a device-check risk.
 - **Contrast over the app below (Decision 10).** The strip is translucent and not content-adaptive, so text contrast depends on what is under it. It is marginal in some cases (Decision 10). This is a device-check risk.
 - **Form covers the other app (Decision 9).** While the form is open, the overlay is focusable and the form sits over the app underneath. The form must close quickly and be easy to cancel. Focus changes must not leave the other app in a bad state.
+- **Circle shows litres, not percent (Decision 5, 2026-10-13).** The implemented circle shows litres with a level-band ring. The pen circle frames still show `62%`, so the design and the code differ until the pen frames are updated or a tank-capacity setting is decided. This is an owner-visible deviation, not a silent one.
+- **Strip theme follows the system (2026-10-13).** The implemented strip uses the system dark or light theme, and the translucent values of Decision 10 apply per theme.
+### Implemented surface (2026-10-13)
+- The **Settings** screen has a row **"Session overlay"** (Decision 6 entry point).
 
 ## Alternatives Considered
 
@@ -145,3 +151,4 @@ Constraints:
 - [ ] **Fill-up device checks (Decision 9):** verify the keyboard does not cover the form on the test device; verify the overlay returns to pass-through (`FLAG_NOT_FOCUSABLE`) after Cancel, Save and shrink; verify fuel left and range update on the strip after Save; verify the other app is not disturbed by the focus change.
 - [ ] **Contrast device check (Decision 10):** on the test device, check the three weak spots (dark strip over pure white labels; light strip over red; red net value over mid-grey) and the halo legibility in both themes. If one fails, change the design (`ui-design.pen` and UI-SPEC §5d) before changing the code.
 - [x] **Price bound for the overlay form (Decision 9):** closed 2026-10-13. The app has no numeric price bound; the overlay rule mirrors FillUpDialog (Decision 9 amendment).
+- [ ] **Circle shows litres, not percent (needs tank capacity decision):** the pen circle frames (`Overlay State 4`, `Overlay/Circle`) still show `62%`. Either update them to litres and level colour, or specify a tank-capacity setting (product decision) before the circle is treated as final. Decision 5 amendment, UI-SPEC §5d.

@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.52
+**Document Version:** 0.53
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-13
 **Owner:** Product Manager / UX Designer
@@ -856,7 +856,9 @@ Use the frame names first; the ids are a secondary reference. No external design
 **No-data state:** all five cells show a single `—`.
 
 **Collapsed circle.** Frame state 4 (`l1w29`).
-- A **48 px circle** with a green ring. It shows a fuel icon and the fuel-left percentage (for example `62%`). A small grip bar at the bottom is the drag affordance.
+- A **48 px circle** with a fuel icon and the **fuel-left litres** (for example `12.4`, litres implied, the same value as the strip's FUEL LEFT cell). A small grip bar at the bottom is the drag affordance.
+- **Ring colour = fuel level band** (the same bands as the §5b Fuel Dock, from `FuelBalance.level`): **Normal** green, **Low** amber (`#D97706`) below 6 L, **Critical** red (`#DC2626`) below 3 L. The band is the non-colour cue together with the litres value; the ring is not the only signal. `—` in the circle when there is no Reset yet (as on the strip).
+- **Design deviation (owner-visible, 2026-10-13):** the implemented circle shows litres, not a percentage. The pen frames for this circle (`Overlay State 4`, component `Overlay/Circle`) still draw `62%`, because the code has no tank capacity, so a percentage cannot be computed. A percentage needs a tank-capacity setting, which is a product decision not yet made. **The pen circle frames must be updated to litres and level colour (or a tank-capacity setting specified) before this circle is treated as final.** Until then, this paragraph governs and the `62%` drawings and the TalkBack wording below are superseded by it.
 - It has **no** Fill-up action. Its only tap restores the strip.
 - **Drag:** moves the circle freely. A small touch slop separates a drag from a tap, so a drag never restores the strip.
 - **Tap:** restores the strip. It does **not** open the Fill-up form.
@@ -912,7 +914,7 @@ Use the frame names first; the ids are a secondary reference. No external design
   - Cost: "Cost 1.2 million rupiah"
   - Income: "Income gross 8.4 thousand, net 6.0 thousand rupiah". A loss is stated explicitly as "net loss".
   - Fill up button: "Fill up". Shrink button: "Shrink to circle".
-  - Collapsed circle: "Fuel 62 percent, drag to move, double tap to expand".
+  - Collapsed circle: "Fuel left 12.4 litres, level normal, drag to move, double tap to expand" (litres and level band; replaces the earlier percent wording, see the §5d circle deviation note).
 - Check at code time that the overlay does not block the status bar or the system back gesture.
 
 **Status:** designed and approved in `ui-design.pen` on 2026-10-13 (section frame "Session Overlay Banner (ADR-029)", eight state frames). Behaviour is recorded in ADR-029 (accepted 2026-10-13, not yet implemented) and PRD FR-24. Not implemented. Items to check on a device once implemented: the contrast weak spots listed under the strip, the halo legibility on both themes, and the TalkBack wording above.
