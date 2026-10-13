@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.17  
+**Document Version:** 0.18  
 **Status:** Active  
 **Last Updated:** 2026-10-13  
 **Owner:** Product Manager  
@@ -70,7 +70,7 @@ When any controlled document changes, update both:
 | `docs/UI-SPEC.md` | 0.53 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-13 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
-| `docs/ERRORS-LOG.md` | 0.9 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually; ERR-011 ADR-029 savedstate ViewTree setter, added 2026-10-13) | Project Team | 2026-10-13 |
+| `docs/ERRORS-LOG.md` | 0.10 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually; ERR-011 ADR-029 savedstate ViewTree setter; ERR-012 ADR-029 overlay ViewTree owners on window root, added 2026-10-13) | Project Team | 2026-10-13 |
 | `AGENTS.md` | 0.5 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-10-13 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
@@ -97,6 +97,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-13 | ERRORS-LOG, DOCUMENT-CONTROL | ERRORS-LOG 0.9, DOCUMENT-CONTROL 0.17 | ERRORS-LOG 0.10, DOCUMENT-CONTROL 0.18 | ERR-012 added (ADR-029 overlay crash on show: `ViewTreeLifecycleOwner not found` from `OverlayRootView`; owners were set on the ComposeView but not on the WindowManager window root; fixed in `0ab3b13`, debug build OK, device re-test pending); quick-reference row and header bumped to 0.10. Related to ERR-011 (same ViewTree owner setup class; count 2, Patterns section not yet populated). Register row updated. | Claude Haiku 5.5 |
 | 2026-10-13 | adr/029, UI-SPEC, IMPLEMENTATION-PLAN, ERRORS-LOG (new ERR-011), DOCUMENT-CONTROL | adr/029 1.1, UI-SPEC 0.52, IMPLEMENTATION-PLAN 0.68, ERRORS-LOG 0.9 (no bump), DOCUMENT-CONTROL 0.16 | adr/029 1.2, UI-SPEC 0.53, IMPLEMENTATION-PLAN 0.69, ERRORS-LOG 0.9 (no bump), DOCUMENT-CONTROL 0.17 | Implementation status and circle amendment (docs only). adr/029 Revision 1.2: circle shows fuel-left litres with a level-band ring, not a percentage (Decision 5 amended; owner-visible deviation; pen circle frames pending follow-up); implemented build OK; device checks pending. IMPLEMENTATION-PLAN §4 and §6: ADR-029 code row with the five code commits (4f5811a..756a8fa), slices 1 to 8 implemented. UI-SPEC §5d updated to litres. ERRORS-LOG ERR-011 added (`ViewTreeSavedStateRegistryOwner` setter, savedstate 1.2.0 Kotlin extension; fixed in `7b9b1cd`); ERRORS-LOG header not bumped in this change. | Claude Haiku 5.5 |
 | 2026-10-13 | PRD, adr/029, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | PRD 0.31, adr/029 1.0, IMPLEMENTATION-PLAN 0.67, DOCUMENT-CONTROL 0.15 | PRD 0.32, adr/029 1.1, IMPLEMENTATION-PLAN 0.68, DOCUMENT-CONTROL 0.16 | ADR-029 implementation decisions (owner-approved 2026-10-13): cancelled orders excluded from totals and session orders selected by time window with no schema change (Decision 4 amended); separate OverlayService, targetSdk 33 note and canDrawOverlays re-check (Decision 1 amended); Fill-up validation mirrors FillUpDialog, fill-up recorder extracted, price-bound open item closed (Decision 9 amended); instant km/L gate and RANGE source (Decision 11 new). PRD FR-24 amended. IMPLEMENTATION-PLAN §4 slice steps rewritten as slices 1 to 9; §6 code row In Progress; design row revision backfilled (c2c558a). | Claude Haiku 5.5 |
 | 2026-10-13 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/029, DOCUMENT-CONTROL, ui-design.pen | PRD 0.30, ARCHITECTURE 0.38, UI-SPEC 0.51, IMPLEMENTATION-PLAN 0.66, adr/029 1.0, DOCUMENT-CONTROL 0.14 | PRD 0.31, ARCHITECTURE 0.39, UI-SPEC 0.52, IMPLEMENTATION-PLAN 0.67, adr/029 1.0 (amended, no version line in the ADR), DOCUMENT-CONTROL 0.15 | Sync of the session overlay banner (ADR-029) docs with the final design. ADR-029 amended 2026-10-13: one-row translucent strip with halo text, 48 px draggable circle, Fill-up form, permission dialog, eight states (Decisions 3, 5, 6, 10). UI-SPEC §5d rewritten to the approved design. PRD FR-24, ARCHITECTURE and IMPLEMENTATION-PLAN synced; task-log revision backfilled (f225eb1). ui-design.pen: Session Overlay Banner (ADR-029) section added (design file, not read by tooling; committed as binary). Register rows updated. | Claude Haiku 5.5 |

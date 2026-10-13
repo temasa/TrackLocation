@@ -8,9 +8,9 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.9  
+**Document Version:** 0.10  
 **Status:** Active (persistent — never delete)  
-**Last Updated:** 2026-10-11  
+**Last Updated:** 2026-10-13  
 **Owned By:** Project Team
 
 ---
@@ -50,6 +50,7 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
+| ERR-012 | 2026-10-13 | — (fix in `0ab3b13`; device re-test pending) | Runtime | ADR-029 overlay (`feature/overlay/ui/OverlayRootView`, `OverlayWindowHost.kt`) | Overlay show crash — `IllegalStateException: ViewTreeLifecycleOwner not found` from `OverlayRootView`; ViewTree owners set only on the child ComposeView, not on the WindowManager window root (3 crashes, process died each time) | Fix committed; device re-test pending |
 | ERR-011 | 2026-10-13 | 2026-10-13 (fix in `7b9b1cd`; rebuild green in 58 s) | Compilation | ADR-029 overlay (`feature/overlay/ui/OverlayWindowHost.kt`) | `:app:compileDebugKotlin` FAILED — `Unresolved reference: ViewTreeSavedStateRegistryOwner` at (18, 28) and (98, 13); the static `ViewTreeSavedStateRegistryOwner.set(view, owner)` call is not callable from Kotlin on savedstate 1.2.0 | Resolved |
 | ERR-010 | 2026-10-11 | 2026-10-11 (mitigated manually; no code fix) | Verification | Observer accessibility service / order auto-start | Observer accessibility service silently disabled; two Gojek orders not captured and no auto-start trip — service dropped from `enabled_accessibility_services`, so nothing was captured from 07:21 WIB until the evening | Mitigated (manual); in-screen ServiceBanner covers only while the Observer screen is open |
 | ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
@@ -67,6 +68,37 @@ Log an entry whenever an error occurs during any of these phases:
 ---
 
 ## Error Entries
+
+---
+
+### ERR-012: ADR-029 overlay crash on show — `ViewTreeLifecycleOwner not found` (window root view had no owners)
+
+**Found At:** 2026-10-13 22:49:12 device time (owner's Galaxy S9+, debug APK; further crashes at 22:49:14 and 22:49:41)  
+**Resolved At:** — (fix in `0ab3b13`; debug build OK; device re-test pending)  
+**Phase:** Runtime  
+**Sprint/Task:** ADR-029 overlay — `feature/overlay/ui/OverlayRootView` and `feature/overlay/ui/OverlayWindowHost.kt` (ComposeView hosted in a Service/WindowManager window; same slice group as ERR-011)  
+**Environment:** on-device (owner's Galaxy S9+), debug APK installed after the build; Compose UI 1.2.x, androidx.lifecycle 2.5.1, savedstate 1.2.0  
+**Status:** Fix committed; device re-test pending  
+
+**Error Message / Output:**
+```
+java.lang.IllegalStateException: ViewTreeLifecycleOwner not found from com.kolee.tracklocation.feature.overlay.ui.OverlayRootView
+    at androidx.compose.ui.platform.WindowRecomposer_androidKt.createLifecycleAwareWindowRecomposer(WindowRecomposer.android.kt:349)
+    at androidx.compose.ui.platform.AbstractComposeView.onAttachedToWindow(...)
+```
+Three crashes (22:49:12, 22:49:14, 22:49:41); the app process died each time.
+
+**Root Cause:**
+`OverlayWindowHost.show()` set `ViewTreeLifecycleOwner`, `ViewTreeSavedStateRegistryOwner` and `ViewTreeViewModelStoreOwner` only on the child `ComposeView`. Slice 7 later wrapped that ComposeView in a `FrameLayout` (`OverlayRootView`), and that wrapper became the view passed to `WindowManager.addView`, so it is the window root. Compose resolves the ViewTree owners by starting at the window root and walking only upward, so the root had no owners and the ComposeView's own owners were never reached. Slice 5 worked because the ComposeView was itself the window root. The code compiled, so only a runtime window attach revealed the fault.
+
+**Resolution:**
+Set the same three owners on the wrapper root view (`OverlayRootView`) before `windowManager.addView`, in commit `0ab3b13`. Debug build OK. The device re-test on the owner's Galaxy S9+ is still pending.
+
+**Lesson Learned:**
+1. When Compose is hosted in a WindowManager window, set the ViewTree owners on the view actually passed to `addView` (the window root), not only on the ComposeView.
+2. Adding a wrapper view later changes which view is the root. Re-check the owner setup whenever the view hierarchy handed to `WindowManager` changes.
+3. Hosted-window code needs a device run before it is called working. A successful compile proves little here, as ERR-011 and this entry show.
+4. Related to ERR-011 (same slice, both ViewTree owner setup). This is the second entry in the same class (Compose-in-Service ViewTree owner setup). Count is 2; the Patterns section is not populated yet (threshold is 3).
 
 ---
 
