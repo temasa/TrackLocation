@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.53
+**Document Version:** 0.54
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-13
 **Owner:** Product Manager / UX Designer
@@ -207,7 +207,7 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 **Card states:**
 - **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
-- **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared and Dismissed, and on Cancelled for a non-cash order. For a cash order cancelled in Gojek the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-025). The card's replacement by `TripPanel` in that cash-cancelled state is the proposed default and is an open question (ADR-025).
+- **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared and Dismissed. For any cancelled order, in Gojek, the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-030, amending ADR-025). The card's replacement by `TripPanel` in that cancelled state is the proposed default and is an open question (ADR-025).
 
 **Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
 
@@ -230,11 +230,11 @@ Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
 
-**Drop-off snackbar (ADR-025, cash cancel only)**
+**Drop-off snackbar (ADR-025, amended by ADR-030: any cancelled order)**
 
-Shown on the Track screen only when a Gojek order with payment `Tunai` (cash) was cancelled in Gojek, the trip is still recording, and the driver comes within 150 m of the order's drop-off point (cached drop coordinates).
+Shown on the Track screen only when a Gojek order was cancelled in Gojek (any payment type), the trip is still recording, and the driver comes within 150 m of the order's drop-off point (cached drop coordinates). It is not shown when the drop coordinates are unresolved.
 
-- **Trigger:** first fix within 150 m of the drop-off after the cash cancel. Shown **once per trip**; it does not reappear if the driver leaves and returns to the point.
+- **Trigger:** first fix within 150 m of the drop-off after the cancel. Shown **once per trip**; it does not reappear if the driver leaves and returns to the point.
 - **Text:** "Order cancelled in Gojek. You're at the drop-off. Stop trip?"
 - **Action:** one text action, **Stop**. Tapping it runs the normal stop sequence (persist, then stop). Stopping within 150 m of the drop-off saves the trip as `Completed · Offline`; otherwise it saves as `Cancelled` (ADR-025 stop rules).
 - **Placement:** bottom of the Track screen, above the fuel dock (§5b), the bottom navigation and the order card/trip panel. Non-blocking; it does not cover the map controls or take focus from the map.
@@ -268,7 +268,7 @@ Shown on the Track screen only when a Gojek order with payment `Tunai` (cash) wa
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
-**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Dismissed, or Cancelled for a non-cash order (ADR-014, ADR-015, amended by ADR-025 for cash cancels); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Dismissed (ADR-014, ADR-015; cancel never auto-stops, ADR-030 amending ADR-025); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 

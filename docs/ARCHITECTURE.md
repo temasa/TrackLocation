@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.39
+**Document Version:** 0.40
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-13
 **Owner:** Tech Lead
@@ -80,7 +80,7 @@ TrackEntity (trip) — OBD accumulator columns
 
 TrackEntity (trip) — Gojek order outcome columns (ADR-025)
   ├── orderStatus            (TEXT, nullable) — 'COMPLETED' | 'CANCELLED'; NULL for manual trips (added DB v14; backfilled 'COMPLETED' where orderLabel IS NOT NULL)
-  └── orderOffline           (INTEGER, NOT NULL, default 0) — 1 = trip closed offline (cash order, stopped within 150 m of drop-off); meaningful only with orderStatus = 'COMPLETED' (added DB v14)
+  └── orderOffline           (INTEGER, NOT NULL, default 0) — 1 = trip closed offline (cancelled order of any payment type, stopped within 150 m of drop-off; ADR-030); meaningful only with orderStatus = 'COMPLETED' (added DB v14)
 
 FuelPriceEntity (fuel_price)   ← effective-dated price log (added DB v9, ADR-008)
   ├── pricePerLiter (REAL)
@@ -225,7 +225,7 @@ TRIP START (auto-start at Taken):
      → if a trip is live, keep it and set in-memory flag orderOwnsTrip=true
      → mark row handled
 
-TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel rule per ADR-025):
+TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per ADR-030 amending ADR-025):
    → Gojek parser recognizes terminal states:
      (a) Selesai screen = "Selesai" with earnings/summary (normal completion)
      (b) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
@@ -235,15 +235,14 @@ TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel rule per ADR-025):
      → ShareViewModel observes latestOrderFlow
      → when a terminal phase (FINISHED or CANCELLED) and orderOwnsTrip=true and a trip is live, decide by status:
         - FINISHED → stopActiveTrip(status=COMPLETED, offline=false)
-        - CANCELLED, payment not cash ('Tunai' is the cash match, case-insensitive) or missing → stopActiveTrip(status=CANCELLED, offline=false)
-        - CANCELLED, cash, drop coordinates resolved → do NOT stop; keep recording; show one drop-off snackbar when within 150 m of drop coordinates (Track screen only; action "Stop")
-        - CANCELLED, cash, drop coordinates unresolved → do NOT stop; no snackbar; stop later saves CANCELLED
-     → stop of a cash-cancelled trip (snackbar Stop or Stop CTA): within 150 m of drop → COMPLETED + orderOffline=true; otherwise CANCELLED + orderOffline=false
+        - CANCELLED, any payment type, drop coordinates resolved → do NOT stop; keep recording; show one drop-off snackbar when within 150 m of drop coordinates (Track screen only; action "Stop")
+        - CANCELLED, any payment type, drop coordinates unresolved → do NOT stop; no snackbar; stop later saves CANCELLED
+     → stop of a cancelled trip (snackbar Stop or Stop CTA): within 150 m of drop → COMPLETED + orderOffline=true; otherwise CANCELLED + orderOffline=false (ADR-030; payment is not read)
      → stopActiveTrip(): persist the trip (TrackEntity via insertTrack, with orderStatus/orderOffline), then send STOP_TRIP
         (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
      → clear orderOwnsTrip=false
    → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
-   → open risk (ADR-025): a home-screen "Cleared" (FINISHED) written after CANCELLED may end a cash trip early as COMPLETED; verify on device
+   → open risk (ADR-025, resolved 2026-10-10): a FINISHED written after CANCELLED is ignored (CANCELLED rows are terminal); device confirmation remains
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
    → while the trip is live, a compact trip strip sits below the card (same glass panel): TIME (elapsed, compact format), DIST (km), COST / NET (estimated fuel cost = trip fuel from OBD accumulator × effective price; NET = OrderCard.earningsRp − COST), AVG/INST km/L, fed from TrackPanelState + OBD state + FuelPriceController + OrderCard earnings

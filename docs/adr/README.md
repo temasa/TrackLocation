@@ -118,6 +118,7 @@ Links to docs, code, or external resources supporting this decision.
 | [027](027-fuel-balance-fill-up-and-reset.md) | Fuel Balance, Fill-up and Reset (fuel dock: fuel left, range, price, Fill up; derived from append-only `fuel_event` and the session-independent OBD ledger `obd_ledger`; RANGE from a rolling window of the last 1 km of moving driving; amended 2026-10-11) | Accepted | 2026-10-11 |
 | [028](028-floating-status-banner.md) | Floating Status Banner (OBD and Observer): top overlay with tap-through to system settings and session-only collapse | Accepted | 2026-10-11 |
 | [029](029-session-overlay-banner.md) | Session Overlay Banner: system overlay above other apps (TYPE_APPLICATION_OVERLAY, foreground service) during an active session, with fuel, range, consumption and session cost/gross/net; separate from ADR-028 | Accepted | 2026-10-13 |
+| [030](030-offline-completion-for-all-orders.md) | Offline Completion for All Cancelled Orders (not cash-only; cancel never auto-stops; amends ADR-025 decisions 3-4 and ADR-015 cancel rule) | Accepted | 2026-10-13 |
 
 ---
 
@@ -138,5 +139,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 1.10
+**Version:** 1.11
 **Last Updated:** 2026-10-13
