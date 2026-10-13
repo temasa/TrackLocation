@@ -23,6 +23,8 @@ import com.kolee.tracklocation.data.roomdb.LocationEntity
 import com.kolee.tracklocation.data.roomdb.SessionEntity
 import com.kolee.tracklocation.data.roomdb.TrackDatabase
 import com.kolee.tracklocation.feature.obd.service.ObdPollingService
+import com.kolee.tracklocation.feature.overlay.OverlayVisibility
+import com.kolee.tracklocation.feature.overlay.service.OverlayService
 import com.kolee.tracklocation.utils.CHANNEL_ID
 import com.kolee.tracklocation.utils.FASTEST_LOCATION_INTERVAL
 import com.kolee.tracklocation.utils.LOCATION_UPDATE_INTERVAL
@@ -160,6 +162,26 @@ class TrackingService: Service() {
         } else {
             startObdSession(activeSession?.id)
         }
+        startOverlayIfAllowed()
+    }
+
+    // ADR-029: best effort. Android 12+ refuses a foreground-service start from the background; the overlay then
+    // starts the next time MainActivity comes to the foreground. Must never affect tracking.
+    private fun startOverlayIfAllowed() {
+        if (!OverlayVisibility.canDrawOverlays(this)) return
+        try {
+            OverlayService.start(applicationContext)
+        } catch (e: Exception) { // IllegalStateException / ForegroundServiceStartNotAllowedException (API 31+)
+            Log.w("TrackingService", "OverlayService start not allowed", e)
+        }
+    }
+
+    private fun stopOverlay() {
+        try {
+            OverlayService.stop(applicationContext)
+        } catch (e: Exception) {
+            Log.w("TrackingService", "OverlayService stop failed", e)
+        }
     }
 
     private fun startObdSession(sessionId: String?) {
@@ -243,6 +265,7 @@ class TrackingService: Service() {
         }
         startService(intent)
 
+        stopOverlay()
         stopServiceIfIdle()
     }
 
