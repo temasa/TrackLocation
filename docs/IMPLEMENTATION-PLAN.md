@@ -1264,7 +1264,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 | 2026-05-16 | CR-0002 — Session always-recording switch | Completed | `fe241a7` | Verified by user |
 | 2026-05-16 | CR-0001 — always-recorded sessions + canonical log | Completed | `776cd6e` | Verified by user |
 | 2026-05-14 | CR#1 — UI-first Sessions screen + 4-tab nav | Completed | `7ae11b9` | Static |
-| 2026-10-13 | Overlay session strip: value text 11sp→16.5sp (1.5x) in condensed font (`sans-serif-condensed`), after 1.5x mono overflowed (`e6a9d30`) and 1.25x mono (`1d73ea4`); cell widths 48/32/62/40, gap 4dp (value only; labels and collapsed circle unchanged). | Completed | `e6a9d30, 1d73ea4, ---` | `:app:assembleDebug` BUILD SUCCESSFUL (2026-10-13, JDK 17, 0 Kotlin warnings; Compose 1.2 APIs only). NOT installed: `ss -ltnp | grep 5038` showed no `[::1]:5038` listener (device tunnel down); install not retried. On-device clipping check pending (user). |
+| 2026-10-13 | Overlay session strip: value text 11sp→16.5sp (1.5x) in condensed font (`sans-serif-condensed`), after 1.5x mono overflowed (`e6a9d30`) and 1.25x mono (`1d73ea4`); cell widths 48/32/62/40, gap 4dp (value only; labels and collapsed circle unchanged). | Completed | `e6a9d30, 1d73ea4, fa2bef8` | `:app:assembleDebug` BUILD SUCCESSFUL (2026-10-13, JDK 17, 0 Kotlin warnings; Compose 1.2 APIs only). Installed on SM-G965F (adb install -r, Success) after the device tunnel was restored; user confirmed on-device that the strip values fit without clipping (2026-10-13). |
 
 ---
 
