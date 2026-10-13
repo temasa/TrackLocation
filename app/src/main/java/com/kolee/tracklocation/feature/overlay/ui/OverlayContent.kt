@@ -150,7 +150,7 @@ private fun OverlayStrip(
                 .height(52.dp)
                 .padding(start = 12.dp, top = 4.dp, end = 6.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             StripCell(
                 label = "FUEL LEFT",
@@ -172,14 +172,14 @@ private fun OverlayStrip(
                 label = "FUEL CONS",
                 value = formatOverlayFuelCons(state.avgKmL, state.instantKmL),
                 colors = colors,
-                modifier = Modifier.width(53.dp),
+                modifier = Modifier.width(62.dp),
                 description = fuelConsDescription(state.avgKmL, state.instantKmL)
             )
             StripCell(
                 label = "COST",
                 value = formatOverlayCost(totals),
                 colors = colors,
-                modifier = Modifier.width(37.dp),
+                modifier = Modifier.width(40.dp),
                 description = totals.costRp?.let { "Cost ${speakAmount(it)} rupiah" } ?: "Cost unavailable"
             )
             IncomeCell(totals, colors, Modifier.weight(1f))
@@ -202,7 +202,7 @@ private fun stripLabelStyle(colors: OverlayColors) = TextStyle(
 private fun stripValueStyle(colors: OverlayColors, color: Color = colors.value) = TextStyle(
     color = color,
     fontFamily = MonospaceFontFamily,
-    fontSize = 16.5.sp,
+    fontSize = 13.75.sp,
     fontWeight = FontWeight.Bold,
     letterSpacing = (-0.3).sp,
     shadow = Shadow(color = colors.halo, offset = Offset.Zero, blurRadius = 3f)

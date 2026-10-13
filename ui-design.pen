@@ -22137,7 +22137,7 @@
                   "id": "X00yAv",
                   "name": "Row 1",
                   "width": "fill_container",
-                  "gap": 6,
+                  "gap": 4,
                   "alignItems": "center",
                   "children": [
                     {
@@ -22186,7 +22186,7 @@
                               },
                               "content": "12.4",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22240,7 +22240,7 @@
                               },
                               "content": "310",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22252,7 +22252,7 @@
                       "type": "frame",
                       "id": "v58U8n",
                       "name": "Avg",
-                      "width": 53,
+                      "width": 62,
                       "layout": "vertical",
                       "gap": 2,
                       "children": [
@@ -22294,7 +22294,7 @@
                               },
                               "content": "12.3/8.1",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22306,7 +22306,7 @@
                       "type": "frame",
                       "id": "O2JACE",
                       "name": "Cost",
-                      "width": 37,
+                      "width": 40,
                       "layout": "vertical",
                       "gap": 2,
                       "children": [
@@ -22348,7 +22348,7 @@
                               },
                               "content": "1.2jt",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22401,7 +22401,7 @@
                               },
                               "content": "8.4k",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22418,7 +22418,7 @@
                               },
                               "content": "/",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22438,7 +22438,7 @@
                               },
                               "content": "−",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22455,7 +22455,7 @@
                               },
                               "content": "6.0k",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22678,7 +22678,7 @@
                   "id": "jb1cR",
                   "name": "Row 1",
                   "width": "fill_container",
-                  "gap": 6,
+                  "gap": 4,
                   "alignItems": "center",
                   "children": [
                     {
@@ -22727,7 +22727,7 @@
                               },
                               "content": "12.4",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22781,7 +22781,7 @@
                               },
                               "content": "310",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22793,7 +22793,7 @@
                       "type": "frame",
                       "id": "faL95",
                       "name": "Avg",
-                      "width": 53,
+                      "width": 62,
                       "layout": "vertical",
                       "gap": 2,
                       "children": [
@@ -22835,7 +22835,7 @@
                               },
                               "content": "12.3/8.1",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22847,7 +22847,7 @@
                       "type": "frame",
                       "id": "uKUxF",
                       "name": "Cost",
-                      "width": 37,
+                      "width": 40,
                       "layout": "vertical",
                       "gap": 2,
                       "children": [
@@ -22889,7 +22889,7 @@
                               },
                               "content": "1.2jt",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             }
@@ -22942,7 +22942,7 @@
                               },
                               "content": "8.4k",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22959,7 +22959,7 @@
                               },
                               "content": "/",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22979,7 +22979,7 @@
                               },
                               "content": "−",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
@@ -22996,7 +22996,7 @@
                               },
                               "content": "6.0k",
                               "fontFamily": "Roboto Mono",
-                              "fontSize": 11,
+                              "fontSize": 13.75,
                               "fontWeight": "600",
                               "letterSpacing": -0.6
                             },
