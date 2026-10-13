@@ -1,6 +1,6 @@
 # ADR-029: Session Overlay Banner (System Overlay Above Other Apps)
 
-**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); not yet implemented
+**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); implementation decisions recorded 2026-10-13 (Decisions 1, 4 and 9 amended, Decision 11 added); code in progress (IMPLEMENTATION-PLAN §4, slices 1 to 9)
 **Date:** 2026-10-13
 **Decided By:** Project owner + Claude Code
 
@@ -18,6 +18,8 @@ Constraints:
 ## Decision
 
 1. **Separate overlay, not `StatusBannerHost`.** The session banner is a system overlay drawn above other apps. It is added through `WindowManager` with `TYPE_APPLICATION_OVERLAY` and hosted by a foreground service. It needs the `SYSTEM_ALERT_WINDOW` permission. `StatusBannerHost` (ADR-028) stays in-app only and is not changed.
+
+   *Amendment 2026-10-13 (implementation decision, owner-approved):* the overlay is hosted by a separate `OverlayService`, not inside `TrackingService`. It is started only while TrackLocation is in the foreground (Android 12 and later block starting a foreground service from the background), when a session is active and "Display over other apps" is granted. It adds `SYSTEM_ALERT_WINDOW` to the manifest, its own notification channel, and explicit `lifecycle-process` and `lifecycle-service` dependencies at 2.5.1. `targetSdk` stays at 33, where no foreground service type is enforced for this service; a later bump to `targetSdk` 34 needs a type (`specialUse`). This is a future note, not part of this change. `Settings.canDrawOverlays` is re-checked on every show, because the user can revoke the permission at any time.
 
 2. **Visibility.** The overlay is shown only while both of these are true:
    - a recording session is active, and
@@ -41,6 +43,10 @@ Constraints:
    - An order that lacks OBD litres or earnings is excluded from the totals, and the total is flagged **partial** on the strip.
    - A negative net is shown as a loss.
 
+   *Amendment 2026-10-13 (implementation decisions, owner-approved):*
+   - **Cancelled orders** (`track.orderStatus == CANCELLED`) are excluded from cost, gross and net, since they have no earnings. Completed orders, and orders in progress that have data, count per FR-16.
+   - **Session-to-order link:** the `track` table has no session id, so the current session's orders are selected by time window: `track.timestamp >= active session startedAt AND orderLabel IS NOT NULL`, through a new read-only DAO query. No schema change and no Room migration. Known limitation: a trip that started before an older open session was adopted can be misattributed.
+
 5. **Shrink and circle.** The strip has a shrink button. Tapping it collapses the strip to a **48 px** draggable circle. A drag moves the circle. A tap (without a drag) restores the strip. The circle has no Fill-up action. The circle position is persisted in DataStore and clamped to the screen bounds, so it stays reachable after rotation or a screen-size change.
 
 6. **One-time permission prompt.** The app asks once for the overlay permission (from Settings or on the first session). The prompt is a one-time **centred dialog** titled "Show session totals over other apps", with the buttons **Not now** and **Open settings**. It is not a card on the Session screen. Open settings deep-links to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`. If the permission is not granted, the overlay does not show. Nothing else changes: tracking, recording and the in-app UI keep working.
@@ -57,6 +63,7 @@ Constraints:
    - **Fields:** **Litres added (L)**, required; **Price (Rp/L)**, optional, pre-filled with the latest shared price, with the same helper text as the in-app Fill up dialog. Actions: Cancel / Save.
    - **Same write path, no new store.** Save calls the ADR-027 fill-up use case (ADR-027 Decision 3). If the price was changed, the save also goes through the ADR-008 effective-dated price mechanism (a new effective-now `fuel_price` row). If the price is unchanged, the event stores `pricePerLiter = NULL` and no `fuel_price` row is written. This is exactly the in-app FillUpDialog behaviour. No new store, no schema change, no Room migration, and no new permission (the overlay already needs `SYSTEM_ALERT_WINDOW`).
    - **Validation mirrors FillUpDialog.** Litres: required, decimal, > 0; Save is disabled while invalid. Price: the same rule as the FillUpDialog price field. ADR-027 does not state a numeric bound for the price, so the implementation takes it from the FillUpDialog code.
+   - **Amendment 2026-10-13 (implementation decision):** the rule is taken from the FillUpDialog code. Litres: digits and one `.`, must be greater than 0, no upper bound. Price: digits only and optional; it is saved only if it is greater than 0 and different from the latest price (`FuelPriceController.set`, ADR-008). The app has **no numeric price bound**. The fill-up write is extracted from `FuelDockViewModel.fillUp` into a plain class that both the dock and the overlay use. Behaviour is unchanged, and a fill-up before a Reset is stored but ignored for the balance, as in FR-22.
    - **Result on the strip.** On save, fuel left and range update immediately. Both are derived from the stored events and the OBD ledger / rolling window (ADR-027 Decisions 2 and 5), so the strip re-reads them after the save.
    - **Window focus.** The overlay window is normally `FLAG_NOT_FOCUSABLE`, so touches pass through to the app underneath. While the form is open, the window becomes focusable so the keyboard can receive input. It reverts to `FLAG_NOT_FOCUSABLE` when the form closes by Cancel, by Save, or when the strip is shrunk to the circle.
    - **Placement.** The form is a compact panel, positioned so the on-screen keyboard does not cover its input fields. The exact placement is confirmed on the device (see Consequences, Risks).
@@ -68,6 +75,10 @@ Constraints:
     - **Not content-adaptive.** The strip does not sample the pixels under it. Reading them needs MediaProjection screen capture, which was considered and rejected (Alternatives Considered, 5). It adds an extra permission and a persistent recording indicator, costs battery, is blocked on secure apps, and raises privacy concerns.
     - **Consequence: contrast is marginal in some cases.** Known weak spots: a dark strip over pure white labels (about 4.5:1); a light strip over red (about 4:1); the red net value over mid-grey. These must be checked on the device (Open items).
     - The visual values are owned by UI-SPEC §5d and `ui-design.pen`.
+
+11. **Strip figures and sources (implementation decision, owner-approved 2026-10-13).**
+   - **Instant km/L** uses the same gate as the Track screen: speed above 3 km/h and GPS accuracy at or below 20 m. When the OBD state is not Connected, the instant value shows `—`.
+   - **FUEL LEFT and RANGE** come from the `FuelDockViewModel` state. RANGE is held in memory, so it shows `—` after a process restart until 0.2 km is driven.
 
 ## Consequences
 
@@ -122,15 +133,15 @@ Constraints:
 - Android: `WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE` (toggled while the Fill-up form is open)
 - `ui-design.pen` is the design source for this banner; UI-SPEC §5d is the visual spec.
 - Android: `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY`, `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`, `ProcessLifecycleOwner`
-- IMPLEMENTATION-PLAN §4 (slice to be added when implementation starts)
+- IMPLEMENTATION-PLAN §4 (slice "Session Overlay Banner (ADR-029)", added 2026-10-13; code in progress)
 
 ## Open items
 
-- [ ] Implementation is not started. A slice with a "How to Verify" block must be added to IMPLEMENTATION-PLAN §4 before code work begins.
+- [ ] Implementation is in progress (2026-10-13). The slice with its "How to Verify" block is in IMPLEMENTATION-PLAN §4; the device checks are not run.
 - [ ] Refresh interval of the background figures (battery trade-off) is not decided here.
 - [ ] Exact behaviour when a session starts while the permission is missing (prompt timing: Settings only, or also the first session) is recorded as decided by the owner in Decision 6, but the prompt wording is fixed in UI-SPEC §5d (2026-10-13).
 - [ ] Notification channel name and wording for the foreground service are not decided here.
 - [x] **Fill-up form design (Decision 9):** closed 2026-10-13. Designed in `ui-design.pen` (frames "Overlay State 5" and "Overlay State 6") and specified in UI-SPEC §5d.
 - [ ] **Fill-up device checks (Decision 9):** verify the keyboard does not cover the form on the test device; verify the overlay returns to pass-through (`FLAG_NOT_FOCUSABLE`) after Cancel, Save and shrink; verify fuel left and range update on the strip after Save; verify the other app is not disturbed by the focus change.
 - [ ] **Contrast device check (Decision 10):** on the test device, check the three weak spots (dark strip over pure white labels; light strip over red; red net value over mid-grey) and the halo legibility in both themes. If one fails, change the design (`ui-design.pen` and UI-SPEC §5d) before changing the code.
-- [ ] **Price bound for the overlay form (Decision 9):** the price rule is taken from FillUpDialog. ADR-027 does not state a numeric bound, so confirm it against the code at implementation time.
+- [x] **Price bound for the overlay form (Decision 9):** closed 2026-10-13. The app has no numeric price bound; the overlay rule mirrors FillUpDialog (Decision 9 amendment).

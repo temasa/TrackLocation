@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.15  
+**Document Version:** 0.16  
 **Status:** Active  
 **Last Updated:** 2026-10-13  
 **Owner:** Product Manager  
@@ -35,7 +35,7 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.31 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-13 |
+| `docs/PRD.md` | 0.32 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-13 |
 | `docs/ARCHITECTURE.md` | 0.39 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-13 |
 | `docs/adr/README.md` | 1.10 | Active (29 ADRs indexed) | Tech Lead | 2026-10-13 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
@@ -65,8 +65,8 @@ When any controlled document changes, update both:
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.8 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device; Revision 1.8 (2026-10-13): cross-reference to ADR-029 overlay banner as a second Fill-up entry point | Project owner | 2026-10-13 |
 | `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified (no version line in the ADR) | Project owner | 2026-10-11 |
-| `docs/adr/029-session-overlay-banner.md` | 1.0 | Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); planned, not yet implemented | Project owner | 2026-10-13 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.67 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
+| `docs/adr/029-session-overlay-banner.md` | 1.1 | Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); implementation decisions 2026-10-13 (Decisions 1, 4, 9 amended; Decision 11 added; no version line in the ADR); code in progress (slices 1 to 9) | Project owner | 2026-10-13 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.68 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
 | `docs/UI-SPEC.md` | 0.52 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-13 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
@@ -75,7 +75,7 @@ When any controlled document changes, update both:
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.15 | Active | Product Manager | 2026-10-13 |
+| `docs/DOCUMENT-CONTROL.md` | 0.16 | Active | Product Manager | 2026-10-13 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -97,6 +97,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-13 | PRD, adr/029, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | PRD 0.31, adr/029 1.0, IMPLEMENTATION-PLAN 0.67, DOCUMENT-CONTROL 0.15 | PRD 0.32, adr/029 1.1, IMPLEMENTATION-PLAN 0.68, DOCUMENT-CONTROL 0.16 | ADR-029 implementation decisions (owner-approved 2026-10-13): cancelled orders excluded from totals and session orders selected by time window with no schema change (Decision 4 amended); separate OverlayService, targetSdk 33 note and canDrawOverlays re-check (Decision 1 amended); Fill-up validation mirrors FillUpDialog, fill-up recorder extracted, price-bound open item closed (Decision 9 amended); instant km/L gate and RANGE source (Decision 11 new). PRD FR-24 amended. IMPLEMENTATION-PLAN §4 slice steps rewritten as slices 1 to 9; §6 code row In Progress; design row revision backfilled (c2c558a). | Claude Haiku 5.5 |
 | 2026-10-13 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/029, DOCUMENT-CONTROL, ui-design.pen | PRD 0.30, ARCHITECTURE 0.38, UI-SPEC 0.51, IMPLEMENTATION-PLAN 0.66, adr/029 1.0, DOCUMENT-CONTROL 0.14 | PRD 0.31, ARCHITECTURE 0.39, UI-SPEC 0.52, IMPLEMENTATION-PLAN 0.67, adr/029 1.0 (amended, no version line in the ADR), DOCUMENT-CONTROL 0.15 | Sync of the session overlay banner (ADR-029) docs with the final design. ADR-029 amended 2026-10-13: one-row translucent strip with halo text, 48 px draggable circle, Fill-up form, permission dialog, eight states (Decisions 3, 5, 6, 10). UI-SPEC §5d rewritten to the approved design. PRD FR-24, ARCHITECTURE and IMPLEMENTATION-PLAN synced; task-log revision backfilled (f225eb1). ui-design.pen: Session Overlay Banner (ADR-029) section added (design file, not read by tooling; committed as binary). Register rows updated. | Claude Haiku 5.5 |
 | 2026-10-13 | adr/027 | 1.7 | 1.8 | Revision 1.8: cross-reference to the ADR-029 session overlay banner as a second Fill-up entry point (Fill up action in the overlay banner docs); dock behaviour and model unchanged. Register row updated. | Claude Haiku 5.5 |
 | 2026-10-13 | AGENTS, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, WORKFLOW, adr/README, adr/029 (new register row), DOCUMENT-CONTROL | AGENTS 0.4, PRD 0.29, ARCHITECTURE 0.37, UI-SPEC 0.50, IMPLEMENTATION-PLAN 0.65, WORKFLOW 0.1, adr/README 1.9, DOCUMENT-CONTROL 0.13 | AGENTS 0.5, PRD 0.30, ARCHITECTURE 0.38, UI-SPEC 0.51, IMPLEMENTATION-PLAN 0.66, WORKFLOW 0.2, adr/README 1.10, DOCUMENT-CONTROL 0.14 | Register resynced to the version headers actually in each file (the headers were already ahead of the register for these documents; this entry does not change document content). Last Updated set to 2026-10-13. adr/README index note changed from 28 to 29 ADRs indexed. Register row added for `docs/adr/029-session-overlay-banner.md` (1.0, Accepted; planned, not yet implemented). | Claude Haiku 5.5 |
