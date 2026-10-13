@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.38
+**Document Version:** 0.39
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-13
 **Owner:** Tech Lead
@@ -188,7 +188,7 @@ Session state (session active / ended)  ──┐
 ProcessLifecycleOwner (app foreground?) ──┤→ SessionOverlayService (foreground service)
                                           │     ├── visibility gate: session active AND app in background
 Session aggregator (session-scoped Flow)──┤     ├── WindowManager view, TYPE_APPLICATION_OVERLAY
-  ├── fuel left (ADR-027 obd_ledger)      │     │     ├── strip: fuel left · range · avg / inst km/L · cost · gross · net
+  ├── fuel left (ADR-027 obd_ledger)      │     │     ├── strip: fuel left · range · fuel cons (avg / inst km/L) · cost · income (gross / net), one row
   ├── range (ADR-027 rolling RANGE)       │     │     └── circle (shrunk): draggable, position in DataStore
   ├── avg / inst km/L (ADR-007, ADR-024)  │     └── permission gate: Settings.canDrawOverlays
   └── per-order cost / gross / net (FR-16)┘
@@ -198,6 +198,7 @@ Session aggregator (session-scoped Flow)──┤     ├── WindowManager vi
 - **Service and window:** a foreground service hosts the overlay view through `WindowManager` with `TYPE_APPLICATION_OVERLAY`. It starts when a session becomes active and stops when the session ends, and the view is removed at that point. It needs a notification channel (name and wording not yet decided, ADR-029 open items). The service does not call or change `TrackingService`.
 - **Visibility gate:** the overlay is visible only while a session is active AND the app process is in the background. `ProcessLifecycleOwner` ON_START hides it and ON_STOP shows it. No `UsageStats` permission is used.
 - **Session aggregator:** a session-scoped flow that reads existing data only and adds no store. Fuel left and RANGE come from the session-independent OBD ledger and the rolling-distance RANGE (ADR-027). Consumption comes from the session average and instant km/L (ADR-007, ADR-024). Per order, over all orders of the current session: cost = trip litres × pump price (the same rule as FR-16 in `GojekOrderCard`), gross = `earningsRp`, net = gross − cost. An order that lacks OBD litres or earnings is excluded from the totals and the strip shows a **partial** flag. A negative net is shown as a loss.
+- **Surface and text:** the strip surface is translucent and its text uses halo text for contrast (UI-SPEC §5d). This is a pure UI styling choice: the overlay does not capture or sample the screen behind it, and no new component is added.
 - **Circle position:** the shrunk circle's x and y are persisted in **DataStore Preferences**. They are clamped to the screen bounds on read and after a rotation or screen-size change, so the circle stays reachable. Tapping the circle restores the strip at the same place.
 - **Fill-up action (owner decision 2026-10-13):** the strip has a **Fill-up** action that opens an inline form inside the overlay: litres (required, greater than 0) and price (optional, pre-filled with the current effective price). **Save** calls the existing ADR-027 fill-up use case, which records the event in the session-independent OBD ledger. A changed price calls the existing ADR-008 price save path, which appends one effective-now `fuel_price` row; an unchanged price writes no row. Invalid litres are rejected in the form and nothing is written. The overlay adds no store, schema, repository or permission beyond `SYSTEM_ALERT_WINDOW`.
 - **Focusable toggle:** the overlay view is normally `FLAG_NOT_FOCUSABLE`, so touches pass through to the app below and the keyboard is not needed. While the Fill-up form is open, the service clears `FLAG_NOT_FOCUSABLE` on the same view with `WindowManager.updateViewLayout`, so the soft keyboard can receive input. The flag is set again when the form closes by Cancel, when Save succeeds, when the strip is shrunk, and when the view is removed (session end) or hidden by the visibility gate. The shrunk circle is never focusable.

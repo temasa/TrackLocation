@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.51
+**Document Version:** 0.52
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-13
 **Owner:** Product Manager / UX Designer
@@ -54,7 +54,7 @@ Observer navigation is **Option B** (accepted 2026-05-18): Observer lives under 
 | Observer Event Detail / JSON Viewer | Current | via `SnapshotViewerSheet` (formatted + raw JSON, copy, prev/next event nav) |
 | Gojek Order Card (Track screen) + compact trip strip | Planned | Replaces `TripPanel` on the Track screen when a Gojek order has full info; displays the card with a compact trip strip underneath (elapsed, distance, COST/NET, AVG/INST km/L) while the trip is live (ADR-014, ADR-015); design handoff pending (AGENTS.md §12). Screenshots to attach: Track screen with map + `TripPanel` (all 3 states), bottom nav, a Session/List card for glass-panel style |
 | Fuel dock (§5b) on Track (all variants), List, Sessions, Settings | Designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `3354689`); build OK; partly device-verified 2026-10-11 | FUEL LEFT / RANGE / PRICE / Fill up above the bottom nav (ADR-027, FR-22). No dock on OBD Settings or the pushed screens. No external handoff needed (designed in the `.pen`) |
-| Session overlay banner (§5d) | Planned | System overlay above other apps, shown only while a session is active and TrackLocation is not in front; needs the Display over other apps permission (ADR-029, FR-24). Has a Fill-up action (owner decision 2026-10-13) that opens an inline form; the form is not on the collapsed circle. Designed in `ui-design.pen`, frame names pending (visuals are placeholders). No external handoff. Not a TrackLocation screen, so it adds no route |
+| Session overlay banner (§5d) | Designed (approved 2026-10-13); not implemented | System overlay above other apps, shown only while a session is active and TrackLocation is in the background; needs the Display over other apps permission (ADR-029, FR-24). Strip with an inline Fill up form and a draggable collapsed circle. Visual source of truth: `ui-design.pen`, section frame "Session Overlay Banner (ADR-029)". No external handoff. Not a TrackLocation screen, so it adds no route |
 | Registration / Auth Overlay | Planned | Observer/auth phase |
 
 ### Core User Flow
@@ -797,89 +797,125 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 
 ---
 
-## 5d. Session Overlay Banner (ADR-029) — planned; designed in `ui-design.pen` (frames pending)
+## 5d. Session Overlay Banner (ADR-029) — designed and approved in `ui-design.pen`; not implemented
 
-**Behaviour:** ADR-029 and PRD FR-24. This section covers the visual and layout spec only.
+**Behaviour:** ADR-029 and PRD FR-24. This section is the visual and layout spec only.
 
-**Purpose:** Show the live session figures (fuel, range, consumption, and order cost, gross and net) while the driver uses another app, such as the Gojek driver app, without switching back to TrackLocation.
+**Purpose:** Show the live session figures (fuel left, range, fuel consumption, cost and income) while the driver uses another app, such as the Gojek driver app, without switching back to TrackLocation.
 
-**Source of truth:** the visual source of truth is the frames in `ui-design.pen`, edited through the Pencil MCP. The frames have not been designed yet; frame names will be filled into this section once they exist. No external design handoff is used (owner directive 2026-10-13, ADR-029 Decision 8), the same as §5b and §5c.
+**Source of truth:** the frames in `ui-design.pen` are the visual source of truth. They are edited through the Pencil MCP only. Section frame: **"Session Overlay Banner (ADR-029)"** (id `GjDVg`). Components:
 
-**Placement and routes:**
+| Component frame | Id | Component frame | Id |
+|-----------------|----|-----------------|----|
+| Overlay/Strip Dark | `uBWY3` | Overlay/FillUpForm Dark | `R4Y6qP` |
+| Overlay/Strip Light | `vcWqE` | Overlay/FillUpForm Light | `vsy9e` |
+| Overlay/Circle Dark | `r9QAZL` | Overlay/MockKeyboard (helper) | `O9Ef71` |
+| Overlay/Circle Light | `QxDIj` | Overlay/Backdrop Map (helper) | `u7vww` |
+
+Use the frame names first; the ids are a secondary reference. No external design handoff is used (ADR-029 Decision 8), the same as §5b and §5c.
+
+**Placement and visibility:**
 - A **system overlay** drawn above other apps (`TYPE_APPLICATION_OVERLAY`, hosted by a foreground service). It is not part of the in-app nav graph and is not mounted in `MainActivity`. The in-app `StatusBannerHost` (§5c) is unchanged.
-- Shown only while **both** a recording session is active **and** TrackLocation is not in the foreground. Removed when the session ends.
-- Position: default at the top of the screen, below the status bar, 16 dp side gutters. It can be dragged (see Collapsed circle).
-- Not shown on any TrackLocation screen, because TrackLocation is in front there. The route list therefore does not apply.
+- Shown only while **both** a recording session is active **and** TrackLocation is in the background. Removed when the session ends.
+- Not shown on any TrackLocation screen, so the route list in §5c and §5b does not apply.
+- Design units: frame pixels are treated as dp in code (the design frame is 390 px wide).
 
-**Strip layout (expanded):** a compact card with two rows of three metric cells, a shrink button in the top-right corner, and a **Fill up** action at the bottom of the card (below row 2).
+**Strip (expanded): one row.** Frame states 1, 2, 3 and 8 (instances ZJeoW, Hd2om, g9vmg and JDbsT).
+- One row, **382 px wide** (4 px side gutters on a 390 px screen), **52 px high**. When the optional PARTIAL line is shown below the row, the strip is **72 px high**.
+- Inner padding: left 12, right 6, vertical 4. Gap between items: 6 (never less than 6). No wrapping.
+- Order, left to right: **FUEL LEFT | RANGE | FUEL CONS | COST | INCOME | Fill up | shrink button**.
 
-| Row | Cell | Label (uppercase) | Value | Format |
-|-----|------|-------------------|-------|--------|
-| 1 | Fuel | FUEL | Fuel left | `12.4 L`; `—` until a Reset has been set (ADR-027) |
-| 1 | Range | RANGE | Range | `310 km`; `—` as on the dock (§5b) |
-| 1 | Consumption | AVG / INST | Session average / instant | `12.3 / 8.1` km/L; `—` when there is no OBD data |
-| 2 | Cost | COST | Sum of litres × pump price over orders | Compact Rp (FR-16), e.g. `Rp1.2jt` |
-| 2 | Gross | GROSS | Sum of order earnings | Compact Rp |
-| 2 | Net | NET | GROSS − COST | Compact Rp; negative shown as `−Rp150` |
+| Cell | Label (no units) | Width | Value | Format |
+|------|------------------|-------|-------|--------|
+| Fuel left | FUEL LEFT | 48 | Fuel left | `12.4`, litres implied; `—` until a Reset has been set (ADR-027) |
+| Range | RANGE | 32 | Range | `310`, km implied; `—` as on the dock (§5b) |
+| Fuel consumption | FUEL CONS | 53 | Session average / instant | `12.3/8.1`, km/L implied; no spaces around `/`; `—` when there is no OBD data |
+| Cost | COST | 37 | Sum of litres × pump price over orders | Compact, e.g. `1.2jt`, Rp implied |
+| Income | INCOME | ~76 (fills the rest) | Gross / net over orders | `8.4k/6.0k`, Rp implied; no spaces around `/` |
 
-- Compact Rupiah format is the FR-16 format: below 1,000 → `Rp850`; 1,000–999,999 → `Rp8.4k`; from 1,000,000 → `Rp1.2jt`. Negative values carry a leading `−`.
-- The FUEL cell uses the same low-fuel thresholds and colours as the dock (§5b). Colour is decoration only; the cell is readable without it.
-- Cell separators are thin dividers. Values use the Kinetic Precision tokens (§5), with the `Metric Display Standard` (§5a) for the number and unit styling.
+- Labels are 9 px. Values are 11 px bold. Do not go below these minimums.
+- Compact Rupiah (FR-16): below 1,000 → `850`; 1,000 to 999,999 → `8.4k`; from 1,000,000 → `1.2jt`. A negative value carries a real minus sign `−`.
+- Value examples that must not clip: `12.45`, `12.5jt`, `15.0k/−3.5k`.
 
-**Shrink button:** top-right corner, 32 dp visual with a 48 dp hit area (same as the §5c minimize button). Tapping it collapses the strip to the circle.
+**Fill up button (in the strip):** icon-only **green 44 × 44 px circle** with a fuel icon. Accessible name "Fill up". Opens the Fill-up form (below). It is not on the collapsed circle.
 
-**Fill-up action (owner decision 2026-10-13):**
-- A **Fill up** text button with a leading fuel-pump icon, full width at the bottom of the expanded card, **48 dp** minimum height. Placeholder: the button style (filled pill as on the dock in §5b, or a text button) is to be confirmed in the `.pen` design.
-- Tapping it opens the **Fill-up form** in place of the metric cells (below). It is not available on the collapsed circle.
+**Shrink button:** **44 × 44 px hit area** with a **32 px visual**, solid surface fill. Tapping it collapses the strip to the circle. Accessible name "Shrink to circle".
 
-**Fill-up form (inline, placeholder layout until the `.pen` frame exists):**
-- A compact panel that replaces the six metric cells inside the same card, with the same 16 dp side gutters and the strip's position. It does not open a separate dialog window.
-- Layout, top to bottom: title **Fill up**; field **Litres added (L)** (required, decimal keyboard, comma or dot accepted, as the FillUpDialog §5b); field **Price (Rp/L) - optional**, pre-filled with the latest shared price; helper text; a row with **Cancel** (left) and **Save** (right).
-- Helper text, from the FillUpDialog wording: "Price defaults to the latest. Changing it saves a new price from now."
-- **Keyboard:** the overlay takes input focus while the form is open so the keyboard can appear. The panel must stay above the keyboard: the Save and Cancel row is always visible while the IME is shown, so the panel moves up or the card moves to the top of the free area. Check at code time on a small screen.
-- Litres field receives focus when the form opens.
+**Surface and text (translucent, so the app below shows through):**
+- The strip surface uses the strip-only token `ov-surface-glass`: dark `#0E2A209E` (about 62%), light `#FFFFFFB8` (about 72%).
+- Text, the green Fill up button and the shrink button stay **opaque**.
+- Text uses **halo text** for contrast: an outer shadow with offset 0, blur 3, colour `ov-halo` (dark theme: black about 70%; light theme: white about 90%).
+- Strip-only text tokens: `ov-label` and `ov-value`. Dark: white 94% (label) and 100% (value). Light: `#3F3F3F` (label) and `#0A0A0A` (value).
+- The halo is not adaptive. The overlay cannot read the pixels under it without screen capture, which was rejected for privacy.
+- **Known weak spots to check on a device:** dark-strip labels over pure white (about 4.5:1); light strip over red (about 4:1); the red net value over mid-grey.
 
-**Fill-up form states:**
+**PARTIAL line (below the row, optional):** shown only when the totals exclude some orders. A bordered **PARTIAL** tag with a warning icon, and the note "Orders without OBD or earnings excluded". The tag and note are text, not colour.
 
-| State | What the form shows | Visual cue (not colour alone) |
-|-------|---------------------|-------------------------------|
-| Empty (on open) | Litres empty; price pre-filled with the latest price (empty when none is set). **Save disabled** | Save greyed with text unchanged; disabled state read by TalkBack |
-| Invalid litres | Litres empty, `0`, negative or non-numeric. **Save disabled** (mirrors FillUpDialog: Save is enabled only when litres > 0) | Proposed: a message under the litres field, "Enter litres greater than 0". FillUpDialog shows no message; this form adds one so the disabled Save is explained. Owner to confirm |
-| Price changed | Price is a value > 0 that differs from the latest. The helper text stays as above; any extra "price will change" line is a placeholder to be confirmed. Save appends an effective-now price row (ADR-008) | Text only |
-| Price unchanged or invalid | Price equal to the latest, blank, or 0. No price row is written (mirrors FillUpDialog: a price > 0 that differs from the current price is the only case that appends a row) | Text only; no error for an empty or 0 price |
-| Saving | Litres and price fields disabled; Save and Cancel disabled; progress indicator in place of Save | Progress indicator plus the text "Saving…" |
-| Success | Form closes and the metric cells return. FUEL LEFT and RANGE update immediately; COST re-reads the pump price if it changed | TalkBack live announcement (below) |
-| Error | Save did not complete (for example, a database write failed). Form stays open with the entered values kept and Save enabled again | Message "Could not save the fill-up. Try again." in text; the message is a placeholder until the copy is confirmed |
+**Net loss:** INCOME shows `15.0k/−3.5k`. The net part is red (`ov-loss`) and has a leading real minus sign. The minus sign is the non-colour cue. The trend-down icon is intentionally not used (no width for it).
 
-**Collapsed circle:**
-- A draggable circle, **56 dp** diameter (above the 44 dp minimum). It carries **no** Fill-up action: its only tap restores the strip.
-- Content: the fuel-left percentage (e.g. `62%`) when fuel left is set, otherwise a fuel-pump icon. **Placeholder:** the exact content, size of the percentage text and the icon are to be confirmed in the `.pen` design.
-- **Tap:** restores the strip at the circle's position (clamped as below).
+**No-data state:** all five cells show a single `—`.
+
+**Collapsed circle.** Frame state 4 (`l1w29`).
+- A **48 px circle** with a green ring. It shows a fuel icon and the fuel-left percentage (for example `62%`). A small grip bar at the bottom is the drag affordance.
+- It has **no** Fill-up action. Its only tap restores the strip.
 - **Drag:** moves the circle freely. A small touch slop separates a drag from a tap, so a drag never restores the strip.
-- **Clamp and persistence:** the circle is clamped to the screen bounds with an 8 dp margin, and it stays clear of the status bar and the navigation-bar insets. Its position is persisted (DataStore, ADR-029 Decision 5) and clamped again after rotation or a screen-size change, so it stays reachable.
+- **Tap:** restores the strip. It does **not** open the Fill-up form.
+- **Clamp and persistence:** the circle is clamped to the screen with an 8 dp margin and stays clear of the status bar and the navigation-bar insets. Its position is persisted (DataStore, ADR-029 Decision 5) and clamped again after rotation or a screen-size change.
+- State 4 shows a ghost at the old spot, a move arrow, and the caption "Drag to move · tap to expand". The caption is a design annotation, not UI.
 
-**States:**
+**Fill-up form (inline panel in the overlay).** Frame states 5 (`B56hLY`, keyboard open) and 6 (`woEUQ`, invalid litres). Frames FillUpForm Dark and Light.
+- Opens from the strip's Fill up button. It is an inline compact panel, not a separate dialog window.
+- Placed in the **upper part of the screen**, with the numeric keyboard below it, so the Save row is never covered.
+- Overlay takes input focus while the form is open. When it closes, the overlay returns to pass-through.
+- Title: **Fill up**.
+- Two side-by-side fields:
+  - **Litres added (L)**: required. Focus is placed here when the form opens.
+  - **Price (Rp/L) - optional**: pre-filled with the latest price. Changing it saves a new price from now on (ADR-008). Helper text: "Price defaults to the latest. Changing it saves a new price from now."
+- **Cancel** and **Save** buttons, **48 px high**.
+- **Save is disabled until litres are valid** (greater than 0). The Save label uses **dark text on the green fill**, because white on green has too low a contrast.
+- **Error state (invalid litres):** the litres field has a red border and the message "Enter litres greater than 0".
+- The form is dismissed by **Cancel**, **Save**, or **shrinking** the overlay.
+- A saving spinner icon exists in the component, off by default. There is no dedicated "Saving…" frame.
+- A price equal to the latest, or blank or 0, writes no price row. A price above 0 that differs from the latest appends an effective-now price row (ADR-008).
+- Keyboard and font scale: the Save and Cancel row stays visible while the keyboard is shown. At the largest system font size the form wraps and scrolls inside the panel rather than clipping Save or Cancel.
 
-| State | What the strip shows | Visual cue (not colour alone) |
-|-------|----------------------|-------------------------------|
-| Normal | All six cells with values | None beyond the normal layout |
-| No OBD data | FUEL, RANGE and AVG / INST show `—` when OBD is disconnected or the value is not yet known. COST, GROSS and NET show `—` when no order in the session has both OBD litres and earnings | `—` placeholder text |
-| Partial total | COST, GROSS and NET show totals over the orders that have data, with the orders lacking data excluded | A `PARTIAL` tag next to the totals row. The tag is text, not colour |
-| Negative net (loss) | NET shows `−Rp…` | Leading minus sign, a down-arrow icon and the TalkBack word "loss" |
-| Permission not granted | No overlay is drawn. Instead, a one-time prompt card on the Session screen: "Show session totals over other apps" with an **Allow** button | The button deep-links to the system Display over other apps settings (`Settings.ACTION_MANAGE_OVERLAY_PERMISSION`). Prompt copy is a placeholder until designed |
-| Collapsed | The circle only (see Collapsed circle) | Icon or percentage text, with the TalkBack label |
+**Fill-up TalkBack:** the button reads "Fill up". On open, the form is announced as "Fill up form" and focus goes to the litres field. A disabled Save reads "Save, unavailable" with the reason. On success, a polite live announcement reads "Fill-up saved. Fuel left N litres." On error, the error message is announced politely. The helper and error text are linked to their fields.
+
+**Permission prompt (not granted).** Frame state 7 (`jnz6e`).
+- A **centred dialog** over a dimmed backdrop, in the FillUpDialog look. No overlay is drawn while the permission is missing.
+- Title: "Show session totals over other apps".
+- Body: "Display over other apps is needed to show fuel left, range and session earnings on top of navigation and driver apps while a session is recording." Followed by "Tracking and recording keep working without it."
+- Buttons: **Not now** and **Open settings**. Open settings deep-links to the system overlay-permission screen (`Settings.ACTION_MANAGE_OVERLAY_PERMISSION`).
+- Shown **once** (one-time prompt). It is not a card on the Session screen.
+
+**States (frame map):**
+
+| # | Frame | Id | What it shows |
+|---|-------|----|---------------|
+| 1 | Strip normal | `i8qsNW` | All five cells with values, Fill up and shrink |
+| 2 | Strip no data | `vWXqS` | All five cells show `—` |
+| 3 | Strip negative net + partial | `Z3kpsG` | INCOME `15.0k/−3.5k` (red net, minus sign), PARTIAL line, 72 px strip |
+| 4 | Circle collapsed, dragged | `l1w29` | Circle, ghost at old spot, move arrow, design caption |
+| 5 | Fill-up form open with keyboard | `B56hLY` | Form in upper area, numeric keyboard below, Save row visible |
+| 6 | Fill-up form error, invalid litres | `woEUQ` | Red litres border and "Enter litres greater than 0" |
+| 7 | Permission prompt | `jnz6e` | Centred dialog over dimmed backdrop |
+| 8 | Light-theme strip | `C4M54` | Light strip (`vcWqE` component) |
 
 **Accessibility:**
-- Touch targets: circle 56 dp; shrink button 48 dp hit area; the Allow button follows the normal button size (≥48 dp).
-- TalkBack reads each cell as a full phrase, for example "Fuel left 12.4 litres", "Net loss 150 rupiah", "Partial total, some orders excluded". The circle reads "Session totals, collapsed. Double tap to expand". The shrink button reads "Shrink session totals".
-- Not colour-only: every cell has a text label, and the loss state uses a minus sign and an icon as well as colour. The `PARTIAL` marker is text.
-- The strip must remain readable at the system font scale; cells wrap rather than clip.
+- Touch targets: Fill up 44 px; shrink 44 px hit area; collapsed circle 48 px; form buttons 48 px high; the Allow/Open settings button at the normal button size (48 px or more).
+- Do not rely on colour alone. Every cell has a text label. The loss uses a minus sign as well as red. The PARTIAL marker is text.
+- The strip keeps the value minimums above at the system font scale or cells clip. Check at code time.
+- **TalkBack wording (per cell):**
+  - Fuel left: "Fuel left 12.4 litres"
+  - Range: "Range 310 kilometres"
+  - Fuel consumption: "Fuel consumption average 12.3 instant 8.1 kilometres per litre"
+  - Cost: "Cost 1.2 million rupiah"
+  - Income: "Income gross 8.4 thousand, net 6.0 thousand rupiah". A loss is stated explicitly as "net loss".
+  - Fill up button: "Fill up". Shrink button: "Shrink to circle".
+  - Collapsed circle: "Fuel 62 percent, drag to move, double tap to expand".
 - Check at code time that the overlay does not block the status bar or the system back gesture.
-- **Fill-up action:** the Fill up button is at least 48 dp high. The litres and price fields, Cancel and Save are each at least 48 dp high. Every field has a visible label (not placeholder text only), and the helper and error text are linked to their field for TalkBack.
-- **Fill-up TalkBack:** the button reads "Fill up fuel". When the form opens it is announced as "Fill up form" and focus goes to the litres field. Disabled Save reads "Save, unavailable" with the reason from the invalid state. On success, a polite live announcement reads "Fill-up saved. Fuel left N litres." On error, a polite live announcement reads the error message.
-- **Fill-up font scale:** the form wraps and scrolls inside the card rather than clipping Save or Cancel at the largest system font size.
 
-**Status:** planned. Behaviour is recorded in ADR-029 (accepted 2026-10-13, not yet implemented) and PRD FR-24. The Fill-up action and form (owner decision 2026-10-13) are specified here; they are not yet in ADR-029. The visual spec is this section; the `.pen` frames and their names are pending. Placeholders to close: the circle content and size, the prompt copy, the TalkBack wording, the Fill-up button style, the form layout and copy (including the invalid-litres message and the error message), and the price-changed line.
+**Status:** designed and approved in `ui-design.pen` on 2026-10-13 (section frame "Session Overlay Banner (ADR-029)", eight state frames). Behaviour is recorded in ADR-029 (accepted 2026-10-13, not yet implemented) and PRD FR-24. Not implemented. Items to check on a device once implemented: the contrast weak spots listed under the strip, the halo legibility on both themes, and the TalkBack wording above.
 
 ---
 
@@ -900,7 +936,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 - OBD Phase 1 UI: implemented (Settings, ObdStatusCard, TripPanel row); km/L logic verified live.
 - Fuel dock (§5b): designed in `ui-design.pen` (dock, edit pencils, Fill up / Reset fuel / Fuel price dialogs, dock states; 2026-10-11 update, `f39e1d4` added the first dock); state thresholds and colours confirmed 2026-10-11; code implemented 2026-10-11 (`a197453`, `36030ef`, `9d01688`, `3354689`; build OK; partly device-verified 2026-10-11).
 - Floating status banner (§5c): designed in `ui-design.pen` 2026-10-11 (OBD not connected, Observer inactive, collapsed icons; eight states); code implemented `8cd95f8` (2026-10-11); partly device-verified 2026-10-11 (not tested: OBD Connected state, restart reset, TalkBack) (ADR-028).
-- Session overlay banner (§5d): planned (ADR-029, FR-24); includes a Fill-up action with an inline form (owner decision 2026-10-13); the `.pen` frames are pending; not implemented.
+- Session overlay banner (§5d): designed and approved in `ui-design.pen` 2026-10-13 (section frame "Session Overlay Banner (ADR-029)", eight state frames: one-row strip with Fill up, collapsed circle, Fill-up form, permission prompt); not implemented (ADR-029 accepted, FR-24).
 
 ---
 

@@ -1,6 +1,6 @@
 # ADR-029: Session Overlay Banner (System Overlay Above Other Apps)
 
-**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); not yet implemented
+**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); not yet implemented
 **Date:** 2026-10-13
 **Decided By:** Project owner + Claude Code
 
@@ -25,11 +25,14 @@ Constraints:
 
    Foreground state is detected with `ProcessLifecycleOwner`. No `UsageStats` permission is used. When the session ends, the overlay is removed.
 
-3. **Strip content.** The strip shows, in this order:
-   - **Fuel left** (ADR-027, session-independent OBD ledger).
-   - **Range** (ADR-027, rolling-distance RANGE).
-   - **Consumption:** the session average km/L and the instant km/L (ADR-007, ADR-024).
-   - **Total cost**, **gross** and **net** for the session (Decision 4).
+3. **Strip content and layout.** The strip is one row of five cells, in this order, with no units in the labels:
+   - **FUEL LEFT** (ADR-027, session-independent OBD ledger).
+   - **RANGE** (ADR-027, rolling-distance RANGE).
+   - **FUEL CONS** (the session average km/L and the instant km/L, ADR-007, ADR-024).
+   - **COST** (the session total cost, Decision 4).
+   - **INCOME** (the session gross and net, Decision 4).
+
+   The row also holds an icon-only **Fill up** button (Decision 9) and the shrink button. The row is 382 px wide, so the overlay has 4 px side gutters on a 390 px screen. The exact layout, sizes and value formats are owned by UI-SPEC §5d and the pen frames in `ui-design.pen`, section "Session Overlay Banner (ADR-029)". This ADR does not repeat them.
 
 4. **Session totals over all orders.** The totals accumulate over all orders in the current session:
    - **Cost** = sum over orders of (trip litres x pump price), using the same rule as FR-16 in `GojekOrderCard`.
@@ -38,9 +41,9 @@ Constraints:
    - An order that lacks OBD litres or earnings is excluded from the totals, and the total is flagged **partial** on the strip.
    - A negative net is shown as a loss.
 
-5. **Shrink and circle.** The strip has a shrink button. Tapping it collapses the strip to a small draggable circle. Tapping the circle restores the strip. The circle position is persisted in DataStore and clamped to the screen bounds, so it stays reachable after rotation or a screen-size change.
+5. **Shrink and circle.** The strip has a shrink button. Tapping it collapses the strip to a **48 px** draggable circle. A drag moves the circle. A tap (without a drag) restores the strip. The circle has no Fill-up action. The circle position is persisted in DataStore and clamped to the screen bounds, so it stays reachable after rotation or a screen-size change.
 
-6. **One-time permission prompt.** The app asks once for the overlay permission (from Settings or on the first session). The prompt has a deep link to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`. If the permission is not granted, the overlay does not show. Nothing else changes: tracking, recording and the in-app UI keep working.
+6. **One-time permission prompt.** The app asks once for the overlay permission (from Settings or on the first session). The prompt is a one-time **centred dialog** titled "Show session totals over other apps", with the buttons **Not now** and **Open settings**. It is not a card on the Session screen. Open settings deep-links to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`. If the permission is not granted, the overlay does not show. Nothing else changes: tracking, recording and the in-app UI keep working.
 
 7. **Boundaries.** The banner is display plus one action: Fill-up (Decision 9). It has no other write path.
    - No schema change, no Room migration, no new store.
@@ -61,6 +64,11 @@ Constraints:
    - **Design.** The form is designed in `ui-design.pen` and specified in UI-SPEC §5d, the same as the rest of the banner (Decision 8). No code before that spec exists (AGENTS §12).
    - **Risks (device check needed):** the keyboard may overlap the form; while the form is open the panel can cover the other app's controls (the same overlap risk as the strip, Consequences); and the focus switch on the overlay window must not disturb the app underneath after the form closes.
 
+10. **Translucent strip, halo text, no content-adaptive contrast (owner decision, 2026-10-13).** The strip surface is translucent so the app below stays visible: dark theme `ov-surface-glass` about 62% (`#0E2A209E`), light theme about 72% (`#FFFFFFB8`). The Fill up and shrink buttons stay opaque, and so does all text. Text uses **halo text**: an outer shadow (offset 0, blur 3) in `ov-halo`, for legibility over whatever is underneath.
+    - **Not content-adaptive.** The strip does not sample the pixels under it. Reading them needs MediaProjection screen capture, which was considered and rejected (Alternatives Considered, 5). It adds an extra permission and a persistent recording indicator, costs battery, is blocked on secure apps, and raises privacy concerns.
+    - **Consequence: contrast is marginal in some cases.** Known weak spots: a dark strip over pure white labels (about 4.5:1); a light strip over red (about 4:1); the red net value over mid-grey. These must be checked on the device (Open items).
+    - The visual values are owned by UI-SPEC §5d and `ui-design.pen`.
+
 ## Consequences
 
 ### Positive
@@ -77,6 +85,7 @@ Constraints:
 - **Overlap with other apps' UI.** The strip can cover controls in other apps, such as navigation or the order app. The shrink and drag controls are the mitigation.
 - **Partial totals.** Orders without OBD litres or earnings are left out, so the session totals can understate the real figures. The "partial" flag makes this visible.
 - **Keyboard overlap (Decision 9).** The Fill-up form needs the soft keyboard. The keyboard can cover the input fields if the panel is placed badly. This is a device-check risk.
+- **Contrast over the app below (Decision 10).** The strip is translucent and not content-adaptive, so text contrast depends on what is under it. It is marginal in some cases (Decision 10). This is a device-check risk.
 - **Form covers the other app (Decision 9).** While the form is open, the overlay is focusable and the form sits over the app underneath. The form must close quickly and be easy to cancel. Focus changes must not leave the other app in a bad state.
 
 ## Alternatives Considered
@@ -93,6 +102,9 @@ Constraints:
 4. **One-tap preset amounts on the strip (Decision 9).**
    - Pros: the fastest possible refuel, with no keyboard.
    - Cons: it needs preset or "Full" semantics, which are not defined and not chosen. Rejected for this version.
+5. **Content-adaptive strip (MediaProjection screen capture, Decision 10).**
+   - Pros: the strip could pick an opaque or tinted surface from the pixels under it, so contrast would be reliable.
+   - Cons: an extra permission, a persistent screen-recording indicator, extra battery and CPU, secure apps block the capture, and it raises a privacy concern about what is on the driver's screen. Rejected. The strip uses a translucent surface with halo text instead (Decision 10).
 
 ## Related ADRs
 
@@ -106,7 +118,7 @@ Constraints:
 
 - PRD FR-16 (order cost and earnings rule); PRD §2 and §12 (boundaries and locked rules)
 - ADR-027 (fuel dock, ledger, RANGE; Decision 3 Fill-up dialog); ADR-008 (effective-dated price); ADR-028 (in-app status banner)
-- UI-SPEC §5d (System Overlay Banner, including the Fill-up form once specified); `ui-design.pen` (edited through the Pencil MCP)
+- UI-SPEC §5d (System Overlay Banner, including the Fill-up form and the permission prompt); `ui-design.pen` (edited through the Pencil MCP)
 - Android: `WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE` (toggled while the Fill-up form is open)
 - `ui-design.pen` is the design source for this banner; UI-SPEC §5d is the visual spec.
 - Android: `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY`, `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`, `ProcessLifecycleOwner`
@@ -116,8 +128,9 @@ Constraints:
 
 - [ ] Implementation is not started. A slice with a "How to Verify" block must be added to IMPLEMENTATION-PLAN §4 before code work begins.
 - [ ] Refresh interval of the background figures (battery trade-off) is not decided here.
-- [ ] Exact behaviour when a session starts while the permission is missing (prompt timing: Settings only, or also the first session) is recorded as decided by the owner in Decision 6, but the wording of the prompt is not fixed here.
+- [ ] Exact behaviour when a session starts while the permission is missing (prompt timing: Settings only, or also the first session) is recorded as decided by the owner in Decision 6, but the prompt wording is fixed in UI-SPEC §5d (2026-10-13).
 - [ ] Notification channel name and wording for the foreground service are not decided here.
-- [ ] **Fill-up form design (Decision 9):** the form has no spec or `ui-design.pen` frame yet. It must be added to UI-SPEC §5d and the design before code starts.
+- [x] **Fill-up form design (Decision 9):** closed 2026-10-13. Designed in `ui-design.pen` (frames "Overlay State 5" and "Overlay State 6") and specified in UI-SPEC §5d.
 - [ ] **Fill-up device checks (Decision 9):** verify the keyboard does not cover the form on the test device; verify the overlay returns to pass-through (`FLAG_NOT_FOCUSABLE`) after Cancel, Save and shrink; verify fuel left and range update on the strip after Save; verify the other app is not disturbed by the focus change.
+- [ ] **Contrast device check (Decision 10):** on the test device, check the three weak spots (dark strip over pure white labels; light strip over red; red net value over mid-grey) and the halo legibility in both themes. If one fails, change the design (`ui-design.pen` and UI-SPEC §5d) before changing the code.
 - [ ] **Price bound for the overlay form (Decision 9):** the price rule is taken from FillUpDialog. ADR-027 does not state a numeric bound, so confirm it against the code at implementation time.
