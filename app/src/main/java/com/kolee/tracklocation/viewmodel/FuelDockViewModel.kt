@@ -6,12 +6,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.kolee.tracklocation.TrackApp
-import com.kolee.tracklocation.data.roomdb.FUEL_EVENT_FILL_UP
 import com.kolee.tracklocation.data.roomdb.FUEL_EVENT_RESET
 import com.kolee.tracklocation.data.roomdb.FuelEventDao
 import com.kolee.tracklocation.data.roomdb.FuelEventEntity
 import com.kolee.tracklocation.data.roomdb.ObdLedgerDao
 import com.kolee.tracklocation.data.roomdb.SessionDao
+import com.kolee.tracklocation.feature.obd.FillUpRecorder
 import com.kolee.tracklocation.feature.obd.FuelPriceController
 import com.kolee.tracklocation.feature.obd.RollingEfficiency
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
@@ -54,6 +54,8 @@ class FuelDockViewModel(
     private val sessionDao: SessionDao,
     private val obdLedgerDao: ObdLedgerDao,
 ) : ViewModel() {
+
+    private val fillUpRecorder = FillUpRecorder(fuelEventDao)
 
     val uiState: StateFlow<FuelDockUiState> = combine(
         fuelEventDao.latestReset().flatMapLatest { reset ->
@@ -109,18 +111,7 @@ class FuelDockViewModel(
 
     /** ADR-027: add litres; a changed price is saved as a new effective-now price (ADR-008). */
     fun fillUp(litres: Double, price: Double?) {
-        val changedPrice = price?.takeIf { it > 0.0 && it != FuelPriceController.state.value.currentPrice }
-        if (changedPrice != null) FuelPriceController.set(changedPrice)
-        viewModelScope.launch(Dispatchers.IO) {
-            fuelEventDao.insert(
-                FuelEventEntity(
-                    kind = FUEL_EVENT_FILL_UP,
-                    litres = litres,
-                    pricePerLiter = changedPrice,
-                    createdAtMs = System.currentTimeMillis(),
-                )
-            )
-        }
+        viewModelScope.launch { fillUpRecorder.record(litres, price) }
     }
 
     companion object {
