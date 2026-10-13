@@ -1,6 +1,6 @@
 # ADR-029: Session Overlay Banner (System Overlay Above Other Apps)
 
-**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); implementation decisions recorded 2026-10-13 (Decisions 1, 4 and 9 amended, Decision 11 added); circle shows fuel-left litres with a level-band ring, not a percentage (Decision 5 amended, owner-visible deviation, 2026-10-13); code in progress (IMPLEMENTATION-PLAN §4, slices 1 to 9)
+**Status:** Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); strip layout, circle, permission prompt and translucent surface amended 2026-10-13 (Decisions 3, 5, 6, 10); implementation decisions recorded 2026-10-13 (Decisions 1, 4 and 9 amended, Decision 11 added); circle shows fuel-left litres with a level-band ring, not a percentage (Decision 5 amended, owner-visible deviation, 2026-10-13); code in progress (IMPLEMENTATION-PLAN §4, slices 1 to 9); device verification recorded in part on 2026-10-13 (see "Device verification (2026-10-13)"; open items updated)
 **Date:** 2026-10-13
 **Decided By:** Project owner + Claude Code
 
@@ -105,6 +105,34 @@ Constraints:
 ### Implemented surface (2026-10-13)
 - The **Settings** screen has a row **"Session overlay"** (Decision 6 entry point).
 
+## Device verification (2026-10-13)
+
+One owner-requested device run on 2026-10-13: Galaxy S9+ (SM-G965F) over the adb tunnel, with a debug APK built after commits `0ab3b13` (ERR-012) and `14523fc` (ERR-013). The assistant checked the screen through adb screenshots and dumpsys at the owner's request. Save was not pressed, so no data was written.
+
+**Verified on the device:**
+- The overlay window shows over the launcher while a session is active and TrackLocation is in the background (strip with FUEL LEFT `0.7`, other cells `—`). No crash after the ERR-012 fix.
+- The Fill-up form opens under the status bar with litres, price (prefilled `16130`), Cancel, and a disabled Save.
+- The numeric keyboard shows above the Save row. After the ERR-013 fix it appeared by itself on two consecutive opens (one device run).
+- Validation shows a red border and "Enter litres greater than 0", and Save stays disabled.
+- BACK is two-step: the first press hides the keyboard, the second closes the form.
+- An outside touch closes the form, and window focus returns to the app below (touch pass-through).
+- Shrink collapses to a circle at the default spot (right edge, about 25% down), with a fuel icon, the litres and a red ring (Critical, 0.7 L below 3 L).
+- Dragging the circle moves it without scrolling or launching the app underneath. Tapping it expands the strip without launching the app underneath. Shrinking again returns the circle at the dragged position.
+
+**Not verified yet:**
+- Circle position after a service or app restart (DataStore).
+- Drag clamp at the screen edges.
+- Save: fuel left and range update, and the price row (`fuel_price`).
+- Strip totals with real orders: COST, INCOME, PARTIAL and a loss.
+- The permission dialog and the Settings row (the overlay permission was already granted on the device).
+- Readability over a busy app (Decision 10 contrast checks).
+- First-session start when the permission is granted from the dialog.
+- Behaviour after the session ends (overlay disappears).
+
+**Observed deviations:**
+- FUEL CONS shows `—/—` in the no-data state; the design is a single `—` (open item below).
+- The circle shows litres, not a percentage (known; Decision 5 amendment).
+
 ## Alternatives Considered
 
 1. **Reuse `StatusBannerHost` (ADR-028).**
@@ -143,12 +171,13 @@ Constraints:
 
 ## Open items
 
-- [ ] Implementation is in progress (2026-10-13). The slice with its "How to Verify" block is in IMPLEMENTATION-PLAN §4; the device checks are not run.
+- [ ] Implementation is in progress (2026-10-13). The slice with its "How to Verify" block is in IMPLEMENTATION-PLAN §4; one device run on 2026-10-13 covered part of the checks (see "Device verification (2026-10-13)"); the rest are open.
 - [ ] Refresh interval of the background figures (battery trade-off) is not decided here.
 - [ ] Exact behaviour when a session starts while the permission is missing (prompt timing: Settings only, or also the first session) is recorded as decided by the owner in Decision 6, but the prompt wording is fixed in UI-SPEC §5d (2026-10-13).
 - [ ] Notification channel name and wording for the foreground service are not decided here.
 - [x] **Fill-up form design (Decision 9):** closed 2026-10-13. Designed in `ui-design.pen` (frames "Overlay State 5" and "Overlay State 6") and specified in UI-SPEC §5d.
-- [ ] **Fill-up device checks (Decision 9):** verify the keyboard does not cover the form on the test device; verify the overlay returns to pass-through (`FLAG_NOT_FOCUSABLE`) after Cancel, Save and shrink; verify fuel left and range update on the strip after Save; verify the other app is not disturbed by the focus change.
+- [ ] **Fill-up device checks (Decision 9), reduced 2026-10-13:** the keyboard above the form and the focus return after an outside touch are verified (see "Device verification (2026-10-13)"). Remaining: Save records the fill-up and the strip updates fuel left and range (plan slice 9, item 14); a changed price appends one `fuel_price` row and an unchanged price writes none (item 15); pass-through after Cancel and after shrink, checked as separate cases (item 16).
 - [ ] **Contrast device check (Decision 10):** on the test device, check the three weak spots (dark strip over pure white labels; light strip over red; red net value over mid-grey) and the halo legibility in both themes. If one fails, change the design (`ui-design.pen` and UI-SPEC §5d) before changing the code.
 - [x] **Price bound for the overlay form (Decision 9):** closed 2026-10-13. The app has no numeric price bound; the overlay rule mirrors FillUpDialog (Decision 9 amendment).
 - [ ] **Circle shows litres, not percent (needs tank capacity decision):** the pen circle frames (`Overlay State 4`, `Overlay/Circle`) still show `62%`. Either update them to litres and level colour, or specify a tank-capacity setting (product decision) before the circle is treated as final. Decision 5 amendment, UI-SPEC §5d.
+- [ ] **FUEL CONS no-data deviation (2026-10-13):** in the no-data state the strip shows `—/—` for FUEL CONS. The design (UI-SPEC §5d, and plan slice 9 item 19) is a single `—`. Decide: change the code to a single `—`, or amend the design. This must be settled before plan item 19 can pass.

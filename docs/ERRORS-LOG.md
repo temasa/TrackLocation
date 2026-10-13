@@ -8,7 +8,7 @@ description: Persistent error learning log — captures all errors from compilat
 
 ## TrackLocation
 
-**Document Version:** 0.10  
+**Document Version:** 0.11  
 **Status:** Active (persistent — never delete)  
 **Last Updated:** 2026-10-13  
 **Owned By:** Project Team
@@ -50,7 +50,8 @@ Log an entry whenever an error occurs during any of these phases:
 
 | ID | Found At | Resolved At | Phase | Sprint/Task | Title | Status |
 |----|----------|-------------|-------|-------------|-------|--------|
-| ERR-012 | 2026-10-13 | — (fix in `0ab3b13`; device re-test pending) | Runtime | ADR-029 overlay (`feature/overlay/ui/OverlayRootView`, `OverlayWindowHost.kt`) | Overlay show crash — `IllegalStateException: ViewTreeLifecycleOwner not found` from `OverlayRootView`; ViewTree owners set only on the child ComposeView, not on the WindowManager window root (3 crashes, process died each time) | Fix committed; device re-test pending |
+| ERR-013 | 2026-10-13 | 2026-10-13 (fix in `14523fc`; one device run, partly proven) | Runtime | ADR-029 overlay Fill-up form (`feature/overlay/ui/OverlayRootView`, `OverlayFillUpForm`, `OverlayWindowHost.kt`) | Soft keyboard did not open on the first open of the overlay Fill-up form (`mShowRequested=false`, `mInputShown=false`); keyboard requested from composition before the window had input focus, so the IME ignored `showSoftInput` (intermittent; worked on second open) | Resolved (partly verified: one device run) |
+| ERR-012 | 2026-10-13 | verified on device 2026-10-13 (overlay shows over another app, no crash after commit 0ab3b13) | Runtime | ADR-029 overlay (`feature/overlay/ui/OverlayRootView`, `OverlayWindowHost.kt`) | Overlay show crash — `IllegalStateException: ViewTreeLifecycleOwner not found` from `OverlayRootView`; ViewTree owners set only on the child ComposeView, not on the WindowManager window root (3 crashes, process died each time) | Resolved; verified on device 2026-10-13 (overlay shows over another app, no crash after commit 0ab3b13) |
 | ERR-011 | 2026-10-13 | 2026-10-13 (fix in `7b9b1cd`; rebuild green in 58 s) | Compilation | ADR-029 overlay (`feature/overlay/ui/OverlayWindowHost.kt`) | `:app:compileDebugKotlin` FAILED — `Unresolved reference: ViewTreeSavedStateRegistryOwner` at (18, 28) and (98, 13); the static `ViewTreeSavedStateRegistryOwner.set(view, owner)` call is not callable from Kotlin on savedstate 1.2.0 | Resolved |
 | ERR-010 | 2026-10-11 | 2026-10-11 (mitigated manually; no code fix) | Verification | Observer accessibility service / order auto-start | Observer accessibility service silently disabled; two Gojek orders not captured and no auto-start trip — service dropped from `enabled_accessibility_services`, so nothing was captured from 07:21 WIB until the evening | Mitigated (manual); in-screen ServiceBanner covers only while the Observer screen is open |
 | ERR-009 | 2026-10-11 | 2026-10-11 (fix `3354689`) | Verification | Fuel dock (ADR-027) | Fuel dock not rendering — mounted in unreferenced `screens/MainScreen.kt`; fixed by `FuelDockHost` in MainActivity | Resolved |
@@ -71,14 +72,41 @@ Log an entry whenever an error occurs during any of these phases:
 
 ---
 
+### ERR-013: ADR-029 overlay Fill-up form — soft keyboard not shown on first open (IME request before window focus)
+
+**Found At:** 2026-10-13 (owner's Galaxy S9+, SM-G965F, testing the overlay Fill-up form)  
+**Resolved At:** 2026-10-13 (fix in `14523fc`; one device run after reinstall, partly proven)  
+**Phase:** Runtime  
+**Severity:** Low (UX)  
+**Sprint/Task:** ADR-029 overlay — `feature/overlay/ui/OverlayRootView`, `OverlayFillUpForm`, and `feature/overlay/ui/OverlayWindowHost.kt` (ComposeView hosted in a WindowManager window; same class as ERR-011/ERR-012)  
+**Environment:** on-device (owner's Galaxy S9+, SM-G965F), debug APK; Compose UI 1.2.x, androidx.lifecycle 2.5.1  
+**Status:** Resolved (partly verified: one device run)  
+
+**Error Message / Output:**
+No crash and no exception. Tapping the litres field showed the keyboard, but the first automatic open of the form did not. `dumpsys input_method` on the first open showed `mShowRequested=false`, `mInputShown=false`. On the second open the keyboard appeared by itself.
+
+**Root Cause:**
+`OverlayFillUpForm` called `focusRequester.requestFocus()` and `keyboard?.show()` inside `LaunchedEffect(Unit)`, so both ran the moment the form composed. At the same moment `OverlayWindowHost.setFocusable(true)` flipped the WindowManager window to focusable through `updateViewLayout`, which is asynchronous. The window had not yet gained input focus, so the IME ignored `showSoftInput`. `SOFT_INPUT_STATE_VISIBLE` is not honored without `FORWARD_NAVIGATION`, so it did not rescue the request. On the second open the IME was already warm, which is why the failure looked intermittent.
+
+**Resolution:**
+`OverlayRootView.onWindowFocusChanged` now exposes `windowHasFocus` as Compose state. The form requests focus and shows the keyboard only when the window has focus (`LaunchedEffect(windowHasFocus)`). Focusable windows also use `SOFT_INPUT_STATE_ALWAYS_VISIBLE | ADJUST_PAN` as a backup. Commit `14523fc`. Verified on the device after reinstall: the keyboard showed by itself on two consecutive opens (`mShowRequested=true`, `mInputShown=true`). This is a single device run, so the fix is only partly proven.
+
+**Lesson Learned:**
+1. IME show requests are ignored until the window has input focus. Trigger them from the window-focus callback, not from composition.
+2. Any UI that toggles window focusability (`FLAG_NOT_FOCUSABLE`) is asynchronous. Do not assume the flag change has taken effect in the same frame.
+3. A race that passes on the second try needs a first-open test on a fresh install. A warm second open proves little.
+4. Related to ERR-011 and ERR-012 (same Compose-in-overlay-window setup). This is the third entry in that class, so the Patterns section now has an entry for it.
+
+---
+
 ### ERR-012: ADR-029 overlay crash on show — `ViewTreeLifecycleOwner not found` (window root view had no owners)
 
 **Found At:** 2026-10-13 22:49:12 device time (owner's Galaxy S9+, debug APK; further crashes at 22:49:14 and 22:49:41)  
-**Resolved At:** — (fix in `0ab3b13`; debug build OK; device re-test pending)  
+**Resolved At:** verified on device 2026-10-13 (overlay shows over another app, no crash after commit 0ab3b13)  
 **Phase:** Runtime  
 **Sprint/Task:** ADR-029 overlay — `feature/overlay/ui/OverlayRootView` and `feature/overlay/ui/OverlayWindowHost.kt` (ComposeView hosted in a Service/WindowManager window; same slice group as ERR-011)  
 **Environment:** on-device (owner's Galaxy S9+), debug APK installed after the build; Compose UI 1.2.x, androidx.lifecycle 2.5.1, savedstate 1.2.0  
-**Status:** Fix committed; device re-test pending  
+**Status:** Resolved; verified on device 2026-10-13 (overlay shows over another app, no crash after commit 0ab3b13)  
 
 **Error Message / Output:**
 ```
@@ -92,13 +120,13 @@ Three crashes (22:49:12, 22:49:14, 22:49:41); the app process died each time.
 `OverlayWindowHost.show()` set `ViewTreeLifecycleOwner`, `ViewTreeSavedStateRegistryOwner` and `ViewTreeViewModelStoreOwner` only on the child `ComposeView`. Slice 7 later wrapped that ComposeView in a `FrameLayout` (`OverlayRootView`), and that wrapper became the view passed to `WindowManager.addView`, so it is the window root. Compose resolves the ViewTree owners by starting at the window root and walking only upward, so the root had no owners and the ComposeView's own owners were never reached. Slice 5 worked because the ComposeView was itself the window root. The code compiled, so only a runtime window attach revealed the fault.
 
 **Resolution:**
-Set the same three owners on the wrapper root view (`OverlayRootView`) before `windowManager.addView`, in commit `0ab3b13`. Debug build OK. The device re-test on the owner's Galaxy S9+ is still pending.
+Set the same three owners on the wrapper root view (`OverlayRootView`) before `windowManager.addView`, in commit `0ab3b13`. Debug build OK. Verified on the owner's Galaxy S9+ on 2026-10-13: the overlay shows over another app and there is no crash after commit `0ab3b13`.
 
 **Lesson Learned:**
 1. When Compose is hosted in a WindowManager window, set the ViewTree owners on the view actually passed to `addView` (the window root), not only on the ComposeView.
 2. Adding a wrapper view later changes which view is the root. Re-check the owner setup whenever the view hierarchy handed to `WindowManager` changes.
 3. Hosted-window code needs a device run before it is called working. A successful compile proves little here, as ERR-011 and this entry show.
-4. Related to ERR-011 (same slice, both ViewTree owner setup). This is the second entry in the same class (Compose-in-Service ViewTree owner setup). Count is 2; the Patterns section is not populated yet (threshold is 3).
+4. Related to ERR-011 (same slice, both ViewTree owner setup). This is the second entry in the same class (Compose-in-Service ViewTree owner setup). Count is 2 at the time of writing; it reached 3 with ERR-013 (see Patterns).
 
 ---
 
@@ -434,7 +462,7 @@ Populate this section when the same class of error appears 3 or more times.
 
 | Pattern | Phase(s) | Entries | Mitigation |
 |---------|----------|---------|------------|
-| *(none yet)* | | | |
+| Compose hosted in a WindowManager overlay: ViewTree owners on the root view, focus-dependent IME calls, runtime-only failures; device run required | Compilation, Runtime | ERR-011, ERR-012, ERR-013 | Set ViewTree owners on the view passed to `addView`; trigger IME show and focus requests from the window-focus callback (not composition); treat any focusability toggle as asynchronous; verify hosted-window UI on a fresh install on a device, since a successful compile proves little |
 
 ---
 
