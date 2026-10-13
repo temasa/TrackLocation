@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.20  
+**Document Version:** 0.21  
 **Status:** Active  
 **Last Updated:** 2026-10-13  
 **Owner:** Product Manager  
@@ -67,7 +67,7 @@ When any controlled document changes, update both:
 | `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified (no version line in the ADR) | Project owner | 2026-10-11 |
 | `docs/adr/029-session-overlay-banner.md` | 1.2 | device-verified in part 2026-10-13; Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); implementation decisions 2026-10-13 (Decisions 1, 4, 9 amended; Decision 11 added; no version line in the ADR); amended 2026-10-13: circle shows litres, implemented build OK, device-unverified; code in progress (slices 1 to 9) | Project owner | 2026-10-13 |
 | `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted | Project owner | 2026-10-13 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.71 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.72 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
 | `docs/UI-SPEC.md` | 0.54 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-13 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
@@ -76,7 +76,7 @@ When any controlled document changes, update both:
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.20 | Active | Product Manager | 2026-10-13 |
+| `docs/DOCUMENT-CONTROL.md` | 0.21 | Active | Product Manager | 2026-10-13 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -98,6 +98,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-13 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.71/0.20 | 0.72/0.21 | ADR-030 revision hash backfill and code status; docs only. IMPLEMENTATION-PLAN §6 docs row `2f94294` and code row `6785a6b` (`---` placeholders cleared), code row Completed with static-only verification, Next Step updated. DOCUMENT-CONTROL register and this change log. | Claude Haiku 5.5 |
 | 2026-10-13 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/015, adr/025, adr/030 (new), adr/README, DOCUMENT-CONTROL | PRD 0.32, ARCHITECTURE 0.39, UI-SPEC 0.53, IMPLEMENTATION-PLAN 0.70, adr/015 1.2, adr/025 1.0, adr/030 —, adr/README 1.10, DOCUMENT-CONTROL 0.19 | PRD 0.33, ARCHITECTURE 0.40, UI-SPEC 0.54, IMPLEMENTATION-PLAN 0.71, adr/015 1.2 (no bump; status text), adr/025 1.0 (no bump; status text), adr/030 1.0 (new), adr/README 1.11, DOCUMENT-CONTROL 0.20 | ADR-030: offline completion for all orders (removes cash-only rule from ADR-025); docs only | Claude Haiku 5.5 |
 | 2026-10-13 | ERRORS-LOG, IMPLEMENTATION-PLAN, adr/029, DOCUMENT-CONTROL | ERRORS-LOG 0.10, IMPLEMENTATION-PLAN 0.69, adr/029 1.2, DOCUMENT-CONTROL 0.18 | ERRORS-LOG 0.11, IMPLEMENTATION-PLAN 0.70, adr/029 1.2 (no bump; no version line in the ADR), DOCUMENT-CONTROL 0.19 | Device verification of the ADR-029 session overlay on the owner's Galaxy S9+ (adb screenshots and dumpsys, debug APK after `0ab3b13` and `14523fc`). ERRORS-LOG: ERR-013 added (Fill-up keyboard not shown on first open; IME request before window focus; fixed in `14523fc`; one device run); ERR-012 marked verified on device (overlay shows over another app, no crash after `0ab3b13`); Patterns entry for Compose hosted in a WindowManager overlay (ERR-011, ERR-012, ERR-013). IMPLEMENTATION-PLAN §4 and §6: device verification recorded (verified and not-yet-verified lists; FUEL CONS shows `—/—` in the no-data state, a deviation from the single `—` design). adr/029: status line and new section "Device verification (2026-10-13)"; open items updated; device-verified in part. Register rows updated. | Claude Haiku 5.5 |
 | 2026-10-13 | ERRORS-LOG, DOCUMENT-CONTROL | ERRORS-LOG 0.9, DOCUMENT-CONTROL 0.17 | ERRORS-LOG 0.10, DOCUMENT-CONTROL 0.18 | ERR-012 added (ADR-029 overlay crash on show: `ViewTreeLifecycleOwner not found` from `OverlayRootView`; owners were set on the ComposeView but not on the WindowManager window root; fixed in `0ab3b13`, debug build OK, device re-test pending); quick-reference row and header bumped to 0.10. Related to ERR-011 (same ViewTree owner setup class; count 2, Patterns section not yet populated). Register row updated. | Claude Haiku 5.5 |
