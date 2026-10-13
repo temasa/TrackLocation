@@ -7,3 +7,4 @@ const val POLYLINE_WIDTH = 8f
 const val MAP_ZOOM = 15f
 
 const val CHANNEL_ID = "TRACK_GOOGLE_MAP"
+const val OVERLAY_CHANNEL_ID = "SESSION_OVERLAY"

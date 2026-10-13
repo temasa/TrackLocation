@@ -78,3 +78,21 @@ val ObserverGreenBg = Color(0x1F22C55E)
 // Fuel dock level colours (ADR-027 Decision 9)
 val FuelLowAmber = Color(0xFFD97706)       // < 6 L
 val FuelCriticalRed = Color(0xFFDC2626)    // < 3 L
+
+// Session overlay banner tokens (ADR-029, UI-SPEC §5d). Compose Color is AARRGGBB; pen values are RRGGBBAA.
+val OverlaySurfaceGlassDark = Color(0x9E0E2A20)     // ov-surface-glass dark, #0E2A209E
+val OverlaySurfaceGlassLight = Color(0xB8FFFFFF)    // ov-surface-glass light, #FFFFFFB8
+val OverlayHaloDark = Color(0xB3000000)             // ov-halo dark (text shadow)
+val OverlayHaloLight = Color(0xE6FFFFFF)            // ov-halo light (text shadow)
+val OverlayLabelDark = Color(0xF0FFFFFF)
+val OverlayLabelLight = Color(0xFF3F3F3F)
+val OverlayValueDark = Color(0xFFFFFFFF)
+val OverlayValueLight = Color(0xFF0A0A0A)
+val OverlayLoss = ObserverRed                       // reuses the existing loss red (DC2626)
+
+// Overlay Fill-up form (slice 7): opaque surfaces so the keyboard-driven form is readable over any app.
+val OverlayFormSurfaceDark = Color(0xFF0E2A20)      // ov-surface dark, solid
+val OverlayFormSurfaceLight = Color(0xFFFFFFFF)     // ov-surface light
+val OverlayInputDark = Color(0xFF1B3A2D)            // ov-input dark, slightly lighter than the surface
+val OverlayInputLight = Color(0xFFF1F5F3)           // ov-input light
+val OverlayDisabled = Color(0xFF6B7F76)             // ov-disabled (Save disabled fill)

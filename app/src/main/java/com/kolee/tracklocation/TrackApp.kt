@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import com.kolee.tracklocation.data.roomdb.TrackDatabase
 import com.kolee.tracklocation.utils.CHANNEL_ID
+import com.kolee.tracklocation.utils.OVERLAY_CHANNEL_ID
 
 class TrackApp: Application() {
 
@@ -64,5 +65,12 @@ class TrackApp: Application() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
         manager.createNotificationChannel(obdChannel)
+
+        val overlayChannel = NotificationChannel(
+            OVERLAY_CHANNEL_ID,
+            "Session overlay",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        manager.createNotificationChannel(overlayChannel)
     }
 }
