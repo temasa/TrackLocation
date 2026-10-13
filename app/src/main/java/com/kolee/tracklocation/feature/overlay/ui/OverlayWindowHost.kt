@@ -100,6 +100,10 @@ class OverlayWindowHost(
             setContent { content() }
         }
         val view = OverlayRootView(context, compose) { if (focusable) onDismissRequest() }
+        // Owners must be on the window root view too: Compose looks them up from the root (ERR-012).
+        ViewTreeLifecycleOwner.set(view, lifecycleOwner)
+        view.setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+        ViewTreeViewModelStoreOwner.set(view, lifecycleOwner)
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
