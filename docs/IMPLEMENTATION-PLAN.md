@@ -1264,6 +1264,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 | 2026-05-16 | CR-0002 — Session always-recording switch | Completed | `fe241a7` | Verified by user |
 | 2026-05-16 | CR-0001 — always-recorded sessions + canonical log | Completed | `776cd6e` | Verified by user |
 | 2026-05-14 | CR#1 — UI-first Sessions screen + 4-tab nav | Completed | `7ae11b9` | Static |
+| 2026-10-13 | Overlay session strip: value text 11sp→16.5sp (1.5x, value only; labels and collapsed circle unchanged) | Completed | `---` | Static review only; no Gradle build/device run (AGENTS §5a); on-device width/clipping check pending (user). |
 
 ---
 

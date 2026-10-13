@@ -202,7 +202,7 @@ private fun stripLabelStyle(colors: OverlayColors) = TextStyle(
 private fun stripValueStyle(colors: OverlayColors, color: Color = colors.value) = TextStyle(
     color = color,
     fontFamily = MonospaceFontFamily,
-    fontSize = 11.sp,
+    fontSize = 16.5.sp,
     fontWeight = FontWeight.Bold,
     letterSpacing = (-0.3).sp,
     shadow = Shadow(color = colors.halo, offset = Offset.Zero, blurRadius = 3f)
