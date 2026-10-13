@@ -22185,10 +22185,9 @@
                                 "blur": 3
                               },
                               "content": "12.4",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22239,10 +22238,9 @@
                                 "blur": 3
                               },
                               "content": "310",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22293,10 +22291,9 @@
                                 "blur": 3
                               },
                               "content": "12.3/8.1",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22347,10 +22344,9 @@
                                 "blur": 3
                               },
                               "content": "1.2jt",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22400,10 +22396,9 @@
                                 "blur": 3
                               },
                               "content": "8.4k",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22417,10 +22412,9 @@
                                 "blur": 3
                               },
                               "content": "/",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22437,10 +22431,9 @@
                                 "blur": 3
                               },
                               "content": "−",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22454,10 +22447,9 @@
                                 "blur": 3
                               },
                               "content": "6.0k",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "icon",
@@ -22726,10 +22718,9 @@
                                 "blur": 3
                               },
                               "content": "12.4",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22780,10 +22771,9 @@
                                 "blur": 3
                               },
                               "content": "310",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22834,10 +22824,9 @@
                                 "blur": 3
                               },
                               "content": "12.3/8.1",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22888,10 +22877,9 @@
                                 "blur": 3
                               },
                               "content": "1.2jt",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             }
                           ]
                         }
@@ -22941,10 +22929,9 @@
                                 "blur": 3
                               },
                               "content": "8.4k",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22958,10 +22945,9 @@
                                 "blur": 3
                               },
                               "content": "/",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22978,10 +22964,9 @@
                                 "blur": 3
                               },
                               "content": "−",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "text",
@@ -22995,10 +22980,9 @@
                                 "blur": 3
                               },
                               "content": "6.0k",
-                              "fontFamily": "Roboto Mono",
-                              "fontSize": 13.75,
-                              "fontWeight": "600",
-                              "letterSpacing": -0.6
+                              "fontFamily": "Roboto Condensed",
+                              "fontSize": 16.5,
+                              "fontWeight": "600"
                             },
                             {
                               "type": "icon",

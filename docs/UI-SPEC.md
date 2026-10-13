@@ -833,7 +833,7 @@ Use the frame names first; the ids are a secondary reference. No external design
 | Cost | COST | 40 | Sum of litres × pump price over orders | Compact, e.g. `1.2jt`, Rp implied |
 | Income | INCOME | ~76 (fills the rest) | Gross / net over orders | `8.4k/6.0k`, Rp implied; no spaces around `/` |
 
-- Labels are 9 px. Values are 13.75 px (1.25x, 2026-10-13) bold; 1.5x (16.5 px) overflowed the fixed-width cells on device (2026-10-13). Cell widths 48 / 32 / 62 / 40 with a 4 dp gap (2026-10-13, design frames Overlay/Strip Dark and Overlay/Strip Light in `ui-design.pen`). Do not go below these minimums.
+- Labels are 9 px. Values are 16.5 px (1.5x, 2026-10-13) bold, tracking 0, in the condensed system face `sans-serif-condensed` (Roboto Condensed in the design). The condensed face is what lets 1.5x fit: the monospace face at 1.5x overflowed the fixed-width cells on device (2026-10-13), and 1.25x monospace (13.75 px) was the earlier fallback. Cell widths 48 / 32 / 62 / 40 with a 4 dp gap (2026-10-13, design frames Overlay/Strip Dark and Overlay/Strip Light in `ui-design.pen`). Do not go below these minimums.
 - Compact Rupiah (FR-16): below 1,000 → `850`; 1,000 to 999,999 → `8.4k`; from 1,000,000 → `1.2jt`. A negative value carries a real minus sign `−`.
 - Value examples that must not clip: `12.45`, `12.5jt`, `15.0k/−3.5k`.
 

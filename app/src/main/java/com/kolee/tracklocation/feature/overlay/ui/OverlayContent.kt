@@ -1,5 +1,6 @@
 package com.kolee.tracklocation.feature.overlay.ui
 
+import android.graphics.Typeface
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -199,12 +201,14 @@ private fun stripLabelStyle(colors: OverlayColors) = TextStyle(
     shadow = Shadow(color = colors.halo, offset = Offset.Zero, blurRadius = 3f)
 )
 
+private val StripValueFontFamily = FontFamily(Typeface.create("sans-serif-condensed", Typeface.NORMAL))
+
 private fun stripValueStyle(colors: OverlayColors, color: Color = colors.value) = TextStyle(
     color = color,
-    fontFamily = MonospaceFontFamily,
-    fontSize = 13.75.sp,
+    fontFamily = StripValueFontFamily,
+    fontSize = 16.5.sp,
     fontWeight = FontWeight.Bold,
-    letterSpacing = (-0.3).sp,
+    letterSpacing = 0.sp,
     shadow = Shadow(color = colors.halo, offset = Offset.Zero, blurRadius = 3f)
 )
 
