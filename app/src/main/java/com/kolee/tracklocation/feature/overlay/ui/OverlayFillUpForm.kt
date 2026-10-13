@@ -105,7 +105,8 @@ private fun sanitizeLitres(raw: String): String {
 @Composable
 fun OverlayFillUpForm(
     onCancel: () -> Unit,
-    onSave: (litres: Double, price: Double?) -> Unit
+    onSave: (litres: Double, price: Double?) -> Unit,
+    windowHasFocus: Boolean = true
 ) {
     val colors = if (isSystemInDarkTheme()) FormDark else FormLight
     // Field state lives only while the form is composed, so closing the form resets it.
@@ -120,14 +121,17 @@ fun OverlayFillUpForm(
 
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) {
-        // The window only becomes focusable after this composition starts; the request may need a moment.
-        try {
-            focusRequester.requestFocus()
-        } catch (e: IllegalStateException) {
-            // Not attached yet: the IME is still requested through softInputMode.
+    // ERR-013: the window turns focusable asynchronously after this composes; showSoftInput is ignored until
+    // the window has input focus, so request focus + keyboard only once it reports window focus.
+    LaunchedEffect(windowHasFocus) {
+        if (windowHasFocus) {
+            try {
+                focusRequester.requestFocus()
+            } catch (e: IllegalStateException) {
+                // Not attached yet: the IME is still requested through softInputMode.
+            }
+            keyboard?.show()
         }
-        keyboard?.show()
     }
 
     val shape = RoundedCornerShape(16.dp)

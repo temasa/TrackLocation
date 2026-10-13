@@ -12,6 +12,9 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.ViewTreeViewModelStoreOwner
@@ -31,9 +34,15 @@ private const val CIRCLE_DEFAULT_Y_FRACTION = 0.25f
 private class OverlayRootView(
     context: Context,
     val compose: ComposeView,
-    private val dismissWhenFocusable: () -> Unit
+    private val dismissWhenFocusable: () -> Unit,
+    private val onWindowFocus: (Boolean) -> Unit
 ) : FrameLayout(context) {
     init { addView(compose) }
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        onWindowFocus(hasWindowFocus)
+    }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.keyCode == KeyEvent.KEYCODE_BACK) {
@@ -80,6 +89,11 @@ class OverlayWindowHost(
     private var dragging = false
     private var focusable = false
 
+    // ERR-013: true once the window has input focus (Compose snapshot state); the Fill-up form waits on it before
+    // requesting focus + keyboard, because setFocusable(true) is applied asynchronously by WindowManager.
+    var windowHasFocus by mutableStateOf(false)
+        private set
+
     val isShowing: Boolean get() = composeView != null
 
     /** Adds the window; returns false when the permission is missing or the system refuses it. */
@@ -99,7 +113,11 @@ class OverlayWindowHost(
             ViewTreeViewModelStoreOwner.set(this, lifecycleOwner)
             setContent { content() }
         }
-        val view = OverlayRootView(context, compose) { if (focusable) onDismissRequest() }
+        val view = OverlayRootView(
+            context, compose,
+            dismissWhenFocusable = { if (focusable) onDismissRequest() },
+            onWindowFocus = { windowHasFocus = it && focusable }
+        )
         // Owners must be on the window root view too: Compose looks them up from the root (ERR-012).
         ViewTreeLifecycleOwner.set(view, lifecycleOwner)
         view.setViewTreeSavedStateRegistryOwner(lifecycleOwner)
@@ -134,6 +152,7 @@ class OverlayWindowHost(
         params = null
         dragging = false
         focusable = false
+        windowHasFocus = false
         hideIme(view)
         try {
             windowManager.removeView(view)
@@ -180,12 +199,13 @@ class OverlayWindowHost(
      */
     fun setFocusable(value: Boolean) {
         focusable = value
+        if (!value) windowHasFocus = false
         val lp = params ?: return
         val view = composeView ?: return
         if (!value) hideIme(view)
         lp.flags = flags()
         lp.softInputMode = if (value) {
-            WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+            WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
         } else {
             WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED
         }

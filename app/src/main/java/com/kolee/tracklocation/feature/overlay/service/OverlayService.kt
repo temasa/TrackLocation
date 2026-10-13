@@ -155,6 +155,7 @@ class OverlayService : Service() {
     private fun showOverlay() {
         val host = windowHost ?: OverlayWindowHost(this, onDismissRequest = { closeFillUp() }) {
             OverlayContent(
+                windowHasFocus = windowHost?.windowHasFocus ?: false,
                 state = uiState.value,
                 onShrink = { setCollapsed(true) },
                 onExpand = { setCollapsed(false) },

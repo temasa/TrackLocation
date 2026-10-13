@@ -112,14 +112,15 @@ fun OverlayContent(
     onDragEnd: () -> Unit,
     fillUpOpen: Boolean = false,
     onFillUpCancel: () -> Unit = {},
-    onFillUpSave: (litres: Double, price: Double?) -> Unit = { _, _ -> }
+    onFillUpSave: (litres: Double, price: Double?) -> Unit = { _, _ -> },
+    windowHasFocus: Boolean = true
 ) {
     val colors = if (isSystemInDarkTheme()) DarkColors else LightColors
     if (state.collapsed) {
         // The circle never shows the form (the service also closes it on shrink).
         OverlayCircle(state, colors, onExpand, onDrag, onDragEnd)
     } else if (fillUpOpen) {
-        OverlayFillUpForm(onCancel = onFillUpCancel, onSave = onFillUpSave)
+        OverlayFillUpForm(onCancel = onFillUpCancel, onSave = onFillUpSave, windowHasFocus = windowHasFocus)
     } else {
         OverlayStrip(state, colors, onShrink, onFillUp)
     }
