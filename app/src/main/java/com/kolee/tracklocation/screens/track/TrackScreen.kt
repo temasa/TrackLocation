@@ -88,7 +88,7 @@ fun TrackScreen() {
     var isFollowing by remember { mutableStateOf(true) }
     var recenterTick by remember { mutableStateOf(0) }
 
-    // ADR-025: one-shot drop-off prompt for a cash-cancelled order (on-screen only; never auto-stops).
+    // ADR-025/ADR-030: one-shot drop-off prompt for a cancelled order of any payment type (on-screen only; never auto-stops).
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
         viewModel.dropOffEvents.collect {

@@ -19,7 +19,7 @@ object OrderCardParser {
         if (cancelButton != null && texts.contains(cancelButton) &&
             cancelMarker != null && texts.any { it.contains(cancelMarker, ignoreCase = true) }
         ) {
-            // ADR-025: distinct phase so cash-order cancels can keep the trip running.
+            // ADR-025/ADR-030: distinct phase so a cancelled order can keep the trip running.
             return OrderCard(phase = OrderPhase.CANCELLED)
         }
         // Cleared: the home screen (all bottom-nav labels present) means no order is being served.

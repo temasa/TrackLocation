@@ -28,7 +28,6 @@ import com.kolee.tracklocation.data.roomdb.TripPlannedRouteDao
 import com.kolee.tracklocation.data.roomdb.TripPlannedRouteEntity
 import com.kolee.tracklocation.feature.observer.trip.ORDER_ACTIVE_WINDOW_MS
 import com.kolee.tracklocation.feature.observer.trip.OrderCard
-import com.kolee.tracklocation.feature.observer.trip.GojekRules
 import com.kolee.tracklocation.feature.observer.trip.OrderPhase
 import com.kolee.tracklocation.feature.observer.trip.isTerminalOrderPhase
 import com.kolee.tracklocation.feature.observer.trip.route.OpenRouteServiceClient
@@ -91,14 +90,14 @@ class ShareViewModel(
     // ADR-022: id of the observer_trip row that owns the running trip, read at stop for the label.
     private var orderOwnedId: Long? = null
 
-    // ADR-025: a cash order cancelled in Gojek keeps the trip running. Pending state = the cancelled
-    // observer_trip id, its cached drop coordinates (null = unresolved) and the one-shot proximity watch.
+    // ADR-025/ADR-030: a cancelled order (any payment type) keeps the trip running. Pending state = the
+    // cancelled observer_trip id, its cached drop coordinates (null = unresolved) and the one-shot proximity watch.
     private var cancelledPendingId: Long? = null
     private var cancelledDrop: LatLng? = null
     private var dropWatchJob: Job? = null
     private val dropOffChannel = Channel<Unit>(Channel.CONFLATED)
 
-    /** One-shot: the driver came within [DROP_OFF_RADIUS_M] of a cash-cancelled order's drop-off. */
+    /** One-shot: the driver came within [DROP_OFF_RADIUS_M] of a cancelled order's drop-off (ADR-030). */
     val dropOffEvents: Flow<Unit> = dropOffChannel.receiveAsFlow()
 
     // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
@@ -220,8 +219,8 @@ class ShareViewModel(
         }
         // ADR-015 end: the order reaching FINISHED (Drop off, Cleared or dismissed) ends the trip
         // only if the order owns it; a trip already stopped manually just clears the flag.
-        // ADR-025: CANCELLED stops immediately as Cancelled unless the order is cash (Tunai); then
-        // the trip keeps recording and a drop-off proximity watch starts.
+        // ADR-025/ADR-030: CANCELLED never stops the trip directly; it keeps recording and a drop-off
+        // proximity watch starts (any payment type). The driver stops the trip via the Stop CTA or the snackbar action.
         viewModelScope.launch {
             observerTripDao.latestOrderFlow().collect { row ->
                 if (row == null || !orderOwnsTrip) return@collect
@@ -238,13 +237,7 @@ class ShareViewModel(
                     OrderPhase.CANCELLED.name -> {
                         if (cancelledPendingId == row.id) return@collect
                         val current = locationUiState.value
-                        val cashLabel = GojekRules.GOJEK.cashPaymentLabel
-                        val isCash = cashLabel != null && row.payment?.equals(cashLabel, ignoreCase = true) == true
                         if (!current.isTracking || current.isPaused) {
-                            orderOwnsTrip = false
-                            orderOwnedId = null
-                        } else if (!isCash) {
-                            stopActiveTrip(current, ORDER_STATUS_CANCELLED)
                             orderOwnsTrip = false
                             orderOwnedId = null
                         } else {
@@ -347,7 +340,7 @@ class ShareViewModel(
                 } else null
                 startFix ?: current.pathPoints.firstOrNull()
             } else null
-            // ADR-025: outcome. A pending cash-cancel stop is Completed·Offline within the radius of the
+            // ADR-025/ADR-030: outcome. A pending cancelled-order stop is Completed·Offline within the radius of the
             // cached drop, else Cancelled; manual trips (no order row) carry no status.
             var finalStatus: String? = null
             var finalOffline = false
