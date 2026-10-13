@@ -24,10 +24,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.kolee.tracklocation.navigation.BottomNavigationScreen
 import com.kolee.tracklocation.navigation.NavGraph
+import com.kolee.tracklocation.feature.overlay.ui.OverlayPermissionPromptHost
 import com.kolee.tracklocation.ui.components.FuelDockHost
 import com.kolee.tracklocation.ui.components.StatusBannerHost
 import androidx.core.content.ContextCompat
 import com.kolee.tracklocation.tracking.Actions
+import com.kolee.tracklocation.feature.overlay.OverlayVisibility
+import com.kolee.tracklocation.feature.overlay.service.OverlayService
 import com.kolee.tracklocation.tracking.TrackingService
 import com.kolee.tracklocation.ui.theme.TrackLocationTheme
 import com.google.android.gms.location.LocationServices
@@ -61,6 +64,23 @@ class MainActivity : ComponentActivity() {
         if (intent?.getBooleanExtra(EXTRA_OPEN_TRACK, false) == true) {
             intent.removeExtra(EXTRA_OPEN_TRACK)
             openTrackRequest++
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // ADR-029: foreground is the only moment Android 12+ lets us start OverlayService, so start it here when a
+        // session is active (it shows itself only after the app goes to the background).
+        if (OverlayVisibility.canDrawOverlays(this)) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                if ((application as TrackApp).sessionDao.getActiveSession() != null) {
+                    try {
+                        OverlayService.start(this@MainActivity)
+                    } catch (e: Exception) {
+                        android.util.Log.w("MainActivity", "OverlayService start not allowed", e)
+                    }
+                }
+            }
         }
     }
 
@@ -159,6 +179,7 @@ class MainActivity : ComponentActivity() {
                     // Banner overlays the nav graph; the Box adds no touch handling of its own.
                     Box(modifier = Modifier.padding(paddingValues)) {
                         NavGraph(navHostController = navController, modifier = Modifier)
+                        OverlayPermissionPromptHost()
                         StatusBannerHost(
                             navController = navController,
                             modifier = Modifier.align(Alignment.TopStart)

@@ -21,6 +21,17 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.kolee.tracklocation.feature.overlay.canDrawOverlays
+import com.kolee.tracklocation.feature.overlay.overlaySettingsIntent
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +47,17 @@ import com.kolee.tracklocation.navigation.Screen
 
 @Composable
 fun SettingsScreen(navController: NavController? = null) {
+    val context = LocalContext.current
+    // Re-read on resume: the user toggles this in system settings, outside the app.
+    var overlayAllowed by remember { mutableStateOf(canDrawOverlays(context)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) overlayAllowed = canDrawOverlays(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -94,6 +116,14 @@ fun SettingsScreen(navController: NavController? = null) {
                     supporting = "ELM327 Bluetooth telemetry",
                     iconId = R.drawable.baseline_settings_24,
                     onClick = { navController?.navigate(Screen.ObdSettingsScreen.route) },
+                )
+                SettingsRowDivider()
+                SettingsRow(
+                    label = "Session overlay",
+                    supporting = "Show fuel and income over other apps",
+                    value = if (overlayAllowed) "Allowed" else "Off",
+                    iconId = R.drawable.ic_fuel_dock,
+                    onClick = { context.startActivity(overlaySettingsIntent(context)) },
                 )
             }
         }
