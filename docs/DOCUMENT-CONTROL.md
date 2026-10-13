@@ -7,9 +7,9 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.13  
+**Document Version:** 0.14  
 **Status:** Active  
-**Last Updated:** 2026-10-11  
+**Last Updated:** 2026-10-13  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.29 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-11 |
-| `docs/ARCHITECTURE.md` | 0.37 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-11 |
-| `docs/adr/README.md` | 1.9 | Active (28 ADRs indexed) | Tech Lead | 2026-10-11 |
+| `docs/PRD.md` | 0.30 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-13 |
+| `docs/ARCHITECTURE.md` | 0.38 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-13 |
+| `docs/adr/README.md` | 1.10 | Active (29 ADRs indexed) | Tech Lead | 2026-10-13 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -63,18 +63,19 @@ When any controlled document changes, update both:
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
-| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.7 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device | Project owner | 2026-10-11 |
+| `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.8 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device; Revision 1.8 (2026-10-13): cross-reference to ADR-029 overlay banner as a second Fill-up entry point | Project owner | 2026-10-13 |
 | `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified (no version line in the ADR) | Project owner | 2026-10-11 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.65 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-11 |
-| `docs/UI-SPEC.md` | 0.50 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-11 |
-| `docs/WORKFLOW.md` | 0.1 | Ready to use | Project Team | 2026-06-15 |
+| `docs/adr/029-session-overlay-banner.md` | 1.0 | Accepted; planned, not yet implemented | Project owner | 2026-10-13 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.66 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
+| `docs/UI-SPEC.md` | 0.51 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-13 |
+| `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.9 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually) | Project Team | 2026-10-11 |
-| `AGENTS.md` | 0.4 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-07-06 |
+| `AGENTS.md` | 0.5 | Active (template + preserved project rules + imported utbk-platform governance §5b + back-ported create-project §5c/§8b) | Tech Lead | 2026-10-13 |
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.13 | Active | Product Manager | 2026-10-11 |
+| `docs/DOCUMENT-CONTROL.md` | 0.14 | Active | Product Manager | 2026-10-13 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -96,6 +97,9 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-13 | adr/027 | 1.7 | 1.8 | Revision 1.8: cross-reference to the ADR-029 session overlay banner as a second Fill-up entry point (Fill up action in the overlay banner docs); dock behaviour and model unchanged. Register row updated. | Claude Haiku 5.5 |
+| 2026-10-13 | AGENTS, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, WORKFLOW, adr/README, adr/029 (new register row), DOCUMENT-CONTROL | AGENTS 0.4, PRD 0.29, ARCHITECTURE 0.37, UI-SPEC 0.50, IMPLEMENTATION-PLAN 0.65, WORKFLOW 0.1, adr/README 1.9, DOCUMENT-CONTROL 0.13 | AGENTS 0.5, PRD 0.30, ARCHITECTURE 0.38, UI-SPEC 0.51, IMPLEMENTATION-PLAN 0.66, WORKFLOW 0.2, adr/README 1.10, DOCUMENT-CONTROL 0.14 | Register resynced to the version headers actually in each file (the headers were already ahead of the register for these documents; this entry does not change document content). Last Updated set to 2026-10-13. adr/README index note changed from 28 to 29 ADRs indexed. Register row added for `docs/adr/029-session-overlay-banner.md` (1.0, Accepted; planned, not yet implemented). | Claude Haiku 5.5 |
+| 2026-10-13 | DOCUMENT-CONTROL | 0.13 | 0.14 | Register rows and change-log row for the 2026-10-13 resync (see the row above). | Claude Haiku 5.5 |
 | 2026-10-11 | adr/027, adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.6/1.8/0.28/0.36/0.49/0.64/0.12 | 1.7/1.9/0.29/0.37/0.50/0.65/0.13 | OBD ledger code and RANGE distance window (ADR-027 Revision 1.7; owner decision after Revision 1.6). RANGE = fuel left × km/L over the last 1.0 km of moving driving (was a 60 s window): moving intervals only (covered km > 0, speed ≥ 2 km/h), trimmed to about 1.0 km, published at ≥ 0.2 km and > 0.01 L, otherwise the previous value is held; window cleared on adapter reconnect; `—` until a value is published since app start. ADR-027: Decision 5 rewritten, Decision 13 idle litres go to the ledger only, Alternatives 8 added (60 s window rejected), status, Related ADRs, open items and Revision 1.7 summary; code implemented 2026-10-11 (build OK; device checks open). ARCHITECTURE: DB v17 current, ledger implemented, no `onCreate` seeding, RANGE text. PRD FR-22: RANGE text and DB v17 status. UI-SPEC §5b: RANGE row and RANGE rules. IMPLEMENTATION-PLAN: §1 row, Next Step, §4 slice (What, Observable result, How to Verify, steps), §6 rows (docs `6b8aff6` backfilled; code row Completed, build and install OK, device checks pending). adr/README: 027 row summary; header read 1.7 while the register said 1.8, now 1.9. | Claude Haiku 5.5 |
 | 2026-10-11 | DOCUMENT-CONTROL | 0.12 | 0.13 | Register rows and change-log row for the ADR-027 Revision 1.7 update (see the row above). | Claude Haiku 5.5 |
 | 2026-10-11 | adr/027, adr/README, PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 1.5/1.7/0.27/0.35/0.48/0.63/0.11 | 1.6/1.8/0.28/0.36/0.49/0.64/0.12 | OBD fuel ledger and rolling RANGE (ADR-027 Revision 1.6, owner decisions 2026-10-11; docs only, code not started). ADR-027: Decision 2 (consumption source = `obd_ledger`), Decision 5 (RANGE = 1-minute rolling OBD window, in memory, held while stationary; assistant default flagged for owner override; since-Reset draft recorded as superseded), Decision 6 (`resetCoveredBaselineKm` dropped), Decision 13 (new: session-independent ledger with one column, idle burn counts with 0 km, ledger write outside the always-recording gate, migration v16 → v17, rejected alternatives incl. since-Reset average), consequences, open items. adr/README row 027 summary. PRD FR-22 (ledger, idle burn, RANGE rolling window). ARCHITECTURE (`obd_ledger` one column, RANGE, `MIGRATION_16_17` planned, DB v17 planned). UI-SPEC §5b (RANGE cell and `—` rules, low-confidence scope). IMPLEMENTATION-PLAN v0.64 (§1 row, §4 slice "OBD Fuel Ledger and Rolling RANGE (ADR-027 amendment)" with 11 How to Verify items and 4 steps, Next Step, §6 rows: docs Completed `---`, code Not started `---`). | Claude Haiku 5.5 |

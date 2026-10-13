@@ -7,14 +7,15 @@ description: AI-assistant instructions for TrackLocation (create-project schema 
 
 Instructions for AI Coding Assistants — TrackLocation
 
-**Document Version:** 0.4
+**Document Version:** 0.5
 **Status:** Active
-**Last Updated:** 2026-07-06
+**Last Updated:** 2026-10-13
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
 > Migrated 2026-06-15 to the create-project governance schema. Generic methodology is template-owned; TrackLocation-specific rules are preserved in §2, §3, §5a, and §12.
 > 2026-07-02: §5b imported from the `utbk-platform` project's governance rules (user directive — these rules take priority over the generic template where they overlap).
 > 2026-07-06: §5c and §8b back-ported from the `create-project` skill template (Task Tracking Consolidation, Decision & Documentation Workflow) — content that predated TrackLocation's 2026-06-15 migration but was not carried over.
+> 2026-10-13: Owner directive — the external design-handoff step (Google Stitch / Claude Design / Figma, Handoff Instructions, screenshot checklist) is replaced by designing in the project's `ui-design.pen` file through the Pencil MCP tools. §3 and §12 updated accordingly; the "design first, not in code" rule is unchanged.
 
 ---
 
@@ -68,7 +69,7 @@ Do not independently define:
 - The locked business rules in PRD §12 (sessions/trips, canonical log, switch placement, retention).
 - Navigation/IA changes (e.g., revisiting Observer Option B).
 - Data-retention or privacy rules (Observer retention, "raw face images never transmitted").
-- Major UI/UX behavior — produce a UI spec/design handoff first (§12 two-track model).
+- Major UI/UX behavior — design the screen as a frame in `ui-design.pen` first (§12 two-track model).
 
 Record gaps and ask for a product decision.
 
@@ -282,17 +283,22 @@ Errors during compilation, build, deployment, or verification are permanent lear
 For every CR or implementation phase, distinguish:
 
 1. **Code implementation work** → Codex CLI / Claude Code / Cursor / Windsurf.
-2. **UI specification / design handoff work** → Claude Design / Google Stitch / Figma.
+2. **UI design work** → the project design file `ui-design.pen`, edited directly through the Pencil MCP tools.
 
-Do not mix design-only handoff instructions with source-code implementation unless explicitly requested. New UI needs a design-handoff spec **first**; don't invent visual design directly in code.
+Do not mix design work with source-code implementation unless explicitly requested. New UI needs a design **first**: the screen or component is drawn as a frame in `ui-design.pen`, and the code follows that pen design. Don't invent visual design directly in code.
 
-### UI Screenshot Attachment Rule (always follow)
+### Design file access (always follow)
 
-When producing/updating any UI spec or design handoff (Google Stitch, Figma, Claude Design), always suggest which current-app screenshots to attach to preserve the visual language. Prefer baseline-establishing screens (bottom nav, top app bar, list density, cards, typography, relevant control surfaces). Skip empty/minimal screens; tailor the list to the specific change.
+`ui-design.pen` is encrypted. Access it **only** through the Pencil MCP tools (`mcp__pencil__*`); never Read or Grep a `.pen` file.
 
-### Design handoff spec template
+### UI design workflow (replaces the former external design handoff)
 
-Every handoff spec includes a **Handoff Instructions** section: step-by-step process, screenshot checklist, tool recommendations, and a copy-paste-ready prompt.
+1. Design the screen or component as a frame in `ui-design.pen` via the Pencil MCP tools. Edit the existing frame when one exists; do not duplicate it.
+2. Record the frame name(s) in the matching `docs/UI-SPEC.md` section. Those frames are the visual source of truth for that section.
+3. Obtain explicit user approval of the design before implementation starts (§8b, WORKFLOW §3).
+4. Implement in code to match the approved pen frames.
+
+There is no separate handoff document, Handoff Instructions section, screenshot checklist, or copy-paste prompt for external tools.
 
 ---
 

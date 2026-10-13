@@ -20,7 +20,7 @@ Use `AGENTS.md` as the canonical project instruction source.
 - Do not implement unrelated future phases unless explicitly requested.
 
 ### Design & Planning Tools
-- **Design tool:** Google Stitch / Claude Design (external handoff). New UI gets a design-handoff spec first (AGENTS.md §12). See `docs/WORKFLOW.md §3`.
+- **Design tool:** Pencil MCP — edit `ui-design.pen` directly via the Pencil MCP tools (never Read/Grep the encrypted `.pen` file). New UI is designed as frames there first (AGENTS.md §12). See `docs/WORKFLOW.md §3`.
 - **Product docs:** `docs/PRD.md`
 - **Implementation plan / contract:** `docs/IMPLEMENTATION-PLAN.md`
 - **Decision log:** `docs/adr/` (+ AGENTS.md §8a for when docs get updated)

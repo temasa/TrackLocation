@@ -7,8 +7,8 @@ description: Human-facing development workflow guide — references AGENTS.md fo
 # Development Workflow
 ## TrackLocation
 
-**Document Version:** 0.1  
-**Last Updated:** 2026-06-15 11:44:58
+**Document Version:** 0.2  
+**Last Updated:** 2026-10-13 (§3 design handoff replaced by Pencil MCP / ui-design.pen)
 
 Human-facing guide for working with Claude across the full development cycle. Claude's behavioral rules (audit log format, commit format, git safeguard, blocker protocol) live in `AGENTS.md` — this doc references them rather than repeating them.
 
@@ -54,35 +54,17 @@ See AGENTS.md §8b for the full protocol. **Trigger language:**
 
 ## 3. UI Design Workflow
 
-Design mode is set by **Design tool** in `CLAUDE.md`. Two paths:
-
-### Mode A — Claude as designer (no external tool needed)
-
-Claude renders mockups inline using HTML/SVG (`show_widget` or `/prototype` skill).
-
-```
-1. You: describe the screen or component
-2. Claude: renders a visual mockup inline in the chat
-3. You: give feedback — iterate until satisfied
-4. You: "Approved" or "Finalize" ← Claude waits for this explicitly
-5. Claude: records the agreed design in docs/UI-SPEC.md
-6. Claude: implements in code + builds
-   — after task: marks Completed in IMPLEMENTATION-PLAN.md §6 (with verification) + commits
-```
-
-### Mode B — External design tool (Google Stitch, Figma, etc.)
-
-Claude proposes/edits designs in the chosen tool; the link is recorded in `docs/UI-SPEC.md §8`.
+The design tool is set by **Design tool** in `CLAUDE.md`: Pencil MCP, editing the project design file `ui-design.pen`. The external design handoff (Google Stitch / Claude Design / Figma) is retired (owner directive, 2026-10-13). `.pen` files are encrypted, so Claude accesses them only through the Pencil MCP tools.
 
 ```
 1. You: describe the component and which screen
-2. Claude: proposes/edits the design in your chosen tool
-   — edits the existing screen; does not regenerate it from scratch
-3. You: review in the design tool (link recorded in UI-SPEC.md §8)
+2. Claude: draws or edits the screen as a frame in ui-design.pen (Pencil MCP)
+   — edits the existing frame; does not duplicate or regenerate it from scratch
+3. You: review the frame in ui-design.pen
 4. Iterate until satisfied
 5. You: "Approved" or "Finalize" ← Claude waits for this explicitly
-6. Claude: updates docs/UI-SPEC.md with the agreed design
-7. Claude: implements in code + builds
+6. Claude: records the frame name(s) as the visual source of truth in docs/UI-SPEC.md
+7. Claude: implements in code to match the approved pen frames + builds
    — after task: marks Completed in IMPLEMENTATION-PLAN.md §6 (with verification) + commits
 ```
 
@@ -107,7 +89,7 @@ git stash push -u -m "pre-task: <description>" && git stash apply
 
 | Mistake | Fix |
 |---------|-----|
-| Regenerating a screen from scratch instead of editing it (Mode B) | Edit the existing screen — regenerating creates a duplicate and loses prior work |
+| Regenerating a screen from scratch instead of editing it in ui-design.pen | Edit the existing frame — regenerating creates a duplicate and loses prior work |
 | Not naming which screen to edit | Always say the screen name |
 | Leaving a task uncommitted | Every task ends with a commit — see AGENTS.md §5 |
 | Resolving a blocker inline | Write it to IMPLEMENTATION-ISSUES.md first — see AGENTS.md §9 |

@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.37
+**Document Version:** 0.38
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-11
+**Last Updated:** 2026-10-13
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -178,6 +178,34 @@ ObserverViewModel.isOurServiceEnabled)        └── Collapse state: in-memor
 - **State:** the collapsed or expanded choice and the "re-expand on problem change" rule are held in memory only. They reset on app restart and are not written to Room or DataStore.
 - **Schema:** no Room change. The banner reads existing state and writes nothing.
 - **Service isolation:** the banner does not call `TrackingService`, `ObdPollingService` methods or `ObserverAccessibilityService` methods; it only observes state. GPS tracking is unaffected.
+
+### Session Overlay Banner (ADR-029, planned — not implemented)
+
+A system overlay drawn above other apps while a recording session is active. It is separate from the in-app `StatusBannerHost` (ADR-028), which is not changed.
+
+```
+Session state (session active / ended)  ──┐
+ProcessLifecycleOwner (app foreground?) ──┤→ SessionOverlayService (foreground service)
+                                          │     ├── visibility gate: session active AND app in background
+Session aggregator (session-scoped Flow)──┤     ├── WindowManager view, TYPE_APPLICATION_OVERLAY
+  ├── fuel left (ADR-027 obd_ledger)      │     │     ├── strip: fuel left · range · avg / inst km/L · cost · gross · net
+  ├── range (ADR-027 rolling RANGE)       │     │     └── circle (shrunk): draggable, position in DataStore
+  ├── avg / inst km/L (ADR-007, ADR-024)  │     └── permission gate: Settings.canDrawOverlays
+  └── per-order cost / gross / net (FR-16)┘
+```
+
+- **Permission:** `SYSTEM_ALERT_WINDOW` ("Display over other apps"). `Settings.canDrawOverlays` is checked before the view is added. The app asks once, from Settings or on the first session (ADR-029 Decision 6), with a deep link to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`. If the permission is not granted, no overlay is added and tracking and the in-app UI are unchanged.
+- **Service and window:** a foreground service hosts the overlay view through `WindowManager` with `TYPE_APPLICATION_OVERLAY`. It starts when a session becomes active and stops when the session ends, and the view is removed at that point. It needs a notification channel (name and wording not yet decided, ADR-029 open items). The service does not call or change `TrackingService`.
+- **Visibility gate:** the overlay is visible only while a session is active AND the app process is in the background. `ProcessLifecycleOwner` ON_START hides it and ON_STOP shows it. No `UsageStats` permission is used.
+- **Session aggregator:** a session-scoped flow that reads existing data only and adds no store. Fuel left and RANGE come from the session-independent OBD ledger and the rolling-distance RANGE (ADR-027). Consumption comes from the session average and instant km/L (ADR-007, ADR-024). Per order, over all orders of the current session: cost = trip litres × pump price (the same rule as FR-16 in `GojekOrderCard`), gross = `earningsRp`, net = gross − cost. An order that lacks OBD litres or earnings is excluded from the totals and the strip shows a **partial** flag. A negative net is shown as a loss.
+- **Circle position:** the shrunk circle's x and y are persisted in **DataStore Preferences**. They are clamped to the screen bounds on read and after a rotation or screen-size change, so the circle stays reachable. Tapping the circle restores the strip at the same place.
+- **Fill-up action (owner decision 2026-10-13):** the strip has a **Fill-up** action that opens an inline form inside the overlay: litres (required, greater than 0) and price (optional, pre-filled with the current effective price). **Save** calls the existing ADR-027 fill-up use case, which records the event in the session-independent OBD ledger. A changed price calls the existing ADR-008 price save path, which appends one effective-now `fuel_price` row; an unchanged price writes no row. Invalid litres are rejected in the form and nothing is written. The overlay adds no store, schema, repository or permission beyond `SYSTEM_ALERT_WINDOW`.
+- **Focusable toggle:** the overlay view is normally `FLAG_NOT_FOCUSABLE`, so touches pass through to the app below and the keyboard is not needed. While the Fill-up form is open, the service clears `FLAG_NOT_FOCUSABLE` on the same view with `WindowManager.updateViewLayout`, so the soft keyboard can receive input. The flag is set again when the form closes by Cancel, when Save succeeds, when the strip is shrunk, and when the view is removed (session end) or hidden by the visibility gate. The shrunk circle is never focusable.
+- **Form placement:** the keyboard does not resize an overlay window (`adjustResize` does not apply to `TYPE_APPLICATION_OVERLAY`), so the form is top-anchored in the upper part of the screen and kept short enough to stay clear of the soft keyboard. The keyboard's top edge is not known in advance; the exact layout is decided at implementation and confirmed on device (plan How to Verify). If a top-anchored form still cannot stay clear of the keyboard on the test device, raise a blocker (AGENTS §9).
+- **Reuse and live update:** no new store. The strip's fuel left and range are read from the same ledger flow as the session aggregator, so a saved fill-up updates both values immediately, without reopening the overlay. The event is also visible in the in-app Fuel Dock history, because both paths write to the same ledger.
+- **Schema: none.** No Room entity, no DAO, no migration (ADR-029 Decision 7). The overlay is display-only except for the Fill-up action, whose only writes are the fill-up event and the optional price row through the existing ADR-027 and ADR-008 paths. It does not write to the canonical location log or the sessions/trips model. PRD §12 locked rules are not changed.
+- **Design:** the visual spec is UI-SPEC §5d; the `ui-design.pen` frames are pending (no external handoff).
+- **Relation to `StatusBannerHost` (ADR-028):** two different surfaces. `StatusBannerHost` is in-app, mounted in `MainActivity`, and disappears when TrackLocation leaves the foreground. The session overlay is a system window that is shown only when TrackLocation is in the background. They do not share a view or a host.
 
 ### Gojek Order-Card Takeover Flow (ADR-014, amended by ADR-015, extended by ADR-016)
 
