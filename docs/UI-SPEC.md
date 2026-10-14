@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.56
+**Document Version:** 0.57
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-14
 **Owner:** Product Manager / UX Designer
@@ -207,9 +207,9 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 **Card states:**
 - **Pickup phase** — Order card displays: pickup name + address, drop name + address, payment method, earnings (Rp).
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
-- **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared and Dismissed. For any cancelled order, in Gojek, the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-030, amending ADR-025). The card's replacement by `TripPanel` in that cancelled state is the proposed default and is an open question (ADR-025).
+- **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared only within 150 m of known drop coordinates (otherwise it keeps recording, ADR-031); Stop trip always ends it. For any cancelled order, in Gojek, the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-030, amending ADR-025). The card's replacement by `TripPanel` in that cancelled state is the proposed default and is an open question (ADR-025).
 
-**Stop trip:** The order card carries a **Stop trip** control (it replaces the former "Dismiss" label; behavior is unchanged). Tapping it ends the order and the trip: the order row is set to FINISHED and the trip is saved as `COMPLETED` through the normal persist-then-stop sequence. It is the only way to end an active order's trip by hand, because the card replaces `TripPanel` and its Stop CTA while an order is active. If no trip is live, the control still closes the order. Visual: label and glyph swap on the existing control only (no new layout or visual language). The `ui-design.pen` order-card frame was NOT updated on 2026-10-14 because the Pencil MCP app was unreachable; update the frame's control label to "Stop trip" when Pencil is available.
+**Stop trip:** The order card carries a **Stop trip** control (it replaces the former "Dismiss" label; behavior is unchanged). Tapping it ends the order and the trip: the order row is set to FINISHED and the trip is saved as `COMPLETED` through the normal persist-then-stop sequence. It ends the trip directly (no distance check). It is the only way to end an active order's trip by hand, because the card replaces `TripPanel` and its Stop CTA while an order is active. If no trip is live, the control still closes the order. Visual: label and glyph swap on the existing control only (no new layout or visual language). The `ui-design.pen` order-card frame was NOT updated on 2026-10-14 because the Pencil MCP app was unreachable; update the frame's control label to "Stop trip" when Pencil is available.
 
 **Card interactions (expand/collapse + strip-only) — 2026-10-06**
 
@@ -236,6 +236,7 @@ Shown on the Track screen only when a Gojek order was cancelled in Gojek (any pa
 
 - **Trigger:** first fix within 150 m of the drop-off after the cancel. Shown **once per trip**; it does not reappear if the driver leaves and returns to the point.
 - **Text:** "Order cancelled in Gojek. You're at the drop-off. Stop trip?"
+- **Early-finished order (ADR-031):** the same snackbar also appears for an order finished in Gojek ("Selesai" or Cleared) whose trip was kept recording because the driver was farther than 150 m from the drop-off, with the text "Order finished in Gojek. You're at the drop-off. Stop trip?". Same action, trigger, placement, duration and visual; wording only. It is not shown when the drop coordinates are unknown.
 - **Action:** one text action, **Stop**. Tapping it runs the normal stop sequence (persist, then stop). Stopping within 150 m of the drop-off saves the trip as `Completed · Offline`; otherwise it saves as `Cancelled` (ADR-025 stop rules).
 - **Placement:** bottom of the Track screen, above the fuel dock (§5b), the bottom navigation and the order card/trip panel. Non-blocking; it does not cover the map controls or take focus from the map.
 - **Duration:** indefinite. It never auto-dismisses by timer and never auto-stops the trip. Ignoring it does nothing; the normal Stop CTA stays available. Swiping it away also does nothing to the trip.
@@ -268,7 +269,7 @@ Shown on the Track screen only when a Gojek order was cancelled in Gojek (any pa
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
-**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Stopped from the card (Stop trip control) (ADR-014, ADR-015; cancel never auto-stops, ADR-030 amending ADR-025); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared only within 150 m of known drop coordinates (otherwise the trip keeps recording) and Stop trip always ends the trip from the card (Stop trip control) (ADR-014, ADR-015; cancel never auto-stops, ADR-030 amending ADR-025; early finish, ADR-031); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 

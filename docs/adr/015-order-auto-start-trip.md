@@ -4,6 +4,8 @@
 **Date:** 2026-10-06
 **Decided By:** Project owner + Claude Code
 
+**Amended 2026-10-14 by ADR-031:** a Gojek-originated FINISHED no longer always stops the trip; it stops only within 150 m of known drop coordinates, otherwise the trip keeps recording. See ADR-031.
+
 **Amended 2026-10-08:** vocabulary table and wording aligned with code - the trip ends when the order row reaches FINISHED, including at the Selesai screen.
 
 **Amended 2026-10-14:** the order card's "Dismiss" control is relabelled "Stop trip". Behavior is unchanged (it still calls dismiss(id) and ends the trip). No new ADR.

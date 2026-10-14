@@ -6,6 +6,8 @@
 
 **Amends:** ADR-025 decisions 3 (cash-order detection) and 4 (stop rules, cancel rows), and ADR-015 cancel rule (Amendment 2026-10-10). Everything else in ADR-025 and ADR-015 is unchanged. See ADR-025 "Amended 2026-10-13 by ADR-030".
 
+**Amended 2026-10-14 by ADR-031:** a Gojek-originated FINISHED no longer always stops the trip; it stops only within 150 m of known drop coordinates, otherwise the trip keeps recording. See ADR-031.
+
 ## Context
 
 ADR-025 limited the cancel-keeps-recording behaviour to cash orders (payment `Tunai`). A cancelled non-cash order was still stopped immediately, which could end the trip before the driver reached the drop-off, where the job might still be finished offline.

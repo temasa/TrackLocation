@@ -7,7 +7,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 # Implementation Plan
 ## TrackLocation
 
-**Version:** 0.74
+**Version:** 0.75
 **Status:** Active (migrated from implementation-plan.md + progress.md)
 **Last Updated:** 2026-10-14
 **Approach:** Incremental end-to-end vertical slices; two-track model (code work + UI design-handoff work) per AGENTS.md §12.
@@ -74,6 +74,7 @@ description: Implementation Plan — TrackLocation (phases, slices, task log, se
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.75 | 2026-10-14 | Early finish keeps trip recording (ADR-031, amends ADR-030/015/025; docs only in this entry): a Gojek FINISHED on an order-owned running trip auto-stops only within 150 m of a known drop-off; farther away or with an unresolved drop the trip keeps recording (one snackbar only for a known drop, once within 150 m); the order card Stop trip control stops the trip directly and then closes the row; a new order accepted while a kept-open trip records is ignored for trip purposes. New §4 slice "Early Finish Keeps the Trip Recording (ADR-031)", new §6 row (In Progress, Git Revision `---`). ARCHITECTURE 0.41 → 0.42 (TRIP END section). Code later: `ShareViewModel.kt`, `TrackScreen.kt`, `GojekOrderCard.kt`. DOCUMENT-CONTROL not updated in this entry. |
 | 0.74 | 2026-10-14 | Order card: `Dismiss` control relabelled `Stop trip` (stop glyph) (UI-SPEC §3e, PRD FR-16, ARCHITECTURE, ADR-015 amendment; docs only in this entry). No behavior change: it still calls `dismiss(id)`, which sets the order FINISHED; the trip is then stopped by the normal stop sequence and saved COMPLETED. Code touches later: `screens/track/components/GojekOrderCard.kt` and `screens/track/TrackScreen.kt` (label, glyph and contentDescription only). New §6 row (In Progress, Git Revision `---`). DOCUMENT-CONTROL not updated in this entry. |
 | 0.73 | 2026-10-14 | Status banner tap-through amended (ADR-028 Revision 2026-10-14, docs only): chips navigate in-app to OBD Settings / Observer Settings instead of system settings; banner slice How to Verify items 11 and 12 reworded (not yet verified on device); new §6 row for the code change (Completed (code), Git Revision `---`; verification records the `:app:assembleDebug` build and APK install, tap-through pending). DOCUMENT-CONTROL 0.21 → 0.22 (register and change log). |
 | 0.72 | 2026-10-13 | ADR-030 hash backfill and code status (docs only): §6 docs row Git Revision `---` → `2f94294` and code row `---` → `6785a6b`; code row status Completed with static-only verification (no build, test or device run; device checks are the owner's); Next Step heading and sentence now state docs and code committed (not built or run). §4 ADR-030 slice has no status line, so it is unchanged. DOCUMENT-CONTROL 0.20 → 0.21 (register and change log). |
@@ -833,6 +834,34 @@ The active and historical slice contracts (OBD Phase 1 Slices 1–4, Observer Ph
 
 ---
 
+### Early Finish Keeps the Trip Recording (ADR-031)
+
+**What it does:** Changes the Gojek FINISHED rule for order-owned running trips (Selesai, or the Gojek home screen "Cleared"), for all orders. The distance test uses the drop-off radius of 150 m (`DROP_OFF_RADIUS_M`) to the cached drop coordinates (`OrderRouteController.cachedGeo`). Within 150 m of a known drop-off the trip auto-stops as before (COMPLETED, `orderOffline=false`). Farther from a known drop-off the trip keeps recording and one drop-off snackbar appears when the driver first gets within 150 m ("Order finished in Gojek. You're at the drop-off. Stop trip?"). With an unresolved drop the trip keeps recording with no snackbar, and the driver ends it manually. The order card's **Stop trip** control, the **Stop** CTA and the snackbar **Stop** always stop the trip; the Stop trip control now stops the trip directly and then closes the order row (formerly it only set the row FINISHED). A manual stop of a kept-open trip saves COMPLETED, with `orderOffline=true` only within 150 m of the drop. A new order accepted (Taken) while a kept-open trip records is ignored for trip purposes (no start, no adoption). Amends ADR-030, ADR-015 and ADR-025; rules: ADR-031.
+
+**Observable result:** Pressing Selesai in Gojek far from the drop-off keeps the trip recording: the order card disappears and the trip panel with **Stop** shows. Within 150 m of the drop-off the snackbar appears once. Tapping Stop saves the trip as Completed (with the Offline chip when within 150 m). Selesai within 150 m stops the trip at once, as before. With an unresolved drop the trip records until the driver stops it.
+
+**How to Verify:**
+
+1. (Far finish keeps recording) Take an order with resolved drop coordinates and press **Selesai** in Gojek while more than 150 m from the drop-off: the trip keeps recording (timer and distance keep moving), the order card is gone, and the trip panel with **Stop** is visible. No snackbar yet.
+2. (Snackbar once, Stop saves offline) Drive or mock the position to within 150 m of the drop-off with TrackLocation on the Track screen: the snackbar "Order finished in Gojek. You're at the drop-off. Stop trip?" appears once. Tap **Stop**: the Trips row shows `Completed · Offline`.
+3. (Finish within radius unchanged) Take an order and press **Selesai** within 150 m of the drop-off: the trip stops at once, as before, and the row shows `Completed` (not Offline).
+4. (Unresolved drop) Take an order whose drop coordinates did not resolve (for example, no network at takeover) and press **Selesai**: the trip keeps recording, no snackbar appears, and the **Stop** CTA ends it, saved as `Completed` without Offline.
+5. (New order ignored) While a kept-open trip records, accept a new order (Taken): no new trip starts, the old trip keeps recording, and the new order is not adopted.
+6. (Stop trip control) Tap **Stop trip** on the order card while more than 150 m from the drop-off: the trip stops immediately, saved as `Completed` without Offline, and the order card closes.
+7. (Device checks are the owner's) Items 1 to 6 are device checks run by the project owner; the assistant does not run them (AGENTS.md §5a). Record the results in §6 (Verification column) and in ADR-031.
+
+**Implementation steps (numbered, What/How; code not started, pending approval):**
+
+1. **`ShareViewModel.kt` FINISHED handler (around the existing `stopActiveTrip(status=COMPLETED, offline=false)` call):** for a known drop-off farther than 150 m, do not stop; record an early-finish pending state and call the drop-off watch. For an unresolved drop, do not stop and set no snackbar. Within 150 m keep the immediate auto-stop.
+2. **`ShareViewModel.kt` pending state:** generalize the cancel pending state (`cancelledPendingId`, `cancelledDrop`, `dropWatchJob`, `dropOffChannel`) into one in-memory early-finish pending state holding the pending order id and the drop coordinates or null. The drop-off event carries a kind (`CANCELLED` or `FINISHED_EARLY`). The order-end collector ignores rows whose id is not the pending order's id while a kept-open trip exists. A Taken row for a new order is ignored for trip purposes while a kept-open trip is recording.
+3. **`ShareViewModel.kt` stop paths:** the snackbar Stop and the Stop CTA stop the kept-open trip with `orderStatus = COMPLETED` and `orderOffline = true` only within 150 m of the drop, otherwise `orderOffline = false`.
+4. **`TrackScreen.kt`:** pick the snackbar wording from the event kind (`CANCELLED` keeps the existing "Order cancelled in Gojek" text; `FINISHED_EARLY` shows the new text). Snackbar and Stop action unchanged otherwise.
+5. **`screens/track/components/GojekOrderCard.kt` and `TrackScreen.kt` (Stop trip control):** the control calls the stop path directly (regardless of distance), then closes the order row, instead of only setting the row FINISHED through `dismiss(id)`.
+
+**Schema: none. No migration (Room stays at v14). No new permission.**
+
+---
+
 ### Observer — Geocode Guard & Accepted-Point Origin (ADR-017 Amendment 2026-10-11)
 
 **What it does:** Stops the order route overlay (ADR-016/017) from drawing a route to a far-away wrong place, and makes the planned route start where the order was accepted. (1) Every geocode request carries a 50 km boundary circle around the driver's current location; an accepted result more than 50 km away (`MAX_GEOCODE_DISTANCE_KM`) is rejected client-side and the ladder moves to the next step. If all steps fail, nothing is drawn (fail-soft). (2) The ladder is reordered: full normalised address with city first; place name plus last 1–2 address segments second; house-number-stripped and progressively trimmed third; street-only last. The bare place-name-only candidate is removed. (3) The planned route origin is the accepted point: the trip-start fix (`activeTripStartLocationId` row, else first recorded path point, else current live fix as last resort), then pickup → drop, fetched once and frozen. (4) Diagnostics log each ladder step and route fetch, with no address text, coordinates or key. Layer/confidence rules, the 3-attempt quota, the 60 s retry, runtime route, visuals, attribution and privacy are unchanged. No schema change. Rules: ADR-017 Amendment 2026-10-11.
@@ -1144,6 +1173,7 @@ Status: `Completed` | `In Progress` | `Blocked`. Full narrative for each entry i
 
 | Date | Task | Status | Git Revision | Verification |
 |------|------|--------|--------------|--------------|
+| 2026-10-14 | Docs+Code - ADR-031 early finish keeps trip recording (ADR-031, PRD FR-16, UI-SPEC 3e, ARCHITECTURE) | In Progress | --- | Not verified by the assistant; on-device checks are the owner's (see slice How to Verify) |
 | 2026-10-14 | Docs+Code — Order card: relabel Dismiss as Stop trip (UI-SPEC §3e, PRD FR-16, ARCHITECTURE, ADR-015 amendment); no behavior change. The control still calls `dismiss(id)` (order set FINISHED); the trip is stopped by the normal stop sequence and saved COMPLETED. Code later: `GojekOrderCard.kt` and `TrackScreen.kt` (label, glyph and contentDescription only). | Implemented - build OK (assembleDebug); installed on device 2026-10-14; on-device verification by the project owner (not performed by the assistant) | 7a1185d | Not verified by the assistant; on-device checks are the owner's. How to Verify: (1) accept/Take a Gojek order so the order card shows with the trip strip; (2) the card shows a "Stop trip" control (not "Dismiss"); (3) tap it; (4) the trip stops, appears in the Trips list as COMPLETED with the order header, and the normal trip panel returns. Expected: trip saved COMPLETED and TripPanel returns. Not run: no build, test or device run in this docs entry (AGENTS 5a). |
 | 2026-10-14 | Status banner tap-through: chips navigate to OBD Settings / Observer Settings instead of system settings (ADR-028 rev 2026-10-14) | Completed (code) | 63d0ba7 | :app:assembleDebug BUILD SUCCESSFUL and debug APK installed on the Galaxy S9+ 2026-10-14; tap-through to OBD Settings / Observer Settings not yet verified on device (runtime check pending, owner) |
 | 2026-10-14 | Overlay FUEL CONS: use session avg km/L (`avgKmL`) instead of `tripAvgKmL` in `OverlayStateHolder` (ADR-029, UI-SPEC §5d). `tripAvgKmL` is null when no GPS trip is tracking, so the strip showed a dash while the session had an average. One-line code change; no schema change, no migration. | Completed (code) | 2bdda67 | Built and installed on device 2026-10-14; user confirmed the strip shows the session average between trips |

@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.23  
+**Document Version:** 0.24  
 **Status:** Active  
 **Last Updated:** 2026-10-14  
 **Owner:** Product Manager  
@@ -35,8 +35,8 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.35 | Active (migrated from product-spec.md + change-requests.md; FR-23 tap-through amended 2026-10-14) | Product Manager | 2026-10-14 |
-| `docs/ARCHITECTURE.md` | 0.41 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-14 |
+| `docs/PRD.md` | 0.36 | Active (migrated from product-spec.md + change-requests.md; FR-23 tap-through amended 2026-10-14) | Product Manager | 2026-10-14 |
+| `docs/ARCHITECTURE.md` | 0.42 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-14 |
 | `docs/adr/README.md` | 1.11 | Active (29 ADRs indexed) | Tech Lead | 2026-10-13 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
@@ -51,7 +51,7 @@ When any controlled document changes, update both:
 | `docs/adr/012-obd-accumulation-recording-state.md` | 1.1 | Accepted (out-of-scope item resolved by ADR-024 2026-10-09) | Project owner | 2026-10-09 |
 | `docs/adr/013-observer-trip-extraction.md` | 1.0 | Accepted | Project owner | 2026-10-05 |
 | `docs/adr/014-gojek-order-card-takeover.md` | 1.0 | Accepted (amended by ADR-015) | Project owner | 2026-10-05 |
-| `docs/adr/015-order-auto-start-trip.md` | 1.2 | Accepted (vocabulary aligned with code; cancel rule amended by ADR-025; amended by ADR-030; amended 2026-10-14: Dismiss relabelled Stop trip) | Project owner | 2026-10-14 |
+| `docs/adr/015-order-auto-start-trip.md` | 1.2 | Accepted (vocabulary aligned with code; cancel rule amended by ADR-025; amended by ADR-030; amended 2026-10-14: Dismiss relabelled Stop trip; amended 2026-10-14 by ADR-031) | Project owner | 2026-10-14 |
 | `docs/adr/016-order-route-overlay.md` | 1.2 | Accepted (provider superseded by ADR-017; planned-route origin amended 2026-10-11; 'not persisted' rule amended for the planned route by ADR-026) | Project owner | 2026-10-11 |
 | `docs/adr/017-order-route-provider-openrouteservice.md` | 1.2 | Accepted (amended 2026-10-08 for backfill privacy; amended 2026-10-11 for geocode guard + accepted-point origin; ADR-026 pointer 2026-10-11) | Project owner | 2026-10-11 |
 | `docs/adr/018-track-screen-live-location.md` | 1.0 | Accepted | Project owner | 2026-10-06 |
@@ -66,9 +66,10 @@ When any controlled document changes, update both:
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.8 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device; Revision 1.8 (2026-10-13): cross-reference to ADR-029 overlay banner as a second Fill-up entry point | Project owner | 2026-10-13 |
 | `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified; revised 2026-10-14 (chip tap-through navigates in-app to OBD Settings / Observer Settings; no version line in the ADR) | Project owner | 2026-10-14 |
 | `docs/adr/029-session-overlay-banner.md` | 1.2 | device-verified in part 2026-10-13; Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); implementation decisions 2026-10-13 (Decisions 1, 4, 9 amended; Decision 11 added; no version line in the ADR); amended 2026-10-13: circle shows litres, implemented build OK, device-unverified; code in progress (slices 1 to 9) | Project owner | 2026-10-13 |
-| `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted | Project owner | 2026-10-13 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.74 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-14 |
-| `docs/UI-SPEC.md` | 0.56 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-14 |
+| `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted (amended 2026-10-14 by ADR-031) | Project owner | 2026-10-13 |
+| `docs/adr/031-early-finish-keeps-trip-recording.md` | 1.0 | Accepted (amends ADR-015, ADR-025, ADR-030) | Project owner | 2026-10-14 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.75 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-14 |
+| `docs/UI-SPEC.md` | 0.57 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-14 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.11 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually; ERR-011 ADR-029 savedstate ViewTree setter; ERR-012 ADR-029 overlay ViewTree owners on window root, verified on device 2026-10-13; ERR-013 ADR-029 overlay Fill-up keyboard before window focus, added 2026-10-13; pattern entry for Compose in overlay windows) | Project Team | 2026-10-13 |
@@ -76,7 +77,7 @@ When any controlled document changes, update both:
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.23 | Active | Product Manager | 2026-10-14 |
+| `docs/DOCUMENT-CONTROL.md` | 0.24 | Active | Product Manager | 2026-10-14 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -98,6 +99,7 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-14 | ADR-031 (new), adr/README, adr/015, adr/030, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | ADR-031 (new), adr/README 1.11, adr/015 1.2, adr/030 1.0, PRD 0.35, UI-SPEC 0.56, ARCHITECTURE 0.41, IMPLEMENTATION-PLAN 0.74, DOCUMENT-CONTROL 0.23 | ADR-031 1.0, adr/README 1.11 (no bump), adr/015 1.2 (no bump), adr/030 1.0 (no bump), PRD 0.36, UI-SPEC 0.57, ARCHITECTURE 0.42, IMPLEMENTATION-PLAN 0.75, DOCUMENT-CONTROL 0.24 | ADR-031 early finish keeps trip recording (docs only; code pending) | Claude Haiku 5.5 |
 | 2026-10-14 | PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, adr/015, DOCUMENT-CONTROL | PRD 0.34, UI-SPEC 0.55, ARCHITECTURE 0.40, IMPLEMENTATION-PLAN 0.73, adr/015 1.2, DOCUMENT-CONTROL 0.22 | PRD 0.35, UI-SPEC 0.56, ARCHITECTURE 0.41, IMPLEMENTATION-PLAN 0.74, adr/015 1.2 (no bump; status text), DOCUMENT-CONTROL 0.23 | Order card: Dismiss relabelled Stop trip (docs only; behavior unchanged). Pencil frame not updated - Pencil MCP unreachable. | Claude Haiku 5.5 |
 | 2026-10-14 | IMPLEMENTATION-PLAN | 0.72 | 0.73 | Status banner tap-through amended (ADR-028 Revision 2026-10-14, docs only): chips navigate in-app to OBD Settings / Observer Settings; banner slice How to Verify items 11 and 12 reworded; new §6 row (Completed (code), `---`; `:app:assembleDebug` BUILD SUCCESSFUL and APK installed 2026-10-14; tap-through pending owner device check). | Claude Haiku 5.5 |
 | 2026-10-14 | PRD | 0.33 | 0.34 | FR-23 floating status banner tap-through amended: body tap opens the in-app OBD Settings / Observer Settings screen instead of system settings (ADR-028 Revision 2026-10-14). | Claude Haiku 5.5 |

@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.41
+**Document Version:** 0.42
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-14
 **Owner:** Tech Lead
@@ -225,7 +225,7 @@ TRIP START (auto-start at Taken):
      → if a trip is live, keep it and set in-memory flag orderOwnsTrip=true
      → mark row handled
 
-TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per ADR-030 amending ADR-025):
+TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per ADR-030 amending ADR-025; early finish far from the drop keeps recording, per ADR-031):
    → Gojek parser recognizes terminal states:
      (a) Selesai screen = "Selesai" with earnings/summary (normal completion)
      (b) Gojek home screen = all 4 nav texts present (Beranda, Pendapatan, Swadaya, Pesan)
@@ -234,14 +234,19 @@ TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per AD
      → OrderTripRecorder marks the latest open row (FINISHED or CANCELLED)
      → ShareViewModel observes latestOrderFlow
      → when a terminal phase (FINISHED or CANCELLED) and orderOwnsTrip=true and a trip is live, decide by status:
-        - FINISHED → stopActiveTrip(status=COMPLETED, offline=false)
+        - FINISHED, drop coordinates resolved, within 150 m of drop (DROP_OFF_RADIUS_M) → stopActiveTrip(status=COMPLETED, offline=false) (unchanged)
+        - FINISHED, drop coordinates resolved, farther than 150 m → do NOT stop; keep recording as an early-finish pending trip (ADR-031); show one drop-off snackbar when first within 150 m ("Order finished in Gojek. You're at the drop-off. Stop trip?"; Track screen only; action "Stop")
+        - FINISHED, drop coordinates unresolved → do NOT stop; no snackbar; the driver ends the trip manually
+     → early-finish pending state (ADR-031, in memory only): pending order id + drop coordinates or null; generalizes the cancel pending state (cancelledPendingId / cancelledDrop / dropWatchJob / dropOffChannel); the drop-off event carries a kind (CANCELLED or FINISHED_EARLY) so TrackScreen picks the snackbar wording; the existing drop-off proximity watch is reused; while a kept-open trip exists, the order-end collector ignores rows other than the pending order's id
+     → a new order accepted (Taken) while a kept-open trip is recording is ignored for trip purposes: no trip start, no adoption of the new order
+     → manual stop of a kept-open trip (Stop CTA, snackbar Stop, order card Stop trip): status=COMPLETED; orderOffline=true only if within 150 m of drop coordinates (ADR-031)
         - CANCELLED, any payment type, drop coordinates resolved → do NOT stop; keep recording; show one drop-off snackbar when within 150 m of drop coordinates (Track screen only; action "Stop")
         - CANCELLED, any payment type, drop coordinates unresolved → do NOT stop; no snackbar; stop later saves CANCELLED
      → stop of a cancelled trip (snackbar Stop or Stop CTA): within 150 m of drop → COMPLETED + orderOffline=true; otherwise CANCELLED + orderOffline=false (ADR-030; payment is not read)
      → stopActiveTrip(): persist the trip (TrackEntity via insertTrack, with orderStatus/orderOffline), then send STOP_TRIP
         (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
      → clear orderOwnsTrip=false
-   → the order card's **Stop trip** control (formerly labelled Dismiss) calls dismiss(id), triggering the same stop logic
+   → the order card's **Stop trip** control (formerly labelled Dismiss) stops the trip directly, regardless of distance, using the same status rule as the Stop CTA for that trip (ADR-030 for cancelled, ADR-031 for early finish), and then closes the order row (ADR-031; formerly it only set the row FINISHED via dismiss(id))
    → open risk (ADR-025, resolved 2026-10-10): a FINISHED written after CANCELLED is ignored (CANCELLED rows are terminal); device confirmation remains
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
