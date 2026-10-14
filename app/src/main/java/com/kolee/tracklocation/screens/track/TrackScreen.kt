@@ -65,6 +65,7 @@ fun TrackScreen() {
     )
     val locationUiState by viewModel.locationUiState.collectAsState()
     val activeOrder by viewModel.activeOrder.collectAsState()
+    val displayOrder by viewModel.displayOrder.collectAsState()
     val orderRoute by viewModel.orderRoute.collectAsState()
     val obdState by ObdPollingService.obdUiState.collectAsState()
 
@@ -145,7 +146,7 @@ fun TrackScreen() {
     )
 
     // ADR-020: heading-up camera while a trip is live/paused or an order is active (display-only).
-    val navigationActive = panelState.tripState != TripState.READY || activeOrder != null
+    val navigationActive = panelState.tripState != TripState.READY || activeOrder != null || displayOrder != null
     var lastValidHeading by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(liveFix, navigationActive) {
         val fix = liveFix
@@ -228,7 +229,7 @@ fun TrackScreen() {
                 enter = EnterTransition.None,
                 exit = fadeOut()
             ) {
-                val order = activeOrder
+                val order = displayOrder
                 when {
                     order != null -> {
                         // ADR-014 (provisional UI): order card replaces the trip panel while an order is active.

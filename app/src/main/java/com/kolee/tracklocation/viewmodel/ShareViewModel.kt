@@ -47,6 +47,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -117,6 +119,25 @@ class ShareViewModel(
         row?.takeIf {
             !isTerminalOrderPhase(it.phase) && now - it.lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
         }?.toOrderCard()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    // ADR-032: id of the ended (FINISHED/CANCELLED) order whose trip is kept recording; drives displayOrder.
+    private val keptOpenOrderId = MutableStateFlow<Long?>(null)
+
+    // ADR-032: the order shown by the Track-screen card. Same as activeOrder, plus the ended order
+    // while its trip is kept open and still recording. Routes/legend keep using activeOrder.
+    val displayOrder: StateFlow<OrderCard?> = combine(
+        observerTripDao.latestOrderFlow(),
+        keptOpenOrderId,
+        locationUiState.map { it.isTracking }.distinctUntilChanged(),
+        flow { while (true) { emit(System.currentTimeMillis()); delay(ORDER_STALENESS_TICK_MS) } }
+    ) { row, keptId, tracking, now ->
+        when {
+            row == null -> null
+            !isTerminalOrderPhase(row.phase) && now - row.lastSeenAt <= ORDER_ACTIVE_WINDOW_MS -> row.toOrderCard()
+            keptId != null && row.id == keptId && tracking -> row.toOrderCard()
+            else -> null
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val routeProvider = OpenRouteServiceClient(appContext)
@@ -268,6 +289,7 @@ class ShareViewModel(
                         } else {
                             // Keep recording; ownership stays so the eventual stop snapshots the order.
                             finishedPendingId = row.id
+                            keptOpenOrderId.value = row.id
                             finishedDrop = drop
                             if (drop != null) startDropWatch(drop, DropOffKind.FINISHED_EARLY)
                         }
@@ -280,6 +302,7 @@ class ShareViewModel(
                             orderOwnedId = null
                         } else {
                             cancelledPendingId = row.id
+                            keptOpenOrderId.value = row.id
                             cancelledDrop = orderRouteController.cachedGeo(row.toOrderCard())?.second
                             cancelledDrop?.let { startDropWatch(it, DropOffKind.CANCELLED) }
                         }
@@ -309,6 +332,7 @@ class ShareViewModel(
         cancelledDrop = null
         finishedPendingId = null
         finishedDrop = null
+        keptOpenOrderId.value = null
         dropWatchJob?.cancel()
         dropWatchJob = null
         dropOffChannel.tryReceive() // drop an unshown event
