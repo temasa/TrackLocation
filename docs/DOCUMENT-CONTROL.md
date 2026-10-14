@@ -7,7 +7,7 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.25  
+**Document Version:** 0.26  
 **Status:** Active  
 **Last Updated:** 2026-10-14  
 **Owner:** Product Manager  
@@ -35,9 +35,9 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.36 | Active (migrated from product-spec.md + change-requests.md; FR-23 tap-through amended 2026-10-14) | Product Manager | 2026-10-14 |
-| `docs/ARCHITECTURE.md` | 0.42 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-14 |
-| `docs/adr/README.md` | 1.11 | Active (29 ADRs indexed) | Tech Lead | 2026-10-13 |
+| `docs/PRD.md` | 0.37 | Active (migrated from product-spec.md + change-requests.md; FR-16 order card stays while a kept-open trip records (ADR-032) and FR-23 tap-through amended 2026-10-14) | Product Manager | 2026-10-14 |
+| `docs/ARCHITECTURE.md` | 0.43 | Active (migrated from product-spec.md data rules; trip end: order card stays while a kept-open trip records, ADR-032) | Tech Lead | 2026-10-14 |
+| `docs/adr/README.md` | 1.12 | Active (ADR-032 row added 2026-10-14) | Tech Lead | 2026-10-14 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
 | `docs/adr/002-session-recording-switch.md` | 1.0 | Accepted (from CR-0002) | Project owner | 2026-06-15 |
 | `docs/adr/003-observer-navigation-placement.md` | 1.0 | Accepted | Project owner | 2026-06-15 |
@@ -61,15 +61,16 @@ When any controlled document changes, update both:
 | `docs/adr/022-order-trip-label-in-trips-list.md` | 1.0 | Accepted (amended by ADR-023 for presentation) | Project owner | 2026-10-08 |
 | `docs/adr/023-order-trip-header-card-and-geo-snapshot.md` | 1.0 | Accepted (amended 2026-10-08 for backfill) | Project owner | 2026-10-08 |
 | `docs/adr/024-avg-km-per-liter-over-fuel-covered-intervals.md` | 1.0 | Accepted (supersedes ADR-007 averaging definition) | Project owner | 2026-10-09 |
-| `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule; amended by ADR-030, ADR-031) | Project owner | 2026-10-10 |
+| `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule; amended by ADR-030, ADR-031, ADR-032 (card state open question resolved)) | Project owner | 2026-10-14 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.8 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device; Revision 1.8 (2026-10-13): cross-reference to ADR-029 overlay banner as a second Fill-up entry point | Project owner | 2026-10-13 |
 | `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified; revised 2026-10-14 (chip tap-through navigates in-app to OBD Settings / Observer Settings; no version line in the ADR) | Project owner | 2026-10-14 |
 | `docs/adr/029-session-overlay-banner.md` | 1.2 | device-verified in part 2026-10-13; Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); implementation decisions 2026-10-13 (Decisions 1, 4, 9 amended; Decision 11 added; no version line in the ADR); amended 2026-10-13: circle shows litres, implemented build OK, device-unverified; code in progress (slices 1 to 9) | Project owner | 2026-10-13 |
-| `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted (amended 2026-10-14 by ADR-031) | Project owner | 2026-10-13 |
-| `docs/adr/031-early-finish-keeps-trip-recording.md` | 1.0 | Accepted (amends ADR-015, ADR-025, ADR-030) | Project owner | 2026-10-14 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.75 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-14 |
-| `docs/UI-SPEC.md` | 0.58 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-14 |
+| `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted (amended 2026-10-14 by ADR-031 and ADR-032) | Project owner | 2026-10-14 |
+| `docs/adr/031-early-finish-keeps-trip-recording.md` | 1.0 | Accepted (amends ADR-015, ADR-025, ADR-030; amended 2026-10-14 by ADR-032) | Project owner | 2026-10-14 |
+| `docs/adr/032-order-card-stays-while-trip-kept-open.md` | 1.0 | Accepted (amends ADR-025, ADR-030, ADR-031 for the Track order card only; stop rules unchanged; code in progress) | Project owner | 2026-10-14 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.76 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-14 |
+| `docs/UI-SPEC.md` | 0.59 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-14 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.11 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually; ERR-011 ADR-029 savedstate ViewTree setter; ERR-012 ADR-029 overlay ViewTree owners on window root, verified on device 2026-10-13; ERR-013 ADR-029 overlay Fill-up keyboard before window focus, added 2026-10-13; pattern entry for Compose in overlay windows) | Project Team | 2026-10-13 |
@@ -99,6 +100,8 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-14 | adr/032 (new), adr/025, adr/030, adr/031, adr/README, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | adr/032 (new), adr/025 1.0, adr/030 1.0, adr/031 1.0, adr/README 1.11, PRD 0.36, UI-SPEC 0.58, ARCHITECTURE 0.42, IMPLEMENTATION-PLAN 0.75, DOCUMENT-CONTROL 0.25 | adr/032 1.0, adr/025 1.0 (no bump; amendment note), adr/030 1.0 (no bump; amendment note), adr/031 1.0 (no bump; amendment note), adr/README 1.12, PRD 0.37, UI-SPEC 0.59, ARCHITECTURE 0.43, IMPLEMENTATION-PLAN 0.76, DOCUMENT-CONTROL 0.26 | ADR-032 order card stays on the Track screen while a kept-open order trip records (resolves the ADR-025 open question on the card during a cancelled trip; card-only display order; stop rules, statuses and schema unchanged). Docs only in this entry; code in progress (`ShareViewModel`, `TrackScreen`). IMPLEMENTATION-PLAN §4 slice "Order Card Stays While Trip Kept Open (ADR-032)", §6 row (In Progress, `---`) and stale ADR-025 / ADR-031 text fixed. UI-SPEC §3e, PRD FR-16 and ARCHITECTURE trip end updated. | Claude Haiku 5.5 |
+| 2026-10-14 | DOCUMENT-CONTROL | 0.25 | 0.26 | Register rows (PRD, ARCHITECTURE, adr/README, IMPLEMENTATION-PLAN, UI-SPEC, adr/025, adr/030, adr/031, new adr/032) and change-log row for the ADR-032 update (see the row above). AGENTS unchanged (0.5). | Claude Haiku 5.5 |
 | 2026-10-14 | ADR-031 (new), adr/README, adr/015, adr/030, PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | ADR-031 (new), adr/README 1.11, adr/015 1.2, adr/030 1.0, PRD 0.35, UI-SPEC 0.56, ARCHITECTURE 0.41, IMPLEMENTATION-PLAN 0.74, DOCUMENT-CONTROL 0.23 | ADR-031 1.0, adr/README 1.11 (no bump), adr/015 1.2 (no bump), adr/030 1.0 (no bump), PRD 0.36, UI-SPEC 0.57, ARCHITECTURE 0.42, IMPLEMENTATION-PLAN 0.75, DOCUMENT-CONTROL 0.24 | ADR-031 early finish keeps trip recording (docs only; code pending) | Claude Haiku 5.5 |
 | 2026-10-14 | adr/025 (amendment note), adr/README, UI-SPEC, DOCUMENT-CONTROL | adr/025 1.0, UI-SPEC 0.57, DOCUMENT-CONTROL 0.24 | adr/025 1.0 (no bump; amendment note), adr/README (row note), UI-SPEC 0.58, DOCUMENT-CONTROL 0.25 | Cross-references for ADR-031 (early finish keeps trip recording): ADR-025 amended note, adr/README row note, UI-SPEC drop-off snackbar heading (early-finished wording). | Claude Haiku 5.5 |
 | 2026-10-14 | PRD, UI-SPEC, ARCHITECTURE, IMPLEMENTATION-PLAN, adr/015, DOCUMENT-CONTROL | PRD 0.34, UI-SPEC 0.55, ARCHITECTURE 0.40, IMPLEMENTATION-PLAN 0.73, adr/015 1.2, DOCUMENT-CONTROL 0.22 | PRD 0.35, UI-SPEC 0.56, ARCHITECTURE 0.41, IMPLEMENTATION-PLAN 0.74, adr/015 1.2 (no bump; status text), DOCUMENT-CONTROL 0.23 | Order card: Dismiss relabelled Stop trip (docs only; behavior unchanged). Pencil frame not updated - Pencil MCP unreachable. | Claude Haiku 5.5 |

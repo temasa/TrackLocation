@@ -10,6 +10,8 @@
 
 **Amended 2026-10-14 by ADR-031:** a Gojek-originated FINISHED no longer always stops the trip; it stops only within 150 m of known drop coordinates, otherwise the trip keeps recording. See ADR-031.
 
+**Amendment 2026-10-14 (ADR-032):** while a kept-open order trip is recording, the Track screen keeps the order card (last known details, `Done` or `Cancelled` chip, Stop trip) instead of falling back to `TripPanel`. This resolves the open question on the card in the cancelled state. Stop rules are unchanged. See ADR-032.
+
 ## Context
 
 ADR-015 ends an order-owned trip as soon as the Gojek order reaches a terminal state (Selesai, Cleared, Cancelled, Dismissed) and saves it with no outcome. The Trips list therefore cannot tell a normal completed order from a cancelled one, and a cancelled cash order can end before the driver has actually reached the drop-off, where the job may still be finished offline.

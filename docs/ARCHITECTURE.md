@@ -7,7 +7,7 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.42
+**Document Version:** 0.43
 **Status:** Active (migrated from product-spec.md data/architecture rules)
 **Last Updated:** 2026-10-14
 **Owner:** Tech Lead
@@ -238,6 +238,7 @@ TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per AD
         - FINISHED, drop coordinates resolved, farther than 150 m → do NOT stop; keep recording as an early-finish pending trip (ADR-031); show one drop-off snackbar when first within 150 m ("Order finished in Gojek. You're at the drop-off. Stop trip?"; Track screen only; action "Stop")
         - FINISHED, drop coordinates unresolved → do NOT stop; no snackbar; the driver ends the trip manually
      → early-finish pending state (ADR-031, in memory only): pending order id + drop coordinates or null; generalizes the cancel pending state (cancelledPendingId / cancelledDrop / dropWatchJob / dropOffChannel); the drop-off event carries a kind (CANCELLED or FINISHED_EARLY) so TrackScreen picks the snackbar wording; the existing drop-off proximity watch is reused; while a kept-open trip exists, the order-end collector ignores rows other than the pending order's id
+     → order card after the order ends (ADR-032, in memory only): `ShareViewModel` exposes `displayOrder` (card-only StateFlow) = `activeOrder`, or, while a trip is tracking, the order row whose id equals the kept-open pending id (`keptOpenOrderId`, a StateFlow set wherever cancelledPendingId / finishedPendingId is set and cleared in clearCancelPending); TrackScreen's order-card branch uses `displayOrder`, so the card (last known order details, phase chip Done/Cancelled, Stop trip) stays until the trip stops or the pending state clears; `OrderRouteController` and the legend keep using `activeOrder` (route overlay follows the active order only); no schema change, no stop-rule change
      → a new order accepted (Taken) while a kept-open trip is recording is ignored for trip purposes: no trip start, no adoption of the new order
      → manual stop of a kept-open trip (Stop CTA, snackbar Stop, order card Stop trip): status=COMPLETED; orderOffline=true only if within 150 m of drop coordinates (ADR-031)
         - CANCELLED, any payment type, drop coordinates resolved → do NOT stop; keep recording; show one drop-off snackbar when within 150 m of drop coordinates (Track screen only; action "Stop")

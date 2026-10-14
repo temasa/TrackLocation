@@ -120,6 +120,7 @@ Links to docs, code, or external resources supporting this decision.
 | [029](029-session-overlay-banner.md) | Session Overlay Banner: system overlay above other apps (TYPE_APPLICATION_OVERLAY, foreground service) during an active session, with fuel, range, consumption and session cost/gross/net; separate from ADR-028 | Accepted | 2026-10-13 |
 | [030](030-offline-completion-for-all-orders.md) | Offline Completion for All Cancelled Orders (not cash-only; cancel never auto-stops; amends ADR-025 decisions 3-4 and ADR-015 cancel rule) | Accepted | 2026-10-13 |
 | [031](031-early-finish-keeps-trip-recording.md) | Early Finish Keeps the Trip Recording (Gojek FINISHED stops only within 150 m of known drop coordinates; amends ADR-015, ADR-025, ADR-030) | Accepted | 2026-10-14 |
+| [032](032-order-card-stays-while-trip-kept-open.md) | Order Card Stays on the Track Screen While a Kept-open Order Trip Is Recording (card-only; resolves ADR-025 open question; amends ADR-025, ADR-030, ADR-031) | Accepted | 2026-10-14 |
 
 ---
 
@@ -140,5 +141,5 @@ This captures decision rationale in real-time during development, reducing post-
 
 ---
 
-**Version:** 1.11
-**Last Updated:** 2026-10-13
+**Version:** 1.12
+**Last Updated:** 2026-10-14

@@ -8,6 +8,8 @@
 
 **Amended 2026-10-14 by ADR-031:** a Gojek-originated FINISHED no longer always stops the trip; it stops only within 150 m of known drop coordinates, otherwise the trip keeps recording. See ADR-031.
 
+**Amendment 2026-10-14 (ADR-032):** a cancelled order whose trip is kept open keeps the order card on the Track screen (instead of `TripPanel`) until the trip stops. Cancel stop rules are unchanged. See ADR-032.
+
 ## Context
 
 ADR-025 limited the cancel-keeps-recording behaviour to cash orders (payment `Tunai`). A cancelled non-cash order was still stopped immediately, which could end the trip before the driver reached the drop-off, where the job might still be finished offline.

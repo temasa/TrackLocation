@@ -6,6 +6,8 @@
 
 **Amends:** ADR-030 (offline completion for cancelled orders; the FINISHED rows of the stop table are no longer unconditional), ADR-015 (order lifecycle drives the trip: the FINISHED auto-end rule, decision 2), and ADR-025 (order trip status and offline completion; the stop rules for FINISHED). Everything else in ADR-030, ADR-015 and ADR-025 is unchanged. See the amendment notes in those ADRs.
 
+**Amendment 2026-10-14 (ADR-032):** a kept-open early-finished trip keeps the order card on the Track screen (instead of `TripPanel`) until the trip stops. The stop rules in this ADR are unchanged. See ADR-032.
+
 ## Context
 
 ADR-015 auto-ends an order-owned trip when Gojek reports the order as `FINISHED` (Selesai screen, or Gojek home screen "Cleared"). ADR-030 kept cancelled orders recording until the driver stops them, but still stopped every `FINISHED` trip immediately.
