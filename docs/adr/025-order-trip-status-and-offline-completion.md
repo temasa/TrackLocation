@@ -8,6 +8,8 @@
 
 **Amended 2026-10-13 by ADR-030:** the offline rule applies to **all** cancelled orders, not only cash (`Tunai`) orders. The cash-order detection (decision 3) and the cash-only rows of the stop table (decision 4) are replaced by the table in ADR-030. The status model, chip, snackbar wording, and the rest of this ADR are unchanged.
 
+**Amended 2026-10-14 by ADR-031:** a Gojek-originated FINISHED no longer always stops the trip; it stops only within 150 m of known drop coordinates, otherwise the trip keeps recording. See ADR-031.
+
 ## Context
 
 ADR-015 ends an order-owned trip as soon as the Gojek order reaches a terminal state (Selesai, Cleared, Cancelled, Dismissed) and saves it with no outcome. The Trips list therefore cannot tell a normal completed order from a cancelled one, and a cancelled cash order can end before the driver has actually reached the drop-off, where the job may still be finished offline.

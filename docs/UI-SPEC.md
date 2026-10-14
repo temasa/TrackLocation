@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.57
+**Document Version:** 0.58
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-14
 **Owner:** Product Manager / UX Designer
@@ -230,7 +230,7 @@ Layout: four cells, all center-aligned; weights TIME 0.7, DIST 0.7, COST/NET 1.4
 
 The strip is hidden when the order ends and `TripPanel` returns. Provisional visuals reuse `TripPanel`'s glass-panel style; final design comes from the handoff (§ Handoff Instructions below).
 
-**Drop-off snackbar (ADR-025, amended by ADR-030: any cancelled order)**
+**Drop-off snackbar (ADR-025, amended by ADR-030: any cancelled order; ADR-031: early-finished orders too)**
 
 Shown on the Track screen only when a Gojek order was cancelled in Gojek (any payment type), the trip is still recording, and the driver comes within 150 m of the order's drop-off point (cached drop coordinates). It is not shown when the drop coordinates are unresolved.
 

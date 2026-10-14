@@ -113,7 +113,7 @@ Links to docs, code, or external resources supporting this decision.
 | [022](022-order-trip-label-in-trips-list.md) | Order Trip Label in the Trips List (pickup → drop + price/net) | Accepted | 2026-10-08 |
 | [023](023-order-trip-header-card-and-geo-snapshot.md) | Order Trip Header Card (accepted/pickup/drop + saved geo details) | Accepted | 2026-10-08 |
 | [024](024-avg-km-per-liter-over-fuel-covered-intervals.md) | Average km/L over Fuel-covered Intervals (supersedes ADR-007 averaging definition) | Accepted | 2026-10-09 |
-| [025](025-order-trip-status-and-offline-completion.md) | Order Trip Status and Offline Completion (Completed / Completed · Offline / Cancelled; amends ADR-015 cancel rule) | Accepted | 2026-10-10 |
+| [025](025-order-trip-status-and-offline-completion.md) | Order Trip Status and Offline Completion (Completed / Completed · Offline / Cancelled; amends ADR-015 cancel rule; amended by ADR-031 early finish) | Accepted | 2026-10-10 |
 | [026](026-saved-planned-route-and-comparison.md) | Saved Planned Route and Planned-vs-Actual Comparison (device-only; amends the 'not persisted' rule for the planned route; conditional on ORS ToS gate) | Accepted (conditional) | 2026-10-11 |
 | [027](027-fuel-balance-fill-up-and-reset.md) | Fuel Balance, Fill-up and Reset (fuel dock: fuel left, range, price, Fill up; derived from append-only `fuel_event` and the session-independent OBD ledger `obd_ledger`; RANGE from a rolling window of the last 1 km of moving driving; amended 2026-10-11) | Accepted | 2026-10-11 |
 | [028](028-floating-status-banner.md) | Floating Status Banner (OBD and Observer): top overlay with tap-through to system settings and session-only collapse | Accepted | 2026-10-11 |
