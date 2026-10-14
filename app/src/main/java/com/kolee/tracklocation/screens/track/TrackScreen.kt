@@ -52,6 +52,7 @@ import com.kolee.tracklocation.screens.track.components.RouteLegend
 import com.kolee.tracklocation.screens.track.components.TrackMap
 import com.kolee.tracklocation.screens.track.components.TripPanel
 import com.kolee.tracklocation.tracking.rememberLiveFix
+import com.kolee.tracklocation.viewmodel.DropOffKind
 import com.kolee.tracklocation.viewmodel.ShareViewModel
 import kotlinx.coroutines.delay
 
@@ -91,9 +92,14 @@ fun TrackScreen() {
     // ADR-025/ADR-030: one-shot drop-off prompt for a cancelled order of any payment type (on-screen only; never auto-stops).
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
-        viewModel.dropOffEvents.collect {
+        // ADR-025/ADR-030/ADR-031: at the drop-off of a cancelled or early-finished order, offer to stop the trip.
+        viewModel.dropOffEvents.collect { kind ->
             val result = snackbarHostState.showSnackbar(
-                message = "Order cancelled in Gojek. You're at the drop-off. Stop trip?",
+                message = if (kind == DropOffKind.CANCELLED) {
+                    "Order cancelled in Gojek. You're at the drop-off. Stop trip?"
+                } else {
+                    "Order finished in Gojek. You're at the drop-off. Stop trip?"
+                },
                 actionLabel = "Stop",
                 duration = SnackbarDuration.Long
             )
@@ -230,7 +236,7 @@ fun TrackScreen() {
                             order = order,
                             modifier = Modifier
                                 .padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
-                            onStopTrip = { viewModel.dismissActiveOrder() },
+                            onStopTrip = { viewModel.stopTripFromOrderCard() },
                             tripStripState = panelState
                         )
                     }

@@ -59,6 +59,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeoutOrNull
 
+/** ADR-031: which pending order outcome a drop-off proximity event refers to. */
+enum class DropOffKind { CANCELLED, FINISHED_EARLY }
+
 class ShareViewModel(
     private val appContext: Context,
     private val databaseDao: TrackDao,
@@ -95,10 +98,14 @@ class ShareViewModel(
     private var cancelledPendingId: Long? = null
     private var cancelledDrop: LatLng? = null
     private var dropWatchJob: Job? = null
-    private val dropOffChannel = Channel<Unit>(Channel.CONFLATED)
+    // ADR-031: an order finished (Drop off / Selesai) away from its drop-off keeps the trip recording.
+    // Pending state = that observer_trip id and its cached drop (null = unresolved). Shares dropWatchJob.
+    private var finishedPendingId: Long? = null
+    private var finishedDrop: LatLng? = null
+    private val dropOffChannel = Channel<DropOffKind>(Channel.CONFLATED)
 
-    /** One-shot: the driver came within [DROP_OFF_RADIUS_M] of a cancelled order's drop-off (ADR-030). */
-    val dropOffEvents: Flow<Unit> = dropOffChannel.receiveAsFlow()
+    /** One-shot: the driver came within [DROP_OFF_RADIUS_M] of a cancelled/early-finished order's drop-off (ADR-030/ADR-031). */
+    val dropOffEvents: Flow<DropOffKind> = dropOffChannel.receiveAsFlow()
 
     // ADR-014 (provisional): the Gojek order currently being served, or null. An order is "active"
     // while its latest row is not FINISHED and was seen within ORDER_ACTIVE_WINDOW_MS. The ticker
@@ -205,6 +212,14 @@ class ShareViewModel(
         viewModelScope.launch {
             observerTripDao.unhandledReadyFlow().collect { row ->
                 if (row == null) return@collect
+                // ADR-031: an early-finished trip is kept open; a new order is ignored while it still runs.
+                if (finishedPendingId != null) {
+                    if (locationUiState.value.isTracking) {
+                        observerTripDao.markHandled(row.id)
+                        return@collect
+                    }
+                    clearCancelPending() // stale pending: the trip is gone
+                }
                 if (!isTerminalOrderPhase(row.phase) &&
                     System.currentTimeMillis() - row.lastSeenAt <= ORDER_ACTIVE_WINDOW_MS
                 ) {
@@ -221,18 +236,41 @@ class ShareViewModel(
         // only if the order owns it; a trip already stopped manually just clears the flag.
         // ADR-025/ADR-030: CANCELLED never stops the trip directly; it keeps recording and a drop-off
         // proximity watch starts (any payment type). The driver stops the trip via the Stop CTA or the snackbar action.
+        // ADR-031: FINISHED stops the trip only within the radius of the cached drop; otherwise (farther, no
+        // fix, or unresolved drop) the trip keeps recording until the driver stops it.
         viewModelScope.launch {
             observerTripDao.latestOrderFlow().collect { row ->
-                if (row == null || !orderOwnsTrip) return@collect
+                if (row == null) return@collect
+                // ADR-031: while an early-finished trip is kept open, other orders' rows never affect it.
+                val pending = finishedPendingId
+                if (pending != null && row.id != pending) return@collect
+                if (!orderOwnsTrip) return@collect
                 when (row.phase) {
                     OrderPhase.FINISHED.name -> {
                         val current = locationUiState.value
-                        if (current.isTracking && !current.isPaused) {
-                            stopActiveTrip(current, ORDER_STATUS_COMPLETED)
+                        if (!current.isTracking || current.isPaused) {
+                            orderOwnsTrip = false
+                            orderOwnedId = null
+                            clearCancelPending()
+                            return@collect
                         }
-                        orderOwnsTrip = false
-                        orderOwnedId = null
-                        clearCancelPending()
+                        // Repeated Cleared/Selesai signals for the same order must not re-evaluate.
+                        if (finishedPendingId == row.id) return@collect
+                        val drop = orderRouteController.cachedGeo(row.toOrderCard())?.second
+                        val here = current.currentLocation
+                        if (drop != null && isRealFix(here) &&
+                            LocationUtils.getDistanceBetweenPathPoints(here, drop) <= DROP_OFF_RADIUS_M
+                        ) {
+                            stopActiveTrip(current, ORDER_STATUS_COMPLETED)
+                            orderOwnsTrip = false
+                            orderOwnedId = null
+                            clearCancelPending()
+                        } else {
+                            // Keep recording; ownership stays so the eventual stop snapshots the order.
+                            finishedPendingId = row.id
+                            finishedDrop = drop
+                            if (drop != null) startDropWatch(drop, DropOffKind.FINISHED_EARLY)
+                        }
                     }
                     OrderPhase.CANCELLED.name -> {
                         if (cancelledPendingId == row.id) return@collect
@@ -243,7 +281,7 @@ class ShareViewModel(
                         } else {
                             cancelledPendingId = row.id
                             cancelledDrop = orderRouteController.cachedGeo(row.toOrderCard())?.second
-                            startDropWatch()
+                            cancelledDrop?.let { startDropWatch(it, DropOffKind.CANCELLED) }
                         }
                     }
                 }
@@ -251,22 +289,26 @@ class ShareViewModel(
         }
     }
 
-    // ADR-025: emits ONE dropOffEvents item when the live location first comes within the radius.
-    private fun startDropWatch() {
+    // ADR-025/ADR-031: emits ONE dropOffEvents item (tagged with [kind]) when the live location first
+    // comes within the radius of [drop].
+    private fun startDropWatch(drop: LatLng, kind: DropOffKind) {
         dropWatchJob?.cancel()
-        val drop = cancelledDrop ?: return
         dropWatchJob = viewModelScope.launch {
             locationUiState.first { s ->
                 isRealFix(s.currentLocation) &&
                     LocationUtils.getDistanceBetweenPathPoints(s.currentLocation, drop) <= DROP_OFF_RADIUS_M
             }
-            dropOffChannel.trySend(Unit)
+            dropOffChannel.trySend(kind)
         }
     }
 
+    // Clears ALL pending drop-off state: the cancelled-order pending (ADR-025/ADR-030) and the
+    // early-finished-order pending (ADR-031), plus the watch and any unshown event.
     private fun clearCancelPending() {
         cancelledPendingId = null
         cancelledDrop = null
+        finishedPendingId = null
+        finishedDrop = null
         dropWatchJob?.cancel()
         dropWatchJob = null
         dropOffChannel.tryReceive() // drop an unshown event
@@ -277,12 +319,14 @@ class ShareViewModel(
         p != LocationUiState().currentLocation && !(p.latitude == 0.0 && p.longitude == 0.0)
 
     /**
-     * Order card's Stop trip control: closes the active order (sets it FINISHED), which ends the
-     * order-owned trip via the order-end collector. Also dismisses a cancelled order that never
-     * reaches "Selesai".
+     * Order card's Stop trip control (ADR-031): stops the running trip directly, with no distance check,
+     * FIRST (so the order snapshot is taken while ownership is intact), then closes the active order row
+     * (sets it FINISHED). Also closes a cancelled order that never reaches "Selesai".
      */
-    fun dismissActiveOrder() {
+    fun stopTripFromOrderCard() {
         viewModelScope.launch {
+            val current = locationUiState.value
+            if (current.isTracking && !current.isPaused) stopActiveTrip(current)
             observerTripDao.findLatestOpen()?.let { observerTripDao.dismiss(it.id) }
         }
     }
@@ -361,6 +405,14 @@ class ShareViewModel(
                     } else {
                         finalStatus = ORDER_STATUS_CANCELLED
                     }
+                } else if (finishedPendingId != null) {
+                    // ADR-031: an order finished early kept the trip recording; always Completed, Offline
+                    // only when the stop happens within the radius of the cached drop. Read before clearCancelPending().
+                    val drop = finishedDrop
+                    val here = live.currentLocation
+                    finalStatus = ORDER_STATUS_COMPLETED
+                    finalOffline = drop != null && isRealFix(here) &&
+                        LocationUtils.getDistanceBetweenPathPoints(here, drop) <= DROP_OFF_RADIUS_M
                 }
             }
             val tripIdx = databaseDao.insertTrack(
