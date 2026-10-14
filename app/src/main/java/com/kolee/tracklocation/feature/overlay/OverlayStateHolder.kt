@@ -58,7 +58,7 @@ class OverlayStateHolder(app: TrackApp, scope: CoroutineScope) {
     ) { obd, loc ->
         val connected = obd as? ObdUiState.Connected
         ObdOverlayValues(
-            avgKmL = connected?.tripAvgKmL,
+            avgKmL = connected?.avgKmL,
             instantKmL = connected?.instantKmL
                 ?.takeIf { loc.speedInKMH > 3f && loc.accuracyMeters <= 20f }
         )
