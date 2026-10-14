@@ -276,7 +276,11 @@ class ShareViewModel(
     private fun isRealFix(p: LatLng): Boolean =
         p != LocationUiState().currentLocation && !(p.latitude == 0.0 && p.longitude == 0.0)
 
-    /** Dismisses the active order card (e.g. a cancelled order that never reaches "Selesai"). */
+    /**
+     * Order card's Stop trip control: closes the active order (sets it FINISHED), which ends the
+     * order-owned trip via the order-end collector. Also dismisses a cancelled order that never
+     * reaches "Selesai".
+     */
     fun dismissActiveOrder() {
         viewModelScope.launch {
             observerTripDao.findLatestOpen()?.let { observerTripDao.dismiss(it.id) }

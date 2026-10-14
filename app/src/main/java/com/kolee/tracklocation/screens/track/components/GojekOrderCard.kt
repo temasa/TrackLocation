@@ -88,7 +88,7 @@ private val EarningsStyle = TextStyle(
 fun GojekOrderCard(
     order: OrderCard,
     modifier: Modifier = Modifier,
-    onDismiss: (() -> Unit)? = null,
+    onStopTrip: (() -> Unit)? = null,
     // PROVISIONAL: compact trip strip, shown only while a trip is LIVE/PAUSED (null/READY hides it).
     tripStripState: TrackPanelState? = null
 ) {
@@ -146,7 +146,7 @@ fun GojekOrderCard(
             }
         } else {
             Column {
-                // Phase chip + chevron + optional dismiss.
+                // Phase chip + chevron + optional stop-trip control.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -181,16 +181,27 @@ fun GojekOrderCard(
                                 style = CardLabelStyle
                             )
                         }
-                        if (onDismiss != null) {
+                        if (onStopTrip != null) {
                             Box(
                                 modifier = Modifier
                                     .heightIn(min = 48.dp)
-                                    .clickable(role = Role.Button, onClick = onDismiss)
-                                    .semantics { contentDescription = "Dismiss order card" }
+                                    .clickable(role = Role.Button, onClick = onStopTrip)
+                                    .semantics { contentDescription = "Stop trip and close order" }
                                     .padding(horizontal = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "Dismiss", style = CardLabelStyle)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    // Small filled rounded square: stop glyph.
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(color = PanelTextPrimary, shape = RoundedCornerShape(2.dp))
+                                    )
+                                    Text(text = "Stop trip", style = CardLabelStyle)
+                                }
                             }
                         }
                     }
