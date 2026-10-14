@@ -7,7 +7,7 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.55
+**Document Version:** 0.56
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
 **Last Updated:** 2026-10-14
 **Owner:** Product Manager / UX Designer
@@ -209,11 +209,11 @@ New Track-screen UI surface to display extracted Gojek order card details when a
 - **Drop-only phase** — Pickup details no longer shown; card displays drop + payment + earnings.
 - **Cleared/Dismissed/Cancelled** — Card is replaced by the normal `TripPanel`. The trip ends automatically on Cleared and Dismissed. For any cancelled order, in Gojek, the trip keeps recording until the driver stops it, with the drop-off snackbar below (ADR-030, amending ADR-025). The card's replacement by `TripPanel` in that cancelled state is the proposed default and is an open question (ADR-025).
 
-**Dismiss:** The provisional order card includes a Dismiss control so a cancelled order (which never reaches the finished phase) cannot hide the trip Start/Stop control; the final placement/visual is part of the pending design handoff.
+**Stop trip:** The order card carries a **Stop trip** control (it replaces the former "Dismiss" label; behavior is unchanged). Tapping it ends the order and the trip: the order row is set to FINISHED and the trip is saved as `COMPLETED` through the normal persist-then-stop sequence. It is the only way to end an active order's trip by hand, because the card replaces `TripPanel` and its Stop CTA while an order is active. If no trip is live, the control still closes the order. Visual: label and glyph swap on the existing control only (no new layout or visual language). The `ui-design.pen` order-card frame was NOT updated on 2026-10-14 because the Pencil MCP app was unreachable; update the frame's control label to "Stop trip" when Pencil is available.
 
 **Card interactions (expand/collapse + strip-only) — 2026-10-06**
 
-Three interaction states for the card (excluding the Dismiss control):
+Three interaction states for the card (excluding the Stop trip control):
 - **Expanded** (default): both pickup and drop show name + address; a chevron-up (▲) button in the PhaseRow collapses the card.
 - **Collapsed**: both pickup and drop show name only (no address); chevron-down (▼) in the PhaseRow expands. Payment/earnings and the trip strip remain visible in both states.
 - **Strip-only**: tapping either the PickupBlock or DropBlock enters this mode — the card body is hidden and only the trip strip is shown. Tapping the trip strip exits strip-only and returns to collapsed state. This lets the driver free most of the map for navigation once they know the route.
@@ -268,7 +268,7 @@ Shown on the Track screen only when a Gojek order was cancelled in Gojek (any pa
 
 **Placement:** Replaces `TripPanel` on the Track screen (where the trip control and metrics normally display) when an extracted Gojek order has all four fields. Card is displayed from pickup phase until order completion; a compact trip strip appears below the card while the trip is live (showing elapsed time, distance, COST/NET, and AVG/INST km/L); `TripPanel` returns after the order ends.
 
-**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Dismissed (ADR-014, ADR-015; cancel never auto-stops, ADR-030 amending ADR-025); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
+**Related behavior (not visual design):** Automatic trip start when the order card first becomes complete (Taken) and automatic trip end when the order is Cleared or Stopped from the card (Stop trip control) (ADR-014, ADR-015; cancel never auto-stops, ADR-030 amending ADR-025); one-shot foreground launch when card is ready; always-recording remains active. While an order is active the trip runs automatically and the card replaces TripPanel (including its Start/Stop control) and carries a compact trip strip. The compact trip strip carries live trip metrics without duplicating the card.
 
 **Handoff Instructions (AGENTS.md §12 template)**
 

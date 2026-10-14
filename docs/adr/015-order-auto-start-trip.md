@@ -6,6 +6,8 @@
 
 **Amended 2026-10-08:** vocabulary table and wording aligned with code - the trip ends when the order row reaches FINISHED, including at the Selesai screen.
 
+**Amended 2026-10-14:** the order card's "Dismiss" control is relabelled "Stop trip". Behavior is unchanged (it still calls dismiss(id) and ends the trip). No new ADR.
+
 **Amended 2026-10-13 by ADR-030:** a non-cash cancel no longer auto-stops the trip either. Every cancelled order keeps the trip recording until the driver stops it (drop-off snackbar within 150 m of the drop-off; stop within 150 m saves Completed · Offline, otherwise Cancelled). See ADR-030.
 
 **Amended 2026-10-10 by ADR-025:** cancel no longer unconditionally auto-stops the trip. For a cash order (`Tunai`) cancelled in Gojek, the trip keeps recording until the driver stops it; a drop-off snackbar is offered within 150 m of the drop-off. Non-cash cancels still stop immediately. The Cancelled outcome is stored as a trip status (ADR-025). Original decision text below is kept as written; see "Amendment 2026-10-10 (ADR-025)".

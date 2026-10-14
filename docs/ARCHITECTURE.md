@@ -7,9 +7,9 @@ description: High-level system architecture, domain model, and design decisions 
 # System Architecture
 ## TrackLocation
 
-**Document Version:** 0.40
+**Document Version:** 0.41
 **Status:** Active (migrated from product-spec.md data/architecture rules)
-**Last Updated:** 2026-10-13
+**Last Updated:** 2026-10-14
 **Owner:** Tech Lead
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 
@@ -241,7 +241,7 @@ TRIP END (auto-end at Selesai/Cleared/Dismissed; cancel never auto-stops, per AD
      → stopActiveTrip(): persist the trip (TrackEntity via insertTrack, with orderStatus/orderOffline), then send STOP_TRIP
         (TrackingService.stopTrip() only stops trip recording and the timer; always-recording unaffected)
      → clear orderOwnsTrip=false
-   → user-initiated Dismiss on the order card also calls dismiss(id), triggering the same stop logic
+   → the order card's **Stop trip** control (formerly labelled Dismiss) calls dismiss(id), triggering the same stop logic
    → open risk (ADR-025, resolved 2026-10-10): a FINISHED written after CANCELLED is ignored (CANCELLED rows are terminal); device confirmation remains
 
    → Track screen displays the order card (composable name chosen at implementation) instead of TripPanel (from pickup phase through terminal state)
