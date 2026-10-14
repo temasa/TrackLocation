@@ -1,10 +1,5 @@
 package com.kolee.tracklocation.ui.components
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.provider.Settings
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,7 +33,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -105,7 +99,6 @@ fun StatusBannerHost(navController: NavController, modifier: Modifier = Modifier
 
     if (route !in BannerRoutes || (!obdProblem && !observerProblem)) return
 
-    val context = LocalContext.current
     val obdConnecting = obdState is ObdUiState.Connecting || obdState is ObdUiState.Retrying
 
     if (collapsed) {
@@ -142,9 +135,9 @@ fun StatusBannerHost(navController: NavController, modifier: Modifier = Modifier
                     icon = Icons.Filled.VisibilityOff,
                     colors = ObserverColors,
                     title = "Observer inactive",
-                    hint = "Orders won't be captured · Tap to fix",
-                    description = "Observer inactive. Orders won't be captured. Opens Accessibility settings",
-                    onClick = { openSettings(context, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+                    hint = "Orders won't be captured · Tap to open Observer Settings",
+                    description = "Observer inactive. Orders won't be captured. Opens Observer Settings",
+                    onClick = { navController.navigate(Screen.ObserverSettingsScreen.route) },
                     onMinimize = { vm.setCollapsed(true) },
                 )
             }
@@ -153,22 +146,14 @@ fun StatusBannerHost(navController: NavController, modifier: Modifier = Modifier
                     icon = if (obdConnecting) Icons.Filled.Sync else Icons.Filled.BluetoothDisabled,
                     colors = ObdColors,
                     title = if (obdConnecting) "OBD connecting…" else "OBD not connected",
-                    hint = "Tap to open Bluetooth settings",
+                    hint = "Tap to open OBD Settings",
                     description = (if (obdConnecting) "OBD connecting" else "OBD not connected") +
-                        ". Opens Bluetooth settings",
-                    onClick = { openSettings(context, Settings.ACTION_BLUETOOTH_SETTINGS) },
+                        ". Opens OBD Settings",
+                    onClick = { navController.navigate(Screen.ObdSettingsScreen.route) },
                     onMinimize = { vm.setCollapsed(true) },
                 )
             }
         }
-    }
-}
-
-private fun openSettings(context: Context, action: String) {
-    try {
-        context.startActivity(Intent(action))
-    } catch (e: ActivityNotFoundException) {
-        Log.w("StatusBannerHost", "No activity for $action", e)
     }
 }
 

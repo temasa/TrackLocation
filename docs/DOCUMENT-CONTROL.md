@@ -7,9 +7,9 @@ description: Document control register and change log — fully generic, ready t
 # Document Control Register
 ## TrackLocation
 
-**Document Version:** 0.21  
+**Document Version:** 0.22  
 **Status:** Active  
-**Last Updated:** 2026-10-13  
+**Last Updated:** 2026-10-14  
 **Owner:** Product Manager  
 **Controlled By:** This file
 
@@ -35,7 +35,7 @@ When any controlled document changes, update both:
 
 | Document | Current Version | Status | Owner | Last Updated |
 |---|---:|---|---|---|
-| `docs/PRD.md` | 0.33 | Active (migrated from product-spec.md + change-requests.md) | Product Manager | 2026-10-13 |
+| `docs/PRD.md` | 0.34 | Active (migrated from product-spec.md + change-requests.md; FR-23 tap-through amended 2026-10-14) | Product Manager | 2026-10-14 |
 | `docs/ARCHITECTURE.md` | 0.40 | Active (migrated from product-spec.md data rules) | Tech Lead | 2026-10-13 |
 | `docs/adr/README.md` | 1.11 | Active (29 ADRs indexed) | Tech Lead | 2026-10-13 |
 | `docs/adr/001-always-recorded-sessions.md` | 1.0 | Accepted (from CR-0001) | Project owner | 2026-06-15 |
@@ -64,11 +64,11 @@ When any controlled document changes, update both:
 | `docs/adr/025-order-trip-status-and-offline-completion.md` | 1.0 | Accepted (amends ADR-015 cancel rule; amended by ADR-030) | Project owner | 2026-10-10 |
 | `docs/adr/026-saved-planned-route-and-comparison.md` | 1.0 | Accepted — conditional on ORS ToS gate (amends the 'not persisted' rule for the planned route) | Project owner | 2026-10-11 |
 | `docs/adr/027-fuel-balance-fill-up-and-reset.md` | 1.8 | Accepted (Revision 1.7, 2026-10-11: session-independent OBD ledger `obd_ledger` and RANGE from a rolling window of the last 1 km of moving driving); ledger and RANGE code implemented 2026-10-11; build OK; device checks for ledger and RANGE open; Reset accepts 0 L verified on device; Revision 1.8 (2026-10-13): cross-reference to ADR-029 overlay banner as a second Fill-up entry point | Project owner | 2026-10-13 |
-| `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified (no version line in the ADR) | Project owner | 2026-10-11 |
+| `docs/adr/028-floating-status-banner.md` | 1.0 | Accepted; implemented `8cd95f8`; partly device-verified; revised 2026-10-14 (chip tap-through navigates in-app to OBD Settings / Observer Settings; no version line in the ADR) | Project owner | 2026-10-14 |
 | `docs/adr/029-session-overlay-banner.md` | 1.2 | device-verified in part 2026-10-13; Accepted (owner-approved 2026-10-13); Fill-up action added 2026-10-13 (Decision 9); amended 2026-10-13 for the final design: one-row translucent strip with halo text (Decisions 3, 5, 6, 10); implementation decisions 2026-10-13 (Decisions 1, 4, 9 amended; Decision 11 added; no version line in the ADR); amended 2026-10-13: circle shows litres, implemented build OK, device-unverified; code in progress (slices 1 to 9) | Project owner | 2026-10-13 |
 | `docs/adr/030-offline-completion-for-all-orders.md` | 1.0 | Accepted | Project owner | 2026-10-13 |
-| `docs/IMPLEMENTATION-PLAN.md` | 0.72 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-13 |
-| `docs/UI-SPEC.md` | 0.54 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-13 |
+| `docs/IMPLEMENTATION-PLAN.md` | 0.73 | Active (migrated from implementation-plan.md + progress.md) | Product Manager / Tech Lead | 2026-10-14 |
+| `docs/UI-SPEC.md` | 0.55 | Active (migrated from product-spec.md + DESIGN_SYSTEM.md + CR-0002) | Product Manager / UX Designer | 2026-10-14 |
 | `docs/WORKFLOW.md` | 0.2 | Ready to use | Project Team | 2026-10-13 |
 | `docs/IMPLEMENTATION-ISSUES.md` | 0.4 | Ready to use (blocker protocol; Issue #2 resolved; Issue #3 ORS ToS gate raised) | Tech Lead | 2026-10-11 |
 | `docs/ERRORS-LOG.md` | 0.11 | Active (persistent; ERR-010 Observer accessibility service disabled, mitigated manually; ERR-011 ADR-029 savedstate ViewTree setter; ERR-012 ADR-029 overlay ViewTree owners on window root, verified on device 2026-10-13; ERR-013 ADR-029 overlay Fill-up keyboard before window focus, added 2026-10-13; pattern entry for Compose in overlay windows) | Project Team | 2026-10-13 |
@@ -76,7 +76,7 @@ When any controlled document changes, update both:
 | `CLAUDE.md` | 0.2 | Active | Tech Lead | 2026-06-15 |
 | `README.md` | 0.3 | Active | Project Team | 2026-10-06 |
 | `docs/PLANNING-LOG.md` | 0.1 | Active (temporary) — new, scaffolded from create-project template | Planning/Design Session | 2026-07-06 |
-| `docs/DOCUMENT-CONTROL.md` | 0.21 | Active | Product Manager | 2026-10-13 |
+| `docs/DOCUMENT-CONTROL.md` | 0.22 | Active | Product Manager | 2026-10-14 |
 
 **Retired in migration (content folded into the docs above):** `docs/product-spec.md` → PRD + ARCHITECTURE + UI-SPEC; `docs/change-requests.md` → adr/001–002 (+ PRD §12); `docs/progress.md` → IMPLEMENTATION-PLAN §6 + Appendix B; `docs/DESIGN_SYSTEM.md` → UI-SPEC §5/§9.
 
@@ -98,6 +98,11 @@ Draft documents normally begin at `0.1`.
 
 | Date | Document | From | To | Change Summary | Changed By |
 |---|---|---:|---:|---|---|
+| 2026-10-14 | IMPLEMENTATION-PLAN | 0.72 | 0.73 | Status banner tap-through amended (ADR-028 Revision 2026-10-14, docs only): chips navigate in-app to OBD Settings / Observer Settings; banner slice How to Verify items 11 and 12 reworded; new §6 row (Completed (code), `---`; `:app:assembleDebug` BUILD SUCCESSFUL and APK installed 2026-10-14; tap-through pending owner device check). | Claude Haiku 5.5 |
+| 2026-10-14 | PRD | 0.33 | 0.34 | FR-23 floating status banner tap-through amended: body tap opens the in-app OBD Settings / Observer Settings screen instead of system settings (ADR-028 Revision 2026-10-14). | Claude Haiku 5.5 |
+| 2026-10-14 | UI-SPEC | 0.54 | 0.55 | §5c Floating Status Banner: tap-through navigates in-app to OBD Settings / Observer Settings; hints ("Tap to open OBD Settings"; "Orders won't be captured · Tap to open Observer Settings") and OBD TalkBack text ("OBD not connected. Opens OBD Settings") updated. | Claude Haiku 5.5 |
+| 2026-10-14 | adr/028 | — | — | Revised 2026-10-14 (owner decision, no version number): tap-through to in-app OBD Settings / Observer Settings replaces system-settings tap-through; Revision note added; register row updated. | Claude Haiku 5.5 |
+| 2026-10-14 | DOCUMENT-CONTROL | 0.21 | 0.22 | Register rows and change-log rows for the 2026-10-14 status banner tap-through update (see the rows above). | Claude Haiku 5.5 |
 | 2026-10-13 | IMPLEMENTATION-PLAN, DOCUMENT-CONTROL | 0.71/0.20 | 0.72/0.21 | ADR-030 revision hash backfill and code status; docs only. IMPLEMENTATION-PLAN §6 docs row `2f94294` and code row `6785a6b` (`---` placeholders cleared), code row Completed with static-only verification, Next Step updated. DOCUMENT-CONTROL register and this change log. | Claude Haiku 5.5 |
 | 2026-10-13 | PRD, ARCHITECTURE, UI-SPEC, IMPLEMENTATION-PLAN, adr/015, adr/025, adr/030 (new), adr/README, DOCUMENT-CONTROL | PRD 0.32, ARCHITECTURE 0.39, UI-SPEC 0.53, IMPLEMENTATION-PLAN 0.70, adr/015 1.2, adr/025 1.0, adr/030 —, adr/README 1.10, DOCUMENT-CONTROL 0.19 | PRD 0.33, ARCHITECTURE 0.40, UI-SPEC 0.54, IMPLEMENTATION-PLAN 0.71, adr/015 1.2 (no bump; status text), adr/025 1.0 (no bump; status text), adr/030 1.0 (new), adr/README 1.11, DOCUMENT-CONTROL 0.20 | ADR-030: offline completion for all orders (removes cash-only rule from ADR-025); docs only | Claude Haiku 5.5 |
 | 2026-10-13 | ERRORS-LOG, IMPLEMENTATION-PLAN, adr/029, DOCUMENT-CONTROL | ERRORS-LOG 0.10, IMPLEMENTATION-PLAN 0.69, adr/029 1.2, DOCUMENT-CONTROL 0.18 | ERRORS-LOG 0.11, IMPLEMENTATION-PLAN 0.70, adr/029 1.2 (no bump; no version line in the ADR), DOCUMENT-CONTROL 0.19 | Device verification of the ADR-029 session overlay on the owner's Galaxy S9+ (adb screenshots and dumpsys, debug APK after `0ab3b13` and `14523fc`). ERRORS-LOG: ERR-013 added (Fill-up keyboard not shown on first open; IME request before window focus; fixed in `14523fc`; one device run); ERR-012 marked verified on device (overlay shows over another app, no crash after `0ab3b13`); Patterns entry for Compose hosted in a WindowManager overlay (ERR-011, ERR-012, ERR-013). IMPLEMENTATION-PLAN §4 and §6: device verification recorded (verified and not-yet-verified lists; FUEL CONS shows `—/—` in the no-data state, a deviation from the single `—` design). adr/029: status line and new section "Device verification (2026-10-13)"; open items updated; device-verified in part. Register rows updated. | Claude Haiku 5.5 |

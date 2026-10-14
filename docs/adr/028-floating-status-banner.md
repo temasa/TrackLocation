@@ -1,8 +1,11 @@
 # ADR-028: Floating Status Banner (OBD and Observer)
 
-**Status:** Accepted; implemented in `8cd95f8` (2026-10-11); partly device-verified (see IMPLEMENTATION-PLAN section 4)
+**Status:** Accepted; implemented in `8cd95f8` (2026-10-11); partly device-verified (see IMPLEMENTATION-PLAN section 4). Revised 2026-10-14 (tap-through and hints, see Revision note below).
 **Date:** 2026-10-11
+**Revised:** 2026-10-14
 **Decided By:** Project owner + Claude Code
+
+> **Revision 2026-10-14 (owner decision).** Tapping the body of an expanded chip no longer opens Android system settings. The OBD chip opens the in-app **OBD Settings** screen (`Screen.ObdSettingsScreen`). The Observer chip opens the in-app **Observer Settings** screen (`Screen.ObserverSettingsScreen`). Both screens are outside the banner routes, so the banner hides there, and Back returns to the previous screen. The hint lines and TalkBack wording change to match (Decisions 3, 4, 6, 7, 9). The system Bluetooth and Accessibility settings stay reachable from inside those screens: OBD Settings keeps "Pair a new device" (system Bluetooth), and Observer Settings keeps its accessibility button. The Observer Feed `ServiceBanner` "Open settings" button is unchanged. Collapse behaviour is unchanged. No in-app Bluetooth discovery or PIN entry is added (PRD §2, AGENTS §2). The Pencil frames in `ui-design.pen` still show the old hint text until they are touched up.
 
 ## Context
 
@@ -17,7 +20,7 @@ An earlier draft of ADR-028 was reverted in commit `339e366` because its premise
 
 Constraints:
 - No schema change and no Room migration.
-- PRD §2 and AGENTS §2 ban in-app Bluetooth discovery and PIN entry. A link that opens the system Bluetooth settings does not break that rule.
+- PRD §2 and AGENTS §2 ban in-app Bluetooth discovery and PIN entry. A link to the system Bluetooth settings (reachable from OBD Settings since 2026-10-14) does not break that rule.
 - No new bottom-navigation destination. GPS tracking, the always-recording switch and the PRD §12 locked rules stay untouched.
 
 ## Decision
@@ -30,30 +33,32 @@ Constraints:
    - `Connected`: chip hidden.
    - `Connecting` and `Retrying`: title "OBD connecting…".
    - `Idle` and `Waiting`: title "OBD not connected".
-   - Hint line: "Tap to open Bluetooth settings".
+   - Hint line: "Tap to open OBD Settings" (same for Idle, Waiting, Connecting and Retrying).
    - The chip also shows when the OBD feature is turned off in OBD Settings. Owner decision: always show; the chip is never hidden because OBD is disabled.
 
 4. **Observer chip (red).** Shown when the app's own accessibility service is not enabled. The check matches the package and class, as `ObserverViewModel.isOurServiceEnabled` does. The check is extracted into one shared helper and re-run every second while the app is in the foreground, at the same cadence as the existing Observer Feed `ServiceBanner`. That `ServiceBanner` stays unchanged.
    - Title: "Observer inactive".
-   - Hint line: "Orders won't be captured · Tap to fix".
+   - Hint line: "Orders won't be captured · Tap to open Observer Settings".
 
 5. **Both chips.** When both problems exist, the chips are stacked with the Observer chip on top. When both are healthy, nothing is shown.
 
-6. **Tap-through.** Tapping the body of an expanded chip opens the system settings:
-   - OBD chip: `Settings.ACTION_BLUETOOTH_SETTINGS`.
-   - Observer chip: `Settings.ACTION_ACCESSIBILITY_SETTINGS`, the same intent the Observer Feed `ServiceBanner` already uses.
-   - These are deep links to system settings. In-app Bluetooth discovery and PIN entry stay banned (PRD §2, AGENTS §2).
+6. **Tap-through.** Tapping the body of an expanded chip navigates in-app (revised 2026-10-14; previously deep-linked to system settings):
+   - OBD chip: navigates to `Screen.ObdSettingsScreen` (OBD Settings).
+   - Observer chip: navigates to `Screen.ObserverSettingsScreen` (Observer Settings).
+   - Both screens are outside the banner routes, so the banner hides there. Back returns to the previous screen.
+   - The system Bluetooth and Accessibility settings remain reachable from inside those screens (OBD Settings "Pair a new device"; Observer Settings accessibility button). The Observer Feed `ServiceBanner` "Open settings" button still opens `Settings.ACTION_ACCESSIBILITY_SETTINGS` and is unchanged.
+   - In-app Bluetooth discovery and PIN entry stay banned (PRD §2, AGENTS §2).
 
 7. **Collapse.** Every expanded chip has a minimize button on its right, after a divider. The button is 32 px visually with a 48 dp hit area.
    - Tapping the minimize button shrinks the banner to icon-only circular chips, 44 px each, at the top right. The icons are amber Bluetooth-off for OBD and red eye-off for Observer. When both are collapsed they stack vertically, Observer on top.
-   - Tapping the main body of an expanded chip opens the system settings (Decision 6).
+   - Tapping the main body of an expanded chip opens the in-app OBD Settings or Observer Settings screen (Decision 6, revised 2026-10-14).
    - Tapping a collapsed icon expands it again. It does **not** open settings, to avoid accidental taps.
 
 8. **Collapse memory.** The collapsed or expanded choice applies to all screens. It is held in memory and lasts for the app session only. It resets on app restart, so a warning can never stay hidden forever. If a problem state changes (for example OBD goes from connected to disconnected, or the Observer service is turned off again), the affected chip re-expands even if it was collapsed.
 
 9. **Accessibility.**
    - Do not rely on colour alone. Each chip has an icon and text.
-   - TalkBack reads the title plus the action, for example "OBD not connected. Opens Bluetooth settings".
+   - TalkBack reads the title plus the action, for example "OBD not connected. Opens OBD Settings" or "Observer inactive. Orders won't be captured. Opens Observer Settings".
    - Touch targets are at least 44 px. Collapsed icons are 44 px. The minimize button is 32 px visually with a 48 dp hit area.
 
 10. **Boundaries.** No schema change, no Room migration, no new bottom-nav destination. GPS tracking, the always-recording switch (ADR-002) and the PRD §12 locked rules are untouched. The banner is display-only and does not change the canonical location log or the sessions/trips model.
@@ -65,7 +70,7 @@ Constraints:
 ### Positive
 - The driver sees an OBD or Observer problem on the main screens, not only on the Observer screen. The ERR-010 gap (service off, screen closed) is covered.
 - One shared Observer-enabled helper replaces the duplicated check. The Observer Feed `ServiceBanner` keeps its behaviour.
-- Tap-through to the system settings shortens the fix to one tap.
+- Tap-through to the in-app OBD or Observer Settings screen shortens the fix to one tap.
 - No data-model change; the feature is display-only.
 
 ### Negative

@@ -7,9 +7,9 @@ description: UI Specification — TrackLocation (screens, design system, flows)
 # UI Specification
 ## TrackLocation
 
-**Document Version:** 0.54
+**Document Version:** 0.55
 **Status:** Active (migrated from product-spec.md, DESIGN_SYSTEM.md, CR-0002 UI spec)
-**Last Updated:** 2026-10-13
+**Last Updated:** 2026-10-14
 **Owner:** Product Manager / UX Designer
 **Controlled By:** `docs/DOCUMENT-CONTROL.md`
 **Design Tool:** Google Stitch / Claude Design (external handoff). See `docs/WORKFLOW.md §3`.
@@ -770,12 +770,13 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 
 | Chip | Title | Hint line |
 |------|-------|-----------|
-| OBD (Idle, Waiting) | OBD not connected | Tap to open Bluetooth settings |
-| OBD (Connecting, Retrying) | OBD connecting… | Tap to open Bluetooth settings |
-| Observer | Observer inactive | Orders won't be captured · Tap to fix |
+| OBD (Idle, Waiting) | OBD not connected | Tap to open OBD Settings |
+| OBD (Connecting, Retrying) | OBD connecting… | Tap to open OBD Settings |
+| Observer | Observer inactive | Orders won't be captured · Tap to open Observer Settings |
 
 **Tap targets:**
-- **Body of an expanded chip:** opens the system settings. OBD opens `Settings.ACTION_BLUETOOTH_SETTINGS`; Observer opens `Settings.ACTION_ACCESSIBILITY_SETTINGS` (the same intent as the Observer Feed `ServiceBanner`). Neither opens an in-app Bluetooth screen.
+- **Body of an expanded chip:** navigates in-app (revised 2026-10-14; previously opened system settings). OBD opens the **OBD Settings** screen (`Screen.ObdSettingsScreen`); Observer opens the **Observer Settings** screen (`Screen.ObserverSettingsScreen`). Both are outside the banner routes, so the banner hides there; Back returns to the previous screen. The system Bluetooth and Accessibility settings stay reachable from inside those screens (OBD Settings "Pair a new device"; Observer Settings accessibility button). The Observer Feed `ServiceBanner` "Open settings" button is unchanged. No in-app Bluetooth discovery or PIN entry.
+- **Pen frames:** `ui-design.pen` still shows the old hint text ("Tap to open Bluetooth settings", "Tap to fix") until the StatusBanner frames are touched up. Treat the copy and tap-target text in this section as authoritative.
 - **Minimize button:** collapses the banner to icon-only chips.
 - **Collapsed icon:** expands the banner again. It does **not** open settings, to avoid accidental taps.
 
@@ -788,7 +789,7 @@ The thresholds (6 L, 3 L, 10%) and the colours (amber `#D97706`, red `#DC2626`) 
 
 **Accessibility:**
 - Do not rely on colour alone: every chip has an icon and text, and the collapsed icons use shape (Bluetooth-off, eye-off) as well as colour.
-- TalkBack reads the title plus the action, for example "OBD not connected. Opens Bluetooth settings".
+- TalkBack reads the title plus the action, for example "OBD not connected. Opens OBD Settings" and "Observer inactive. Orders won't be captured. Opens Observer Settings".
 - Collapsed icons read their title and the expand action (wording to confirm at code time).
 - Touch targets: collapsed icons 44 px; minimize button 32 px visual with a 48 dp hit area.
 - Check at code time that the banner does not hide the Track top controls or the status bar.
