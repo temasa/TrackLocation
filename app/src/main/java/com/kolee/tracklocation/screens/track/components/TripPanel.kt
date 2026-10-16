@@ -108,6 +108,7 @@ fun TripPanel(
             )
             .clip(RoundedCornerShape(18.dp))
             .background(panelBg)
+            .border(1.dp, PanelBorder, RoundedCornerShape(18.dp))
             .padding(vertical = 12.dp, horizontal = 14.dp)
     ) {
         Column {
