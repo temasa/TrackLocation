@@ -41,7 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.kolee.tracklocation.R
 import com.kolee.tracklocation.TrackApp
 import com.kolee.tracklocation.feature.obd.data.ObdPreferencesDataStore
@@ -57,7 +60,18 @@ fun ObdSettingsScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val prefs = (context.applicationContext as TrackApp).run { ObdPreferencesDataStore(context) }
 
-    val bluetoothPermission = rememberPermissionState(android.Manifest.permission.BLUETOOTH_CONNECT)
+    val bluetoothPermissions = rememberMultiplePermissionsState(
+        permissions = if (android.os.Build.VERSION.SDK_INT >= 31) {
+            listOf(
+                android.Manifest.permission.BLUETOOTH_CONNECT,
+                android.Manifest.permission.BLUETOOTH_SCAN
+            )
+        } else {
+            emptyList()
+        }
+    )
+
+    var pendingObdEnable by remember { mutableStateOf(false) }
     val showDevicePicker = remember { mutableStateOf(false) }
     val bondedDevices = remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     val refreshDevices = { bondedDevices.value = getBluetoothBondedDevices() }
@@ -68,6 +82,21 @@ fun ObdSettingsScreen(navController: NavController) {
     val retentionDays = prefs.obdRetentionDays.collectAsState(initial = 7).value
     val retryMaxSeconds = prefs.obdRetryMaxSeconds.collectAsState(initial = 120).value
     val engineDisplacementCc = prefs.obdEngineDisplacementCc.collectAsState(initial = 1193).value
+
+    LaunchedEffect(
+        pendingObdEnable,
+        bluetoothPermissions.allPermissionsGranted
+    ) {
+        if (pendingObdEnable && bluetoothPermissions.allPermissionsGranted) {
+            pendingObdEnable = false
+            prefs.setObdServiceEnabled(true)
+            context.startForegroundService(
+                Intent(context, ObdPollingService::class.java).apply {
+                    action = ObdPollingService.ACTION_START
+                }
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -119,29 +148,16 @@ fun ObdSettingsScreen(navController: NavController) {
                         onToggle = { enabled ->
                             scope.launch {
                                 if (enabled && android.os.Build.VERSION.SDK_INT >= 31) {
-                                    try {
-                                        val permission = android.Manifest.permission.BLUETOOTH_CONNECT
-                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
-                                            context, permission
-                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
-                                        if (!hasPermission) {
-                                            bluetoothPermission.launchPermissionRequest()
-                                        } else {
-                                            prefs.setObdServiceEnabled(true)
-                                            context.startForegroundService(
-                                                Intent(context, ObdPollingService::class.java).apply {
-                                                    action = ObdPollingService.ACTION_START
-                                                }
-                                            )
-                                        }
-                                    } catch (e: Exception) {
+                                    if (bluetoothPermissions.allPermissionsGranted) {
                                         prefs.setObdServiceEnabled(true)
                                         context.startForegroundService(
                                             Intent(context, ObdPollingService::class.java).apply {
                                                 action = ObdPollingService.ACTION_START
                                             }
                                         )
+                                    } else {
+                                        pendingObdEnable = true
+                                        bluetoothPermissions.launchMultiplePermissionRequest()
                                     }
                                 } else if (enabled) {
                                     prefs.setObdServiceEnabled(true)
@@ -151,6 +167,7 @@ fun ObdSettingsScreen(navController: NavController) {
                                         }
                                     )
                                 } else {
+                                    pendingObdEnable = false
                                     prefs.setObdServiceEnabled(false)
                                     context.startService(
                                         Intent(context, ObdPollingService::class.java).apply {
